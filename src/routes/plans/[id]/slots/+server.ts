@@ -1,11 +1,14 @@
-import { json } from '@sveltejs/kit';
+import { json, error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/db';
-import { weekSlots } from '$lib/schema';
+import { plans, weekSlots } from '$lib/schema';
 import type { RequestHandler } from './$types';
 
-export const PUT: RequestHandler = async ({ params, request }) => {
+export const PUT: RequestHandler = async ({ params, request, locals }) => {
   const planId = Number(params.id);
+  const [plan] = await db.select({ id: plans.id }).from(plans).where(and(eq(plans.id, planId), eq(plans.userId, locals.user!.id))).limit(1);
+  if (!plan) error(404, 'Plan not found');
+
   const { dayOfWeek, mealType, mealId } = await request.json();
 
   if (mealId === null) {
