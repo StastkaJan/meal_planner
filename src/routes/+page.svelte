@@ -58,6 +58,12 @@
     plan = await fetch(`/plans/${plan.id}`).then(r => r.json());
   }
 
+  async function handleAutoCompose() {
+    if (!plan) return;
+    await fetch(`/plans/${plan.id}/autocompose`, { method: 'POST' });
+    plan = await fetch(`/plans/${plan.id}`).then(r => r.json());
+  }
+
   async function handleSettingsChange(patch: object) {
     if (!plan) return;
     const updated = await fetch(`/plans/${plan.id}`, {
@@ -105,7 +111,7 @@
 
   {#if plan}
     <PlanSettings {plan} onChange={handleSettingsChange} />
-    <WeekTable {plan} {meals} onSlotChange={handleSlotChange} />
+    <WeekTable {plan} {meals} onSlotChange={handleSlotChange} onAutoCompose={handleAutoCompose} />
   {:else if plans.length === 0}
     <p class="empty-state">No plans yet. Create one to get started.</p>
   {:else}

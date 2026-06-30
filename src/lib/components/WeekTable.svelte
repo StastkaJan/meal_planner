@@ -5,10 +5,11 @@
   import MealCell from './MealCell.svelte';
   import NutritionBar from './NutritionBar.svelte';
 
-  let { plan, meals, onSlotChange }: {
+  let { plan, meals, onSlotChange, onAutoCompose }: {
     plan: PlanDetail;
     meals: Meal[];
     onSlotChange: (day: number, mealType: string, mealId: number | null) => void;
+    onAutoCompose?: () => void;
   } = $props();
 
   const slotMap = $derived(
@@ -51,6 +52,12 @@
     {#each dailyNutrition as dn}
       <NutritionBar {...dn} />
     {/each}
+
+    {#if onAutoCompose}
+      <div class="foot-actions">
+        <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -84,5 +91,23 @@
   }
   .nutrition-label {
     font-size: 0.7rem;
+  }
+  .foot-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 0;
+  }
+  .btn-autocompose {
+    padding: 4px 12px;
+    background: $color-accent;
+    border: none;
+    border-radius: $radius-sm;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    opacity: 0.85;
+    &:hover { opacity: 1; }
   }
 </style>
