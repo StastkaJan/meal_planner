@@ -14,7 +14,7 @@ const mockDb = vi.hoisted(() => ({
 
 vi.mock('$lib/db', () => ({ db: mockDb }));
 
-import { PUT } from '../routes/plans/[id]/slots/+server';
+import { PUT } from './+server';
 
 function makeEvent(body: object, planId = '1', userId = 1) {
   return {

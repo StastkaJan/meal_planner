@@ -64,7 +64,7 @@ npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
-npx vitest            # unit tests
+npm run test:unit     # vitest unit tests
 docker compose up -d  # start postgres + app
 ```
 
@@ -72,13 +72,13 @@ docker compose up -d  # start postgres + app
 
 - E2E: single Chrome worker, no retries, app at `http://localhost:3000`
 - DB resets between test runs via seed script
-- Unit tests live alongside source in `src/`
+- Unit tests colocated with their subject (`*.test.ts` next to the file under test); vitest picks them up via `vite.config.ts`
 
 ## Testing rules
 
-- After every new feature or API change, write or update the corresponding Vitest unit test (colocated in `src/`) or Playwright E2E test (in `tests/`).
+- After every new feature or API change, write or update the corresponding Vitest unit test (colocated next to the file under test) or Playwright E2E test (in `tests/`).
 - Unit tests for pure logic; E2E for user-facing flows.
-- Run `npx vitest run` before declaring a feature done.
+- Run `npm run test:unit` before declaring a feature done.
 
 ## Self-improvement instructions
 
