@@ -1,0 +1,14 @@
+@base = http://localhost:3000
+@mealId = 1
+
+### Update meal (partial)
+PATCH {{base}}/meals/{{mealId}}
+Content-Type: application/json
+
+{
+  "calories": 600,
+  "proteinG": 48
+}
+
+### Delete meal
+DELETE {{base}}/meals/{{mealId}}

@@ -1,0 +1,18 @@
+@base = http://localhost:3000
+@planId = 1
+
+### Get plan with slots
+GET {{base}}/plans/{{planId}}
+
+### Update plan (partial)
+PATCH {{base}}/plans/{{planId}}
+Content-Type: application/json
+
+{
+  "name": "Week 1 Updated",
+  "cuisinePrefs": ["mediterranean"],
+  "dietaryRestrictions": ["gluten-free"]
+}
+
+### Delete plan
+DELETE {{base}}/plans/{{planId}}

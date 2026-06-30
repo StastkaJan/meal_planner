@@ -1,0 +1,22 @@
+@base = http://localhost:3000
+@planId = 1
+
+### Assign meal to slot
+PUT {{base}}/plans/{{planId}}/slots
+Content-Type: application/json
+
+{
+  "dayOfWeek": 0,
+  "mealType": "breakfast",
+  "mealId": 1
+}
+
+### Clear a slot (mealId: null)
+PUT {{base}}/plans/{{planId}}/slots
+Content-Type: application/json
+
+{
+  "dayOfWeek": 0,
+  "mealType": "breakfast",
+  "mealId": null
+}

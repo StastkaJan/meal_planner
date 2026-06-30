@@ -1,0 +1,16 @@
+@base = http://localhost:3000
+
+### List meals
+GET {{base}}/meals
+
+### Create meal
+POST {{base}}/meals
+Content-Type: application/json
+
+{
+  "name": "Chicken Rice Bowl",
+  "calories": 550,
+  "proteinG": 45,
+  "carbsG": 60,
+  "fatG": 10
+}

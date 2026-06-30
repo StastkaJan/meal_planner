@@ -1,0 +1,13 @@
+@base = http://localhost:3000
+
+### List plans
+GET {{base}}/plans
+
+### Create plan
+POST {{base}}/plans
+Content-Type: application/json
+
+{
+  "name": "Week 1",
+  "weekStart": "2026-06-30"
+}

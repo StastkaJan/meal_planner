@@ -1,0 +1,5 @@
+@base = http://localhost:3000
+@planId = 1
+
+### Autocompose — fills empty slots using plan prefs + calorie budget
+POST {{base}}/plans/{{planId}}/autocompose
