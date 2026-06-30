@@ -10,7 +10,7 @@ export type SlotWithMeal = WeekSlot & {
 
 export type PlanDetail = Plan & { slots: SlotWithMeal[] };
 
-export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snacks'] as const;
+export const MEAL_TYPES = ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner'] as const;
 export type MealType = typeof MEAL_TYPES[number];
 
 export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const;

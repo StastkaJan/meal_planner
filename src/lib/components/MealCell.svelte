@@ -63,10 +63,11 @@
       border-color: $color-accent-dim;
     }
 
-    &.breakfast { border-left: 3px solid $color-breakfast; }
-    &.lunch     { border-left: 3px solid $color-lunch; }
-    &.dinner    { border-left: 3px solid $color-dinner; }
-    &.snacks    { border-left: 3px solid $color-snacks; }
+    &.breakfast         { border-left: 3px solid $color-breakfast; }
+    &.morning_snack     { border-left: 3px solid $color-morning_snack; }
+    &.lunch             { border-left: 3px solid $color-lunch; }
+    &.afternoon_snack   { border-left: 3px solid $color-afternoon_snack; }
+    &.dinner            { border-left: 3px solid $color-dinner; }
   }
   .name {
     font-size: 0.8rem;

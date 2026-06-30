@@ -1,14 +1,19 @@
 import { json, error } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { plans, weekSlots, meals } from '$lib/schema';
 import type { RequestHandler } from './$types';
 import type { SlotWithMeal, PlanDetail } from '$lib/types';
 
-export const GET: RequestHandler = async ({ params }) => {
-  const id = Number(params.id);
-  const [plan] = await db.select().from(plans).where(eq(plans.id, id));
+async function ownedPlan(id: number, userId: number) {
+  const [plan] = await db.select().from(plans).where(and(eq(plans.id, id), eq(plans.userId, userId)));
   if (!plan) error(404, 'Plan not found');
+  return plan;
+}
+
+export const GET: RequestHandler = async ({ params, locals }) => {
+  const id = Number(params.id);
+  const plan = await ownedPlan(id, locals.user!.id);
 
   const rows = await db
     .select({
@@ -30,16 +35,17 @@ export const GET: RequestHandler = async ({ params }) => {
   return json(result);
 };
 
-export const PATCH: RequestHandler = async ({ params, request }) => {
+export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   const id = Number(params.id);
+  await ownedPlan(id, locals.user!.id);
   const body = await request.json();
   const [updated] = await db.update(plans).set(body).where(eq(plans.id, id)).returning();
-  if (!updated) error(404, 'Plan not found');
   return json(updated);
 };
 
-export const DELETE: RequestHandler = async ({ params }) => {
+export const DELETE: RequestHandler = async ({ params, locals }) => {
   const id = Number(params.id);
+  await ownedPlan(id, locals.user!.id);
   await db.delete(plans).where(eq(plans.id, id));
   return new Response(null, { status: 204 });
 };
