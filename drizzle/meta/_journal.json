@@ -15,6 +15,13 @@
       "when": 1782801197886,
       "tag": "0001_massive_dexter_bennett",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782826611579,
+      "tag": "0002_thankful_lenny_balinger",
+      "breakpoints": true
     }
   ]
 }

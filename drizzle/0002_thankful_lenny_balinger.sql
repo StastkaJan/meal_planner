@@ -1,0 +1,1 @@
+ALTER TABLE "meals" ADD COLUMN "tags" text[] DEFAULT '{}' NOT NULL;

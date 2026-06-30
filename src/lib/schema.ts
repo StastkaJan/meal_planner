@@ -20,6 +20,7 @@ export const meals = pgTable('meals', {
   proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
   carbsG:   numeric('carbs_g',   { precision: 6, scale: 1 }),
   fatG:     numeric('fat_g',     { precision: 6, scale: 1 }),
+  tags:     text('tags').array().notNull().default(sql`'{}'`),
 });
 
 export const plans = pgTable('plans', {
