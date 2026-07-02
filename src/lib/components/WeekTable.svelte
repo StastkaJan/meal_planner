@@ -29,75 +29,124 @@
   );
 </script>
 
-<div class="table-wrap">
-  <div class="grid">
-    <div class="header-cell row-label"></div>
-    {#each DAYS as d}
-      <div class="header-cell">{DAY_NAMES[d]}</div>
-    {/each}
-
-    {#each MEAL_TYPES as mt}
-      <div class="row-label">{mt}</div>
-      {#each DAYS as d}
-        <MealCell
-          slot={slotMap.get(`${d}-${mt}`) ?? null}
-          {meals}
-          mealType={mt}
-          onPick={(mealId) => onSlotChange(d, mt, mealId)}
-        />
+<div class="cal-wrap">
+  <table class="cal">
+    <thead>
+      <tr>
+        <th class="corner"></th>
+        {#each DAYS as d}
+          <th class="day-head">{DAY_NAMES[d]}</th>
+        {/each}
+      </tr>
+    </thead>
+    <tbody>
+      {#each MEAL_TYPES as mt}
+        <tr>
+          <td class="row-label">{mt.replaceAll('_', ' ')}</td>
+          {#each DAYS as d}
+            <td class="slot-cell">
+              <MealCell
+                slot={slotMap.get(`${d}-${mt}`) ?? null}
+                {meals}
+                mealType={mt}
+                onPick={(mealId) => onSlotChange(d, mt, mealId)}
+              />
+            </td>
+          {/each}
+        </tr>
       {/each}
-    {/each}
+      <tr class="nutrition-row">
+        <td class="row-label nutrition-label">nutrition</td>
+        {#each dailyNutrition as dn}
+          <td class="slot-cell nutrition-cell">
+            <NutritionBar {...dn} />
+          </td>
+        {/each}
+      </tr>
+    </tbody>
+  </table>
 
-    <div class="row-label nutrition-label">nutrition</div>
-    {#each dailyNutrition as dn}
-      <NutritionBar {...dn} />
-    {/each}
-
-    {#if onAutoCompose}
-      <div class="foot-actions">
-        <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
-      </div>
-    {/if}
-  </div>
+  {#if onAutoCompose}
+    <div class="foot-actions">
+      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
-  .table-wrap {
+  .cal-wrap {
     overflow-x: auto;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    overflow: hidden;
   }
-  .grid {
-    display: grid;
-    grid-template-columns: 90px repeat(7, 1fr);
-    gap: 4px;
+
+  .cal {
+    width: 100%;
     min-width: 700px;
+    border-collapse: collapse;
+    table-layout: fixed;
   }
-  .header-cell {
-    padding: 8px 4px;
+
+  .corner {
+    width: 90px;
+  }
+
+  thead {
+    background: $color-surface;
+    border-bottom: 2px solid $color-border;
+  }
+
+  .day-head {
+    padding: 10px 6px;
     text-align: center;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: $color-text-muted;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
+    border-left: 1px solid $color-border;
   }
+
   .row-label {
-    display: flex;
-    align-items: center;
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    padding: 0 10px;
+    font-size: 0.72rem;
     font-weight: 600;
     color: $color-text-muted;
     text-transform: capitalize;
+    white-space: nowrap;
+    border-top: 1px solid $color-border;
+    background: $color-surface;
+    vertical-align: middle;
   }
+
   .nutrition-label {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    color: $color-text-muted;
   }
+
+  .slot-cell {
+    border-top: 1px solid $color-border;
+    border-left: 1px solid $color-border;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  .nutrition-row {
+    background: $color-surface;
+  }
+
+  .nutrition-cell {
+    padding: 6px 8px;
+    vertical-align: middle;
+  }
+
   .foot-actions {
-    grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    padding: 4px 0;
+    padding: 8px 0 0;
   }
+
   .btn-autocompose {
     padding: 4px 12px;
     background: $color-accent;

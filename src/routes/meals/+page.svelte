@@ -59,6 +59,7 @@
     <button class="btn" onclick={() => { creating = true; }}>+ Add meal</button>
   </div>
 
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -118,6 +119,7 @@
       {/each}
     </tbody>
   </table>
+  </div>
 </div>
 
 <style lang="scss">
@@ -130,28 +132,34 @@
   }
   h2 { font-size: 1.2rem; font-weight: 600; }
 
+  .table-wrap {
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    overflow: hidden;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
   }
+  thead { background: $color-surface; }
   th {
     text-align: left;
-    padding: 8px 10px;
+    padding: 10px 12px;
     color: $color-text-muted;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid $color-border;
+    letter-spacing: 0.07em;
+    border-bottom: 2px solid $color-border;
   }
   td {
-    padding: 9px 10px;
-    border-bottom: 1px solid $color-border;
+    padding: 10px 12px;
+    border-top: 1px solid $color-border;
     color: $color-text;
   }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: $color-surface-2; }
+  tr:first-child td { border-top: none; }
+  tbody tr:hover td { background: $color-surface-2; }
 
   .meal-name { font-weight: 500; }
 
