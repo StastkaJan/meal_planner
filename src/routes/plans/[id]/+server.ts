@@ -40,8 +40,8 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   const id = Number(params.id);
   await ownedPlan(id, locals.user!.id);
-  const body = await request.json();
-  const [updated] = await db.update(plans).set(body).where(eq(plans.id, id)).returning();
+  const { name, cuisinePrefs, dietaryRestrictions } = await request.json();
+  const [updated] = await db.update(plans).set({ name, cuisinePrefs, dietaryRestrictions }).where(eq(plans.id, id)).returning();
   return json(updated);
 };
 

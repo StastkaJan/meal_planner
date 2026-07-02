@@ -10,7 +10,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  const { name, weekStart } = await request.json();
+  const { name } = await request.json();
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // snap to Monday
+  const weekStart = d.toISOString().slice(0, 10);
   const [plan] = await db.insert(plans).values({ name, weekStart, userId: locals.user!.id }).returning();
   return json(plan, { status: 201 });
 };
