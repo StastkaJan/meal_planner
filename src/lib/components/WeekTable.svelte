@@ -21,19 +21,19 @@
 
   const weekDates = $derived(
     DAYS.map(d => {
-      const dt = new Date(weekStart + 'T00:00:00');
-      dt.setDate(dt.getDate() + d);
+      const dt = new Date(weekStart); // UTC midnight
+      dt.setUTCDate(dt.getUTCDate() + d);
       return dt;
     })
   );
 
   const monthLabel = $derived(
-    weekDates[0].getMonth() === weekDates[6].getMonth()
-      ? weekDates[0].toLocaleDateString('en', { month: 'long', year: 'numeric' })
-      : `${weekDates[0].toLocaleDateString('en', { month: 'short' })} – ${weekDates[6].toLocaleDateString('en', { month: 'short', year: 'numeric' })}`
+    weekDates[0].getUTCMonth() === weekDates[6].getUTCMonth()
+      ? weekDates[0].toLocaleDateString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+      : `${weekDates[0].toLocaleDateString('en', { month: 'short', timeZone: 'UTC' })} – ${weekDates[6].toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`
   );
 
-  const todayStr = new Date().toDateString();
+  const todayUTC = new Date().toISOString().slice(0, 10);
 
   const dailyNutrition = $derived(
     DAYS.map(d => {
@@ -60,9 +60,9 @@
           </div>
         </th>
         {#each DAYS as d}
-          <th class="day-head" class:today={weekDates[d].toDateString() === todayStr}>
+          <th class="day-head" class:today={weekDates[d].toISOString().slice(0, 10) === todayUTC}>
             <span class="day-name">{DAY_NAMES[d]}</span>
-            <span class="day-num">{weekDates[d].getDate()}</span>
+            <span class="day-num">{weekDates[d].getUTCDate()}</span>
           </th>
         {/each}
       </tr>

@@ -15,8 +15,8 @@
   let creating      = $state(false);
 
   function shiftWeek(delta: number) {
-    const d = new Date(viewWeek + 'T00:00:00');
-    d.setDate(d.getDate() + delta * 7);
+    const d = new Date(viewWeek); // ISO date string → UTC midnight, no tz shift
+    d.setUTCDate(d.getUTCDate() + delta * 7);
     viewWeek = d.toISOString().slice(0, 10);
   }
 
