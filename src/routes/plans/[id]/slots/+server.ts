@@ -9,19 +9,20 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   const [plan] = await db.select({ id: plans.id }).from(plans).where(and(eq(plans.id, planId), eq(plans.userId, locals.user!.id))).limit(1);
   if (!plan) error(404, 'Plan not found');
 
-  const { dayOfWeek, mealType, mealId } = await request.json();
+  const { week, dayOfWeek, mealType, mealId } = await request.json();
+  if (!week || !/^\d{4}-\d{2}-\d{2}$/.test(week)) error(400, 'Invalid week');
 
   if (mealId === null) {
     await db.delete(weekSlots).where(
-      and(eq(weekSlots.planId, planId), eq(weekSlots.dayOfWeek, dayOfWeek), eq(weekSlots.mealType, mealType))
+      and(eq(weekSlots.planId, planId), eq(weekSlots.week, week), eq(weekSlots.dayOfWeek, dayOfWeek), eq(weekSlots.mealType, mealType))
     );
     return new Response(null, { status: 204 });
   }
 
   await db.insert(weekSlots)
-    .values({ planId, dayOfWeek, mealType, mealId })
+    .values({ planId, week, dayOfWeek, mealType, mealId })
     .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.dayOfWeek, weekSlots.mealType],
+      target: [weekSlots.planId, weekSlots.week, weekSlots.dayOfWeek, weekSlots.mealType],
       set: { mealId }
     });
 

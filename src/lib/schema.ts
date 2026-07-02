@@ -34,10 +34,11 @@ export const plans = pgTable('plans', {
 
 export const weekSlots = pgTable('week_slots', {
   planId:    integer('plan_id').notNull().references(() => plans.id, { onDelete: 'cascade' }),
+  week:      date('week').notNull(),
   dayOfWeek: smallint('day_of_week').notNull(),
   mealType:  text('meal_type').notNull(),
   mealId:    integer('meal_id').references(() => meals.id, { onDelete: 'set null' }),
-}, (t) => [primaryKey({ columns: [t.planId, t.dayOfWeek, t.mealType] })]);
+}, (t) => [primaryKey({ columns: [t.planId, t.week, t.dayOfWeek, t.mealType] })]);
 
 export type User     = typeof users.$inferSelect;
 export type Session  = typeof sessions.$inferSelect;

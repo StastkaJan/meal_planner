@@ -51,23 +51,20 @@
     width: 100%;
     min-height: 56px;
     padding: 6px 8px;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
+    background: transparent;
+    border: none;
+    border-top: 3px solid transparent; // meal-type color accent
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.15s, background 0.15s;
+    transition: background 0.15s;
 
-    &:hover {
-      background: $color-surface-2;
-      border-color: $color-accent-dim;
-    }
+    &:hover { background: $color-surface-2; }
 
-    &.breakfast         { border-left: 3px solid $color-breakfast; }
-    &.morning_snack     { border-left: 3px solid $color-morning_snack; }
-    &.lunch             { border-left: 3px solid $color-lunch; }
-    &.afternoon_snack   { border-left: 3px solid $color-afternoon_snack; }
-    &.dinner            { border-left: 3px solid $color-dinner; }
+    &.breakfast         { border-top-color: $color-breakfast; }
+    &.morning_snack     { border-top-color: $color-morning_snack; }
+    &.lunch             { border-top-color: $color-lunch; }
+    &.afternoon_snack   { border-top-color: $color-afternoon_snack; }
+    &.dinner            { border-top-color: $color-dinner; }
   }
   .name {
     font-size: 0.8rem;

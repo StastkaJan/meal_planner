@@ -22,6 +22,13 @@
       "when": 1782826611579,
       "tag": "0002_thankful_lenny_balinger",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783022890223,
+      "tag": "0003_romantic_lester",
+      "breakpoints": true
     }
   ]
 }
