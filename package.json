@@ -13,7 +13,7 @@
     "test:unit": "vitest run",
     "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.2",
