@@ -16,6 +16,22 @@
     new Map(plan.slots.map(s => [`${s.dayOfWeek}-${s.mealType}`, s]))
   );
 
+  const weekDates = $derived(
+    DAYS.map(d => {
+      const dt = new Date(plan.weekStart + 'T00:00:00');
+      dt.setDate(dt.getDate() + d);
+      return dt;
+    })
+  );
+
+  const monthLabel = $derived(
+    weekDates[0].getMonth() === weekDates[6].getMonth()
+      ? weekDates[0].toLocaleDateString('en', { month: 'long', year: 'numeric' })
+      : `${weekDates[0].toLocaleDateString('en', { month: 'short' })} – ${weekDates[6].toLocaleDateString('en', { month: 'short', year: 'numeric' })}`
+  );
+
+  const todayStr = new Date().toDateString();
+
   const dailyNutrition = $derived(
     DAYS.map(d => {
       const daySlots = plan.slots.filter(s => s.dayOfWeek === d);
@@ -33,9 +49,12 @@
   <table class="cal">
     <thead>
       <tr>
-        <th class="corner"></th>
+        <th class="corner"><span class="month-label">{monthLabel}</span></th>
         {#each DAYS as d}
-          <th class="day-head">{DAY_NAMES[d]}</th>
+          <th class="day-head" class:today={weekDates[d].toDateString() === todayStr}>
+            <span class="day-name">{DAY_NAMES[d]}</span>
+            <span class="day-num">{weekDates[d].getDate()}</span>
+          </th>
         {/each}
       </tr>
     </thead>
@@ -92,20 +111,54 @@
     width: 90px;
   }
 
+  .month-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
   thead {
     background: $color-surface;
     border-bottom: 2px solid $color-border;
   }
 
   .day-head {
-    padding: 10px 6px;
+    padding: 8px 6px;
     text-align: center;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
     border-left: 1px solid $color-border;
+
+    .day-name {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: $color-text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .day-num {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $color-text;
+      line-height: 1.4;
+    }
+
+    &.today {
+      .day-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: $color-accent;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 0.9rem;
+      }
+    }
   }
 
   .row-label {
