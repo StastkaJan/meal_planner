@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { candidateMeals, filterByPrefs } from './+server';
+import { _candidateMeals as candidateMeals, _filterByPrefs as filterByPrefs } from './+server';
 
 // --- pure logic ---
 

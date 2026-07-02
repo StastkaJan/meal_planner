@@ -9,7 +9,7 @@ type Meal = { id: number; calories: number | null; tags: string[] };
 
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 
-export function candidateMeals(allMeals: Meal[], budget: number): Meal[] {
+export function _candidateMeals(allMeals: Meal[], budget: number): Meal[] {
   const fits = allMeals.filter(m => (m.calories ?? 0) <= budget * 1.3);
   return fits.length
     ? fits
@@ -17,7 +17,7 @@ export function candidateMeals(allMeals: Meal[], budget: number): Meal[] {
 }
 
 // cuisinePrefs = OR match; dietaryRestrictions = AND match; falls back to allMeals if nothing passes
-export function filterByPrefs(allMeals: Meal[], cuisinePrefs: string[], dietaryRestrictions: string[]): Meal[] {
+export function _filterByPrefs(allMeals: Meal[], cuisinePrefs: string[], dietaryRestrictions: string[]): Meal[] {
   let filtered = allMeals;
   if (cuisinePrefs.length) filtered = filtered.filter(m => m.tags.some(t => cuisinePrefs.includes(t)));
   if (dietaryRestrictions.length) filtered = filtered.filter(m => dietaryRestrictions.every(r => m.tags.includes(r)));
@@ -44,7 +44,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
   if (!allMeals.length) return new Response(null, { status: 204 });
 
-  const prefilteredMeals = filterByPrefs(allMeals, plan.cuisinePrefs, plan.dietaryRestrictions);
+  const prefilteredMeals = _filterByPrefs(allMeals, plan.cuisinePrefs, plan.dietaryRestrictions);
   const filled = new Set(existingSlots.map(s => `${s.dayOfWeek}-${s.mealType}`));
   const toInsert = [];
 
@@ -57,7 +57,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
     for (const mealType of emptySlots) {
       const budget = (NUTRITION_TARGETS.calories - consumed) / remaining;
       // ponytail: calories-only greedy; add macro tracking if needed
-      const chosen = pick(candidateMeals(prefilteredMeals, budget));
+      const chosen = pick(_candidateMeals(prefilteredMeals, budget));
       toInsert.push({ planId, dayOfWeek: day, mealType, mealId: chosen.id });
       consumed += chosen.calories ?? 0;
       remaining--;
