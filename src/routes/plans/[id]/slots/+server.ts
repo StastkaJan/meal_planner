@@ -10,6 +10,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   if (!plan) error(404, 'Plan not found');
 
   const { week, dayOfWeek, mealType, mealId } = await request.json();
+  if (!week || !/^\d{4}-\d{2}-\d{2}$/.test(week)) error(400, 'Invalid week');
 
   if (mealId === null) {
     await db.delete(weekSlots).where(

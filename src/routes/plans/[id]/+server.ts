@@ -11,10 +11,15 @@ async function ownedPlan(id: number, userId: number) {
   return plan;
 }
 
+function validWeek(w: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) error(400, 'Invalid week');
+  return w;
+}
+
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const id = Number(params.id);
   const plan = await ownedPlan(id, locals.user!.id);
-  const week = url.searchParams.get('week') ?? plan.weekStart;
+  const week = validWeek(url.searchParams.get('week') ?? plan.weekStart);
 
   const rows = await db
     .select({

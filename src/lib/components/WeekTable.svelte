@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { SlotWithMeal, MealType, PlanDetail } from '$lib/types';
-  import { DAYS, DAY_NAMES, MEAL_TYPES } from '$lib/types';
+  import { MEAL_TYPES } from '$lib/types';
   import type { Meal } from '$lib/schema';
   import MealCell from './MealCell.svelte';
   import NutritionBar from './NutritionBar.svelte';
@@ -15,28 +15,37 @@
     onNextWeek: () => void;
   } = $props();
 
-  const slotMap = $derived(
-    new Map(plan.slots.map(s => [`${s.dayOfWeek}-${s.mealType}`, s]))
-  );
+  const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
+    d.toLocaleDateString('en', { timeZone: 'UTC', ...opts });
+
+  const isoDate = (d: Date) => d.toISOString().slice(0, 10); // extract YYYY-MM-DD from UTC ISO string
 
   const weekDates = $derived(
-    DAYS.map(d => {
-      const dt = new Date(weekStart); // UTC midnight
+    Array.from({ length: 7 }, (_, d) => {
+      const dt = new Date(weekStart);
       dt.setUTCDate(dt.getUTCDate() + d);
       return dt;
     })
   );
 
-  const monthLabel = $derived(
-    weekDates[0].getUTCMonth() === weekDates[6].getUTCMonth()
-      ? weekDates[0].toLocaleDateString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' })
-      : `${weekDates[0].toLocaleDateString('en', { month: 'short', timeZone: 'UTC' })} – ${weekDates[6].toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`
+  const monthLabel = $derived.by(() => {
+    const [s, e] = [weekDates[0], weekDates[6]];
+    if (s.getUTCMonth() === e.getUTCMonth())
+      return fmtUTC(s, { month: 'long', year: 'numeric' });
+    const startOpts: Intl.DateTimeFormatOptions = s.getUTCFullYear() !== e.getUTCFullYear()
+      ? { month: 'short', year: 'numeric' }
+      : { month: 'short' };
+    return `${fmtUTC(s, startOpts)} – ${fmtUTC(e, { month: 'short', year: 'numeric' })}`;
+  });
+
+  const todayISO = isoDate(new Date());
+
+  const slotMap = $derived(
+    new Map(plan.slots.map(s => [`${s.dayOfWeek}-${s.mealType}`, s]))
   );
 
-  const todayUTC = new Date().toISOString().slice(0, 10);
-
   const dailyNutrition = $derived(
-    DAYS.map(d => {
+    weekDates.map((_, d) => {
       const daySlots = plan.slots.filter(s => s.dayOfWeek === d);
       return {
         calories: daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0),
@@ -49,6 +58,12 @@
 </script>
 
 <div class="cal-wrap">
+  {#if onAutoCompose}
+    <div class="foot-actions">
+      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+    </div>
+  {/if}
+
   <div class="cal-scroll">
   <table class="cal">
     <thead>
@@ -60,10 +75,10 @@
             <button class="nav-btn" onclick={onNextWeek} aria-label="Next week">›</button>
           </div>
         </th>
-        {#each DAYS as d}
-          <th class="day-head" class:today={weekDates[d].toISOString().slice(0, 10) === todayUTC}>
-            <span class="day-name">{DAY_NAMES[d]}</span>
-            <span class="day-num">{weekDates[d].getUTCDate()}</span>
+        {#each weekDates as dt, d}
+          <th class="day-head" class:today={isoDate(dt) === todayISO}>
+            <span class="day-name">{fmtUTC(dt, { weekday: 'short' })}</span>
+            <span class="day-num">{dt.getUTCDate()}</span>
           </th>
         {/each}
       </tr>
@@ -72,7 +87,7 @@
       {#each MEAL_TYPES as mt}
         <tr>
           <td class="row-label">{mt.replaceAll('_', ' ')}</td>
-          {#each DAYS as d}
+          {#each weekDates as _, d}
             <td class="slot-cell">
               <MealCell
                 slot={slotMap.get(`${d}-${mt}`) ?? null}
@@ -95,12 +110,6 @@
     </tbody>
   </table>
   </div>
-
-  {#if onAutoCompose}
-    <div class="foot-actions">
-      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
-    </div>
-  {/if}
 </div>
 
 <style lang="scss">
@@ -233,7 +242,8 @@
   .foot-actions {
     display: flex;
     justify-content: flex-end;
-    padding: 8px 0 0;
+    padding: 8px;
+    border-bottom: 1px solid $color-border;
   }
 
   .btn-autocompose {
