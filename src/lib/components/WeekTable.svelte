@@ -49,6 +49,7 @@
 </script>
 
 <div class="cal-wrap">
+  <div class="cal-scroll">
   <table class="cal">
     <thead>
       <tr>
@@ -93,6 +94,7 @@
       </tr>
     </tbody>
   </table>
+  </div>
 
   {#if onAutoCompose}
     <div class="foot-actions">
@@ -103,10 +105,13 @@
 
 <style lang="scss">
   .cal-wrap {
-    overflow-x: auto;
     border: 1px solid $color-border;
     border-radius: $radius;
     overflow: hidden;
+  }
+
+  .cal-scroll {
+    overflow-x: auto;
   }
 
   .cal {
