@@ -30,13 +30,13 @@ describe('PUT /plans/:id/slots', () => {
   it('throws 404 when plan is not owned by the user', async () => {
     mockDb.limit.mockResolvedValueOnce([]);
     await expect(
-      PUT(makeEvent({ dayOfWeek: 0, mealType: 'lunch', mealId: 1 }))
+      PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: 1 }))
     ).rejects.toMatchObject({ status: 404 });
   });
 
   it('deletes the slot and returns 204 when mealId is null', async () => {
     mockDb.limit.mockResolvedValueOnce([{ id: 1 }]);
-    const res = await PUT(makeEvent({ dayOfWeek: 0, mealType: 'lunch', mealId: null }));
+    const res = await PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: null }));
     expect(res.status).toBe(204);
     expect(mockDb.delete).toHaveBeenCalled();
     expect(mockDb.insert).not.toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe('PUT /plans/:id/slots', () => {
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
     mockDb.limit.mockResolvedValueOnce([{ id: 1 }]);
-    const res = await PUT(makeEvent({ dayOfWeek: 0, mealType: 'lunch', mealId: 5 }));
+    const res = await PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: 5 }));
     expect(res.status).toBe(204);
     expect(mockDb.insert).toHaveBeenCalled();
     expect(mockDb.delete).not.toHaveBeenCalled();

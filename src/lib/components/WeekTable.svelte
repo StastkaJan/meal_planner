@@ -5,11 +5,14 @@
   import MealCell from './MealCell.svelte';
   import NutritionBar from './NutritionBar.svelte';
 
-  let { plan, meals, onSlotChange, onAutoCompose }: {
+  let { plan, meals, weekStart, onSlotChange, onAutoCompose, onPrevWeek, onNextWeek }: {
     plan: PlanDetail;
     meals: Meal[];
+    weekStart: string;
     onSlotChange: (day: number, mealType: string, mealId: number | null) => void;
     onAutoCompose?: () => void;
+    onPrevWeek: () => void;
+    onNextWeek: () => void;
   } = $props();
 
   const slotMap = $derived(
@@ -18,7 +21,7 @@
 
   const weekDates = $derived(
     DAYS.map(d => {
-      const dt = new Date(plan.weekStart + 'T00:00:00');
+      const dt = new Date(weekStart + 'T00:00:00');
       dt.setDate(dt.getDate() + d);
       return dt;
     })
@@ -49,7 +52,13 @@
   <table class="cal">
     <thead>
       <tr>
-        <th class="corner"><span class="month-label">{monthLabel}</span></th>
+        <th class="corner">
+          <div class="week-nav">
+            <button class="nav-btn" onclick={onPrevWeek} aria-label="Previous week">‹</button>
+            <span class="month-label">{monthLabel}</span>
+            <button class="nav-btn" onclick={onNextWeek} aria-label="Next week">›</button>
+          </div>
+        </th>
         {#each DAYS as d}
           <th class="day-head" class:today={weekDates[d].toDateString() === todayStr}>
             <span class="day-name">{DAY_NAMES[d]}</span>
@@ -111,12 +120,34 @@
     width: 90px;
   }
 
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 0 4px;
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: $color-text-muted;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: $radius-sm;
+    &:hover { color: $color-text; background: $color-surface-2; }
+  }
+
   .month-label {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 600;
     color: $color-text-muted;
+    text-align: center;
     text-transform: none;
     letter-spacing: 0;
+    flex: 1;
   }
 
   thead {

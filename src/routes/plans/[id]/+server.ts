@@ -11,13 +11,15 @@ async function ownedPlan(id: number, userId: number) {
   return plan;
 }
 
-export const GET: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals, url }) => {
   const id = Number(params.id);
   const plan = await ownedPlan(id, locals.user!.id);
+  const week = url.searchParams.get('week') ?? plan.weekStart;
 
   const rows = await db
     .select({
       planId:    weekSlots.planId,
+      week:      weekSlots.week,
       dayOfWeek: weekSlots.dayOfWeek,
       mealType:  weekSlots.mealType,
       mealId:    weekSlots.mealId,
@@ -29,7 +31,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     })
     .from(weekSlots)
     .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-    .where(eq(weekSlots.planId, id));
+    .where(and(eq(weekSlots.planId, id), eq(weekSlots.week, week)));
 
   const result: PlanDetail = { ...plan, slots: rows as SlotWithMeal[] };
   return json(result);

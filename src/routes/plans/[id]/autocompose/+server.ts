@@ -24,22 +24,26 @@ export function _filterByPrefs(allMeals: Meal[], cuisinePrefs: string[], dietary
   return filtered.length ? filtered : allMeals; // ponytail: fallback keeps plan from stalling on untagged meals
 }
 
-export const POST: RequestHandler = async ({ params, locals }) => {
+export const POST: RequestHandler = async ({ params, locals, request }) => {
   const planId = Number(params.id);
+  const { week } = await request.json().catch(() => ({})) as { week?: string };
   const [plan] = await db.select({
     id: plans.id,
+    weekStart: plans.weekStart,
     cuisinePrefs: plans.cuisinePrefs,
     dietaryRestrictions: plans.dietaryRestrictions,
   }).from(plans)
     .where(and(eq(plans.id, planId), eq(plans.userId, locals.user!.id))).limit(1);
   if (!plan) error(404, 'Plan not found');
 
+  const slotWeek = week ?? plan.weekStart;
+
   const [allMeals, existingSlots] = await Promise.all([
     db.select({ id: meals.id, calories: meals.calories, tags: meals.tags }).from(meals),
     db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, calories: meals.calories })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-      .where(eq(weekSlots.planId, planId)),
+      .where(and(eq(weekSlots.planId, planId), eq(weekSlots.week, slotWeek))),
   ]);
 
   if (!allMeals.length) return new Response(null, { status: 204 });
@@ -58,7 +62,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
       const budget = (NUTRITION_TARGETS.calories - consumed) / remaining;
       // ponytail: calories-only greedy; add macro tracking if needed
       const chosen = pick(_candidateMeals(prefilteredMeals, budget));
-      toInsert.push({ planId, dayOfWeek: day, mealType, mealId: chosen.id });
+      toInsert.push({ planId, week: slotWeek, dayOfWeek: day, mealType, mealId: chosen.id });
       consumed += chosen.calories ?? 0;
       remaining--;
     }

@@ -75,7 +75,11 @@ vi.mock('$lib/db', () => ({ db: mockDb }));
 import { POST } from './+server';
 
 function makeEvent(planId = '1', userId = 1) {
-  return { params: { id: planId }, locals: { user: { id: userId } } } as any;
+  return {
+    params: { id: planId },
+    request: { json: () => Promise.resolve({}) },
+    locals: { user: { id: userId } },
+  } as any;
 }
 
 describe('POST /plans/:id/autocompose', () => {

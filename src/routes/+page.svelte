@@ -6,24 +6,35 @@
   import WeekTable from '$lib/components/WeekTable.svelte';
   import PlanSettings from '$lib/components/PlanSettings.svelte';
 
-  let plans:       Plan[]       = $state([]);
-  let meals:       Meal[]       = $state([]);
-  let activePlanId: number       = $state(0);
-  let plan:        PlanDetail | null = $state(null);
-  let newPlanName  = $state('');
-  let creating     = $state(false);
+  let plans:        Plan[]           = $state([]);
+  let meals:        Meal[]           = $state([]);
+  let activePlanId: number           = $state(0);
+  let plan:         PlanDetail | null = $state(null);
+  let viewWeek:     string           = $state('');
+  let newPlanName   = $state('');
+  let creating      = $state(false);
+
+  function shiftWeek(delta: number) {
+    const d = new Date(viewWeek + 'T00:00:00');
+    d.setDate(d.getDate() + delta * 7);
+    viewWeek = d.toISOString().slice(0, 10);
+  }
 
   onMount(async () => {
     [plans, meals] = await Promise.all([
       fetch('/plans').then(r => r.json()),
       fetch('/meals').then(r => r.json()),
     ]);
-    if (plans.length > 0) activePlanId = plans[plans.length - 1].id;
+    if (plans.length > 0) {
+      const last = plans[plans.length - 1];
+      activePlanId = last.id;
+      viewWeek = last.weekStart;
+    }
   });
 
   $effect(() => {
-    if (!activePlanId) return;
-    fetch(`/plans/${activePlanId}`).then(r => r.json()).then(d => plan = d);
+    if (!activePlanId || !viewWeek) return;
+    fetch(`/plans/${activePlanId}?week=${viewWeek}`).then(r => r.json()).then(d => plan = d);
   });
 
   async function createPlan() {
@@ -36,6 +47,7 @@
     const created: Plan = await res.json();
     plans = [...plans, created];
     activePlanId = created.id;
+    viewWeek = created.weekStart;
     newPlanName = '';
     creating = false;
   }
@@ -44,7 +56,16 @@
     if (!confirm('Delete this plan?')) return;
     await fetch(`/plans/${id}`, { method: 'DELETE' });
     plans = plans.filter(p => p.id !== id);
-    if (activePlanId === id) activePlanId = plans[0]?.id ?? 0;
+    if (activePlanId === id) {
+      const next = plans[0];
+      activePlanId = next?.id ?? 0;
+      viewWeek = next?.weekStart ?? '';
+    }
+  }
+
+  function switchPlan(id: number) {
+    activePlanId = id;
+    viewWeek = plans.find(p => p.id === id)?.weekStart ?? viewWeek;
   }
 
   async function handleSlotChange(day: number, mealType: string, mealId: number | null) {
@@ -52,16 +73,19 @@
     await fetch(`/plans/${plan.id}/slots`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ dayOfWeek: day, mealType, mealId }),
+      body: JSON.stringify({ week: viewWeek, dayOfWeek: day, mealType, mealId }),
     });
-    // re-fetch to get updated meal data
-    plan = await fetch(`/plans/${plan.id}`).then(r => r.json());
+    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
   }
 
   async function handleAutoCompose() {
     if (!plan) return;
-    await fetch(`/plans/${plan.id}/autocompose`, { method: 'POST' });
-    plan = await fetch(`/plans/${plan.id}`).then(r => r.json());
+    await fetch(`/plans/${plan.id}/autocompose`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ week: viewWeek }),
+    });
+    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
   }
 
   async function handleSettingsChange(patch: object) {
@@ -83,7 +107,7 @@
         <button
           class="tab"
           class:active={p.id === activePlanId}
-          onclick={() => activePlanId = p.id}
+          onclick={() => switchPlan(p.id)}
         >{p.name}</button>
       {/each}
     </div>
@@ -111,7 +135,15 @@
 
   {#if plan}
     <PlanSettings {plan} onChange={handleSettingsChange} />
-    <WeekTable {plan} {meals} onSlotChange={handleSlotChange} onAutoCompose={handleAutoCompose} />
+    <WeekTable
+      {plan}
+      {meals}
+      weekStart={viewWeek}
+      onSlotChange={handleSlotChange}
+      onAutoCompose={handleAutoCompose}
+      onPrevWeek={() => shiftWeek(-1)}
+      onNextWeek={() => shiftWeek(1)}
+    />
   {:else if plans.length === 0}
     <p class="empty-state">No plans yet. Create one to get started.</p>
   {:else}
