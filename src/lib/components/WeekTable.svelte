@@ -58,23 +58,17 @@
 </script>
 
 <div class="cal-wrap">
-  {#if onAutoCompose}
-    <div class="foot-actions">
-      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
-    </div>
-  {/if}
+  <div class="week-nav">
+    <button class="nav-btn" onclick={onPrevWeek} aria-label="Previous week">‹</button>
+    <span class="month-label">{monthLabel}</span>
+    <button class="nav-btn" onclick={onNextWeek} aria-label="Next week">›</button>
+  </div>
 
   <div class="cal-scroll">
   <table class="cal">
     <thead>
       <tr>
-        <th class="corner">
-          <div class="week-nav">
-            <button class="nav-btn" onclick={onPrevWeek} aria-label="Previous week">‹</button>
-            <span class="month-label">{monthLabel}</span>
-            <button class="nav-btn" onclick={onNextWeek} aria-label="Next week">›</button>
-          </div>
-        </th>
+        <th class="corner"></th>
         {#each weekDates as dt, d}
           <th class="day-head" class:today={isoDate(dt) === todayISO}>
             <span class="day-name">{fmtUTC(dt, { weekday: 'short' })}</span>
@@ -110,6 +104,12 @@
     </tbody>
   </table>
   </div>
+
+  {#if onAutoCompose}
+    <div class="foot-actions">
+      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -138,8 +138,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2px;
-    padding: 0 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid $color-border;
+    background: $color-surface;
   }
 
   .nav-btn {
@@ -243,7 +244,7 @@
     display: flex;
     justify-content: flex-end;
     padding: 8px;
-    border-bottom: 1px solid $color-border;
+    border-top: 1px solid $color-border;
   }
 
   .btn-autocompose {
