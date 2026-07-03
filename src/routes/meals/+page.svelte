@@ -101,7 +101,7 @@
           </tr>
         {:else}
           <tr>
-            <td class="meal-name">{meal.name}</td>
+            <td class="meal-name"><a href="/meals/{meal.id}">{meal.name}</a></td>
             <td>{meal.calories ?? '—'}</td>
             <td>{numField(meal.proteinG) || '—'}</td>
             <td>{numField(meal.carbsG)   || '—'}</td>
@@ -161,7 +161,10 @@
   tr:first-child td { border-top: none; }
   tbody tr:hover td { background: $color-surface-2; }
 
-  .meal-name { font-weight: 500; }
+  .meal-name {
+    font-weight: 500;
+    a { color: $color-text; text-decoration: none; &:hover { color: $color-accent; } }
+  }
 
   .edit-row td {
     padding: 4px 6px;

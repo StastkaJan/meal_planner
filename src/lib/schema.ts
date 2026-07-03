@@ -14,13 +14,19 @@ export const sessions = pgTable('sessions', {
 });
 
 export const meals = pgTable('meals', {
-  id:       serial('id').primaryKey(),
-  name:     text('name').notNull(),
-  calories: integer('calories'),
-  proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
-  carbsG:   numeric('carbs_g',   { precision: 6, scale: 1 }),
-  fatG:     numeric('fat_g',     { precision: 6, scale: 1 }),
-  tags:     text('tags').array().notNull().default(sql`'{}'`),
+  id:           serial('id').primaryKey(),
+  name:         text('name').notNull(),
+  calories:     integer('calories'),
+  proteinG:     numeric('protein_g', { precision: 6, scale: 1 }),
+  carbsG:       numeric('carbs_g',   { precision: 6, scale: 1 }),
+  fatG:         numeric('fat_g',     { precision: 6, scale: 1 }),
+  tags:         text('tags').array().notNull().default(sql`'{}'`),
+  imageUrl:     text('image_url'),
+  description:  text('description'),
+  ingredients:  text('ingredients').array().notNull().default(sql`'{}'`),
+  instructions: text('instructions'),
+  timeMinutes:  integer('time_minutes'),
+  difficulty:   text('difficulty'),
 });
 
 export const plans = pgTable('plans', {
