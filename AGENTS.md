@@ -25,30 +25,36 @@ docker-compose.yml
 ## DB schema
 
 | Table       | Key columns                                                           |
-|-------------|-----------------------------------------------------------------------|
+| ----------- | --------------------------------------------------------------------- |
 | `users`     | id, email, passwordHash                                               |
-| `sessions`  | id (PK), userId FK, expiresAt                                        |
-| `meals`     | id, name, calories, proteinG, carbsG, fatG                           |
+| `sessions`  | id (PK), userId FK, expiresAt                                         |
+| `meals`     | id, name, calories, proteinG, carbsG, fatG                            |
 | `plans`     | id, userId FK, name, weekStart, cuisinePrefs[], dietaryRestrictions[] |
-| `weekSlots` | (planId, dayOfWeek, mealType) composite PK, mealId FK                |
+| `weekSlots` | (planId, dayOfWeek, mealType) composite PK, mealId FK                 |
 
 ## API routes
 
 | Method | Path                    | Auth | Purpose                  |
-|--------|-------------------------|------|--------------------------|
+| ------ | ----------------------- | ---- | ------------------------ |
 | GET    | /meals                  | yes  | list meals               |
 | POST   | /meals                  | yes  | create meal              |
-| PUT    | /meals/[id]             | yes  | update meal              |
+| PATCH  | /meals/[id]             | yes  | update meal              |
 | DELETE | /meals/[id]             | yes  | delete meal              |
 | GET    | /plans                  | yes  | list user plans          |
 | POST   | /plans                  | yes  | create plan              |
-| PUT    | /plans/[id]             | yes  | update plan              |
+| GET    | /plans/[id]?week=...    | yes  | get plan detail for week |
+| PATCH  | /plans/[id]             | yes  | update plan settings     |
 | DELETE | /plans/[id]             | yes  | delete plan              |
-| GET    | /plans/[id]/slots       | yes  | get week slot assignments|
 | PUT    | /plans/[id]/slots       | yes  | assign meals to slots    |
+| POST   | /plans/[id]/autocompose | yes  | fill empty slots         |
 | POST   | /auth/register          | no   | create account           |
 | POST   | /auth/login             | no   | start session            |
 | POST   | /auth/logout            | yes  | end session              |
+
+## Page server routes
+
+- `src/routes/+page.server.ts`: loads plans/meals/current plan and handles create/delete plan form actions
+- `src/routes/meals/+page.server.ts`: loads meals and handles create/update/delete meal form actions
 
 ## Auth flow
 
@@ -83,6 +89,7 @@ docker compose up -d  # start postgres + app
 ## Self-improvement instructions
 
 When updating this file:
+
 1. **Add** new routes/tables immediately when created — one-liner per row is enough.
 2. **Remove** stale entries — a wrong AGENTS.md is worse than a short one.
 3. **Keep prose minimal** — if the code explains it, don't repeat it here.

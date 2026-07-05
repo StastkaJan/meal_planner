@@ -1,102 +1,77 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { Plan } from '$lib/schema';
-  import type { PlanDetail } from '$lib/types';
-  import type { Meal } from '$lib/schema';
-  import WeekTable from '$lib/components/WeekTable.svelte';
-  import PlanSettings from '$lib/components/PlanSettings.svelte';
+  import { enhance } from "$app/forms";
+  import { goto, invalidateAll } from "$app/navigation";
+  import WeekTable from "$lib/components/WeekTable.svelte";
+  import PlanSettings from "$lib/components/PlanSettings.svelte";
 
-  let plans:        Plan[]           = $state([]);
-  let meals:        Meal[]           = $state([]);
-  let activePlanId: number           = $state(0);
-  let plan:         PlanDetail | null = $state(null);
-  let viewWeek:     string           = $state('');
-  let newPlanName   = $state('');
-  let creating      = $state(false);
+  let { data } = $props();
+
+  const plans = $derived(data.plans);
+  const meals = $derived(data.meals);
+  const activePlanId = $derived(data.activePlanId);
+  const viewWeek = $derived(data.viewWeek);
+  const plan = $derived(data.plan);
+
+  let creating = $state(false);
+  let newPlanName = $state("");
+
+  function updateRoute(planId: number, week: string) {
+    void goto(`/?plan=${planId}&week=${week}`, {
+      noScroll: true,
+      keepFocus: true,
+    });
+  }
 
   function shiftWeek(delta: number) {
-    const d = new Date(viewWeek); // ISO date string → UTC midnight, no tz shift
-    d.setUTCDate(d.getUTCDate() + delta * 7);
-    viewWeek = d.toISOString().slice(0, 10);
-  }
-
-  onMount(async () => {
-    [plans, meals] = await Promise.all([
-      fetch('/plans').then(r => r.json()),
-      fetch('/meals').then(r => r.json()),
-    ]);
-    if (plans.length > 0) {
-      const last = plans[plans.length - 1];
-      activePlanId = last.id;
-      viewWeek = last.weekStart;
-    }
-  });
-
-  $effect(() => {
     if (!activePlanId || !viewWeek) return;
-    fetch(`/plans/${activePlanId}?week=${viewWeek}`).then(r => r.json()).then(d => plan = d);
-  });
-
-  async function createPlan() {
-    if (!newPlanName.trim()) return;
-    const res = await fetch('/plans', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: newPlanName.trim() }),
-    });
-    const created: Plan = await res.json();
-    plans = [...plans, created];
-    activePlanId = created.id;
-    viewWeek = created.weekStart;
-    newPlanName = '';
-    creating = false;
-  }
-
-  async function deletePlan(id: number) {
-    if (!confirm('Delete this plan?')) return;
-    await fetch(`/plans/${id}`, { method: 'DELETE' });
-    plans = plans.filter(p => p.id !== id);
-    if (activePlanId === id) {
-      const next = plans[0];
-      activePlanId = next?.id ?? 0;
-      viewWeek = next?.weekStart ?? '';
-    }
+    const d = new Date(viewWeek);
+    d.setUTCDate(d.getUTCDate() + delta * 7);
+    updateRoute(activePlanId, d.toISOString().slice(0, 10));
   }
 
   function switchPlan(id: number) {
-    activePlanId = id;
-    viewWeek = plans.find(p => p.id === id)?.weekStart ?? viewWeek;
+    const selected = plans.find((p) => p.id === id);
+    if (!selected) return;
+    updateRoute(selected.id, selected.weekStart);
   }
 
-  async function handleSlotChange(day: number, mealType: string, mealId: number | null) {
+  async function handleSlotChange(
+    day: number,
+    mealType: string,
+    mealId: number | null,
+  ) {
     if (!plan) return;
     await fetch(`/plans/${plan.id}/slots`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: viewWeek, dayOfWeek: day, mealType, mealId }),
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        week: viewWeek,
+        dayOfWeek: day,
+        mealType,
+        mealId,
+      }),
     });
-    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
+    await invalidateAll();
   }
 
   async function handleAutoCompose() {
     if (!plan) return;
     await fetch(`/plans/${plan.id}/autocompose`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ week: viewWeek }),
     });
-    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
+    await invalidateAll();
   }
 
   async function handleSettingsChange(patch: object) {
     if (!plan) return;
-    const updated = await fetch(`/plans/${plan.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+    await fetch(`/plans/${plan.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(patch),
-    }).then(r => r.json());
-    plan = { ...plan, ...updated };
-    plans = plans.map(p => p.id === plan!.id ? { ...p, ...updated } : p);
+    });
+    await invalidateAll();
   }
 </script>
 
@@ -107,27 +82,52 @@
         <button
           class="tab"
           class:active={p.id === activePlanId}
-          onclick={() => switchPlan(p.id)}
-        >{p.name}</button>
+          onclick={() => switchPlan(p.id)}>{p.name}</button
+        >
       {/each}
     </div>
 
     <div class="plan-actions">
       {#if creating}
-        <input
-          class="new-name"
-          type="text"
-          placeholder="Plan name…"
-          bind:value={newPlanName}
-          onkeydown={(e) => { if (e.key === 'Enter') createPlan(); if (e.key === 'Escape') creating = false; }}
-          autofocus
-        />
-        <button class="btn" onclick={createPlan}>Add</button>
-        <button class="btn ghost" onclick={() => creating = false}>Cancel</button>
+        <form
+          method="POST"
+          action="?/createPlan"
+          class="create-form"
+          use:enhance
+        >
+          <input
+            class="new-name"
+            type="text"
+            name="name"
+            placeholder="Plan name..."
+            bind:value={newPlanName}
+            required
+          />
+          <button class="btn" type="submit">Add</button>
+          <button
+            class="btn ghost"
+            type="button"
+            onclick={() => {
+              creating = false;
+              newPlanName = "";
+            }}>Cancel</button
+          >
+        </form>
       {:else}
-        <button class="btn" onclick={() => creating = true}>+ New plan</button>
+        <button class="btn" onclick={() => (creating = true)}>+ New plan</button
+        >
         {#if activePlanId}
-          <button class="btn danger" onclick={() => deletePlan(activePlanId)}>Delete</button>
+          <form
+            method="POST"
+            action="?/deletePlan"
+            use:enhance
+            onsubmit={(event) => {
+              if (!confirm("Delete this plan?")) event.preventDefault();
+            }}
+          >
+            <input type="hidden" name="id" value={activePlanId} />
+            <button class="btn danger" type="submit">Delete</button>
+          </form>
         {/if}
       {/if}
     </div>
@@ -180,10 +180,22 @@
     color: $color-text-muted;
     transition: all 0.15s;
 
-    &:hover { color: $color-text; border-color: $color-accent-dim; }
-    &.active { background: $color-accent-dim; border-color: $color-accent; color: $color-text; }
+    &:hover {
+      color: $color-text;
+      border-color: $color-accent-dim;
+    }
+    &.active {
+      background: $color-accent-dim;
+      border-color: $color-accent;
+      color: $color-text;
+    }
   }
   .plan-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .create-form {
     display: flex;
     gap: 6px;
     align-items: center;
@@ -195,7 +207,10 @@
     padding: 5px 10px;
     color: $color-text;
     width: 160px;
-    &:focus { outline: 2px solid $color-accent; border-color: transparent; }
+    &:focus {
+      outline: 2px solid $color-accent;
+      border-color: transparent;
+    }
   }
   .btn {
     padding: 5px 14px;
@@ -207,9 +222,17 @@
     font-size: 0.85rem;
     font-weight: 500;
     transition: opacity 0.15s;
-    &:hover { opacity: 0.85; }
-    &.ghost { background: $color-surface; color: $color-text-muted; border: 1px solid $color-border; }
-    &.danger { background: $color-danger; }
+    &:hover {
+      opacity: 0.85;
+    }
+    &.ghost {
+      background: $color-surface;
+      color: $color-text-muted;
+      border: 1px solid $color-border;
+    }
+    &.danger {
+      background: $color-danger;
+    }
   }
   .empty-state {
     color: $color-text-muted;
