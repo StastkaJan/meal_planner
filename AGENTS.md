@@ -22,33 +22,9 @@ tests/          # Playwright E2E
 docker-compose.yml
 ```
 
-## DB schema
+## DB schema & API routes
 
-| Table       | Key columns                                                           |
-|-------------|-----------------------------------------------------------------------|
-| `users`     | id, email, passwordHash                                               |
-| `sessions`  | id (PK), userId FK, expiresAt                                        |
-| `meals`     | id, name, calories, proteinG, carbsG, fatG                           |
-| `plans`     | id, userId FK, name, weekStart, cuisinePrefs[], dietaryRestrictions[] |
-| `weekSlots` | (planId, dayOfWeek, mealType) composite PK, mealId FK                |
-
-## API routes
-
-| Method | Path                    | Auth | Purpose                  |
-|--------|-------------------------|------|--------------------------|
-| GET    | /meals                  | yes  | list meals               |
-| POST   | /meals                  | yes  | create meal              |
-| PUT    | /meals/[id]             | yes  | update meal              |
-| DELETE | /meals/[id]             | yes  | delete meal              |
-| GET    | /plans                  | yes  | list user plans          |
-| POST   | /plans                  | yes  | create plan              |
-| PUT    | /plans/[id]             | yes  | update plan              |
-| DELETE | /plans/[id]             | yes  | delete plan              |
-| GET    | /plans/[id]/slots       | yes  | get week slot assignments|
-| PUT    | /plans/[id]/slots       | yes  | assign meals to slots    |
-| POST   | /auth/register          | no   | create account           |
-| POST   | /auth/login             | no   | start session            |
-| POST   | /auth/logout            | yes  | end session              |
+See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
 
 ## Auth flow
 
