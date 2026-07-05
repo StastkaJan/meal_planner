@@ -3,10 +3,10 @@
   import type { Meal } from '$lib/schema';
 
   let meals: Meal[] = $state([]);
-  let editing: Partial<Meal> = $state({});
-  let editingId: number | null = $state(null);
   let creating = $state(false);
   let newMeal: Partial<Meal> = $state({ name: '' });
+
+  const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
   onMount(async () => {
     meals = await fetch('/meals').then(r => r.json());
@@ -25,31 +25,10 @@
     creating = false;
   }
 
-  function startEdit(meal: Meal) {
-    editingId = meal.id;
-    editing = { ...meal };
-  }
-
-  async function saveEdit() {
-    if (!editingId) return;
-    const res = await fetch(`/meals/${editingId}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(editing),
-    });
-    const updated: Meal = await res.json();
-    meals = meals.map(m => m.id === editingId ? updated : m);
-    editingId = null;
-  }
-
   async function deleteMeal(id: number) {
     if (!confirm('Delete this meal?')) return;
     await fetch(`/meals/${id}`, { method: 'DELETE' });
     meals = meals.filter(m => m.id !== id);
-  }
-
-  function numField(val: string | null | undefined) {
-    return val === null || val === undefined ? '' : val;
   }
 </script>
 
@@ -64,10 +43,8 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Calories</th>
-        <th>Protein (g)</th>
-        <th>Carbs (g)</th>
-        <th>Fat (g)</th>
+        <th>Difficulty</th>
+        <th>Time</th>
         <th></th>
       </tr>
     </thead>
@@ -75,10 +52,8 @@
       {#if creating}
         <tr class="edit-row">
           <td><input type="text" bind:value={newMeal.name} placeholder="Meal name" autofocus /></td>
-          <td><input type="number" bind:value={newMeal.calories} placeholder="—" /></td>
-          <td><input type="number" bind:value={newMeal.proteinG} placeholder="—" /></td>
-          <td><input type="number" bind:value={newMeal.carbsG} placeholder="—" /></td>
-          <td><input type="number" bind:value={newMeal.fatG} placeholder="—" /></td>
+          <td>—</td>
+          <td>—</td>
           <td class="actions">
             <button class="btn sm" onclick={createMeal}>Save</button>
             <button class="btn sm ghost" onclick={() => { creating = false; newMeal = { name: '' }; }}>Cancel</button>
@@ -87,34 +62,17 @@
       {/if}
 
       {#each meals as meal (meal.id)}
-        {#if editingId === meal.id}
-          <tr class="edit-row">
-            <td><input type="text" bind:value={editing.name} /></td>
-            <td><input type="number" bind:value={editing.calories} /></td>
-            <td><input type="number" bind:value={editing.proteinG} /></td>
-            <td><input type="number" bind:value={editing.carbsG} /></td>
-            <td><input type="number" bind:value={editing.fatG} /></td>
-            <td class="actions">
-              <button class="btn sm" onclick={saveEdit}>Save</button>
-              <button class="btn sm ghost" onclick={() => editingId = null}>Cancel</button>
-            </td>
-          </tr>
-        {:else}
-          <tr>
-            <td class="meal-name"><a href="/meals/{meal.id}">{meal.name}</a></td>
-            <td>{meal.calories ?? '—'}</td>
-            <td>{numField(meal.proteinG) || '—'}</td>
-            <td>{numField(meal.carbsG)   || '—'}</td>
-            <td>{numField(meal.fatG)     || '—'}</td>
-            <td class="actions">
-              <button class="btn sm ghost" onclick={() => startEdit(meal)}>Edit</button>
-              <button class="btn sm danger" onclick={() => deleteMeal(meal.id)}>Delete</button>
-            </td>
-          </tr>
-        {/if}
+        <tr>
+          <td class="meal-name"><a href="/meals/{meal.id}">{meal.name}</a></td>
+          <td>{meal.difficulty ? (diffLabel[meal.difficulty] ?? meal.difficulty) : '—'}</td>
+          <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
+          <td class="actions">
+            <button class="btn sm danger" onclick={() => deleteMeal(meal.id)}>Delete</button>
+          </td>
+        </tr>
       {:else}
         <tr>
-          <td colspan="6" class="empty">No meals yet.</td>
+          <td colspan="4" class="empty">No meals yet.</td>
         </tr>
       {/each}
     </tbody>
