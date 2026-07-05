@@ -28,6 +28,7 @@ export const actions: Actions = {
       instructions: data.get('instructions')?.toString() || null,
       timeMinutes: data.get('timeMinutes') ? Number(data.get('timeMinutes')) : null,
       difficulty:  data.get('difficulty')?.toString()  || null,
+      tags:        data.getAll('tags').map(String),
     }).where(eq(meals.id, Number(params.id)));
   },
   delete: async ({ params }) => {
