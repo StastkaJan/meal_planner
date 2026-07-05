@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import MealEditForm from '$lib/components/MealEditForm.svelte';
+  import MealEditForm from './MealEditForm.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
