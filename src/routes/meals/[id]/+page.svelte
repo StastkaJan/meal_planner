@@ -1,11 +1,19 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/types';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
   let editing = $state(false);
 
   const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+
+  let tags = $state<string[]>([]);
+  $effect(() => { if (editing) tags = data.meal.tags ?? []; });
+
+  function toggleTag(opt: string) {
+    tags = tags.includes(opt) ? tags.filter(t => t !== opt) : [...tags, opt];
+  }
 </script>
 
 <div class="page">
@@ -34,6 +42,28 @@
         <label>Carbs (g)<input type="number" step="0.1" name="carbsG" value={data.meal.carbsG ?? ''} /></label>
         <label>Fat (g)<input type="number" step="0.1" name="fatG" value={data.meal.fatG ?? ''} /></label>
       </div>
+      <fieldset class="tags-field">
+        <legend>Cuisine</legend>
+        <div class="chips">
+          {#each CUISINE_OPTIONS as opt}
+            <label class="chip" class:active={tags.includes(opt)}>
+              <input type="checkbox" name="tags" value={opt} checked={tags.includes(opt)} onchange={() => toggleTag(opt)} />
+              {opt.replace('_', ' ')}
+            </label>
+          {/each}
+        </div>
+      </fieldset>
+      <fieldset class="tags-field">
+        <legend>Diet</legend>
+        <div class="chips">
+          {#each DIET_OPTIONS as opt}
+            <label class="chip" class:active={tags.includes(opt)}>
+              <input type="checkbox" name="tags" value={opt} checked={tags.includes(opt)} onchange={() => toggleTag(opt)} />
+              {opt.replace('_', ' ')}
+            </label>
+          {/each}
+        </div>
+      </fieldset>
       <label>Description<textarea name="description" rows="2">{data.meal.description ?? ''}</textarea></label>
       <label>Ingredients <span class="hint">(one per line)</span>
         <textarea name="ingredients" rows="6">{data.meal.ingredients?.join('\n') ?? ''}</textarea>
@@ -68,6 +98,14 @@
           {#if data.meal.difficulty}<span class="badge diff-{data.meal.difficulty}">{diffLabel[data.meal.difficulty] ?? data.meal.difficulty}</span>{/if}
         </div>
       </div>
+
+      {#if data.meal.tags?.length}
+        <div class="chips">
+          {#each data.meal.tags as tag}
+            <span class="chip">{tag.replace('_', ' ')}</span>
+          {/each}
+        </div>
+      {/if}
 
       {#if data.meal.calories || data.meal.proteinG || data.meal.carbsG || data.meal.fatG}
         <div class="nutrition">
@@ -160,6 +198,32 @@
     flex-wrap: wrap;
   }
 
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: $color-surface-2;
+    border: 1px solid $color-border;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+
+    &.active {
+      background: $color-accent-dim;
+      border-color: $color-accent;
+      color: $color-text;
+    }
+
+    input { display: none; }
+  }
+
   .description { color: $color-text-muted; line-height: 1.6; }
 
   section { display: flex; flex-direction: column; }
@@ -202,10 +266,12 @@
     font-size: 0.8rem;
     font-weight: 500;
     color: $color-text-muted;
+    min-width: 0;
 
     .hint { font-weight: 400; }
 
     input, select, textarea {
+      width: 100%;
       background: $color-surface-2;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
@@ -215,6 +281,22 @@
       &:focus { outline: 2px solid $color-accent; border-color: transparent; }
     }
     textarea { resize: vertical; font-family: inherit; }
+  }
+
+  .tags-field {
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    legend {
+      padding: 0;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: $color-text-muted;
+    }
   }
 
   .form-actions { display: flex; gap: 8px; }
