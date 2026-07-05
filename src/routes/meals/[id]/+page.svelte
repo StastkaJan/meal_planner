@@ -1,79 +1,17 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/types';
+  import MealEditForm from '$lib/components/MealEditForm.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
   let editing = $state(false);
 
   const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
-
-  let tags = $state<string[]>([]);
-  $effect(() => { if (editing) tags = data.meal.tags ?? []; });
-
-  function toggleTag(opt: string) {
-    tags = tags.includes(opt) ? tags.filter(t => t !== opt) : [...tags, opt];
-  }
 </script>
 
 <div class="page">
   {#if editing}
-    <form method="POST" action="?/update" class="edit-form"
-      use:enhance={() => async ({ result, update }) => {
-        if (result.type !== 'failure') editing = false;
-        await update();
-      }}>
-      <div class="field-row">
-        <label>Name<input type="text" name="name" value={data.meal.name} autofocus /></label>
-        <label>Image URL<input type="url" name="imageUrl" value={data.meal.imageUrl ?? ''} /></label>
-        <label>Time (min)<input type="number" name="timeMinutes" value={data.meal.timeMinutes ?? ''} /></label>
-        <label>Difficulty
-          <select name="difficulty">
-            <option value="">—</option>
-            {#each ['easy', 'medium', 'hard'] as d}
-              <option value={d} selected={data.meal.difficulty === d}>{diffLabel[d]}</option>
-            {/each}
-          </select>
-        </label>
-      </div>
-      <div class="field-row">
-        <label>Calories<input type="number" name="calories" value={data.meal.calories ?? ''} /></label>
-        <label>Protein (g)<input type="number" step="0.1" name="proteinG" value={data.meal.proteinG ?? ''} /></label>
-        <label>Carbs (g)<input type="number" step="0.1" name="carbsG" value={data.meal.carbsG ?? ''} /></label>
-        <label>Fat (g)<input type="number" step="0.1" name="fatG" value={data.meal.fatG ?? ''} /></label>
-      </div>
-      <fieldset class="tags-field">
-        <legend>Cuisine</legend>
-        <div class="chips">
-          {#each CUISINE_OPTIONS as opt}
-            <label class="chip" class:active={tags.includes(opt)}>
-              <input type="checkbox" name="tags" value={opt} checked={tags.includes(opt)} onchange={() => toggleTag(opt)} />
-              {opt.replace('_', ' ')}
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-      <fieldset class="tags-field">
-        <legend>Diet</legend>
-        <div class="chips">
-          {#each DIET_OPTIONS as opt}
-            <label class="chip" class:active={tags.includes(opt)}>
-              <input type="checkbox" name="tags" value={opt} checked={tags.includes(opt)} onchange={() => toggleTag(opt)} />
-              {opt.replace('_', ' ')}
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-      <label>Description<textarea name="description" rows="2">{data.meal.description ?? ''}</textarea></label>
-      <label>Ingredients <span class="hint">(one per line)</span>
-        <textarea name="ingredients" rows="6">{data.meal.ingredients?.join('\n') ?? ''}</textarea>
-      </label>
-      <label>Instructions<textarea name="instructions" rows="8">{data.meal.instructions ?? ''}</textarea></label>
-      <div class="form-actions">
-        <button class="btn" type="submit">Save</button>
-        <button class="btn ghost" type="button" onclick={() => (editing = false)}>Cancel</button>
-      </div>
-    </form>
+    <MealEditForm meal={data.meal} onCancel={() => (editing = false)} onSaved={() => (editing = false)} />
   {:else}
     <div class="top-bar">
       <a class="back" href="/meals">← Meals</a>
@@ -212,16 +150,7 @@
     border: 1px solid $color-border;
     border-radius: 999px;
     font-size: 0.78rem;
-    cursor: pointer;
-    transition: background 0.1s, border-color 0.1s;
-
-    &.active {
-      background: $color-accent-dim;
-      border-color: $color-accent;
-      color: $color-text;
-    }
-
-    input { display: none; }
+    color: $color-text-muted;
   }
 
   .description { color: $color-text-muted; line-height: 1.6; }
@@ -242,64 +171,6 @@
     font-size: 0.9rem;
     line-height: 1.7;
   }
-
-  .edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-  }
-
-  .field-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: $color-text-muted;
-    min-width: 0;
-
-    .hint { font-weight: 400; }
-
-    input, select, textarea {
-      width: 100%;
-      background: $color-surface-2;
-      border: 1px solid $color-border;
-      border-radius: $radius-sm;
-      padding: 6px 8px;
-      color: $color-text;
-      font-size: 0.875rem;
-      &:focus { outline: 2px solid $color-accent; border-color: transparent; }
-    }
-    textarea { resize: vertical; font-family: inherit; }
-  }
-
-  .tags-field {
-    border: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-
-    legend {
-      padding: 0;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: $color-text-muted;
-    }
-  }
-
-  .form-actions { display: flex; gap: 8px; }
 
   .btn {
     padding: 5px 14px;
