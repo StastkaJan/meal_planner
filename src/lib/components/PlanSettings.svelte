@@ -7,13 +7,8 @@
     onChange: (patch: Partial<Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>>) => void;
   } = $props();
 
-  let cuisinePrefs        = $state<string[]>([]);
-  let dietaryRestrictions = $state<string[]>([]);
-
-  $effect(() => {
-    cuisinePrefs        = plan.cuisinePrefs        ?? [];
-    dietaryRestrictions = plan.dietaryRestrictions ?? [];
-  });
+  let cuisinePrefs        = $derived(plan.cuisinePrefs        ?? []);
+  let dietaryRestrictions = $derived(plan.dietaryRestrictions ?? []);
 
   let debounce: ReturnType<typeof setTimeout>;
 

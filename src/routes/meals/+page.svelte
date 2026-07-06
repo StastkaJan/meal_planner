@@ -1,35 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { Meal } from '$lib/schema';
+  import { enhance } from '$app/forms';
+  import type { PageData } from './$types';
 
-  let meals: Meal[] = $state([]);
+  let { data }: { data: PageData } = $props();
+
   let creating = $state(false);
-  let newMeal: Partial<Meal> = $state({ name: '' });
 
   const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
-
-  onMount(async () => {
-    meals = await fetch('/meals').then(r => r.json());
-  });
-
-  async function createMeal() {
-    if (!newMeal.name?.trim()) return;
-    const res = await fetch('/meals', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(newMeal),
-    });
-    const created: Meal = await res.json();
-    meals = [...meals, created];
-    newMeal = { name: '' };
-    creating = false;
-  }
-
-  async function deleteMeal(id: number) {
-    if (!confirm('Delete this meal?')) return;
-    await fetch(`/meals/${id}`, { method: 'DELETE' });
-    meals = meals.filter(m => m.id !== id);
-  }
 </script>
 
 <div class="page">
@@ -51,23 +28,27 @@
     <tbody>
       {#if creating}
         <tr class="edit-row">
-          <td><input type="text" bind:value={newMeal.name} placeholder="Meal name" autofocus /></td>
-          <td>—</td>
-          <td>—</td>
-          <td class="actions">
-            <button class="btn sm" onclick={createMeal}>Save</button>
-            <button class="btn sm ghost" onclick={() => { creating = false; newMeal = { name: '' }; }}>Cancel</button>
+          <td colspan="4">
+            <form method="POST" action="?/create" use:enhance={() => async ({ update }) => { creating = false; await update(); }}>
+              <input type="text" name="name" placeholder="Meal name" autofocus />
+              <button class="btn sm" type="submit">Save</button>
+              <button class="btn sm ghost" type="button" onclick={() => { creating = false; }}>Cancel</button>
+            </form>
           </td>
         </tr>
       {/if}
 
-      {#each meals as meal (meal.id)}
+      {#each data.meals as meal (meal.id)}
         <tr>
           <td class="meal-name"><a href="/meals/{meal.id}">{meal.name}</a></td>
           <td>{meal.difficulty ? (diffLabel[meal.difficulty] ?? meal.difficulty) : '—'}</td>
           <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
           <td class="actions">
-            <button class="btn sm danger" onclick={() => deleteMeal(meal.id)}>Delete</button>
+            <form method="POST" action="?/delete" use:enhance
+              onsubmit={(e) => { if (!confirm('Delete this meal?')) e.preventDefault(); }}>
+              <input type="hidden" name="id" value={meal.id} />
+              <button class="btn sm danger" type="submit">Delete</button>
+            </form>
           </td>
         </tr>
       {:else}
@@ -127,16 +108,19 @@
   .edit-row td {
     padding: 4px 6px;
     background: $color-surface;
-
-    input {
-      width: 100%;
-      background: $color-surface-2;
-      border: 1px solid $color-border;
-      border-radius: $radius-sm;
-      padding: 5px 8px;
-      color: $color-text;
-      &:focus { outline: 2px solid $color-accent; border-color: transparent; }
-    }
+  }
+  .edit-row form {
+    display: flex;
+    gap: 4px;
+  }
+  .edit-row input {
+    flex: 1;
+    background: $color-surface-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 5px 8px;
+    color: $color-text;
+    &:focus { outline: 2px solid $color-accent; border-color: transparent; }
   }
 
   .actions {

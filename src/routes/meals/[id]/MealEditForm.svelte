@@ -11,7 +11,7 @@
 
   const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
-  let tags = $state<string[]>(meal.tags ?? []);
+  let tags = $derived(meal.tags ?? []);
 
   function toggleTag(opt: string) {
     tags = tags.includes(opt) ? tags.filter(t => t !== opt) : [...tags, opt];
