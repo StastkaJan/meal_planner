@@ -1,44 +1,15 @@
-import { json, error } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { json } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
-import { plans, weekSlots, meals } from '$lib/schema';
+import { plans } from '$lib/schema';
 import type { RequestHandler } from './$types';
-import type { SlotWithMeal, PlanDetail } from '$lib/types';
-
-async function ownedPlan(id: number, userId: number) {
-  const [plan] = await db.select().from(plans).where(and(eq(plans.id, id), eq(plans.userId, userId)));
-  if (!plan) error(404, 'Plan not found');
-  return plan;
-}
-
-function validWeek(w: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) error(400, 'Invalid week');
-  return w;
-}
+import { ownedPlan, validWeek, getPlanDetail } from '$lib/server/plans';
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const id = Number(params.id);
   const plan = await ownedPlan(id, locals.user!.id);
   const week = validWeek(url.searchParams.get('week') ?? plan.weekStart);
-
-  const rows = await db
-    .select({
-      planId:    weekSlots.planId,
-      week:      weekSlots.week,
-      dayOfWeek: weekSlots.dayOfWeek,
-      mealType:  weekSlots.mealType,
-      mealId:    weekSlots.mealId,
-      mealName:  meals.name,
-      calories:  meals.calories,
-      proteinG:  meals.proteinG,
-      carbsG:    meals.carbsG,
-      fatG:      meals.fatG,
-    })
-    .from(weekSlots)
-    .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-    .where(and(eq(weekSlots.planId, id), eq(weekSlots.week, week)));
-
-  const result: PlanDetail = { ...plan, slots: rows as SlotWithMeal[] };
+  const result = await getPlanDetail(plan, week);
   return json(result);
 };
 

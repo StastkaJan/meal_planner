@@ -1,7 +1,8 @@
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/db';
-import { plans, weekSlots } from '$lib/schema';
+import { plans } from '$lib/schema';
+import { upsertSlot } from '$lib/server/plans';
 import type { RequestHandler } from './$types';
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
@@ -12,19 +13,6 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   const { week, dayOfWeek, mealType, mealId } = await request.json();
   if (!week || !/^\d{4}-\d{2}-\d{2}$/.test(week)) error(400, 'Invalid week');
 
-  if (mealId === null) {
-    await db.delete(weekSlots).where(
-      and(eq(weekSlots.planId, planId), eq(weekSlots.week, week), eq(weekSlots.dayOfWeek, dayOfWeek), eq(weekSlots.mealType, mealType))
-    );
-    return new Response(null, { status: 204 });
-  }
-
-  await db.insert(weekSlots)
-    .values({ planId, week, dayOfWeek, mealType, mealId })
-    .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.week, weekSlots.dayOfWeek, weekSlots.mealType],
-      set: { mealId }
-    });
-
+  await upsertSlot(planId, week, dayOfWeek, mealType, mealId);
   return new Response(null, { status: 204 });
 };

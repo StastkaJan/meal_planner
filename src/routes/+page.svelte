@@ -1,71 +1,48 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { Plan } from '$lib/schema';
-  import type { PlanDetail } from '$lib/types';
-  import type { Meal } from '$lib/schema';
+  import { goto } from '$app/navigation';
+  import type { PageData } from './$types';
   import WeekTable from '$lib/components/WeekTable.svelte';
   import PlanSettings from '$lib/components/PlanSettings.svelte';
 
-  let plans:        Plan[]           = $state([]);
-  let meals:        Meal[]           = $state([]);
-  let activePlanId: number           = $state(0);
-  let plan:         PlanDetail | null = $state(null);
-  let viewWeek:     string           = $state('');
-  let newPlanName   = $state('');
-  let creating      = $state(false);
+  let { data }: { data: PageData } = $props();
 
-  function shiftWeek(delta: number) {
-    const d = new Date(viewWeek); // ISO date string → UTC midnight, no tz shift
-    d.setUTCDate(d.getUTCDate() + delta * 7);
-    viewWeek = d.toISOString().slice(0, 10);
+  let creating = $state(false);
+  let newPlanName = $state('');
+  // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
+  let plan = $derived(data.plan);
+
+  function planUrl(planId: number, week: string) {
+    return `/?plan=${planId}&week=${week}`;
   }
 
-  onMount(async () => {
-    [plans, meals] = await Promise.all([
-      fetch('/plans').then(r => r.json()),
-      fetch('/meals').then(r => r.json()),
-    ]);
-    if (plans.length > 0) {
-      const last = plans[plans.length - 1];
-      activePlanId = last.id;
-      viewWeek = last.weekStart;
-    }
-  });
+  function shiftWeek(delta: number) {
+    const d = new Date(data.viewWeek); // ISO date string → UTC midnight, no tz shift
+    d.setUTCDate(d.getUTCDate() + delta * 7);
+    const nextWeek = d.toISOString().slice(0, 10);
+    goto(planUrl(data.activePlanId, nextWeek), { noScroll: true, keepFocus: true, replaceState: true });
+  }
 
-  $effect(() => {
-    if (!activePlanId || !viewWeek) return;
-    fetch(`/plans/${activePlanId}?week=${viewWeek}`).then(r => r.json()).then(d => plan = d);
-  });
+  function switchPlan(id: number) {
+    const week = data.plans.find((p) => p.id === id)?.weekStart ?? data.viewWeek;
+    goto(planUrl(id, week), { noScroll: true, keepFocus: true });
+  }
 
   async function createPlan() {
     if (!newPlanName.trim()) return;
-    const res = await fetch('/plans', {
+    const created = await fetch('/plans', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ name: newPlanName.trim() }),
-    });
-    const created: Plan = await res.json();
-    plans = [...plans, created];
-    activePlanId = created.id;
-    viewWeek = created.weekStart;
+    }).then(r => r.json());
     newPlanName = '';
     creating = false;
+    await goto(planUrl(created.id, created.weekStart));
   }
 
   async function deletePlan(id: number) {
     if (!confirm('Delete this plan?')) return;
     await fetch(`/plans/${id}`, { method: 'DELETE' });
-    plans = plans.filter(p => p.id !== id);
-    if (activePlanId === id) {
-      const next = plans[0];
-      activePlanId = next?.id ?? 0;
-      viewWeek = next?.weekStart ?? '';
-    }
-  }
-
-  function switchPlan(id: number) {
-    activePlanId = id;
-    viewWeek = plans.find(p => p.id === id)?.weekStart ?? viewWeek;
+    await goto('/');
   }
 
   async function handleSlotChange(day: number, mealType: string, mealId: number | null) {
@@ -73,9 +50,9 @@
     await fetch(`/plans/${plan.id}/slots`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: viewWeek, dayOfWeek: day, mealType, mealId }),
+      body: JSON.stringify({ week: data.viewWeek, dayOfWeek: day, mealType, mealId }),
     });
-    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
   }
 
   async function handleAutoCompose() {
@@ -83,9 +60,9 @@
     await fetch(`/plans/${plan.id}/autocompose`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: viewWeek }),
+      body: JSON.stringify({ week: data.viewWeek }),
     });
-    plan = await fetch(`/plans/${plan.id}?week=${viewWeek}`).then(r => r.json());
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
   }
 
   async function handleSettingsChange(patch: object) {
@@ -96,17 +73,16 @@
       body: JSON.stringify(patch),
     }).then(r => r.json());
     plan = { ...plan, ...updated };
-    plans = plans.map(p => p.id === plan!.id ? { ...p, ...updated } : p);
   }
 </script>
 
 <div class="page">
   <div class="plan-bar">
     <div class="plan-tabs">
-      {#each plans as p (p.id)}
+      {#each data.plans as p (p.id)}
         <button
           class="tab"
-          class:active={p.id === activePlanId}
+          class:active={p.id === data.activePlanId}
           onclick={() => switchPlan(p.id)}
         >{p.name}</button>
       {/each}
@@ -126,8 +102,8 @@
         <button class="btn ghost" onclick={() => creating = false}>Cancel</button>
       {:else}
         <button class="btn" onclick={() => creating = true}>+ New plan</button>
-        {#if activePlanId}
-          <button class="btn danger" onclick={() => deletePlan(activePlanId)}>Delete</button>
+        {#if data.activePlanId}
+          <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}>Delete</button>
         {/if}
       {/if}
     </div>
@@ -137,14 +113,14 @@
     <PlanSettings {plan} onChange={handleSettingsChange} />
     <WeekTable
       {plan}
-      {meals}
-      weekStart={viewWeek}
+      meals={data.meals}
+      weekStart={data.viewWeek}
       onSlotChange={handleSlotChange}
       onAutoCompose={handleAutoCompose}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
     />
-  {:else if plans.length === 0}
+  {:else if data.plans.length === 0}
     <p class="empty-state">No plans yet. Create one to get started.</p>
   {:else}
     <p class="empty-state">Loading…</p>
