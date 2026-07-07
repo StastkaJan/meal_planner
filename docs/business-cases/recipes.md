@@ -40,7 +40,8 @@ seeding the library everyone plans from. The library is global, not per-user.
 and swaps to an edit form covering every field — numeric macros, tag chips,
 and multi-line ingredients/instructions. These meal records are exactly what the
 [meal calendar](./meal-calendar.md) assigns to slots and filters during
-auto-compose.
+auto-compose. Note the meal endpoints are currently unauthenticated: since the
+library is global, any visitor — even logged out — can add, edit, or delete it.
 
 See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 (`/meals/*`) for the fields and endpoints.
@@ -52,8 +53,25 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 - Tag coverage — untagged meals weaken auto-compose filtering.
 - How often library meals actually get assigned to plan slots.
 
+## Non-goals
+
+- Not a per-user recipe box — one shared library, not private collections.
+- No edit history or audit; the current values are the only version.
+- No image hosting — `imageUrl` points at an external image, nothing is uploaded.
+
+## Known limitations
+
+- **Unauthenticated writes** — the `/meals` create/edit/delete endpoints require
+  no login, so the global library is open to anyone (see the auth-ownership item
+  under Future opportunities for the fix).
+- **Ambiguous tags** — cuisine and diet share one tag space, and the cuisine list
+  includes `Vegetarian`/`Vegan`, so a single tag can read as either, which muddies
+  auto-compose filtering.
+
 ## Future opportunities
 
+- **Auth + ownership on meal writes** — gate create/edit/delete behind login and
+  attribute meals to a user; the security fix and the per-user-library step at once.
 - **Recipe import** from a URL or paste, to grow the library without manual entry.
 - **Per-user or favorite meals**, so the shared library isn't the only source.
 - **Servings / scaling** on ingredients and nutrition.
