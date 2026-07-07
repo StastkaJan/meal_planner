@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { enhance } from '$app/forms';
   import type { PageData } from './$types';
   import WeekTable from '$lib/components/WeekTable.svelte';
   import PlanSettings from '$lib/components/PlanSettings.svelte';
@@ -8,6 +7,7 @@
   let { data }: { data: PageData } = $props();
 
   let creating = $state(false);
+  let newPlanName = $state('');
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan);
 
@@ -25,6 +25,18 @@
   function switchPlan(id: number) {
     const week = data.plans.find((p) => p.id === id)?.weekStart ?? data.viewWeek;
     goto(planUrl(id, week), { noScroll: true, keepFocus: true });
+  }
+
+  async function createPlan() {
+    if (!newPlanName.trim()) return;
+    const created = await fetch('/plans', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: newPlanName.trim() }),
+    }).then(r => r.json());
+    newPlanName = '';
+    creating = false;
+    await goto(planUrl(created.id, created.weekStart));
   }
 
   async function deletePlan(id: number) {
@@ -78,19 +90,16 @@
 
     <div class="plan-actions">
       {#if creating}
-        <form method="POST" action="?/createPlan" class="new-plan-form"
-          use:enhance={() => async ({ result, update }) => { if (result.type === 'redirect') creating = false; await update(); }}>
-          <input
-            class="new-name"
-            type="text"
-            name="name"
-            placeholder="Plan name…"
-            onkeydown={(e) => { if (e.key === 'Escape') creating = false; }}
-            autofocus
-          />
-          <button class="btn" type="submit">Add</button>
-          <button class="btn ghost" type="button" onclick={() => creating = false}>Cancel</button>
-        </form>
+        <input
+          class="new-name"
+          type="text"
+          placeholder="Plan name…"
+          bind:value={newPlanName}
+          onkeydown={(e) => { if (e.key === 'Enter') createPlan(); if (e.key === 'Escape') creating = false; }}
+          autofocus
+        />
+        <button class="btn" onclick={createPlan}>Add</button>
+        <button class="btn ghost" onclick={() => creating = false}>Cancel</button>
       {:else}
         <button class="btn" onclick={() => creating = true}>+ New plan</button>
         {#if data.activePlanId}
@@ -151,11 +160,6 @@
     &.active { background: $color-accent-dim; border-color: $color-accent; color: $color-text; }
   }
   .plan-actions {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .new-plan-form {
     display: flex;
     gap: 6px;
     align-items: center;
