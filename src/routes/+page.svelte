@@ -8,10 +8,8 @@
   let { data }: { data: PageData } = $props();
 
   let creating = $state(false);
-
-  let slotForm: HTMLFormElement;
-  let autocomposeForm: HTMLFormElement;
-  let settingsForm: HTMLFormElement;
+  // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
+  let plan = $derived(data.plan);
 
   function planUrl(planId: number, week: string) {
     return `/?plan=${planId}&week=${week}`;
@@ -29,37 +27,40 @@
     goto(planUrl(id, week), { noScroll: true, keepFocus: true });
   }
 
-  function handleSlotChange(day: number, mealType: string, mealId: number | null) {
-    if (!data.plan) return;
-    (slotForm.elements.namedItem('dayOfWeek') as HTMLInputElement).value = String(day);
-    (slotForm.elements.namedItem('mealType') as HTMLInputElement).value = mealType;
-    (slotForm.elements.namedItem('mealId') as HTMLInputElement).value = mealId === null ? '' : String(mealId);
-    slotForm.requestSubmit();
+  async function deletePlan(id: number) {
+    if (!confirm('Delete this plan?')) return;
+    await fetch(`/plans/${id}`, { method: 'DELETE' });
+    await goto('/');
   }
 
-  function handleAutoCompose() {
-    if (!data.plan) return;
-    autocomposeForm.requestSubmit();
+  async function handleSlotChange(day: number, mealType: string, mealId: number | null) {
+    if (!plan) return;
+    await fetch(`/plans/${plan.id}/slots`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ week: data.viewWeek, dayOfWeek: day, mealType, mealId }),
+    });
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
   }
 
-  function hiddenInput(name: string, value: string) {
-    const el = document.createElement('input');
-    el.type = 'hidden';
-    el.name = name;
-    el.value = value;
-    return el;
+  async function handleAutoCompose() {
+    if (!plan) return;
+    await fetch(`/plans/${plan.id}/autocompose`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ week: data.viewWeek }),
+    });
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
   }
 
-  function handleSettingsChange(patch: { cuisinePrefs?: string[]; dietaryRestrictions?: string[] }) {
-    if (!data.plan) return;
-    const cuisinePrefs = patch.cuisinePrefs ?? data.plan.cuisinePrefs ?? [];
-    const dietaryRestrictions = patch.dietaryRestrictions ?? data.plan.dietaryRestrictions ?? [];
-    settingsForm.replaceChildren(
-      hiddenInput('planId', String(data.plan.id)),
-      ...cuisinePrefs.map((c) => hiddenInput('cuisinePrefs', c)),
-      ...dietaryRestrictions.map((d) => hiddenInput('dietaryRestrictions', d)),
-    );
-    settingsForm.requestSubmit();
+  async function handleSettingsChange(patch: object) {
+    if (!plan) return;
+    const updated = await fetch(`/plans/${plan.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    }).then(r => r.json());
+    plan = { ...plan, ...updated };
   }
 </script>
 
@@ -93,33 +94,16 @@
       {:else}
         <button class="btn" onclick={() => creating = true}>+ New plan</button>
         {#if data.activePlanId}
-          <form method="POST" action="?/deletePlan" use:enhance
-            onsubmit={(e) => { if (!confirm('Delete this plan?')) e.preventDefault(); }}>
-            <input type="hidden" name="id" value={data.activePlanId} />
-            <button class="btn danger" type="submit">Delete</button>
-          </form>
+          <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}>Delete</button>
         {/if}
       {/if}
     </div>
   </div>
 
-  <form bind:this={slotForm} method="POST" action="?/slotChange" use:enhance class="hidden-form">
-    <input type="hidden" name="planId" value={data.plan?.id ?? ''} />
-    <input type="hidden" name="week" value={data.viewWeek} />
-    <input type="hidden" name="dayOfWeek" />
-    <input type="hidden" name="mealType" />
-    <input type="hidden" name="mealId" />
-  </form>
-  <form bind:this={autocomposeForm} method="POST" action="?/autocompose" use:enhance class="hidden-form">
-    <input type="hidden" name="planId" value={data.plan?.id ?? ''} />
-    <input type="hidden" name="week" value={data.viewWeek} />
-  </form>
-  <form bind:this={settingsForm} method="POST" action="?/settingsChange" use:enhance class="hidden-form"></form>
-
-  {#if data.plan}
-    <PlanSettings plan={data.plan} onChange={handleSettingsChange} />
+  {#if plan}
+    <PlanSettings {plan} onChange={handleSettingsChange} />
     <WeekTable
-      plan={data.plan}
+      {plan}
       meals={data.meals}
       weekStart={data.viewWeek}
       onSlotChange={handleSlotChange}
@@ -139,9 +123,6 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-  }
-  .hidden-form {
-    display: none;
   }
   .plan-bar {
     display: flex;
