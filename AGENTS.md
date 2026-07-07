@@ -2,6 +2,8 @@
 
 > Auto-update rule: after any session that adds routes, tables, auth changes, or infra changes — update the relevant section. If something here is wrong or stale, fix it in the same PR. Keep it short; code is the source of truth.
 
+> Commits: do not add Claude/AI co-author or "Generated with" trailers to commits or PRs.
+
 ## Stack
 
 - **Frontend**: SvelteKit 5, Svelte 5, Vite 6, Sass
@@ -25,6 +27,8 @@ docker-compose.yml
 ## DB schema & API routes
 
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
+
+Feature business cases (the *why*): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md).
 
 ## Svelte conventions
 
