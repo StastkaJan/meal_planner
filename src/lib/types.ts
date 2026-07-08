@@ -18,8 +18,10 @@ export type Day = typeof DAYS[number];
 
 export const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export const CUISINE_OPTIONS = ['Italian', 'Chinese', 'Japanese', 'Mexican', 'Indian', 'Mediterranean', 'Thai', 'Vegetarian', 'Vegan', 'American'];
-export const DIET_OPTIONS     = ['no_lactose', 'no_gluten', 'no_fiber', 'no_nuts', 'no_eggs', 'low_carb', 'low_fat', 'high_protein'];
+export const CUISINE_OPTIONS = ['Italian', 'Chinese', 'Japanese', 'Mexican', 'Indian', 'Mediterranean', 'Thai', 'American'];
+// Vegetarian/Vegan are diet styles, not cuisines — kept here so auto-compose treats them
+// as AND-match restrictions ("only vegan meals"), not OR-match cuisine preferences.
+export const DIET_OPTIONS     = ['Vegetarian', 'Vegan', 'no_lactose', 'no_gluten', 'no_fiber', 'no_nuts', 'no_eggs', 'low_carb', 'low_fat', 'high_protein'];
 
 export const NUTRITION_TARGETS = { calories: 2000, proteinG: 50, carbsG: 250, fatG: 65 };
 export type NutritionTargets = typeof NUTRITION_TARGETS;

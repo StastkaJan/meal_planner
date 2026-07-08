@@ -64,9 +64,9 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 - **No per-user ownership** — meal writes now require login, but the library is
   still global: any logged-in user can edit or delete any meal (see the ownership
   item under Future opportunities).
-- **Ambiguous tags** — cuisine and diet share one tag space, and the cuisine list
-  includes `Vegetarian`/`Vegan`, so a single tag can read as either, which muddies
-  auto-compose filtering.
+- **Shared tag space** — cuisine and diet still share one tag column. `Vegetarian`/`Vegan`
+  now live in the diet list (AND-match) rather than cuisines (OR-match), but nothing stops
+  a meal from carrying a cuisine tag in the diet slot or vice versa.
 
 ## Future opportunities
 
