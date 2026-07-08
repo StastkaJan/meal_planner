@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { candidateMeals, filterByPrefs, pickUnused } from './plans';
+import { candidateMeals, filterByPrefs, pickUnused, mergeIngredients } from './plans';
 
 const meals = [
   { id: 1, calories: 100, tags: ['Italian', 'no_gluten'] },
@@ -76,5 +76,25 @@ describe('filterByPrefs', () => {
   it('returns all meals when prefs are empty', () => {
     const result = filterByPrefs(meals, [], []);
     expect(result).toEqual(meals);
+  });
+});
+
+describe('mergeIngredients', () => {
+  it('dedups case-insensitively, keeps first spelling, counts occurrences, sorts by name', () => {
+    const result = mergeIngredients([
+      ['Eggs', 'flour', ' Milk '],
+      ['eggs', 'Sugar'],
+    ]);
+    expect(result).toEqual([
+      { name: 'Eggs', count: 2 },
+      { name: 'flour', count: 1 },
+      { name: 'Milk', count: 1 },
+      { name: 'Sugar', count: 1 },
+    ]);
+  });
+
+  it('skips blank entries and handles no meals', () => {
+    expect(mergeIngredients([['', '  '], []])).toEqual([]);
+    expect(mergeIngredients([])).toEqual([]);
   });
 });

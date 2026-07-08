@@ -45,7 +45,9 @@ fallback so a sparse or untagged library never stalls it. It tracks the meals
 already placed that week (including ones already in the plan) and prefers unused
 ones, so a large enough library yields a distinct meal per slot. A **Copy from
 last week** action clones the previous week's slots into the current one
-(overwriting it) to reuse a good plan. Week and plan
+(overwriting it) to reuse a good plan. A **Shopping list** view
+(`/plans/[id]/shopping`) flattens every assigned meal's ingredients for the week
+into one deduped, checkable list (no quantity math — ingredients are free text). Week and plan
 live in the URL, so a shared or
 bookmarked link reopens the exact view. Plans are per-user and enforced
 server-side.

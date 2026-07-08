@@ -70,6 +70,25 @@ export async function copyWeek(planId: number, from: string, to: string) {
     });
 }
 
+// Flatten every meal's ingredient list into one deduped shopping list. Grouping is
+// case-insensitive (keeping the first spelling seen); count = how many meals use it.
+// ponytail: no quantity summing — ingredients are free-text strings, so "2 eggs" and
+// "eggs" don't combine; upgrade to a parser only if users ask.
+export function mergeIngredients(lists: string[][]): { name: string; count: number }[] {
+  const map = new Map<string, { name: string; count: number }>();
+  for (const list of lists) {
+    for (const raw of list) {
+      const name = raw.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      const existing = map.get(key);
+      if (existing) existing.count++;
+      else map.set(key, { name, count: 1 });
+    }
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 type CandidateMeal = { id: number; calories: number | null; tags: string[] };
 
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
