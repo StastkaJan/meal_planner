@@ -7,6 +7,15 @@
   let editing = $state(false);
 
   const diffLabel: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+
+  // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
+  // rescales the displayed numbers only (ingredient text is free-form, left untouched).
+  const base = $derived(data.meal.servings || 1);
+  let servings = $state(data.meal.servings || 1);
+  const factor = $derived(servings / base);
+  const hasNutrition = $derived(!!(data.meal.calories || data.meal.proteinG || data.meal.carbsG || data.meal.fatG));
+  const scale  = (v: number | null) => (v == null ? null : Math.round(Number(v) * factor));
+  const scaleG = (v: string | null) => (v == null ? null : (Number(v) * factor).toFixed(1));
 </script>
 
 <div class="page">
@@ -45,12 +54,19 @@
         </div>
       {/if}
 
-      {#if data.meal.calories || data.meal.proteinG || data.meal.carbsG || data.meal.fatG}
-        <div class="nutrition">
-          {#if data.meal.calories}<span>{data.meal.calories} kcal</span>{/if}
-          {#if data.meal.proteinG}<span>{data.meal.proteinG}g protein</span>{/if}
-          {#if data.meal.carbsG}<span>{data.meal.carbsG}g carbs</span>{/if}
-          {#if data.meal.fatG}<span>{data.meal.fatG}g fat</span>{/if}
+      {#if hasNutrition}
+        <div class="nutrition-block">
+          <div class="servings-step">
+            <button type="button" aria-label="Fewer servings" onclick={() => (servings = Math.max(1, servings - 1))}>−</button>
+            <span>{servings} serving{servings === 1 ? '' : 's'}</span>
+            <button type="button" aria-label="More servings" onclick={() => (servings += 1)}>+</button>
+          </div>
+          <div class="nutrition">
+            {#if data.meal.calories}<span>{scale(data.meal.calories)} kcal</span>{/if}
+            {#if data.meal.proteinG}<span>{scaleG(data.meal.proteinG)}g protein</span>{/if}
+            {#if data.meal.carbsG}<span>{scaleG(data.meal.carbsG)}g carbs</span>{/if}
+            {#if data.meal.fatG}<span>{scaleG(data.meal.fatG)}g fat</span>{/if}
+          </div>
         </div>
       {/if}
 
@@ -126,6 +142,28 @@
     &.diff-easy   { background: #d1fae5; color: #065f46; }
     &.diff-medium { background: #fef3c7; color: #92400e; }
     &.diff-hard   { background: #fee2e2; color: #991b1b; }
+  }
+
+  .nutrition-block { display: flex; flex-direction: column; gap: 8px; }
+
+  .servings-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: $color-text-muted;
+
+    button {
+      width: 24px;
+      height: 24px;
+      border: 1px solid $color-border;
+      background: $color-surface-2;
+      color: $color-text;
+      border-radius: $radius-sm;
+      cursor: pointer;
+      line-height: 1;
+      &:hover { border-color: $color-accent; }
+    }
   }
 
   .nutrition {

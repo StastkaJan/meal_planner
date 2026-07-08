@@ -29,6 +29,7 @@ export const actions: Actions = {
       instructions: data.get('instructions')?.toString() || null,
       timeMinutes: data.get('timeMinutes') ? Number(data.get('timeMinutes')) : null,
       difficulty:  data.get('difficulty')?.toString()  || null,
+      servings:    data.get('servings') ? Math.max(1, Number(data.get('servings'))) : 1,
       tags:        data.getAll('tags').map(String),
     }).where(eq(meals.id, Number(params.id)));
   },

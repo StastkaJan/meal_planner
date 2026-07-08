@@ -74,4 +74,5 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
   attributing meals to a user so edits/deletes are scoped, not global.
 - **Recipe import** from a URL or paste, to grow the library without manual entry.
 - **Per-user or favorite meals**, so the shared library isn't the only source.
-- **Servings / scaling** on ingredients and nutrition.
+- **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
+  servings stepper; scaling the free-text ingredient amounts is the harder next step.

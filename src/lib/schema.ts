@@ -33,6 +33,7 @@ export const meals = pgTable('meals', {
   instructions: text('instructions'),
   timeMinutes:  integer('time_minutes'),
   difficulty:   text('difficulty'),
+  servings:     integer('servings').notNull().default(1),
 });
 
 export const plans = pgTable('plans', {

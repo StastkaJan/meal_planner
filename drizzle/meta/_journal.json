@@ -50,6 +50,13 @@
       "when": 1783541030318,
       "tag": "0006_numerous_ezekiel",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783542561586,
+      "tag": "0007_perfect_richard_fisk",
+      "breakpoints": true
     }
   ]
 }
