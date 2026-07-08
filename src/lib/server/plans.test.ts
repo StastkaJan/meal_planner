@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { candidateMeals, filterByPrefs, pickUnused, mergeIngredients } from './plans';
+import { candidateMeals, filterByPrefs, pickUnused, mergeIngredients, rankByMacros } from './plans';
 
 const meals = [
   { id: 1, calories: 100, tags: ['Italian', 'no_gluten'] },
@@ -96,5 +96,21 @@ describe('mergeIngredients', () => {
   it('skips blank entries and handles no meals', () => {
     expect(mergeIngredients([['', '  '], []])).toEqual([]);
     expect(mergeIngredients([])).toEqual([]);
+  });
+});
+
+describe('rankByMacros', () => {
+  const m = (id: number, proteinG: number, carbsG: number, fatG: number) =>
+    ({ id, calories: 100, tags: [], proteinG, carbsG, fatG });
+
+  it('ranks meals closest to the macro budget first', () => {
+    const cands = [m(1, 40, 10, 5), m(2, 10, 60, 25), m(3, 25, 30, 12)];
+    const ranked = rankByMacros(cands, { proteinG: 25, carbsG: 30, fatG: 12 }, 3);
+    expect(ranked[0].id).toBe(3); // exact match wins
+  });
+
+  it('caps the shortlist at k so variety survives', () => {
+    const cands = [m(1, 1, 1, 1), m(2, 2, 2, 2), m(3, 3, 3, 3), m(4, 4, 4, 4)];
+    expect(rankByMacros(cands, { proteinG: 1, carbsG: 1, fatG: 1 }, 2)).toHaveLength(2);
   });
 });

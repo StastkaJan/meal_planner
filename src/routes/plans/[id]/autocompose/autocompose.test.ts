@@ -38,7 +38,7 @@ describe('POST /plans/:id/autocompose', () => {
     expect(autocomposeSlots).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1 }),
       '2026-06-29',
-      1800,
+      expect.objectContaining({ calories: 1800 }),
     );
   });
 
@@ -47,6 +47,6 @@ describe('POST /plans/:id/autocompose', () => {
       .mockResolvedValueOnce([{ id: 1, weekStart: '2026-06-29', cuisinePrefs: [], dietaryRestrictions: [] }])
       .mockResolvedValueOnce([{ calorieTarget: null, proteinTarget: null, carbsTarget: null, fatTarget: null }]);
     await POST(makeEvent());
-    expect(autocomposeSlots).toHaveBeenCalledWith(expect.anything(), '2026-06-29', 2000);
+    expect(autocomposeSlots).toHaveBeenCalledWith(expect.anything(), '2026-06-29', expect.objectContaining({ calories: 2000 }));
   });
 });

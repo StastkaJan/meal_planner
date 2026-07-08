@@ -39,9 +39,11 @@ families juggling dietary needs. A logged-in user, since plans are private.
 Each plan owns a grid of slots keyed by `(plan, week, day, meal type)`; filling
 a slot points it at a meal, clearing it removes it. Auto-compose filters the
 meal library by the plan's cuisine (any-match) and dietary (all-match)
-preferences, then fills empty slots by splitting a 2000-kcal daily budget across
-them and picking at random among meals within 1.3× the per-slot budget — with a
-fallback so a sparse or untagged library never stalls it. It tracks the meals
+preferences, then fills empty slots by splitting the user's daily calorie target
+across them, keeping meals within 1.3× the per-slot calorie budget, and among
+those preferring the ones whose protein/carb/fat land closest to the remaining
+macro budget — picking at random within the top few so the week stays varied,
+with a fallback so a sparse or untagged library never stalls it. It tracks the meals
 already placed that week (including ones already in the plan) and prefers unused
 ones, so a large enough library yields a distinct meal per slot. A **Copy from
 last week** action clones the previous week's slots into the current one
@@ -71,11 +73,12 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`) and
 
 ## Known limitations
 
-- **Calories-only** — auto-compose budgets calories and de-dups within the week,
-  but ignores macros (`src/lib/server/plans.ts` `autocomposeSlots`). Its calorie
-  budget now uses the user's target, but macro targets are still unused here.
+- **Soft macro fit** — auto-compose enforces a hard calorie ceiling but treats
+  protein/carb/fat as a ranking preference, not a constraint
+  (`src/lib/server/plans.ts` `autocomposeSlots`/`rankByMacros`). A library thin on
+  a given macro can still miss the target.
 
 ## Future opportunities
 
-- **Macro-aware auto-compose** — today it budgets calories only (now the
-  per-user calorie target); protein/carb/fat targets are the obvious next lever.
+- **Whole-week optimization** — auto-compose fills greedily slot by slot; solving
+  the week jointly could hit macro targets more tightly.

@@ -25,6 +25,6 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
     fatTarget: users.fatTarget,
   }).from(users).where(eq(users.id, locals.user!.id)).limit(1);
 
-  await autocomposeSlots(plan, week ?? plan.weekStart, resolveTargets(u).calories);
+  await autocomposeSlots(plan, week ?? plan.weekStart, resolveTargets(u));
   return new Response(null, { status: 204 });
 };
