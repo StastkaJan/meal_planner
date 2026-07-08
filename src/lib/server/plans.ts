@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { plans, weekSlots, meals } from '$lib/schema';
 import type { Plan } from '$lib/schema';
@@ -54,9 +54,32 @@ export async function upsertSlot(planId: number, week: string, dayOfWeek: number
     });
 }
 
+// Copy every slot from one week into another (overwriting the target week's slots).
+export async function copyWeek(planId: number, from: string, to: string) {
+  const rows = await db
+    .select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId })
+    .from(weekSlots)
+    .where(and(eq(weekSlots.planId, planId), eq(weekSlots.week, from)));
+  if (!rows.length) return;
+
+  await db.insert(weekSlots)
+    .values(rows.map(r => ({ planId, week: to, dayOfWeek: r.dayOfWeek, mealType: r.mealType, mealId: r.mealId })))
+    .onConflictDoUpdate({
+      target: [weekSlots.planId, weekSlots.week, weekSlots.dayOfWeek, weekSlots.mealType],
+      set: { mealId: sql`excluded.meal_id` },
+    });
+}
+
 type CandidateMeal = { id: number; calories: number | null; tags: string[] };
 
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Prefer a meal not already used this week; fall back to the full list once every
+// candidate has been used, so a small library never stalls.
+export function pickUnused(candidates: CandidateMeal[], used: Set<number>): CandidateMeal {
+  const fresh = candidates.filter(m => !used.has(m.id));
+  return pick(fresh.length ? fresh : candidates);
+}
 
 export function candidateMeals(allMeals: CandidateMeal[], budget: number): CandidateMeal[] {
   const fits = allMeals.filter(m => (m.calories ?? 0) <= budget * 1.3);
@@ -78,7 +101,7 @@ type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: stri
 export async function autocomposeSlots(plan: PlanPrefs, week: string) {
   const [allMeals, existingSlots] = await Promise.all([
     db.select({ id: meals.id, calories: meals.calories, tags: meals.tags }).from(meals),
-    db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, calories: meals.calories })
+    db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week))),
@@ -88,6 +111,8 @@ export async function autocomposeSlots(plan: PlanPrefs, week: string) {
 
   const prefilteredMeals = filterByPrefs(allMeals, plan.cuisinePrefs, plan.dietaryRestrictions);
   const filled = new Set(existingSlots.map(s => `${s.dayOfWeek}-${s.mealType}`));
+  // seed with meals already on the plan this week so we don't duplicate them
+  const used = new Set<number>(existingSlots.map(s => s.mealId).filter((id): id is number => id !== null));
   const toInsert: { planId: number; week: string; dayOfWeek: number; mealType: string; mealId: number }[] = [];
 
   for (const day of DAYS) {
@@ -99,7 +124,8 @@ export async function autocomposeSlots(plan: PlanPrefs, week: string) {
     for (const mealType of emptySlots) {
       const budget = (NUTRITION_TARGETS.calories - consumed) / remaining;
       // ponytail: calories-only greedy; add macro tracking if needed
-      const chosen = pick(candidateMeals(prefilteredMeals, budget));
+      const chosen = pickUnused(candidateMeals(prefilteredMeals, budget), used);
+      used.add(chosen.id);
       toInsert.push({ planId: plan.id, week, dayOfWeek: day, mealType, mealId: chosen.id });
       consumed += chosen.calories ?? 0;
       remaining--;

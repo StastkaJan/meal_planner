@@ -5,12 +5,13 @@
   import MealCell from './MealCell.svelte';
   import NutritionBar from './NutritionBar.svelte';
 
-  let { plan, meals, weekStart, onSlotChange, onAutoCompose, onPrevWeek, onNextWeek }: {
+  let { plan, meals, weekStart, onSlotChange, onAutoCompose, onCopyWeek, onPrevWeek, onNextWeek }: {
     plan: PlanDetail;
     meals: Meal[];
     weekStart: string;
     onSlotChange: (day: number, mealType: string, mealId: number | null) => void;
     onAutoCompose?: () => void;
+    onCopyWeek?: () => void;
     onPrevWeek: () => void;
     onNextWeek: () => void;
   } = $props();
@@ -105,9 +106,14 @@
   </table>
   </div>
 
-  {#if onAutoCompose}
+  {#if onAutoCompose || onCopyWeek}
     <div class="foot-actions">
-      <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+      {#if onCopyWeek}
+        <button class="btn-ghost" onclick={onCopyWeek}>Copy from last week</button>
+      {/if}
+      {#if onAutoCompose}
+        <button class="btn-autocompose" onclick={onAutoCompose}>Auto-compose</button>
+      {/if}
     </div>
   {/if}
 </div>
@@ -243,8 +249,21 @@
   .foot-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 6px;
     padding: 8px;
     border-top: 1px solid $color-border;
+  }
+
+  .btn-ghost {
+    padding: 4px 12px;
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    color: $color-text-muted;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    &:hover { color: $color-text; border-color: $color-accent-dim; }
   }
 
   .btn-autocompose {

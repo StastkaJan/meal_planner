@@ -65,6 +65,20 @@
     plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
   }
 
+  async function handleCopyWeek() {
+    if (!plan) return;
+    const d = new Date(data.viewWeek);
+    d.setUTCDate(d.getUTCDate() - 7);
+    const from = d.toISOString().slice(0, 10);
+    if (!confirm('Copy last week into this week? Existing slots will be overwritten.')) return;
+    await fetch(`/plans/${plan.id}/copy-week`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ from, to: data.viewWeek }),
+    });
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then(r => r.json());
+  }
+
   async function handleSettingsChange(patch: object) {
     if (!plan) return;
     const updated = await fetch(`/plans/${plan.id}`, {
@@ -117,6 +131,7 @@
       weekStart={data.viewWeek}
       onSlotChange={handleSlotChange}
       onAutoCompose={handleAutoCompose}
+      onCopyWeek={handleCopyWeek}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
     />

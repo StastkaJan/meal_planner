@@ -16,7 +16,7 @@ function makeFormEvent(fields: Record<string, string | string[]>, id = '1') {
     if (Array.isArray(val)) val.forEach(v => formData.append(key, v));
     else formData.append(key, val);
   }
-  return { params: { id }, request: { formData: () => Promise.resolve(formData) } } as any;
+  return { params: { id }, locals: { user: { id: 1 } }, request: { formData: () => Promise.resolve(formData) } } as any;
 }
 
 describe('meals/[id] update action', () => {
