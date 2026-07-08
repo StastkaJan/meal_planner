@@ -5,6 +5,7 @@ const mockDb = vi.hoisted(() => ({
   from:    vi.fn().mockReturnThis(),
   where:   vi.fn().mockReturnThis(),
   orderBy: vi.fn(),
+  limit:   vi.fn(),
 }));
 
 vi.mock('$lib/db', () => ({ db: mockDb }));
@@ -28,7 +29,11 @@ function makeEvent(params: Record<string, string> = {}, userId = 1) {
 }
 
 describe('load /', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // user nutrition-targets lookup (Promise.all's third query)
+    mockDb.limit.mockResolvedValue([]);
+  });
 
   it('defaults to the last plan and its weekStart when no params given', async () => {
     mockDb.orderBy

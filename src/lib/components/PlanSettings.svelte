@@ -3,7 +3,7 @@
   import type { Plan } from '$lib/schema';
 
   let { plan, onChange }: {
-    plan: Plan;
+    plan: Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>;
     onChange: (patch: Partial<Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>>) => void;
   } = $props();
 

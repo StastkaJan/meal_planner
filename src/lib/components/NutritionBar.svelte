@@ -1,36 +1,38 @@
 <script lang="ts">
   import { NUTRITION_TARGETS } from '$lib/types';
+  import type { NutritionTargets } from '$lib/types';
 
-  let { calories, proteinG, carbsG, fatG }: {
+  let { calories, proteinG, carbsG, fatG, targets = NUTRITION_TARGETS }: {
     calories: number;
     proteinG: number;
     carbsG:   number;
     fatG:     number;
+    targets?: NutritionTargets;
   } = $props();
 
   const pct = (v: number, max: number) => Math.min(100, Math.round((v / max) * 100));
 </script>
 
 <div class="bar-col">
-  <div class="bar-row" title="Calories: {calories} / {NUTRITION_TARGETS.calories} kcal">
+  <div class="bar-row" title="Calories: {calories} / {targets.calories} kcal">
     <div class="track">
-      <div class="fill calories" style="width:{pct(calories, NUTRITION_TARGETS.calories)}%"></div>
+      <div class="fill calories" style="width:{pct(calories, targets.calories)}%"></div>
     </div>
     <span class="val">{calories}</span>
   </div>
-  <div class="bar-row" title="Protein: {proteinG}g / {NUTRITION_TARGETS.proteinG}g">
+  <div class="bar-row" title="Protein: {proteinG}g / {targets.proteinG}g">
     <div class="track">
-      <div class="fill protein" style="width:{pct(proteinG, NUTRITION_TARGETS.proteinG)}%"></div>
+      <div class="fill protein" style="width:{pct(proteinG, targets.proteinG)}%"></div>
     </div>
   </div>
-  <div class="bar-row" title="Carbs: {carbsG}g / {NUTRITION_TARGETS.carbsG}g">
+  <div class="bar-row" title="Carbs: {carbsG}g / {targets.carbsG}g">
     <div class="track">
-      <div class="fill carbs" style="width:{pct(carbsG, NUTRITION_TARGETS.carbsG)}%"></div>
+      <div class="fill carbs" style="width:{pct(carbsG, targets.carbsG)}%"></div>
     </div>
   </div>
-  <div class="bar-row" title="Fat: {fatG}g / {NUTRITION_TARGETS.fatG}g">
+  <div class="bar-row" title="Fat: {fatG}g / {targets.fatG}g">
     <div class="track">
-      <div class="fill fat" style="width:{pct(fatG, NUTRITION_TARGETS.fatG)}%"></div>
+      <div class="fill fat" style="width:{pct(fatG, targets.fatG)}%"></div>
     </div>
   </div>
 </div>

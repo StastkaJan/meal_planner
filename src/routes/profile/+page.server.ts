@@ -5,8 +5,20 @@ import { users } from '$lib/schema';
 import { hashPassword, verifyPassword } from '$lib/auth';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals }) => {
-  return { email: locals.user!.email };
+export const load: PageServerLoad = async ({ locals }) => {
+  const [u] = await db
+    .select({
+      cuisinePrefs: users.cuisinePrefs,
+      dietaryRestrictions: users.dietaryRestrictions,
+      calorieTarget: users.calorieTarget,
+      proteinTarget: users.proteinTarget,
+      carbsTarget: users.carbsTarget,
+      fatTarget: users.fatTarget,
+    })
+    .from(users)
+    .where(eq(users.id, locals.user!.id))
+    .limit(1);
+  return { email: locals.user!.email, ...u };
 };
 
 export const actions: Actions = {

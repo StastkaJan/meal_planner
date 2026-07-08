@@ -2,9 +2,15 @@ import { pgTable, serial, text, integer, numeric, smallint, date, primaryKey, ti
 import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
-  id:           serial('id').primaryKey(),
-  email:        text('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  id:                  serial('id').primaryKey(),
+  email:               text('email').notNull().unique(),
+  passwordHash:        text('password_hash').notNull(),
+  cuisinePrefs:        text('cuisine_prefs').array().notNull().default(sql`'{}'`),
+  dietaryRestrictions: text('dietary_restrictions').array().notNull().default(sql`'{}'`),
+  calorieTarget:       integer('calorie_target'),
+  proteinTarget:       integer('protein_target'),
+  carbsTarget:         integer('carbs_target'),
+  fatTarget:           integer('fat_target'),
 });
 
 export const sessions = pgTable('sessions', {

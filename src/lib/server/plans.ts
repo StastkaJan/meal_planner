@@ -98,7 +98,7 @@ export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[],
 
 type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: string[] };
 
-export async function autocomposeSlots(plan: PlanPrefs, week: string) {
+export async function autocomposeSlots(plan: PlanPrefs, week: string, calorieTarget = NUTRITION_TARGETS.calories) {
   const [allMeals, existingSlots] = await Promise.all([
     db.select({ id: meals.id, calories: meals.calories, tags: meals.tags }).from(meals),
     db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories })
@@ -122,7 +122,7 @@ export async function autocomposeSlots(plan: PlanPrefs, week: string) {
     let remaining = emptySlots.length;
 
     for (const mealType of emptySlots) {
-      const budget = (NUTRITION_TARGETS.calories - consumed) / remaining;
+      const budget = (calorieTarget - consumed) / remaining;
       // ponytail: calories-only greedy; add macro tracking if needed
       const chosen = pickUnused(candidateMeals(prefilteredMeals, budget), used);
       used.add(chosen.id);

@@ -14,6 +14,7 @@
 | PUT    | /plans/[id]/slots       | yes  | upsert/clear one slot (`{week, dayOfWeek, mealType, mealId}`) |
 | POST   | /plans/[id]/autocompose | yes  | auto-fill empty week slots      |
 | POST   | /plans/[id]/copy-week   | yes  | copy one week's slots to another (`{from, to}`) |
+| PATCH  | /profile                | yes  | update meal-preference defaults (`{cuisinePrefs?, dietaryRestrictions?}`) |
 | POST   | /auth/register          | no   | create account (form action)    |
 | POST   | /auth/login             | no   | start session (form action)     |
 | POST   | /auth/logout            | yes  | end session                     |

@@ -129,6 +129,7 @@
       {plan}
       meals={data.meals}
       weekStart={data.viewWeek}
+      targets={data.targets}
       onSlotChange={handleSlotChange}
       onAutoCompose={handleAutoCompose}
       onCopyWeek={handleCopyWeek}

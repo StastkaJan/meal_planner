@@ -36,6 +36,20 @@
       "when": 1783015384248,
       "tag": "0004_slow_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783526167457,
+      "tag": "0005_unknown_blazing_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783541030318,
+      "tag": "0006_numerous_ezekiel",
+      "breakpoints": true
     }
   ]
 }

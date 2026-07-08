@@ -31,8 +31,8 @@ families juggling dietary needs. A logged-in user, since plans are private.
 - **Per-plan preferences** (cuisines you like, diets you follow) shape what
   auto-compose picks.
 - **Live nutrition feedback** shows each day's calories and macros against a
-  target, so the plan stays balanced without a spreadsheet. (The target is one
-  global constant today — 2000 kcal plus fixed macros — not per-user.)
+  per-user target set on the profile (falling back to a 2000 kcal / fixed-macro
+  default), so the plan stays balanced without a spreadsheet.
 
 ## How it works
 
@@ -70,14 +70,10 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`) and
 ## Known limitations
 
 - **Calories-only** — auto-compose budgets calories and de-dups within the week,
-  but ignores macros (`src/lib/server/plans.ts` `autocomposeSlots`).
-- **Global nutrition target** — the same 2000 kcal / fixed macros apply to every
-  user and plan; no personalization by body, activity, or goal.
+  but ignores macros (`src/lib/server/plans.ts` `autocomposeSlots`). Its calorie
+  budget now uses the user's target, but macro targets are still unused here.
 
 ## Future opportunities
 
-- **Personalized nutrition targets** — per user/goal instead of the global
-  constant, which also makes the live feedback meaningful.
-- **Macro-aware auto-compose** — today it budgets calories only; protein/carb/fat
-  targets are the obvious next lever.
-- **Shopping list** generated from a week's assigned meals.
+- **Macro-aware auto-compose** — today it budgets calories only (now the
+  per-user calorie target); protein/carb/fat targets are the obvious next lever.
