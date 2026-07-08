@@ -41,8 +41,11 @@ a slot points it at a meal, clearing it removes it. Auto-compose filters the
 meal library by the plan's cuisine (any-match) and dietary (all-match)
 preferences, then fills empty slots by splitting a 2000-kcal daily budget across
 them and picking at random among meals within 1.3× the per-slot budget — with a
-fallback so a sparse or untagged library never stalls it. It doesn't track what
-it already placed, so the same meal can recur across the week. Week and plan
+fallback so a sparse or untagged library never stalls it. It tracks the meals
+already placed that week (including ones already in the plan) and prefers unused
+ones, so a large enough library yields a distinct meal per slot. A **Copy from
+last week** action clones the previous week's slots into the current one
+(overwriting it) to reuse a good plan. Week and plan
 live in the URL, so a shared or
 bookmarked link reopens the exact view. Plans are per-user and enforced
 server-side.
@@ -66,12 +69,10 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`) and
 
 ## Known limitations
 
-- **Calories-only, no de-dup** — auto-compose ignores macros and can repeat one
-  meal across the whole week (`src/lib/server/plans.ts` `autocomposeSlots`).
+- **Calories-only** — auto-compose budgets calories and de-dups within the week,
+  but ignores macros (`src/lib/server/plans.ts` `autocomposeSlots`).
 - **Global nutrition target** — the same 2000 kcal / fixed macros apply to every
   user and plan; no personalization by body, activity, or goal.
-- **No cross-slot awareness** — auto-compose picks from the whole library
-  without regard to what's already assigned elsewhere in the week.
 
 ## Future opportunities
 
@@ -79,7 +80,4 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`) and
   constant, which also makes the live feedback meaningful.
 - **Macro-aware auto-compose** — today it budgets calories only; protein/carb/fat
   targets are the obvious next lever.
-- **Variety constraint** — de-dup so auto-compose spreads distinct meals across
-  the week.
 - **Shopping list** generated from a week's assigned meals.
-- **Copy / repeat week** to reuse a good plan instead of rebuilding it.

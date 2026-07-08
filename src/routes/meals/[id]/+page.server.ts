@@ -11,7 +11,8 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-  update: async ({ params, request }) => {
+  update: async ({ params, request, locals }) => {
+    if (!locals.user) return fail(401);
     const data = await request.formData();
     const name = data.get('name')?.toString().trim();
     if (!name) return fail(400, { error: 'Name required' });
@@ -31,7 +32,8 @@ export const actions: Actions = {
       tags:        data.getAll('tags').map(String),
     }).where(eq(meals.id, Number(params.id)));
   },
-  delete: async ({ params }) => {
+  delete: async ({ params, locals }) => {
+    if (!locals.user) return fail(401);
     await db.delete(meals).where(eq(meals.id, Number(params.id)));
     redirect(303, '/meals');
   },

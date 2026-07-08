@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { candidateMeals, filterByPrefs } from './plans';
+import { candidateMeals, filterByPrefs, pickUnused } from './plans';
 
 const meals = [
   { id: 1, calories: 100, tags: ['Italian', 'no_gluten'] },
@@ -29,6 +29,26 @@ describe('candidateMeals', () => {
     const input = [...meals];
     candidateMeals(input, 50);
     expect(input.map(m => m.id)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe('pickUnused', () => {
+  it('never returns a used meal while fresh ones remain', () => {
+    const used = new Set<number>();
+    const seen = new Set<number>();
+    for (let i = 0; i < meals.length; i++) {
+      const chosen = pickUnused(meals, used);
+      expect(used.has(chosen.id)).toBe(false); // no repeat within the week
+      used.add(chosen.id);
+      seen.add(chosen.id);
+    }
+    expect(seen.size).toBe(meals.length); // every distinct meal got used once
+  });
+
+  it('falls back to the full list once all are used', () => {
+    const used = new Set(meals.map(m => m.id));
+    const chosen = pickUnused(meals, used);
+    expect(meals.map(m => m.id)).toContain(chosen.id);
   });
 });
 

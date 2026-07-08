@@ -1,6 +1,7 @@
-import { json } from '@sveltejs/kit';
+import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { meals } from '$lib/schema';
+import { pickMealFields } from '$lib/server/meals';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {
@@ -8,8 +9,10 @@ export const GET: RequestHandler = async () => {
   return json(rows);
 };
 
-export const POST: RequestHandler = async ({ request }) => {
-  const body = await request.json();
-  const [meal] = await db.insert(meals).values(body).returning();
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) error(401, 'Not authenticated');
+  const values = pickMealFields(await request.json());
+  if (!values.name) error(400, 'Name is required');
+  const [meal] = await db.insert(meals).values(values as { name: string }).returning();
   return json(meal, { status: 201 });
 };
