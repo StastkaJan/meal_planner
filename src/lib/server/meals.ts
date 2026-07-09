@@ -51,12 +51,12 @@ export function findRecipeNode(docs: unknown[]): Record<string, any> | null {
   }) ?? null;
 }
 
-// ISO-8601 duration (e.g. "PT1H30M") → minutes.
+// ISO-8601 duration (e.g. "PT1H30M", "P1DT2H") → minutes. Seconds are ignored.
 export function isoDurationToMinutes(iso: unknown): number | undefined {
   if (typeof iso !== 'string') return undefined;
-  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!m || (!m[1] && !m[2])) return undefined;
-  return Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0);
+  const m = iso.match(/^P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!m || (!m[1] && !m[2] && !m[3])) return undefined;
+  return Number(m[1] ?? 0) * 1440 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
 }
 
 // recipeInstructions can be a string, an array of strings/HowToStep, or nested HowToSections.

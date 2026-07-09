@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { plans, weekSlots, meals } from '$lib/schema';
 import type { Plan } from '$lib/schema';
-import { DAYS, MEAL_TYPES, NUTRITION_TARGETS } from '$lib/types';
+import { DAYS, MEAL_TYPES } from '$lib/types';
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types';
 import { visibleToUser } from './meals';
 
@@ -133,7 +133,7 @@ export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[],
 
 type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: string[] };
 
-export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets = NUTRITION_TARGETS, ownerId?: number) {
+export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets, ownerId: number) {
   const [allMealsRaw, existingSlots] = await Promise.all([
     db.select({ id: meals.id, calories: meals.calories, tags: meals.tags, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG }).from(meals).where(visibleToUser(ownerId)),
     db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG })

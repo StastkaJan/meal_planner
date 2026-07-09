@@ -19,6 +19,8 @@ export const PATCH: RequestHandler = async ({ request, locals }) => {
   if ('dietaryRestrictions' in body) patch.dietaryRestrictions = body.dietaryRestrictions;
   for (const f of TARGET_FIELDS) if (f in body) patch[f] = toTarget(body[f]);
 
+  if (!Object.keys(patch).length) return json({}); // nothing recognized to update
+
   const [u] = await db.update(users)
     .set(patch)
     .where(eq(users.id, locals.user!.id))

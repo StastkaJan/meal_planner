@@ -29,10 +29,15 @@
         return;
       }
       const fields = await res.json();
-      const created = await fetch('/meals', {
+      const createRes = await fetch('/meals', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ ...fields, scope: 'personal' }),
-      }).then((r) => r.json());
+      });
+      if (!createRes.ok) {
+        importError = 'Imported the recipe but couldn’t save it (missing a name?)';
+        return;
+      }
+      const created = await createRes.json();
       await goto(`/meals/${created.id}`);
     } catch {
       importError = 'Something went wrong';
