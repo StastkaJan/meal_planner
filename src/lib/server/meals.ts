@@ -25,3 +25,76 @@ export function pickMealFields(body: Record<string, unknown>): Record<string, un
   }
   return out;
 }
+
+// ---- schema.org Recipe (JSON-LD) import ----------------------------------
+
+export type ImportedRecipe = {
+  name?: string; description?: string; imageUrl?: string;
+  ingredients?: string[]; instructions?: string; calories?: number; timeMinutes?: number;
+};
+
+// Find the Recipe node among parsed JSON-LD documents (handles arrays and @graph containers).
+export function findRecipeNode(docs: unknown[]): Record<string, any> | null {
+  const nodes: any[] = [];
+  for (const d of docs) {
+    if (!d) continue;
+    if (Array.isArray(d)) nodes.push(...d);
+    else {
+      nodes.push(d);
+      const graph = (d as any)['@graph'];
+      if (Array.isArray(graph)) nodes.push(...graph);
+    }
+  }
+  return nodes.find((n) => {
+    const t = n?.['@type'];
+    return t === 'Recipe' || (Array.isArray(t) && t.includes('Recipe'));
+  }) ?? null;
+}
+
+// ISO-8601 duration (e.g. "PT1H30M") → minutes.
+export function isoDurationToMinutes(iso: unknown): number | undefined {
+  if (typeof iso !== 'string') return undefined;
+  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!m || (!m[1] && !m[2])) return undefined;
+  return Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0);
+}
+
+// recipeInstructions can be a string, an array of strings/HowToStep, or nested HowToSections.
+function flattenSteps(instr: unknown): string[] {
+  if (typeof instr === 'string') return [instr];
+  if (Array.isArray(instr)) return instr.flatMap(flattenSteps);
+  if (instr && typeof instr === 'object') {
+    const o = instr as Record<string, unknown>;
+    if (Array.isArray(o.itemListElement)) return flattenSteps(o.itemListElement);
+    if (typeof o.text === 'string') return [o.text];
+  }
+  return [];
+}
+
+export function parseRecipeJsonLd(recipe: Record<string, any>): ImportedRecipe {
+  const out: ImportedRecipe = {};
+  if (typeof recipe.name === 'string') out.name = recipe.name.trim();
+  if (typeof recipe.description === 'string') out.description = recipe.description.trim();
+
+  const img = recipe.image;
+  const imgUrl = typeof img === 'string' ? img
+    : Array.isArray(img) ? (typeof img[0] === 'string' ? img[0] : img[0]?.url)
+    : img?.url;
+  if (typeof imgUrl === 'string') out.imageUrl = imgUrl;
+
+  if (Array.isArray(recipe.recipeIngredient)) {
+    out.ingredients = recipe.recipeIngredient.map(String).map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  const steps = flattenSteps(recipe.recipeInstructions).map((s) => s.trim()).filter(Boolean);
+  if (steps.length) out.instructions = steps.join('\n');
+
+  const cal = recipe.nutrition?.calories;
+  const calNum = typeof cal === 'string' ? parseInt(cal, 10) : typeof cal === 'number' ? cal : NaN;
+  if (Number.isFinite(calNum)) out.calories = calNum;
+
+  const mins = isoDurationToMinutes(recipe.totalTime) ?? isoDurationToMinutes(recipe.cookTime);
+  if (mins) out.timeMinutes = mins;
+
+  return out;
+}

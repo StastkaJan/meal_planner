@@ -6,6 +6,7 @@
 | POST   | /meals                  | yes  | create meal (`scope: personal\|global`, default global)              |
 | PATCH  | /meals/[id]             | yes  | update meal                     |
 | DELETE | /meals/[id]             | yes  | delete meal                     |
+| POST   | /meals/import           | yes  | parse a recipe from `{url}` or `{text}` (schema.org JSON-LD) → fields, no insert |
 | GET    | /plans                  | yes  | list user plans                 |
 | POST   | /plans                  | yes  | create plan                     |
 | GET    | /plans/[id]             | yes  | get plan + week slots (`?week=` optional, defaults to plan's weekStart) |

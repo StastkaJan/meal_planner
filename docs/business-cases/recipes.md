@@ -37,7 +37,9 @@ chosen when the meal is created.
 
 ## How it works
 
-`/meals` lists the library (name, difficulty, time) with inline add and delete.
+`/meals` lists the library (name, difficulty, time) with inline add, delete, and
+**Import from URL** (parses a recipe page's schema.org JSON-LD into a personal
+draft you then review on its detail page).
 `/meals/[id]` renders the full recipe, showing only the fields that are filled,
 and swaps to an edit form covering every field — numeric macros, tag chips,
 and multi-line ingredients/instructions. These meal records are exactly what the
@@ -72,7 +74,8 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 
 ## Future opportunities
 
-- **Recipe import** from a URL or paste, to grow the library without manual entry.
 - **Favorite/duplicate global → personal**, so a user can fork a shared recipe to tweak.
+- **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
+  (or with just microdata/plain HTML) fall back to a manual entry.
 - **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
   servings stepper; scaling the free-text ingredient amounts is the harder next step.
