@@ -21,6 +21,7 @@ export const sessions = pgTable('sessions', {
 
 export const meals = pgTable('meals', {
   id:           serial('id').primaryKey(),
+  userId:       integer('user_id').references(() => users.id, { onDelete: 'cascade' }), // NULL = global/shared
   name:         text('name').notNull(),
   calories:     integer('calories'),
   proteinG:     numeric('protein_g', { precision: 6, scale: 1 }),

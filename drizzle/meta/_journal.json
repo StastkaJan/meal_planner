@@ -57,6 +57,13 @@
       "when": 1783542561586,
       "tag": "0007_perfect_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783543286188,
+      "tag": "0008_plain_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

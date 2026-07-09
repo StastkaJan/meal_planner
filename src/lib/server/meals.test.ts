@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { pickMealFields } from './meals';
+import { pickMealFields, canAccessMeal } from './meals';
+
+describe('canAccessMeal', () => {
+  it('lets anyone access a global meal', () => {
+    expect(canAccessMeal({ userId: null }, 1)).toBe(true);
+    expect(canAccessMeal({ userId: null }, undefined)).toBe(true);
+  });
+  it('lets only the owner access a personal meal', () => {
+    expect(canAccessMeal({ userId: 1 }, 1)).toBe(true);
+    expect(canAccessMeal({ userId: 1 }, 2)).toBe(false);
+    expect(canAccessMeal({ userId: 1 }, undefined)).toBe(false);
+  });
+});
 
 describe('pickMealFields', () => {
   it('keeps only writable columns', () => {

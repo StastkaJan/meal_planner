@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { plans as plansTable, meals as mealsTable, users } from '$lib/schema';
 import { getPlanDetail, validWeek } from '$lib/server/plans';
+import { visibleToUser } from '$lib/server/meals';
 import { resolveTargets } from '$lib/types';
 import type { PageServerLoad } from './$types';
 
@@ -9,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id;
   const [plans, meals, [u]] = await Promise.all([
     db.select().from(plansTable).where(eq(plansTable.userId, userId)).orderBy(plansTable.id),
-    db.select().from(mealsTable).orderBy(mealsTable.name),
+    db.select().from(mealsTable).where(visibleToUser(userId)).orderBy(mealsTable.name),
     db.select({
       calorieTarget: users.calorieTarget,
       proteinTarget: users.proteinTarget,

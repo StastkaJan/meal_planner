@@ -31,6 +31,10 @@
           <td colspan="4">
             <form method="POST" action="?/create" use:enhance={() => async ({ update }) => { creating = false; await update(); }}>
               <input type="text" name="name" placeholder="Meal name" autofocus />
+              <select name="scope" title="Who can see this recipe">
+                <option value="global">Everyone</option>
+                <option value="personal">Just me</option>
+              </select>
               <button class="btn sm" type="submit">Save</button>
               <button class="btn sm ghost" type="button" onclick={() => { creating = false; }}>Cancel</button>
             </form>
@@ -40,7 +44,10 @@
 
       {#each data.meals as meal (meal.id)}
         <tr>
-          <td class="meal-name"><a href="/meals/{meal.id}">{meal.name}</a></td>
+          <td class="meal-name">
+            <a href="/meals/{meal.id}">{meal.name}</a>
+            {#if meal.userId}<span class="own-tag">Personal</span>{/if}
+          </td>
           <td>{meal.difficulty ? (diffLabel[meal.difficulty] ?? meal.difficulty) : '—'}</td>
           <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
           <td class="actions">
@@ -103,6 +110,17 @@
   .meal-name {
     font-weight: 500;
     a { color: $color-text; text-decoration: none; &:hover { color: $color-accent; } }
+    .own-tag {
+      margin-left: 8px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: $color-accent;
+      border: 1px solid $color-accent-dim;
+      border-radius: 999px;
+      padding: 1px 7px;
+    }
   }
 
   .edit-row td {
@@ -113,8 +131,8 @@
     display: flex;
     gap: 4px;
   }
-  .edit-row input {
-    flex: 1;
+  .edit-row input { flex: 1; }
+  .edit-row input, .edit-row select {
     background: $color-surface-2;
     border: 1px solid $color-border;
     border-radius: $radius-sm;

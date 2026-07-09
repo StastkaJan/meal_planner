@@ -5,6 +5,7 @@ import { plans, weekSlots, meals } from '$lib/schema';
 import type { Plan } from '$lib/schema';
 import { DAYS, MEAL_TYPES, NUTRITION_TARGETS } from '$lib/types';
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types';
+import { visibleToUser } from './meals';
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
   const [plan] = await db.select().from(plans).where(and(eq(plans.id, id), eq(plans.userId, userId)));
@@ -132,9 +133,9 @@ export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[],
 
 type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: string[] };
 
-export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets = NUTRITION_TARGETS) {
+export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets = NUTRITION_TARGETS, ownerId?: number) {
   const [allMealsRaw, existingSlots] = await Promise.all([
-    db.select({ id: meals.id, calories: meals.calories, tags: meals.tags, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG }).from(meals),
+    db.select({ id: meals.id, calories: meals.calories, tags: meals.tags, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG }).from(meals).where(visibleToUser(ownerId)),
     db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))

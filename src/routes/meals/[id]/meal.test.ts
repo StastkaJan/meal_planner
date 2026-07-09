@@ -1,9 +1,12 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 const mockDb = vi.hoisted(() => ({
+  select: vi.fn().mockReturnThis(),
+  from:   vi.fn().mockReturnThis(),
+  where:  vi.fn().mockReturnThis(),
+  limit:  vi.fn(),          // resolves the ownership lookup row
   update: vi.fn().mockReturnThis(),
   set:    vi.fn().mockReturnThis(),
-  where:  vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('$lib/db', () => ({ db: mockDb }));
@@ -20,7 +23,10 @@ function makeFormEvent(fields: Record<string, string | string[]>, id = '1') {
 }
 
 describe('meals/[id] update action', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb.limit.mockResolvedValue([{ userId: null }]); // global meal → editable by anyone
+  });
 
   it('passes checked tags through to db.update as an array', async () => {
     await actions.update(makeFormEvent({ name: 'Test', tags: ['Vegan', 'no_gluten'] }));
@@ -32,5 +38,11 @@ describe('meals/[id] update action', () => {
     await actions.update(makeFormEvent({ name: 'Test' }));
     const patched = mockDb.set.mock.calls[0][0];
     expect(patched.tags).toEqual([]);
+  });
+
+  it("rejects editing another user's personal meal with 403", async () => {
+    mockDb.limit.mockResolvedValueOnce([{ userId: 2 }]); // owned by someone else
+    await expect(actions.update(makeFormEvent({ name: 'Test' }))).rejects.toMatchObject({ status: 403 });
+    expect(mockDb.set).not.toHaveBeenCalled();
   });
 });
