@@ -1,10 +1,10 @@
 # DB Schema
 
-| Table       | Key columns                                                                                                          |
-|-------------|----------------------------------------------------------------------------------------------------------------------|
-| `users`     | id, email, passwordHash                                                                                              |
+| Table          | Key columns                                                                                                                                                                                                     |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`        | id, email, passwordHash                                                                                                                                                                                         |
 | `userSettings` | userId (PK, FK) — cuisinePrefs[]/dietaryRestrictions[] (defaults new plans inherit), calorieTarget/proteinTarget/carbsTarget/fatTarget (nullable; NULL → global default). 1:1 with users, created on first save |
-| `sessions`  | id (PK), userId FK, expiresAt                                                                                        |
-| `meals`     | id, userId FK (NULL = global/shared, else personal), name, calories, proteinG, carbsG, fatG, tags[], imageUrl, description, ingredients[], instructions, timeMinutes, difficulty, servings (default 1) |
-| `plans`     | id, userId FK, name, weekStart, cuisinePrefs[], dietaryRestrictions[]                                                |
-| `weekSlots` | (planId, week, dayOfWeek, mealType) composite PK, mealId FK                                                          |
+| `sessions`     | id (PK), userId FK, expiresAt                                                                                                                                                                                   |
+| `meals`        | id, userId FK (NULL = global/shared, else personal), name, calories, proteinG, carbsG, fatG, tags[], imageUrl, description, ingredients[], instructions, timeMinutes, difficulty, servings (default 1)          |
+| `plans`        | id, userId FK, name, weekStart, cuisinePrefs[], dietaryRestrictions[]                                                                                                                                           |
+| `weekSlots`    | (planId, week, dayOfWeek, mealType) composite PK, mealId FK                                                                                                                                                     |

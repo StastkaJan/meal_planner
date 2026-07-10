@@ -1,6 +1,6 @@
 # Business Case: Recipe Library
 
-*One structured place for every meal — the building blocks the calendar plans with.*
+_One structured place for every meal — the building blocks the calendar plans with._
 
 ## Problem
 
@@ -14,7 +14,7 @@ library, every plan starts from nothing.
 A shared library of meals, each stored as a full recipe: name, image, cook time,
 difficulty, calories and macros, cuisine/diet tags, description, ingredients,
 and instructions. Browse them in a list, open one for the full detail view, and
-edit every field inline. In this app a **meal *is* a recipe** — the same record
+edit every field inline. In this app a **meal _is_ a recipe** — the same record
 powers both.
 
 ## Who it's for

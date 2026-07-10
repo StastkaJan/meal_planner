@@ -1,17 +1,21 @@
 <script lang="ts">
-  import type { Meal } from '$lib/schema';
+  import type { Meal } from '$lib/schema'
 
-  let { meals, current, onSelect }: {
-    meals: Meal[];
-    current: number | null;
-    onSelect: (mealId: number | null) => void;
-  } = $props();
+  let {
+    meals,
+    current,
+    onSelect,
+  }: {
+    meals: Meal[]
+    current: number | null
+    onSelect: (mealId: number | null) => void
+  } = $props()
 
-  let search = $state('');
+  let search = $state('')
 
   const filtered = $derived(
-    meals.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
-  );
+    meals.filter((m) => m.name.toLowerCase().includes(search.toLowerCase())),
+  )
 </script>
 
 <div class="picker">
@@ -23,7 +27,9 @@
       bind:value={search}
       autofocus
     />
-    <button class="close" onclick={() => onSelect(current)} aria-label="Cancel">✕</button>
+    <button class="close" onclick={() => onSelect(current)} aria-label="Cancel"
+      >✕</button
+    >
   </div>
 
   <ul class="list">
@@ -74,7 +80,10 @@
     color: $color-text;
     font-size: 0.9rem;
 
-    &:focus { outline: 2px solid $color-accent; border-color: transparent; }
+    &:focus {
+      outline: 2px solid $color-accent;
+      border-color: transparent;
+    }
   }
   .close {
     background: none;
@@ -83,7 +92,9 @@
     cursor: pointer;
     padding: 6px;
     font-size: 1rem;
-    &:hover { color: $color-text; }
+    &:hover {
+      color: $color-text;
+    }
   }
   .list {
     list-style: none;
@@ -109,11 +120,28 @@
     font-size: 0.875rem;
     transition: background 0.1s;
 
-    &:hover { background: $color-surface-2; }
-    &.active { border-color: $color-accent; background: $color-accent-dim; }
+    &:hover {
+      background: $color-surface-2;
+    }
+    &.active {
+      border-color: $color-accent;
+      background: $color-accent-dim;
+    }
   }
-  .clear-item { color: $color-danger; }
-  .meal-name { flex: 1; }
-  .meal-meta { font-size: 0.75rem; color: $color-text-muted; margin-left: 8px; }
-  .no-results { padding: 16px 10px; color: $color-text-muted; font-size: 0.875rem; }
+  .clear-item {
+    color: $color-danger;
+  }
+  .meal-name {
+    flex: 1;
+  }
+  .meal-meta {
+    font-size: 0.75rem;
+    color: $color-text-muted;
+    margin-left: 8px;
+  }
+  .no-results {
+    padding: 16px 10px;
+    color: $color-text-muted;
+    font-size: 0.875rem;
+  }
 </style>

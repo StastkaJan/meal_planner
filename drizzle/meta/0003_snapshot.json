@@ -111,12 +111,8 @@
           "name": "plans_user_id_users_id_fk",
           "tableFrom": "plans",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -156,12 +152,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -202,9 +194,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -252,12 +242,8 @@
           "name": "week_slots_plan_id_plans_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -265,12 +251,8 @@
           "name": "week_slots_meal_id_meals_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -278,12 +260,7 @@
       "compositePrimaryKeys": {
         "week_slots_plan_id_week_day_of_week_meal_type_pk": {
           "name": "week_slots_plan_id_week_day_of_week_meal_type_pk",
-          "columns": [
-            "plan_id",
-            "week",
-            "day_of_week",
-            "meal_type"
-          ]
+          "columns": ["plan_id", "week", "day_of_week", "meal_type"]
         }
       },
       "uniqueConstraints": {},

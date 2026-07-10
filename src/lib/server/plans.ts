@@ -1,74 +1,117 @@
-import { error } from '@sveltejs/kit';
-import { and, eq, sql } from 'drizzle-orm';
-import { db } from '$lib/db';
-import { plans, weekSlots, meals } from '$lib/schema';
-import type { Plan } from '$lib/schema';
-import { DAYS, MEAL_TYPES } from '$lib/types';
-import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types';
-import { visibleToUser } from './meals';
+import { error } from '@sveltejs/kit'
+import { and, eq, sql } from 'drizzle-orm'
+import { db } from '$lib/db'
+import { plans, weekSlots, meals } from '$lib/schema'
+import type { Plan } from '$lib/schema'
+import { DAYS, MEAL_TYPES } from '$lib/types'
+import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
+import { visibleToUser } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
-  const [plan] = await db.select().from(plans).where(and(eq(plans.id, id), eq(plans.userId, userId)));
-  if (!plan) error(404, 'Plan not found');
-  return plan;
+  const [plan] = await db
+    .select()
+    .from(plans)
+    .where(and(eq(plans.id, id), eq(plans.userId, userId)))
+  if (!plan) error(404, 'Plan not found')
+  return plan
 }
 
 export function validWeek(w: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) error(400, 'Invalid week');
-  return w;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) error(400, 'Invalid week')
+  return w
 }
 
-export async function getPlanDetail(plan: Plan, week: string): Promise<PlanDetail> {
+export async function getPlanDetail(
+  plan: Plan,
+  week: string,
+): Promise<PlanDetail> {
   const rows = await db
     .select({
-      planId:    weekSlots.planId,
-      week:      weekSlots.week,
+      planId: weekSlots.planId,
+      week: weekSlots.week,
       dayOfWeek: weekSlots.dayOfWeek,
-      mealType:  weekSlots.mealType,
-      mealId:    weekSlots.mealId,
-      mealName:  meals.name,
-      calories:  meals.calories,
-      proteinG:  meals.proteinG,
-      carbsG:    meals.carbsG,
-      fatG:      meals.fatG,
+      mealType: weekSlots.mealType,
+      mealId: weekSlots.mealId,
+      mealName: meals.name,
+      calories: meals.calories,
+      proteinG: meals.proteinG,
+      carbsG: meals.carbsG,
+      fatG: meals.fatG,
     })
     .from(weekSlots)
     .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-    .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week)));
+    .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week)))
 
-  return { ...plan, slots: rows as SlotWithMeal[] };
+  return { ...plan, slots: rows as SlotWithMeal[] }
 }
 
-export async function upsertSlot(planId: number, week: string, dayOfWeek: number, mealType: string, mealId: number | null) {
+export async function upsertSlot(
+  planId: number,
+  week: string,
+  dayOfWeek: number,
+  mealType: string,
+  mealId: number | null,
+) {
   if (mealId === null) {
-    await db.delete(weekSlots).where(
-      and(eq(weekSlots.planId, planId), eq(weekSlots.week, week), eq(weekSlots.dayOfWeek, dayOfWeek), eq(weekSlots.mealType, mealType))
-    );
-    return;
+    await db
+      .delete(weekSlots)
+      .where(
+        and(
+          eq(weekSlots.planId, planId),
+          eq(weekSlots.week, week),
+          eq(weekSlots.dayOfWeek, dayOfWeek),
+          eq(weekSlots.mealType, mealType),
+        ),
+      )
+    return
   }
 
-  await db.insert(weekSlots)
+  await db
+    .insert(weekSlots)
     .values({ planId, week, dayOfWeek, mealType, mealId })
     .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.week, weekSlots.dayOfWeek, weekSlots.mealType],
-      set: { mealId }
-    });
+      target: [
+        weekSlots.planId,
+        weekSlots.week,
+        weekSlots.dayOfWeek,
+        weekSlots.mealType,
+      ],
+      set: { mealId },
+    })
 }
 
 // Copy every slot from one week into another (overwriting the target week's slots).
 export async function copyWeek(planId: number, from: string, to: string) {
   const rows = await db
-    .select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId })
+    .select({
+      dayOfWeek: weekSlots.dayOfWeek,
+      mealType: weekSlots.mealType,
+      mealId: weekSlots.mealId,
+    })
     .from(weekSlots)
-    .where(and(eq(weekSlots.planId, planId), eq(weekSlots.week, from)));
-  if (!rows.length) return;
+    .where(and(eq(weekSlots.planId, planId), eq(weekSlots.week, from)))
+  if (!rows.length) return
 
-  await db.insert(weekSlots)
-    .values(rows.map(r => ({ planId, week: to, dayOfWeek: r.dayOfWeek, mealType: r.mealType, mealId: r.mealId })))
+  await db
+    .insert(weekSlots)
+    .values(
+      rows.map((r) => ({
+        planId,
+        week: to,
+        dayOfWeek: r.dayOfWeek,
+        mealType: r.mealType,
+        mealId: r.mealId,
+      })),
+    )
     .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.week, weekSlots.dayOfWeek, weekSlots.mealType],
+      target: [
+        weekSlots.planId,
+        weekSlots.week,
+        weekSlots.dayOfWeek,
+        weekSlots.mealType,
+      ],
       set: { mealId: sql`excluded.meal_id` },
-    });
+    })
 }
 
 // Flatten every meal's ingredient list into one deduped shopping list. Grouping is
@@ -76,114 +119,214 @@ export async function copyWeek(planId: number, from: string, to: string) {
 // so the list reads consistently. count = how many meals use it.
 // ponytail: no quantity summing — ingredients are free-text strings, so "2 eggs" and
 // "eggs" don't combine; upgrade to a parser only if users ask.
-export function mergeIngredients(lists: string[][]): { name: string; count: number }[] {
-  const map = new Map<string, { name: string; count: number }>();
+export function mergeIngredients(
+  lists: string[][],
+): { name: string; count: number }[] {
+  const map = new Map<string, { name: string; count: number }>()
   for (const list of lists) {
     for (const raw of list) {
-      const trimmed = raw.trim();
-      if (!trimmed) continue;
-      const key = trimmed.toLowerCase();
-      const existing = map.get(key);
-      if (existing) existing.count++;
-      else map.set(key, { name: trimmed[0].toUpperCase() + trimmed.slice(1), count: 1 });
+      const trimmed = raw.trim()
+      if (!trimmed) continue
+      const key = trimmed.toLowerCase()
+      const existing = map.get(key)
+      if (existing) existing.count++
+      else
+        map.set(key, {
+          name: trimmed[0].toUpperCase() + trimmed.slice(1),
+          count: 1,
+        })
     }
   }
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
-type CandidateMeal = { id: number; calories: number | null; tags: string[]; proteinG?: number; carbsG?: number; fatG?: number };
-const toNum = (v: unknown) => Number(v ?? 0) || 0; // numeric columns come back as strings/null
+type CandidateMeal = {
+  id: number
+  calories: number | null
+  tags: string[]
+  proteinG?: number
+  carbsG?: number
+  fatG?: number
+}
+const toNum = (v: unknown) => Number(v ?? 0) || 0 // numeric columns come back as strings/null
 
-function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
 
 // Prefer a meal not already used this week; fall back to the full list once every
 // candidate has been used, so a small library never stalls.
-export function pickUnused(candidates: CandidateMeal[], used: Set<number>): CandidateMeal {
-  const fresh = candidates.filter(m => !used.has(m.id));
-  return pick(fresh.length ? fresh : candidates);
+export function pickUnused(
+  candidates: CandidateMeal[],
+  used: Set<number>,
+): CandidateMeal {
+  const fresh = candidates.filter((m) => !used.has(m.id))
+  return pick(fresh.length ? fresh : candidates)
 }
 
-export function candidateMeals(allMeals: CandidateMeal[], budget: number): CandidateMeal[] {
-  const fits = allMeals.filter(m => (m.calories ?? 0) <= budget * 1.3);
+export function candidateMeals(
+  allMeals: CandidateMeal[],
+  budget: number,
+): CandidateMeal[] {
+  const fits = allMeals.filter((m) => (m.calories ?? 0) <= budget * 1.3)
   return fits.length
     ? fits
-    : [...allMeals].sort((a, b) => (a.calories ?? 0) - (b.calories ?? 0)).slice(0, 3);
+    : [...allMeals]
+        .sort((a, b) => (a.calories ?? 0) - (b.calories ?? 0))
+        .slice(0, 3)
 }
 
-export type MacroBudget = { proteinG: number; carbsG: number; fatG: number };
+export type MacroBudget = { proteinG: number; carbsG: number; fatG: number }
 
 // Sum of relative deviations from the slot's macro budget; 0 = perfect fit, higher = worse.
 export function macroDistance(m: CandidateMeal, b: MacroBudget): number {
-  const rel = (v: number, t: number) => (t > 0 ? Math.abs(v - t) / t : 0);
-  return rel(m.proteinG ?? 0, b.proteinG) + rel(m.carbsG ?? 0, b.carbsG) + rel(m.fatG ?? 0, b.fatG);
+  const rel = (v: number, t: number) => (t > 0 ? Math.abs(v - t) / t : 0)
+  return (
+    rel(m.proteinG ?? 0, b.proteinG) +
+    rel(m.carbsG ?? 0, b.carbsG) +
+    rel(m.fatG ?? 0, b.fatG)
+  )
 }
 
 // Among (already calorie-fitting) candidates, keep the K closest to the macro budget, so the
 // random pickUnused still has variety instead of always locking onto the single best fit.
-export function rankByMacros(candidates: CandidateMeal[], budget: MacroBudget, k = 3): CandidateMeal[] {
-  return [...candidates].sort((a, b) => macroDistance(a, budget) - macroDistance(b, budget)).slice(0, Math.max(1, k));
+export function rankByMacros(
+  candidates: CandidateMeal[],
+  budget: MacroBudget,
+  k = 3,
+): CandidateMeal[] {
+  return [...candidates]
+    .sort((a, b) => macroDistance(a, budget) - macroDistance(b, budget))
+    .slice(0, Math.max(1, k))
 }
 
 // cuisinePrefs = OR match; dietaryRestrictions = AND match; falls back to allMeals if nothing passes
-export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[], dietaryRestrictions: string[]): CandidateMeal[] {
-  let filtered = allMeals;
-  if (cuisinePrefs.length) filtered = filtered.filter(m => m.tags.some(t => cuisinePrefs.includes(t)));
-  if (dietaryRestrictions.length) filtered = filtered.filter(m => dietaryRestrictions.every(r => m.tags.includes(r)));
-  return filtered.length ? filtered : allMeals; // ponytail: fallback keeps plan from stalling on untagged meals
+export function filterByPrefs(
+  allMeals: CandidateMeal[],
+  cuisinePrefs: string[],
+  dietaryRestrictions: string[],
+): CandidateMeal[] {
+  let filtered = allMeals
+  if (cuisinePrefs.length)
+    filtered = filtered.filter((m) =>
+      m.tags.some((t) => cuisinePrefs.includes(t)),
+    )
+  if (dietaryRestrictions.length)
+    filtered = filtered.filter((m) =>
+      dietaryRestrictions.every((r) => m.tags.includes(r)),
+    )
+  return filtered.length ? filtered : allMeals // ponytail: fallback keeps plan from stalling on untagged meals
 }
 
-type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: string[] };
+type PlanPrefs = {
+  id: number
+  cuisinePrefs: string[]
+  dietaryRestrictions: string[]
+}
 
-export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets, ownerId: number) {
+export async function autocomposeSlots(
+  plan: PlanPrefs,
+  week: string,
+  targets: NutritionTargets,
+  ownerId: number,
+) {
   const [allMealsRaw, existingSlots] = await Promise.all([
-    db.select({ id: meals.id, calories: meals.calories, tags: meals.tags, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG }).from(meals).where(visibleToUser(ownerId)),
-    db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG })
+    db
+      .select({
+        id: meals.id,
+        calories: meals.calories,
+        tags: meals.tags,
+        proteinG: meals.proteinG,
+        carbsG: meals.carbsG,
+        fatG: meals.fatG,
+      })
+      .from(meals)
+      .where(visibleToUser(ownerId)),
+    db
+      .select({
+        dayOfWeek: weekSlots.dayOfWeek,
+        mealType: weekSlots.mealType,
+        mealId: weekSlots.mealId,
+        calories: meals.calories,
+        proteinG: meals.proteinG,
+        carbsG: meals.carbsG,
+        fatG: meals.fatG,
+      })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week))),
-  ]);
+  ])
 
-  if (!allMealsRaw.length) return;
+  if (!allMealsRaw.length) return
 
-  const allMeals: CandidateMeal[] = allMealsRaw.map(m => ({
-    id: m.id, calories: m.calories, tags: m.tags,
-    proteinG: toNum(m.proteinG), carbsG: toNum(m.carbsG), fatG: toNum(m.fatG),
-  }));
-  const prefilteredMeals = filterByPrefs(allMeals, plan.cuisinePrefs, plan.dietaryRestrictions);
-  const filled = new Set(existingSlots.map(s => `${s.dayOfWeek}-${s.mealType}`));
+  const allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
+    id: m.id,
+    calories: m.calories,
+    tags: m.tags,
+    proteinG: toNum(m.proteinG),
+    carbsG: toNum(m.carbsG),
+    fatG: toNum(m.fatG),
+  }))
+  const prefilteredMeals = filterByPrefs(
+    allMeals,
+    plan.cuisinePrefs,
+    plan.dietaryRestrictions,
+  )
+  const filled = new Set(
+    existingSlots.map((s) => `${s.dayOfWeek}-${s.mealType}`),
+  )
   // seed with meals already on the plan this week so we don't duplicate them
-  const used = new Set<number>(existingSlots.map(s => s.mealId).filter((id): id is number => id !== null));
-  const toInsert: { planId: number; week: string; dayOfWeek: number; mealType: string; mealId: number }[] = [];
+  const used = new Set<number>(
+    existingSlots
+      .map((s) => s.mealId)
+      .filter((id): id is number => id !== null),
+  )
+  const toInsert: {
+    planId: number
+    week: string
+    dayOfWeek: number
+    mealType: string
+    mealId: number
+  }[] = []
 
   for (const day of DAYS) {
-    const dayFilled = existingSlots.filter(s => s.dayOfWeek === day);
+    const dayFilled = existingSlots.filter((s) => s.dayOfWeek === day)
     const consumed = {
       calories: dayFilled.reduce((sum, s) => sum + (s.calories ?? 0), 0),
       proteinG: dayFilled.reduce((sum, s) => sum + toNum(s.proteinG), 0),
-      carbsG:   dayFilled.reduce((sum, s) => sum + toNum(s.carbsG), 0),
-      fatG:     dayFilled.reduce((sum, s) => sum + toNum(s.fatG), 0),
-    };
-    const emptySlots = MEAL_TYPES.filter(mt => !filled.has(`${day}-${mt}`));
-    let remaining = emptySlots.length;
+      carbsG: dayFilled.reduce((sum, s) => sum + toNum(s.carbsG), 0),
+      fatG: dayFilled.reduce((sum, s) => sum + toNum(s.fatG), 0),
+    }
+    const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(`${day}-${mt}`))
+    let remaining = emptySlots.length
 
     for (const mealType of emptySlots) {
       // calorie ceiling first, then prefer meals whose macros land closest to the remaining budget
-      const fits = candidateMeals(prefilteredMeals, (targets.calories - consumed.calories) / remaining);
+      const fits = candidateMeals(
+        prefilteredMeals,
+        (targets.calories - consumed.calories) / remaining,
+      )
       const macroBudget = {
         proteinG: (targets.proteinG - consumed.proteinG) / remaining,
-        carbsG:   (targets.carbsG - consumed.carbsG) / remaining,
-        fatG:     (targets.fatG - consumed.fatG) / remaining,
-      };
-      const chosen = pickUnused(rankByMacros(fits, macroBudget), used);
-      used.add(chosen.id);
-      toInsert.push({ planId: plan.id, week, dayOfWeek: day, mealType, mealId: chosen.id });
-      consumed.calories += chosen.calories ?? 0;
-      consumed.proteinG += chosen.proteinG ?? 0;
-      consumed.carbsG   += chosen.carbsG ?? 0;
-      consumed.fatG     += chosen.fatG ?? 0;
-      remaining--;
+        carbsG: (targets.carbsG - consumed.carbsG) / remaining,
+        fatG: (targets.fatG - consumed.fatG) / remaining,
+      }
+      const chosen = pickUnused(rankByMacros(fits, macroBudget), used)
+      used.add(chosen.id)
+      toInsert.push({
+        planId: plan.id,
+        week,
+        dayOfWeek: day,
+        mealType,
+        mealId: chosen.id,
+      })
+      consumed.calories += chosen.calories ?? 0
+      consumed.proteinG += chosen.proteinG ?? 0
+      consumed.carbsG += chosen.carbsG ?? 0
+      consumed.fatG += chosen.fatG ?? 0
+      remaining--
     }
   }
 
-  if (toInsert.length) await db.insert(weekSlots).values(toInsert);
+  if (toInsert.length) await db.insert(weekSlots).values(toInsert)
 }

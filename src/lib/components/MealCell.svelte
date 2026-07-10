@@ -1,31 +1,40 @@
 <script lang="ts">
-  import type { SlotWithMeal } from '$lib/types';
-  import type { Meal } from '$lib/schema';
-  import MealPicker from './MealPicker.svelte';
+  import type { SlotWithMeal } from '$lib/types'
+  import type { Meal } from '$lib/schema'
+  import MealPicker from './MealPicker.svelte'
 
-  let { slot, meals, mealType, onPick }: {
-    slot: SlotWithMeal | null;
-    meals: Meal[];
-    mealType: string;
-    onPick: (mealId: number | null) => void;
-  } = $props();
+  let {
+    slot,
+    meals,
+    mealType,
+    onPick,
+  }: {
+    slot: SlotWithMeal | null
+    meals: Meal[]
+    mealType: string
+    onPick: (mealId: number | null) => void
+  } = $props()
 
-  let dialogEl: HTMLDialogElement;
-  let open = $state(false);
+  let dialogEl: HTMLDialogElement
+  let open = $state(false)
 
   function openPicker() {
-    open = true;
-    dialogEl?.showModal();
+    open = true
+    dialogEl?.showModal()
   }
 
   function handlePick(mealId: number | null) {
-    onPick(mealId);
-    dialogEl?.close();
-    open = false;
+    onPick(mealId)
+    dialogEl?.close()
+    open = false
   }
 </script>
 
-<button class="cell {mealType}" onclick={openPicker} title="Click to assign meal">
+<button
+  class="cell {mealType}"
+  onclick={openPicker}
+  title="Click to assign meal"
+>
   {#if slot?.mealName}
     <span class="name">{slot.mealName}</span>
     {#if slot.calories}
@@ -36,7 +45,7 @@
   {/if}
 </button>
 
-<dialog bind:this={dialogEl} onclose={() => open = false}>
+<dialog bind:this={dialogEl} onclose={() => (open = false)}>
   {#if open}
     <MealPicker {meals} current={slot?.mealId ?? null} onSelect={handlePick} />
   {/if}
@@ -58,13 +67,25 @@
     text-align: left;
     transition: background 0.15s;
 
-    &:hover { background: $color-surface-2; }
+    &:hover {
+      background: $color-surface-2;
+    }
 
-    &.breakfast         { border-top-color: $color-breakfast; }
-    &.morning_snack     { border-top-color: $color-morning_snack; }
-    &.lunch             { border-top-color: $color-lunch; }
-    &.afternoon_snack   { border-top-color: $color-afternoon_snack; }
-    &.dinner            { border-top-color: $color-dinner; }
+    &.breakfast {
+      border-top-color: $color-breakfast;
+    }
+    &.morning_snack {
+      border-top-color: $color-morning_snack;
+    }
+    &.lunch {
+      border-top-color: $color-lunch;
+    }
+    &.afternoon_snack {
+      border-top-color: $color-afternoon_snack;
+    }
+    &.dinner {
+      border-top-color: $color-dinner;
+    }
   }
   .name {
     font-size: 0.8rem;
@@ -90,7 +111,7 @@
     color: $color-text;
 
     &::backdrop {
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.6);
     }
   }
 </style>
