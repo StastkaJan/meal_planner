@@ -1,29 +1,17 @@
 <script lang="ts">
   import PlanSettings from '$lib/components/PlanSettings.svelte';
+  import { enhance } from '$app/forms';
   import { NUTRITION_TARGETS } from '$lib/types';
 
   let { data, form } = $props();
 
+  // Chip picker is a live mutation, not a form submit → fetch the REST endpoint (per AGENTS.md).
   async function patchProfile(patch: object) {
     await fetch('/profile', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(patch),
     });
-  }
-
-  let targets = $state({
-    calorieTarget: data.calorieTarget,
-    proteinTarget: data.proteinTarget,
-    carbsTarget: data.carbsTarget,
-    fatTarget: data.fatTarget,
-  });
-  let targetsSaved = $state(false);
-
-  async function saveTargets(e: SubmitEvent) {
-    e.preventDefault();
-    await patchProfile(targets);
-    targetsSaved = true;
   }
 </script>
 
@@ -37,17 +25,17 @@
 
   <h2>Nutrition targets</h2>
   <p class="hint">Daily goals for the calendar's nutrition bars and auto-compose. Blank uses the default.</p>
-  <form onsubmit={saveTargets} oninput={() => (targetsSaved = false)}>
-    {#if targetsSaved}<p class="success">Targets saved.</p>{/if}
-    <label>Calories (kcal) <input type="number" min="1" bind:value={targets.calorieTarget} placeholder={String(NUTRITION_TARGETS.calories)} /></label>
-    <label>Protein (g) <input type="number" min="1" bind:value={targets.proteinTarget} placeholder={String(NUTRITION_TARGETS.proteinG)} /></label>
-    <label>Carbs (g) <input type="number" min="1" bind:value={targets.carbsTarget} placeholder={String(NUTRITION_TARGETS.carbsG)} /></label>
-    <label>Fat (g) <input type="number" min="1" bind:value={targets.fatTarget} placeholder={String(NUTRITION_TARGETS.fatG)} /></label>
+  <form method="POST" action="?/targets" use:enhance>
+    {#if form?.targetsSaved}<p class="success">Targets saved.</p>{/if}
+    <label>Calories (kcal) <input type="number" min="1" name="calorieTarget" value={data.calorieTarget ?? ''} placeholder={String(NUTRITION_TARGETS.calories)} /></label>
+    <label>Protein (g) <input type="number" min="1" name="proteinTarget" value={data.proteinTarget ?? ''} placeholder={String(NUTRITION_TARGETS.proteinG)} /></label>
+    <label>Carbs (g) <input type="number" min="1" name="carbsTarget" value={data.carbsTarget ?? ''} placeholder={String(NUTRITION_TARGETS.carbsG)} /></label>
+    <label>Fat (g) <input type="number" min="1" name="fatTarget" value={data.fatTarget ?? ''} placeholder={String(NUTRITION_TARGETS.fatG)} /></label>
     <button type="submit">Save targets</button>
   </form>
 
   <h2>Change password</h2>
-  <form method="POST">
+  <form method="POST" action="?/password" use:enhance>
     {#if form?.error}<p class="error">{form.error}</p>{/if}
     {#if form?.success}<p class="success">Password updated.</p>{/if}
     <label>Current password <input type="password" name="current" required /></label>

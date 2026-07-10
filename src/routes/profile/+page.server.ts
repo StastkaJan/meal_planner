@@ -1,28 +1,45 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
-import { users } from '$lib/schema';
+import { users, userSettings } from '$lib/schema';
 import { hashPassword, verifyPassword } from '$lib/auth';
 import type { Actions, PageServerLoad } from './$types';
 
+const TARGET_FIELDS = ['calorieTarget', 'proteinTarget', 'carbsTarget', 'fatTarget'] as const;
+
+// blank/invalid clears the target (NULL → falls back to the global default)
+function toTarget(v: FormDataEntryValue | null): number | null {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
-  const [u] = await db
+  const [s] = await db
     .select({
-      cuisinePrefs: users.cuisinePrefs,
-      dietaryRestrictions: users.dietaryRestrictions,
-      calorieTarget: users.calorieTarget,
-      proteinTarget: users.proteinTarget,
-      carbsTarget: users.carbsTarget,
-      fatTarget: users.fatTarget,
+      cuisinePrefs: userSettings.cuisinePrefs,
+      dietaryRestrictions: userSettings.dietaryRestrictions,
+      calorieTarget: userSettings.calorieTarget,
+      proteinTarget: userSettings.proteinTarget,
+      carbsTarget: userSettings.carbsTarget,
+      fatTarget: userSettings.fatTarget,
     })
-    .from(users)
-    .where(eq(users.id, locals.user!.id))
+    .from(userSettings)
+    .where(eq(userSettings.userId, locals.user!.id))
     .limit(1);
-  return { email: locals.user!.email, ...u };
+  // no settings row yet → empty prefs / null targets (resolveTargets falls back to defaults)
+  return {
+    email: locals.user!.email,
+    cuisinePrefs: s?.cuisinePrefs ?? [],
+    dietaryRestrictions: s?.dietaryRestrictions ?? [],
+    calorieTarget: s?.calorieTarget ?? null,
+    proteinTarget: s?.proteinTarget ?? null,
+    carbsTarget: s?.carbsTarget ?? null,
+    fatTarget: s?.fatTarget ?? null,
+  };
 };
 
 export const actions: Actions = {
-  default: async ({ request, locals }) => {
+  password: async ({ request, locals }) => {
     const d = await request.formData();
     const current = String(d.get('current'));
     const next = String(d.get('next'));
@@ -36,5 +53,15 @@ export const actions: Actions = {
 
     await db.update(users).set({ passwordHash: await hashPassword(next) }).where(eq(users.id, user.id));
     return { success: true };
+  },
+
+  targets: async ({ request, locals }) => {
+    const d = await request.formData();
+    const vals = Object.fromEntries(TARGET_FIELDS.map((f) => [f, toTarget(d.get(f))]));
+    const userId = locals.user!.id;
+    // upsert — creates the settings row on first save, so a missing row is never an error
+    await db.insert(userSettings).values({ userId, ...vals })
+      .onConflictDoUpdate({ target: userSettings.userId, set: vals });
+    return { targetsSaved: true };
   },
 };

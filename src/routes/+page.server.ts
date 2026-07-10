@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/db';
-import { plans as plansTable, meals as mealsTable, users } from '$lib/schema';
+import { plans as plansTable, meals as mealsTable, userSettings } from '$lib/schema';
 import { getPlanDetail, validWeek } from '$lib/server/plans';
 import { visibleToUser } from '$lib/server/meals';
 import { resolveTargets } from '$lib/types';
@@ -12,11 +12,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     db.select().from(plansTable).where(eq(plansTable.userId, userId)).orderBy(plansTable.id),
     db.select().from(mealsTable).where(visibleToUser(userId)).orderBy(mealsTable.name),
     db.select({
-      calorieTarget: users.calorieTarget,
-      proteinTarget: users.proteinTarget,
-      carbsTarget: users.carbsTarget,
-      fatTarget: users.fatTarget,
-    }).from(users).where(eq(users.id, userId)).limit(1),
+      calorieTarget: userSettings.calorieTarget,
+      proteinTarget: userSettings.proteinTarget,
+      carbsTarget: userSettings.carbsTarget,
+      fatTarget: userSettings.fatTarget,
+    }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1),
   ]);
   const targets = resolveTargets(u);
 

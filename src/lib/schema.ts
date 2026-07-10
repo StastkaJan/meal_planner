@@ -2,9 +2,15 @@ import { pgTable, serial, text, integer, numeric, smallint, date, primaryKey, ti
 import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
-  id:                  serial('id').primaryKey(),
-  email:               text('email').notNull().unique(),
-  passwordHash:        text('password_hash').notNull(),
+  id:           serial('id').primaryKey(),
+  email:        text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+});
+
+// 1:1 with users; row created lazily on first write. Holds meal-preference defaults new
+// plans inherit + per-user nutrition targets (NULL target → global default).
+export const userSettings = pgTable('user_settings', {
+  userId:              integer('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
   cuisinePrefs:        text('cuisine_prefs').array().notNull().default(sql`'{}'`),
   dietaryRestrictions: text('dietary_restrictions').array().notNull().default(sql`'{}'`),
   calorieTarget:       integer('calorie_target'),
@@ -54,8 +60,9 @@ export const weekSlots = pgTable('week_slots', {
   mealId:    integer('meal_id').references(() => meals.id, { onDelete: 'set null' }),
 }, (t) => [primaryKey({ columns: [t.planId, t.week, t.dayOfWeek, t.mealType] })]);
 
-export type User     = typeof users.$inferSelect;
-export type Session  = typeof sessions.$inferSelect;
+export type User         = typeof users.$inferSelect;
+export type UserSettings = typeof userSettings.$inferSelect;
+export type Session      = typeof sessions.$inferSelect;
 export type Meal     = typeof meals.$inferSelect;
 export type Plan     = typeof plans.$inferSelect;
 export type WeekSlot = typeof weekSlots.$inferSelect;

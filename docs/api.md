@@ -15,7 +15,7 @@
 | PUT    | /plans/[id]/slots       | yes  | upsert/clear one slot (`{week, dayOfWeek, mealType, mealId}`) |
 | POST   | /plans/[id]/autocompose | yes  | auto-fill empty week slots      |
 | POST   | /plans/[id]/copy-week   | yes  | copy one week's slots to another (`{from, to}`) |
-| PATCH  | /profile                | yes  | update prefs/targets (`{cuisinePrefs?, dietaryRestrictions?, calorieTarget?, proteinTarget?, carbsTarget?, fatTarget?}`) |
+| PATCH  | /profile                | yes  | upsert cuisine/dietary defaults (`{cuisinePrefs?, dietaryRestrictions?}`); nutrition targets use the `?/targets` form action |
 | POST   | /auth/register          | no   | create account (form action)    |
 | POST   | /auth/login             | no   | start session (form action)     |
 | POST   | /auth/logout            | yes  | end session                     |
