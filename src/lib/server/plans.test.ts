@@ -80,14 +80,14 @@ describe('filterByPrefs', () => {
 });
 
 describe('mergeIngredients', () => {
-  it('dedups case-insensitively, keeps first spelling, counts occurrences, sorts by name', () => {
+  it('dedups case-insensitively, unifies to a capitalized name, counts, sorts by name', () => {
     const result = mergeIngredients([
       ['Eggs', 'flour', ' Milk '],
       ['eggs', 'Sugar'],
     ]);
     expect(result).toEqual([
       { name: 'Eggs', count: 2 },
-      { name: 'flour', count: 1 },
+      { name: 'Flour', count: 1 },
       { name: 'Milk', count: 1 },
       { name: 'Sugar', count: 1 },
     ]);
