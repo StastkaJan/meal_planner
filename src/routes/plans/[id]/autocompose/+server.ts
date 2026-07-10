@@ -8,9 +8,7 @@ import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {
   const planId = Number(params.id)
-  const { week } = (await request.json().catch(() => ({}))) as {
-    week?: string
-  }
+  const { week } = (await request.json().catch(() => ({}))) as { week?: string }
   const [plan] = await db
     .select({
       id: plans.id,
