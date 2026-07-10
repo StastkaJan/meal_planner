@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 // ponytail: vi.hoisted needed so mockDb is available when vi.mock factory runs (hoisting order)
 const mockDb = vi.hoisted(() => ({
@@ -10,43 +10,64 @@ const mockDb = vi.hoisted(() => ({
   values: vi.fn().mockReturnThis(),
   onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
   delete: vi.fn().mockReturnThis(),
-}));
+}))
 
-vi.mock('$lib/db', () => ({ db: mockDb }));
+vi.mock('$lib/db', () => ({ db: mockDb }))
 
-import { PUT } from './+server';
+import { PUT } from './+server'
 
 function makeEvent(body: object, planId = '1', userId = 1) {
   return {
     params: { id: planId },
     request: { json: () => Promise.resolve(body) },
     locals: { user: { id: userId } },
-  } as any;
+  } as any
 }
 
 describe('PUT /plans/:id/slots', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks())
 
   it('throws 404 when plan is not owned by the user', async () => {
-    mockDb.limit.mockResolvedValueOnce([]);
+    mockDb.limit.mockResolvedValueOnce([])
     await expect(
-      PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: 1 }))
-    ).rejects.toMatchObject({ status: 404 });
-  });
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 0,
+          mealType: 'lunch',
+          mealId: 1,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 404 })
+  })
 
   it('deletes the slot and returns 204 when mealId is null', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }]);
-    const res = await PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: null }));
-    expect(res.status).toBe(204);
-    expect(mockDb.delete).toHaveBeenCalled();
-    expect(mockDb.insert).not.toHaveBeenCalled();
-  });
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    const res = await PUT(
+      makeEvent({
+        week: '2026-06-30',
+        dayOfWeek: 0,
+        mealType: 'lunch',
+        mealId: null,
+      }),
+    )
+    expect(res.status).toBe(204)
+    expect(mockDb.delete).toHaveBeenCalled()
+    expect(mockDb.insert).not.toHaveBeenCalled()
+  })
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }]);
-    const res = await PUT(makeEvent({ week: '2026-06-30', dayOfWeek: 0, mealType: 'lunch', mealId: 5 }));
-    expect(res.status).toBe(204);
-    expect(mockDb.insert).toHaveBeenCalled();
-    expect(mockDb.delete).not.toHaveBeenCalled();
-  });
-});
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    const res = await PUT(
+      makeEvent({
+        week: '2026-06-30',
+        dayOfWeek: 0,
+        mealType: 'lunch',
+        mealId: 5,
+      }),
+    )
+    expect(res.status).toBe(204)
+    expect(mockDb.insert).toHaveBeenCalled()
+    expect(mockDb.delete).not.toHaveBeenCalled()
+  })
+})

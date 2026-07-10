@@ -1,6 +1,6 @@
 # Business Case: Meal Calendar
 
-*Plan a whole week of meals in minutes — or let the app plan it for you.*
+_Plan a whole week of meals in minutes — or let the app plan it for you._
 
 ## Problem
 

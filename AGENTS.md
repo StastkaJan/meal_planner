@@ -28,7 +28,7 @@ docker-compose.yml
 
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
 
-Feature business cases (the *why*): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md).
+Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md).
 
 ## Svelte conventions
 
@@ -73,6 +73,7 @@ docker compose up -d  # start postgres + app
 ## Self-improvement instructions
 
 When updating this file:
+
 1. **Add** new routes/tables immediately when created — one-liner per row is enough.
 2. **Remove** stale entries — a wrong AGENTS.md is worse than a short one.
 3. **Keep prose minimal** — if the code explains it, don't repeat it here.
