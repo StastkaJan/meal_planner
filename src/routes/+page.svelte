@@ -117,6 +117,7 @@
       {:else}
         <button class="btn" onclick={() => creating = true}>+ New plan</button>
         {#if data.activePlanId}
+          <a class="btn" href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}">Shopping list</a>
           <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}>Delete</button>
         {/if}
       {/if}
@@ -129,6 +130,7 @@
       {plan}
       meals={data.meals}
       weekStart={data.viewWeek}
+      targets={data.targets}
       onSlotChange={handleSlotChange}
       onAutoCompose={handleAutoCompose}
       onCopyWeek={handleCopyWeek}
@@ -189,6 +191,9 @@
     &:focus { outline: 2px solid $color-accent; border-color: transparent; }
   }
   .btn {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
     padding: 5px 14px;
     background: $color-accent;
     border: none;

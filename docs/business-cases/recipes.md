@@ -19,8 +19,10 @@ powers both.
 
 ## Who it's for
 
-Whoever curates the meals: the cook building their repertoire, or an admin
-seeding the library everyone plans from. The library is global, not per-user.
+Whoever curates the meals: the cook building their private repertoire, or an
+admin seeding the shared library everyone plans from. Each meal is either
+**global** (shared with everyone) or **personal** (visible only to its owner) —
+chosen when the meal is created.
 
 ## Value
 
@@ -35,13 +37,17 @@ seeding the library everyone plans from. The library is global, not per-user.
 
 ## How it works
 
-`/meals` lists the library (name, difficulty, time) with inline add and delete.
+`/meals` lists the library (name, difficulty, time) with inline add, delete, and
+**Import from URL** (parses a recipe page's schema.org JSON-LD into a personal
+draft you then review on its detail page).
 `/meals/[id]` renders the full recipe, showing only the fields that are filled,
 and swaps to an edit form covering every field — numeric macros, tag chips,
 and multi-line ingredients/instructions. These meal records are exactly what the
 [meal calendar](./meal-calendar.md) assigns to slots and filters during
-auto-compose. Meal writes require login; the library stays global (any logged-in
-user can add, edit, or delete it), but logged-out requests are rejected.
+auto-compose. Meal writes require login. On create you choose the meal's scope:
+**global** (shared, and — like the seeded library — communally editable by any
+logged-in user) or **personal** (only you can see or edit it). The calendar and
+auto-compose only ever offer a user their visible set (global + own).
 
 See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 (`/meals/*`) for the fields and endpoints.
@@ -55,23 +61,21 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
 
 ## Non-goals
 
-- Not a per-user recipe box — one shared library, not private collections.
 - No edit history or audit; the current values are the only version.
 - No image hosting — `imageUrl` points at an external image, nothing is uploaded.
 
 ## Known limitations
 
-- **No per-user ownership** — meal writes now require login, but the library is
-  still global: any logged-in user can edit or delete any meal (see the ownership
-  item under Future opportunities).
-- **Ambiguous tags** — cuisine and diet share one tag space, and the cuisine list
-  includes `Vegetarian`/`Vegan`, so a single tag can read as either, which muddies
-  auto-compose filtering.
+- **Global meals are communally editable** — any logged-in user can edit or delete a global
+  meal (personal meals are owner-only). No admin/owner distinction on the shared library.
+- **Shared tag space** — cuisine and diet still share one tag column. `Vegetarian`/`Vegan`
+  now live in the diet list (AND-match) rather than cuisines (OR-match), but nothing stops
+  a meal from carrying a cuisine tag in the diet slot or vice versa.
 
 ## Future opportunities
 
-- **Ownership on meal writes** — login is now required; the next step is
-  attributing meals to a user so edits/deletes are scoped, not global.
-- **Recipe import** from a URL or paste, to grow the library without manual entry.
-- **Per-user or favorite meals**, so the shared library isn't the only source.
-- **Servings / scaling** on ingredients and nutrition.
+- **Favorite/duplicate global → personal**, so a user can fork a shared recipe to tweak.
+- **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
+  (or with just microdata/plain HTML) fall back to a manual entry.
+- **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
+  servings stepper; scaling the free-text ingredient amounts is the harder next step.

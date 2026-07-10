@@ -1,14 +1,15 @@
 <script lang="ts">
-  import type { SlotWithMeal, MealType, PlanDetail } from '$lib/types';
+  import type { SlotWithMeal, MealType, PlanDetail, NutritionTargets } from '$lib/types';
   import { MEAL_TYPES } from '$lib/types';
   import type { Meal } from '$lib/schema';
   import MealCell from './MealCell.svelte';
   import NutritionBar from './NutritionBar.svelte';
 
-  let { plan, meals, weekStart, onSlotChange, onAutoCompose, onCopyWeek, onPrevWeek, onNextWeek }: {
+  let { plan, meals, weekStart, targets, onSlotChange, onAutoCompose, onCopyWeek, onPrevWeek, onNextWeek }: {
     plan: PlanDetail;
     meals: Meal[];
     weekStart: string;
+    targets: NutritionTargets;
     onSlotChange: (day: number, mealType: string, mealId: number | null) => void;
     onAutoCompose?: () => void;
     onCopyWeek?: () => void;
@@ -98,7 +99,7 @@
         <td class="row-label nutrition-label">nutrition</td>
         {#each dailyNutrition as dn}
           <td class="slot-cell nutrition-cell">
-            <NutritionBar {...dn} />
+            <NutritionBar {...dn} {targets} />
           </td>
         {/each}
       </tr>

@@ -3,8 +3,9 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { plans, weekSlots, meals } from '$lib/schema';
 import type { Plan } from '$lib/schema';
-import { DAYS, MEAL_TYPES, NUTRITION_TARGETS } from '$lib/types';
-import type { SlotWithMeal, PlanDetail } from '$lib/types';
+import { DAYS, MEAL_TYPES } from '$lib/types';
+import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types';
+import { visibleToUser } from './meals';
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
   const [plan] = await db.select().from(plans).where(and(eq(plans.id, id), eq(plans.userId, userId)));
@@ -70,7 +71,28 @@ export async function copyWeek(planId: number, from: string, to: string) {
     });
 }
 
-type CandidateMeal = { id: number; calories: number | null; tags: string[] };
+// Flatten every meal's ingredient list into one deduped shopping list. Grouping is
+// case-insensitive; each name is displayed with a unified case (capitalized first letter)
+// so the list reads consistently. count = how many meals use it.
+// ponytail: no quantity summing — ingredients are free-text strings, so "2 eggs" and
+// "eggs" don't combine; upgrade to a parser only if users ask.
+export function mergeIngredients(lists: string[][]): { name: string; count: number }[] {
+  const map = new Map<string, { name: string; count: number }>();
+  for (const list of lists) {
+    for (const raw of list) {
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      const existing = map.get(key);
+      if (existing) existing.count++;
+      else map.set(key, { name: trimmed[0].toUpperCase() + trimmed.slice(1), count: 1 });
+    }
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+type CandidateMeal = { id: number; calories: number | null; tags: string[]; proteinG?: number; carbsG?: number; fatG?: number };
+const toNum = (v: unknown) => Number(v ?? 0) || 0; // numeric columns come back as strings/null
 
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -88,6 +110,20 @@ export function candidateMeals(allMeals: CandidateMeal[], budget: number): Candi
     : [...allMeals].sort((a, b) => (a.calories ?? 0) - (b.calories ?? 0)).slice(0, 3);
 }
 
+export type MacroBudget = { proteinG: number; carbsG: number; fatG: number };
+
+// Sum of relative deviations from the slot's macro budget; 0 = perfect fit, higher = worse.
+export function macroDistance(m: CandidateMeal, b: MacroBudget): number {
+  const rel = (v: number, t: number) => (t > 0 ? Math.abs(v - t) / t : 0);
+  return rel(m.proteinG ?? 0, b.proteinG) + rel(m.carbsG ?? 0, b.carbsG) + rel(m.fatG ?? 0, b.fatG);
+}
+
+// Among (already calorie-fitting) candidates, keep the K closest to the macro budget, so the
+// random pickUnused still has variety instead of always locking onto the single best fit.
+export function rankByMacros(candidates: CandidateMeal[], budget: MacroBudget, k = 3): CandidateMeal[] {
+  return [...candidates].sort((a, b) => macroDistance(a, budget) - macroDistance(b, budget)).slice(0, Math.max(1, k));
+}
+
 // cuisinePrefs = OR match; dietaryRestrictions = AND match; falls back to allMeals if nothing passes
 export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[], dietaryRestrictions: string[]): CandidateMeal[] {
   let filtered = allMeals;
@@ -98,17 +134,21 @@ export function filterByPrefs(allMeals: CandidateMeal[], cuisinePrefs: string[],
 
 type PlanPrefs = { id: number; cuisinePrefs: string[]; dietaryRestrictions: string[] };
 
-export async function autocomposeSlots(plan: PlanPrefs, week: string) {
-  const [allMeals, existingSlots] = await Promise.all([
-    db.select({ id: meals.id, calories: meals.calories, tags: meals.tags }).from(meals),
-    db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories })
+export async function autocomposeSlots(plan: PlanPrefs, week: string, targets: NutritionTargets, ownerId: number) {
+  const [allMealsRaw, existingSlots] = await Promise.all([
+    db.select({ id: meals.id, calories: meals.calories, tags: meals.tags, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG }).from(meals).where(visibleToUser(ownerId)),
+    db.select({ dayOfWeek: weekSlots.dayOfWeek, mealType: weekSlots.mealType, mealId: weekSlots.mealId, calories: meals.calories, proteinG: meals.proteinG, carbsG: meals.carbsG, fatG: meals.fatG })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week))),
   ]);
 
-  if (!allMeals.length) return;
+  if (!allMealsRaw.length) return;
 
+  const allMeals: CandidateMeal[] = allMealsRaw.map(m => ({
+    id: m.id, calories: m.calories, tags: m.tags,
+    proteinG: toNum(m.proteinG), carbsG: toNum(m.carbsG), fatG: toNum(m.fatG),
+  }));
   const prefilteredMeals = filterByPrefs(allMeals, plan.cuisinePrefs, plan.dietaryRestrictions);
   const filled = new Set(existingSlots.map(s => `${s.dayOfWeek}-${s.mealType}`));
   // seed with meals already on the plan this week so we don't duplicate them
@@ -117,17 +157,30 @@ export async function autocomposeSlots(plan: PlanPrefs, week: string) {
 
   for (const day of DAYS) {
     const dayFilled = existingSlots.filter(s => s.dayOfWeek === day);
-    let consumed = dayFilled.reduce((sum, s) => sum + (s.calories ?? 0), 0);
+    const consumed = {
+      calories: dayFilled.reduce((sum, s) => sum + (s.calories ?? 0), 0),
+      proteinG: dayFilled.reduce((sum, s) => sum + toNum(s.proteinG), 0),
+      carbsG:   dayFilled.reduce((sum, s) => sum + toNum(s.carbsG), 0),
+      fatG:     dayFilled.reduce((sum, s) => sum + toNum(s.fatG), 0),
+    };
     const emptySlots = MEAL_TYPES.filter(mt => !filled.has(`${day}-${mt}`));
     let remaining = emptySlots.length;
 
     for (const mealType of emptySlots) {
-      const budget = (NUTRITION_TARGETS.calories - consumed) / remaining;
-      // ponytail: calories-only greedy; add macro tracking if needed
-      const chosen = pickUnused(candidateMeals(prefilteredMeals, budget), used);
+      // calorie ceiling first, then prefer meals whose macros land closest to the remaining budget
+      const fits = candidateMeals(prefilteredMeals, (targets.calories - consumed.calories) / remaining);
+      const macroBudget = {
+        proteinG: (targets.proteinG - consumed.proteinG) / remaining,
+        carbsG:   (targets.carbsG - consumed.carbsG) / remaining,
+        fatG:     (targets.fatG - consumed.fatG) / remaining,
+      };
+      const chosen = pickUnused(rankByMacros(fits, macroBudget), used);
       used.add(chosen.id);
       toInsert.push({ planId: plan.id, week, dayOfWeek: day, mealType, mealId: chosen.id });
-      consumed += chosen.calories ?? 0;
+      consumed.calories += chosen.calories ?? 0;
+      consumed.proteinG += chosen.proteinG ?? 0;
+      consumed.carbsG   += chosen.carbsG ?? 0;
+      consumed.fatG     += chosen.fatG ?? 0;
       remaining--;
     }
   }

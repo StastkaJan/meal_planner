@@ -5,6 +5,7 @@ const mockDb = vi.hoisted(() => ({
   from: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   orderBy: vi.fn().mockReturnThis(),
+  limit: vi.fn(),
   insert: vi.fn().mockReturnThis(),
   values: vi.fn().mockReturnThis(),
   returning: vi.fn(),
@@ -22,7 +23,21 @@ function makeEvent(body: object, userId = 1) {
 }
 
 describe('POST /plans', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // user meal-preference defaults lookup; overridden per-test when relevant
+    mockDb.limit.mockResolvedValue([{ cuisinePrefs: [], dietaryRestrictions: [] }]);
+  });
+
+  it('inherits the user meal-preference defaults into the new plan', async () => {
+    mockDb.limit.mockResolvedValueOnce([{ cuisinePrefs: ['Italian'], dietaryRestrictions: ['no_gluten'] }]);
+    mockDb.returning.mockResolvedValueOnce([{ id: 1 }]);
+    await POST(makeEvent({ name: 'Week 1' }));
+    const inserted = mockDb.values.mock.calls[0][0];
+    expect(inserted.cuisinePrefs).toEqual(['Italian']);
+    expect(inserted.dietaryRestrictions).toEqual(['no_gluten']);
+    expect(inserted.userId).toBe(1);
+  });
 
   it('inserts a plan with weekStart snapped to Monday', async () => {
     mockDb.returning.mockResolvedValueOnce([{ id: 1, name: 'test', weekStart: '2026-06-29' }]);

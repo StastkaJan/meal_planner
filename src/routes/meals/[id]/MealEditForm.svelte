@@ -42,6 +42,9 @@
     <label>Carbs (g)<input type="number" step="0.1" name="carbsG" value={meal.carbsG ?? ''} /></label>
     <label>Fat (g)<input type="number" step="0.1" name="fatG" value={meal.fatG ?? ''} /></label>
   </div>
+  <div class="field-row">
+    <label>Servings<input type="number" min="1" name="servings" value={meal.servings ?? 1} /></label>
+  </div>
   <fieldset class="tags-field">
     <legend>Cuisine</legend>
     <div class="chips">
