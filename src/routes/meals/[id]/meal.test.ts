@@ -4,53 +4,63 @@ const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
   from: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
-  limit: vi.fn(), // resolves the ownership lookup row
+  limit: vi.fn(),
   update: vi.fn().mockReturnThis(),
   set: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+  delete: vi.fn().mockReturnThis(),
 }))
 
 vi.mock('$lib/db', () => ({ db: mockDb }))
 
-import { actions } from './+page.server'
+import { PATCH, DELETE } from './+server'
 
-function makeFormEvent(fields: Record<string, string | string[]>, id = '1') {
-  const formData = new FormData()
-  for (const [key, val] of Object.entries(fields)) {
-    if (Array.isArray(val)) val.forEach((v) => formData.append(key, v))
-    else formData.append(key, val)
-  }
+function makeApiEvent(body: object, id = '1', user: object | null = { id: 1 }) {
   return {
     params: { id },
-    locals: { user: { id: 1 } },
-    request: { formData: () => Promise.resolve(formData) },
+    locals: { user },
+    request: { json: () => Promise.resolve(body) },
   } as any
 }
 
-describe('meals/[id] update action', () => {
+describe('PATCH /meals/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockDb.limit.mockResolvedValue([{ userId: null }]) // global meal → editable by anyone
+    mockDb.returning.mockResolvedValue([{ id: 1, name: 'Updated' }])
   })
 
-  it('passes checked tags through to db.update as an array', async () => {
-    await actions.update(
-      makeFormEvent({ name: 'Test', tags: ['Vegan', 'no_gluten'] }),
-    )
-    const patched = mockDb.set.mock.calls[0][0]
-    expect(patched.tags).toEqual(['Vegan', 'no_gluten'])
-  })
-
-  it('defaults tags to an empty array when none are checked', async () => {
-    await actions.update(makeFormEvent({ name: 'Test' }))
-    const patched = mockDb.set.mock.calls[0][0]
-    expect(patched.tags).toEqual([])
-  })
-
-  it("rejects editing another user's personal meal with 403", async () => {
-    mockDb.limit.mockResolvedValueOnce([{ userId: 2 }]) // owned by someone else
+  it('throws 401 when unauthenticated', async () => {
     await expect(
-      actions.update(makeFormEvent({ name: 'Test' })),
-    ).rejects.toMatchObject({ status: 403 })
-    expect(mockDb.set).not.toHaveBeenCalled()
+      PATCH(makeApiEvent({ name: 'x' }, '1', null)),
+    ).rejects.toMatchObject({ status: 401 })
+  })
+
+  it('throws 404 when the meal does not exist', async () => {
+    mockDb.returning.mockResolvedValueOnce([])
+    await expect(PATCH(makeApiEvent({ name: 'x' }))).rejects.toMatchObject({
+      status: 404,
+    })
+  })
+
+  it('updates a meal', async () => {
+    const res = await PATCH(makeApiEvent({ name: 'Updated' }))
+    expect(res.status).toBe(200)
+    expect(mockDb.set.mock.calls[0][0]).toEqual({ name: 'Updated' })
+  })
+})
+
+describe('DELETE /meals/:id', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('throws 401 when unauthenticated', async () => {
+    await expect(DELETE(makeApiEvent({}, '1', null))).rejects.toMatchObject({
+      status: 401,
+    })
+  })
+
+  it('deletes a meal and returns 204', async () => {
+    const res = await DELETE(makeApiEvent({}))
+    expect(res.status).toBe(204)
+    expect(mockDb.delete).toHaveBeenCalled()
   })
 })

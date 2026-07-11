@@ -1,17 +1,49 @@
 <script lang="ts">
   import PlanSettings from '$lib/components/PlanSettings.svelte'
-  import { enhance } from '$app/forms'
   import { NUTRITION_TARGETS } from '$lib/types'
 
-  let { data, form } = $props()
+  let { data } = $props()
 
-  // Chip picker is a live mutation, not a form submit → fetch the REST endpoint (per AGENTS.md).
+  let targetsSaved = $state(false)
+  let passwordError = $state('')
+  let passwordSuccess = $state('')
+
   async function patchProfile(patch: object) {
     await fetch('/profile', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(patch),
     })
+  }
+
+  async function saveTargets(e: SubmitEvent) {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    const body = Object.fromEntries(fd)
+    await fetch('/profile', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    targetsSaved = true
+  }
+
+  async function changePassword(e: SubmitEvent) {
+    e.preventDefault()
+    passwordError = ''
+    passwordSuccess = ''
+    const fd = new FormData(e.target as HTMLFormElement)
+    const res = await fetch('/profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        current: fd.get('current'),
+        next: fd.get('next'),
+      }),
+    })
+    const data = await res.json()
+    if (data.error) passwordError = data.error
+    else if (data.success) passwordSuccess = 'Password updated.'
   }
 </script>
 
@@ -30,8 +62,8 @@
     Daily goals for the calendar's nutrition bars and auto-compose. Blank uses
     the default.
   </p>
-  <form method="POST" action="?/targets" use:enhance>
-    {#if form?.targetsSaved}<p class="success">Targets saved.</p>{/if}
+  <form method="POST" onsubmit={saveTargets}>
+    {#if targetsSaved}<p class="success">Targets saved.</p>{/if}
     <label
       >Calories (kcal) <input
         type="number"
@@ -72,9 +104,9 @@
   </form>
 
   <h2>Change password</h2>
-  <form method="POST" action="?/password" use:enhance>
-    {#if form?.error}<p class="error">{form.error}</p>{/if}
-    {#if form?.success}<p class="success">Password updated.</p>{/if}
+  <form method="POST" onsubmit={changePassword}>
+    {#if passwordError}<p class="error">{passwordError}</p>{/if}
+    {#if passwordSuccess}<p class="success">{passwordSuccess}</p>{/if}
     <label
       >Current password <input type="password" name="current" required /></label
     >

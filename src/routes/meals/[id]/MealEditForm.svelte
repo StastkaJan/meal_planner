@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { enhance } from '$app/forms'
   import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/types'
   import type { Meal } from '$lib/schema'
 
@@ -24,18 +23,22 @@
   function toggleTag(opt: string) {
     tags = tags.includes(opt) ? tags.filter((t) => t !== opt) : [...tags, opt]
   }
+
+  async function handleSave(e: SubmitEvent) {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    const body: Record<string, unknown> = Object.fromEntries(fd)
+    body.tags = fd.getAll('tags')
+    const res = await fetch(`/meals/${meal.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) onSaved()
+  }
 </script>
 
-<form
-  method="POST"
-  action="?/update"
-  class="edit-form"
-  use:enhance={() =>
-    async ({ result, update }) => {
-      if (result.type !== 'failure') onSaved()
-      await update()
-    }}
->
+<form method="POST" class="edit-form" onsubmit={handleSave}>
   <div class="field-row">
     <label
       >Name<input type="text" name="name" value={meal.name} autofocus /></label
