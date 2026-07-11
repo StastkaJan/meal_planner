@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { enhance } from '$app/forms'
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
 
@@ -16,6 +15,26 @@
     easy: 'Easy',
     medium: 'Medium',
     hard: 'Hard',
+  }
+
+  async function handleCreate(e: SubmitEvent) {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    const res = await fetch('/meals', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: fd.get('name'), scope: fd.get('scope') }),
+    })
+    if (res.ok) {
+      creating = false
+      await goto('/meals')
+    }
+  }
+
+  async function deleteMeal(id: number) {
+    if (!confirm('Delete this meal?')) return
+    await fetch(`/meals/${id}`, { method: 'DELETE' })
+    await goto('/meals')
   }
 
   // Import parses schema.org data, then creates a personal draft you review/edit on its page.
@@ -42,7 +61,7 @@
       })
       if (!createRes.ok) {
         importError =
-          'Imported the recipe but couldn’t save it (missing a name?)'
+          "Imported the recipe but couldn't save it (missing a name?)"
         return
       }
       const created = await createRes.json()
@@ -113,15 +132,7 @@
         {#if creating}
           <tr class="edit-row">
             <td colspan="4">
-              <form
-                method="POST"
-                action="?/create"
-                use:enhance={() =>
-                  async ({ update }) => {
-                    creating = false
-                    await update()
-                  }}
-              >
+              <form method="POST" onsubmit={handleCreate}>
                 <input
                   type="text"
                   name="name"
@@ -158,17 +169,11 @@
             >
             <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
             <td class="actions">
-              <form
-                method="POST"
-                action="?/delete"
-                use:enhance
-                onsubmit={(e) => {
-                  if (!confirm('Delete this meal?')) e.preventDefault()
-                }}
+              <button
+                class="btn sm danger"
+                type="button"
+                onclick={() => deleteMeal(meal.id)}>Delete</button
               >
-                <input type="hidden" name="id" value={meal.id} />
-                <button class="btn sm danger" type="submit">Delete</button>
-              </form>
             </td>
           </tr>
         {:else}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { enhance } from '$app/forms'
+  import { goto } from '$app/navigation'
   import MealEditForm from './MealEditForm.svelte'
   import type { PageData } from './$types'
 
@@ -29,6 +29,12 @@
     v == null ? null : Math.round(Number(v) * factor)
   const scaleG = (v: string | null) =>
     v == null ? null : (Number(v) * factor).toFixed(1)
+
+  async function deleteMeal() {
+    if (!confirm('Delete this meal?')) return
+    await fetch(`/meals/${data.meal.id}`, { method: 'DELETE' })
+    await goto('/meals')
+  }
 </script>
 
 <div class="page">
@@ -45,16 +51,9 @@
         <button class="btn ghost sm" onclick={() => (editing = true)}
           >Edit</button
         >
-        <form
-          method="POST"
-          action="?/delete"
-          use:enhance
-          onsubmit={(e) => {
-            if (!confirm('Delete this meal?')) e.preventDefault()
-          }}
+        <button class="btn danger sm" type="button" onclick={deleteMeal}
+          >Delete</button
         >
-          <button class="btn danger sm" type="submit">Delete</button>
-        </form>
       </div>
     </div>
 
