@@ -1,4 +1,6 @@
+import { error } from '@sveltejs/kit'
 import { or, isNull, eq } from 'drizzle-orm'
+import { db } from '$lib/db'
 import { meals } from '$lib/schema'
 
 // A meal is visible to a user if it's global (no owner) or owned by them. An anonymous
@@ -13,6 +15,16 @@ export const canAccessMeal = (
   meal: { userId: number | null },
   userId?: number,
 ) => meal.userId === null || meal.userId === userId
+
+export async function assertCanEdit(id: number, userId: number) {
+  const [meal] = await db
+    .select({ userId: meals.userId })
+    .from(meals)
+    .where(eq(meals.id, id))
+    .limit(1)
+  if (!meal) error(404, 'Meal not found')
+  if (!canAccessMeal(meal, userId)) error(403, 'Not allowed')
+}
 
 // Whitelist of columns a client may write on a meal. Prevents mass-assignment
 // from a raw request body (id is server-owned).
@@ -29,6 +41,7 @@ const WRITABLE = [
   'instructions',
   'timeMinutes',
   'difficulty',
+  'servings',
 ] as const
 
 export function pickMealFields(

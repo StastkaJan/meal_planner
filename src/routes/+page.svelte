@@ -11,6 +11,13 @@
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
 
+  async function refreshPlan() {
+    if (!plan) return
+    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
+      r.json(),
+    )
+  }
+
   function planUrl(planId: number, week: string) {
     return `/?plan=${planId}&week=${week}`
   }
@@ -65,9 +72,7 @@
         mealId,
       }),
     })
-    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
-      r.json(),
-    )
+    await refreshPlan()
   }
 
   async function handleAutoCompose() {
@@ -77,9 +82,7 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ week: data.viewWeek }),
     })
-    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
-      r.json(),
-    )
+    await refreshPlan()
   }
 
   async function handleCopyWeek() {
@@ -98,9 +101,7 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ from, to: data.viewWeek }),
     })
-    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
-      r.json(),
-    )
+    await refreshPlan()
   }
 
   async function handleSettingsChange(patch: object) {

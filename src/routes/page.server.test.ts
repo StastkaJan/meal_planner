@@ -19,6 +19,7 @@ vi.mock('$lib/server/plans', () => ({
     if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) throw new Error('Invalid week')
     return w
   },
+  getUserSettings: vi.fn(async () => null),
 }))
 
 import { load as loadImpl } from './+page.server'

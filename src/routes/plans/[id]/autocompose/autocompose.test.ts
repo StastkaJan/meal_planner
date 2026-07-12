@@ -1,16 +1,19 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-const mockDb = vi.hoisted(() => ({
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  limit: vi.fn(),
-}))
-
-vi.mock('$lib/db', () => ({ db: mockDb }))
-
 const autocomposeSlots = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/plans', () => ({ autocomposeSlots }))
+const mockOwnedPlan = vi.hoisted(() => vi.fn())
+const mockGetUserSettings = vi.hoisted(() => vi.fn())
+
+vi.mock('$lib/server/plans', () => ({
+  autocomposeSlots,
+  ownedPlan: mockOwnedPlan,
+  validWeek: (w: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w))
+      throw Object.assign(new Error('Invalid week'), { status: 400 })
+    return w
+  },
+  getUserSettings: mockGetUserSettings,
+}))
 
 import { POST } from './+server'
 
@@ -26,28 +29,26 @@ describe('POST /plans/:id/autocompose', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('throws 404 when plan is not owned by the user', async () => {
-    mockDb.limit.mockResolvedValueOnce([])
+    mockOwnedPlan.mockRejectedValueOnce(
+      Object.assign(new Error('Not found'), { status: 404 }),
+    )
     await expect(POST(makeEvent())).rejects.toMatchObject({ status: 404 })
   })
 
   it("passes the owner's resolved calorie target to autocompose", async () => {
-    mockDb.limit
-      .mockResolvedValueOnce([
-        {
-          id: 1,
-          weekStart: '2026-06-29',
-          cuisinePrefs: [],
-          dietaryRestrictions: [],
-        },
-      ]) // plan
-      .mockResolvedValueOnce([
-        {
-          calorieTarget: 1800,
-          proteinTarget: null,
-          carbsTarget: null,
-          fatTarget: null,
-        },
-      ]) // user
+    mockOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    mockGetUserSettings.mockResolvedValueOnce({
+      calorieTarget: 1800,
+      proteinTarget: null,
+      carbsTarget: null,
+      fatTarget: null,
+    })
     await POST(makeEvent())
     expect(autocomposeSlots).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1 }),
@@ -58,23 +59,13 @@ describe('POST /plans/:id/autocompose', () => {
   })
 
   it('falls back to the default calorie target when the user has none set', async () => {
-    mockDb.limit
-      .mockResolvedValueOnce([
-        {
-          id: 1,
-          weekStart: '2026-06-29',
-          cuisinePrefs: [],
-          dietaryRestrictions: [],
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          calorieTarget: null,
-          proteinTarget: null,
-          carbsTarget: null,
-          fatTarget: null,
-        },
-      ])
+    mockOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
     await POST(makeEvent())
     expect(autocomposeSlots).toHaveBeenCalledWith(
       expect.anything(),

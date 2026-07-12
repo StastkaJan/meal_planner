@@ -1,9 +1,11 @@
 import { db } from '$lib/db'
 import { userSettings } from '$lib/schema'
+import { requireUser } from '$lib/auth'
 import { eq } from 'drizzle-orm'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
+  const { id, email } = requireUser(locals)
   const [s] = await db
     .select({
       cuisinePrefs: userSettings.cuisinePrefs,
@@ -14,10 +16,10 @@ export const load: PageServerLoad = async ({ locals }) => {
       fatTarget: userSettings.fatTarget,
     })
     .from(userSettings)
-    .where(eq(userSettings.userId, locals.user!.id))
+    .where(eq(userSettings.userId, id))
     .limit(1)
   return {
-    email: locals.user!.email,
+    email,
     cuisinePrefs: s?.cuisinePrefs ?? [],
     dietaryRestrictions: s?.dietaryRestrictions ?? [],
     calorieTarget: s?.calorieTarget ?? null,

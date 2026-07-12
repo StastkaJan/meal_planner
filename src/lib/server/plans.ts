@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { plans, weekSlots, meals } from '$lib/schema'
+import { plans, weekSlots, meals, userSettings } from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES } from '$lib/types'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
@@ -12,8 +12,23 @@ export async function ownedPlan(id: number, userId: number): Promise<Plan> {
     .select()
     .from(plans)
     .where(and(eq(plans.id, id), eq(plans.userId, userId)))
+    .limit(1)
   if (!plan) error(404, 'Plan not found')
   return plan
+}
+
+export async function getUserSettings(userId: number) {
+  const [u] = await db
+    .select({
+      calorieTarget: userSettings.calorieTarget,
+      proteinTarget: userSettings.proteinTarget,
+      carbsTarget: userSettings.carbsTarget,
+      fatTarget: userSettings.fatTarget,
+    })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+    .limit(1)
+  return u ?? null
 }
 
 export function validWeek(w: string) {

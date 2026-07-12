@@ -43,6 +43,13 @@
       "when": 1783705189432,
       "tag": "0005_concerned_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783879563816,
+      "tag": "0006_large_lester",
+      "breakpoints": true
     }
   ]
 }

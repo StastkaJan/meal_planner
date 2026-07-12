@@ -1,10 +1,5 @@
 <script lang="ts">
-  import type {
-    SlotWithMeal,
-    MealType,
-    PlanDetail,
-    NutritionTargets,
-  } from '$lib/types'
+  import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
   import { MEAL_TYPES } from '$lib/types'
   import type { Meal } from '$lib/schema'
   import MealCell from './MealCell.svelte'

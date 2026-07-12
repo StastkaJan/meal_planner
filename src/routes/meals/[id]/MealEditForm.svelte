@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/types'
+  import { CUISINE_OPTIONS, DIET_OPTIONS, DIFF_LABEL } from '$lib/types'
   import type { Meal } from '$lib/schema'
 
   let {
@@ -11,12 +11,6 @@
     onCancel: () => void
     onSaved: () => void
   } = $props()
-
-  const diffLabel: Record<string, string> = {
-    easy: 'Easy',
-    medium: 'Medium',
-    hard: 'Hard',
-  }
 
   let tags = $derived(meal.tags ?? [])
 
@@ -63,7 +57,7 @@
         <option value="">—</option>
         {#each ['easy', 'medium', 'hard'] as d}
           <option value={d} selected={meal.difficulty === d}
-            >{diffLabel[d]}</option
+            >{DIFF_LABEL[d]}</option
           >
         {/each}
       </select>

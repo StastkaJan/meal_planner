@@ -15,52 +15,83 @@ vi.mock('$lib/db', () => ({ db: mockDb }))
 
 import { PATCH, DELETE } from './+server'
 
-function makeApiEvent(body: object, id = '1', user: object | null = { id: 1 }) {
+function makeEvent(body?: object, id = '1', userId = 1) {
   return {
     params: { id },
-    locals: { user },
-    request: { json: () => Promise.resolve(body) },
+    request: body
+      ? { json: () => Promise.resolve(body) }
+      : { json: () => Promise.resolve({}) },
+    locals: { user: { id: userId } },
   } as any
 }
 
-describe('PATCH /meals/:id', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockDb.returning.mockResolvedValue([{ id: 1, name: 'Updated' }])
-  })
-
-  it('throws 401 when unauthenticated', async () => {
-    await expect(
-      PATCH(makeApiEvent({ name: 'x' }, '1', null)),
-    ).rejects.toMatchObject({ status: 401 })
-  })
-
-  it('throws 404 when the meal does not exist', async () => {
-    mockDb.returning.mockResolvedValueOnce([])
-    await expect(PATCH(makeApiEvent({ name: 'x' }))).rejects.toMatchObject({
-      status: 404,
-    })
-  })
-
-  it('updates a meal', async () => {
-    const res = await PATCH(makeApiEvent({ name: 'Updated' }))
-    expect(res.status).toBe(200)
-    expect(mockDb.set.mock.calls[0][0]).toEqual({ name: 'Updated' })
-  })
-})
-
-describe('DELETE /meals/:id', () => {
+describe('REST /meals/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('throws 401 when unauthenticated', async () => {
-    await expect(DELETE(makeApiEvent({}, '1', null))).rejects.toMatchObject({
-      status: 401,
+  describe('PATCH', () => {
+    it('rejects non-owner with 403', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 2 }])
+      await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
+        status: 403,
+      })
+    })
+
+    it('returns 404 for non-existent meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
+      await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
+        status: 404,
+      })
+    })
+
+    it('allows editing own meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1 }])
+      mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
+      await PATCH(makeEvent({ name: 'updated' }))
+      expect(mockDb.update).toHaveBeenCalled()
+    })
+
+    it('allows editing global meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: null }])
+      mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
+      await PATCH(makeEvent({ name: 'updated' }))
+      expect(mockDb.update).toHaveBeenCalled()
     })
   })
 
-  it('deletes a meal and returns 204', async () => {
-    const res = await DELETE(makeApiEvent({}))
-    expect(res.status).toBe(204)
-    expect(mockDb.delete).toHaveBeenCalled()
+  describe('DELETE', () => {
+    it('rejects non-owner with 403', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 2 }])
+      await expect(DELETE(makeEvent())).rejects.toMatchObject({
+        status: 403,
+      })
+    })
+
+    it('returns 404 for non-existent meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
+      await expect(DELETE(makeEvent())).rejects.toMatchObject({
+        status: 404,
+      })
+    })
+
+    it('deletes own meal and returns 204', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1 }])
+      const res = await DELETE(makeEvent())
+      expect(res.status).toBe(204)
+      expect(mockDb.delete).toHaveBeenCalled()
+    })
+  })
+
+  describe('unauthenticated', () => {
+    it('PATCH returns 401', async () => {
+      await expect(
+        PATCH({ params: { id: '1' }, locals: {} } as any),
+      ).rejects.toMatchObject({ status: 401 })
+    })
+
+    it('DELETE returns 401', async () => {
+      await expect(
+        DELETE({ params: { id: '1' }, locals: {} } as any),
+      ).rejects.toMatchObject({ status: 401 })
+    })
   })
 })

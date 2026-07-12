@@ -1,6 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-// ponytail: vi.hoisted needed so mockDb is available when vi.mock factory runs (hoisting order)
 const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
   from: vi.fn().mockReturnThis(),
@@ -57,7 +56,9 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    mockDb.limit
+      .mockResolvedValueOnce([{ id: 1 }]) // plan ownership
+      .mockResolvedValueOnce([{ id: 5 }]) // meal visibility
     const res = await PUT(
       makeEvent({
         week: '2026-06-30',
@@ -69,5 +70,79 @@ describe('PUT /plans/:id/slots', () => {
     expect(res.status).toBe(204)
     expect(mockDb.insert).toHaveBeenCalled()
     expect(mockDb.delete).not.toHaveBeenCalled()
+  })
+
+  it('rejects invalid week format with 400', async () => {
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    await expect(
+      PUT(
+        makeEvent({
+          week: 'not-a-date',
+          dayOfWeek: 0,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects invalid dayOfWeek with 400', async () => {
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 7,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects non-integer dayOfWeek with 400', async () => {
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 1.5,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects invalid mealType with 400', async () => {
+    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 0,
+          mealType: 'brunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('returns 401 when unauthenticated', async () => {
+    await expect(
+      PUT({
+        params: { id: '1' },
+        request: {
+          json: () =>
+            Promise.resolve({
+              week: '2026-06-30',
+              dayOfWeek: 0,
+              mealType: 'lunch',
+              mealId: null,
+            }),
+        },
+        locals: {},
+      } as any),
+    ).rejects.toMatchObject({ status: 401 })
   })
 })
