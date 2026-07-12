@@ -36,7 +36,7 @@ families juggling dietary needs. A logged-in user, since plans are private.
 
 ## How it works
 
-Each plan owns a grid of slots keyed by `(plan, week, day, meal type)`; filling
+Each plan owns a grid of slots keyed by `(plan, date, meal type)`; filling
 a slot points it at a meal, clearing it removes it. Auto-compose filters the
 meal library by the plan's cuisine (any-match) and dietary (all-match)
 preferences, then fills empty slots by splitting the user's daily calorie target

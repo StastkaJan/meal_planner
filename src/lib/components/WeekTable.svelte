@@ -20,7 +20,11 @@
     meals: Meal[]
     weekStart: string
     targets: NutritionTargets
-    onSlotChange: (day: number, mealType: string, mealId: number | null) => void
+    onSlotChange: (
+      date: string,
+      mealType: string,
+      mealId: number | null,
+    ) => void
     onAutoCompose?: () => void
     onCopyWeek?: () => void
     onPrevWeek: () => void
@@ -54,12 +58,12 @@
   const todayISO = isoDate(new Date())
 
   const slotMap = $derived(
-    new Map(plan.slots.map((s) => [`${s.dayOfWeek}-${s.mealType}`, s])),
+    new Map(plan.slots.map((s) => [`${s.date}-${s.mealType}`, s])),
   )
 
   const dailyNutrition = $derived(
-    weekDates.map((_, d) => {
-      const daySlots = plan.slots.filter((s) => s.dayOfWeek === d)
+    weekDates.map((dt) => {
+      const daySlots = plan.slots.filter((s) => s.date === isoDate(dt))
       return {
         calories: daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0),
         proteinG: daySlots.reduce(
@@ -104,13 +108,13 @@
         {#each MEAL_TYPES as mt}
           <tr>
             <td class="row-label">{mt.replaceAll('_', ' ')}</td>
-            {#each weekDates as _, d}
+            {#each weekDates as dt}
               <td class="slot-cell">
                 <MealCell
-                  slot={slotMap.get(`${d}-${mt}`) ?? null}
+                  slot={slotMap.get(`${isoDate(dt)}-${mt}`) ?? null}
                   {meals}
                   mealType={mt}
-                  onPick={(mealId) => onSlotChange(d, mt, mealId)}
+                  onPick={(mealId) => onSlotChange(isoDate(dt), mt, mealId)}
                 />
               </td>
             {/each}

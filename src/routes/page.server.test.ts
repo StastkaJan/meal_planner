@@ -15,8 +15,8 @@ vi.mock('$lib/server/plans', () => ({
     slots: [],
     week,
   })),
-  validWeek: (w: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) throw new Error('Invalid week')
+  validDateStr: (w: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) throw new Error('Invalid date')
     return w
   },
   getUserSettings: vi.fn(async () => null),

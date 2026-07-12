@@ -1,7 +1,11 @@
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { plans as plansTable, meals as mealsTable } from '$lib/schema'
-import { getPlanDetail, validWeek, getUserSettings } from '$lib/server/plans'
+import {
+  getPlanDetail,
+  validDateStr,
+  getUserSettings,
+} from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
 import { resolveTargets } from '$lib/types'
 import type { PageServerLoad } from './$types'
@@ -30,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     return { plans, meals, plan: null, activePlanId: 0, viewWeek: '', targets }
   }
 
-  const viewWeek = validWeek(
+  const viewWeek = validDateStr(
     url.searchParams.get('week') || activePlan.weekStart,
   )
   const plan = await getPlanDetail(activePlan, viewWeek)

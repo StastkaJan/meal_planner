@@ -4,7 +4,6 @@ import {
   text,
   integer,
   numeric,
-  smallint,
   date,
   primaryKey,
   timestamp,
@@ -97,14 +96,13 @@ export const weekSlots = pgTable(
     planId: integer('plan_id')
       .notNull()
       .references(() => plans.id, { onDelete: 'cascade' }),
-    week: date('week').notNull(),
-    dayOfWeek: smallint('day_of_week').notNull(),
+    date: date('date').notNull(),
     mealType: text('meal_type').notNull(),
     mealId: integer('meal_id').references(() => meals.id, {
       onDelete: 'set null',
     }),
   },
-  (t) => [primaryKey({ columns: [t.planId, t.week, t.dayOfWeek, t.mealType] })],
+  (t) => [primaryKey({ columns: [t.planId, t.date, t.mealType] })],
 )
 
 export type User = typeof users.$inferSelect
