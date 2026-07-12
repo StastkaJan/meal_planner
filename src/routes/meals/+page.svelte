@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
+  import { DIFF_LABEL } from '$lib/types'
 
   let { data }: { data: PageData } = $props()
 
@@ -10,12 +11,6 @@
   let importUrl = $state('')
   let importError = $state('')
   let importBusy = $state(false)
-
-  const diffLabel: Record<string, string> = {
-    easy: 'Easy',
-    medium: 'Medium',
-    hard: 'Hard',
-  }
 
   async function handleCreate(e: SubmitEvent) {
     e.preventDefault()
@@ -164,7 +159,7 @@
             </td>
             <td
               >{meal.difficulty
-                ? (diffLabel[meal.difficulty] ?? meal.difficulty)
+                ? (DIFF_LABEL[meal.difficulty] ?? meal.difficulty)
                 : '—'}</td
             >
             <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>

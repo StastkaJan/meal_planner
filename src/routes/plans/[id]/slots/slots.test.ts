@@ -1,18 +1,25 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-// ponytail: vi.hoisted needed so mockDb is available when vi.mock factory runs (hoisting order)
 const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
   from: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   limit: vi.fn(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
-  delete: vi.fn().mockReturnThis(),
 }))
 
+const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
+const mockUpsertSlot = vi.hoisted(() => vi.fn())
+
 vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/server/plans', () => ({
+  requireOwnedPlan: mockRequireOwnedPlan,
+  upsertSlot: mockUpsertSlot,
+  validWeek: (w: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w))
+      throw Object.assign(new Error('Invalid week'), { status: 400 })
+    return w
+  },
+}))
 
 import { PUT } from './+server'
 
@@ -28,7 +35,9 @@ describe('PUT /plans/:id/slots', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('throws 404 when plan is not owned by the user', async () => {
-    mockDb.limit.mockResolvedValueOnce([])
+    mockRequireOwnedPlan.mockRejectedValueOnce(
+      Object.assign(new Error('Not found'), { status: 404 }),
+    )
     await expect(
       PUT(
         makeEvent({
@@ -42,7 +51,7 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('deletes the slot and returns 204 when mealId is null', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     const res = await PUT(
       makeEvent({
         week: '2026-06-30',
@@ -52,12 +61,18 @@ describe('PUT /plans/:id/slots', () => {
       }),
     )
     expect(res.status).toBe(204)
-    expect(mockDb.delete).toHaveBeenCalled()
-    expect(mockDb.insert).not.toHaveBeenCalled()
+    expect(mockUpsertSlot).toHaveBeenCalledWith(
+      1,
+      '2026-06-30',
+      0,
+      'lunch',
+      null,
+    )
   })
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockDb.limit.mockResolvedValueOnce([{ id: 5 }])
     const res = await PUT(
       makeEvent({
         week: '2026-06-30',
@@ -67,7 +82,83 @@ describe('PUT /plans/:id/slots', () => {
       }),
     )
     expect(res.status).toBe(204)
-    expect(mockDb.insert).toHaveBeenCalled()
-    expect(mockDb.delete).not.toHaveBeenCalled()
+    expect(mockUpsertSlot).toHaveBeenCalledWith(1, '2026-06-30', 0, 'lunch', 5)
+  })
+
+  it('rejects invalid week format with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PUT(
+        makeEvent({
+          week: 'not-a-date',
+          dayOfWeek: 0,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects invalid dayOfWeek with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 7,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects non-integer dayOfWeek with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 1.5,
+          mealType: 'lunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('rejects invalid mealType with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PUT(
+        makeEvent({
+          week: '2026-06-30',
+          dayOfWeek: 0,
+          mealType: 'brunch',
+          mealId: null,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireOwnedPlan.mockRejectedValueOnce(
+      Object.assign(new Error('Not authenticated'), { status: 401 }),
+    )
+    await expect(
+      PUT({
+        params: { id: '1' },
+        request: {
+          json: () =>
+            Promise.resolve({
+              week: '2026-06-30',
+              dayOfWeek: 0,
+              mealType: 'lunch',
+              mealId: null,
+            }),
+        },
+        locals: {},
+      } as any),
+    ).rejects.toMatchObject({ status: 401 })
   })
 })

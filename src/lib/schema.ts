@@ -69,6 +69,7 @@ export const meals = pgTable('meals', {
   timeMinutes: integer('time_minutes'),
   difficulty: text('difficulty'),
   servings: integer('servings').notNull().default(1),
+  archivedAt: timestamp('archived_at'),
 })
 
 export const plans = pgTable('plans', {

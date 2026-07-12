@@ -1,18 +1,14 @@
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
-import {
-  plans as plansTable,
-  meals as mealsTable,
-  userSettings,
-} from '$lib/schema'
-import { getPlanDetail, validWeek } from '$lib/server/plans'
+import { plans as plansTable, meals as mealsTable } from '$lib/schema'
+import { getPlanDetail, validWeek, getUserSettings } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
 import { resolveTargets } from '$lib/types'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
-  const [plans, meals, [u]] = await Promise.all([
+  const [plans, meals, u] = await Promise.all([
     db
       .select()
       .from(plansTable)
@@ -23,16 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       .from(mealsTable)
       .where(visibleToUser(userId))
       .orderBy(mealsTable.name),
-    db
-      .select({
-        calorieTarget: userSettings.calorieTarget,
-        proteinTarget: userSettings.proteinTarget,
-        carbsTarget: userSettings.carbsTarget,
-        fatTarget: userSettings.fatTarget,
-      })
-      .from(userSettings)
-      .where(eq(userSettings.userId, userId))
-      .limit(1),
+    getUserSettings(userId),
   ])
   const targets = resolveTargets(u)
 

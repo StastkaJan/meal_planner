@@ -2,8 +2,7 @@ import { json } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { users, userSettings } from '$lib/schema'
-import { requireUser } from '$lib/auth'
-import { verifyPassword, hashPassword } from '$lib/auth'
+import { requireUser, verifyPassword, hashPassword } from '$lib/auth'
 import type { RequestHandler } from './$types'
 
 const TARGET_FIELDS = [
@@ -19,7 +18,7 @@ function toTarget(v: unknown): number | null {
 }
 
 export const PATCH: RequestHandler = async ({ request, locals }) => {
-  const user = requireUser(locals)
+  const { id } = requireUser(locals)
   const body = await request.json()
   const patch: Record<string, unknown> = {}
   if ('cuisinePrefs' in body) patch.cuisinePrefs = body.cuisinePrefs
@@ -33,14 +32,14 @@ export const PATCH: RequestHandler = async ({ request, locals }) => {
 
   const [s] = await db
     .insert(userSettings)
-    .values({ userId: user.id, ...patch })
+    .values({ userId: id, ...patch })
     .onConflictDoUpdate({ target: userSettings.userId, set: patch })
     .returning()
   return json(s)
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  const user = requireUser(locals)
+  const { id } = requireUser(locals)
   const { current, next } = await request.json()
 
   if (typeof next !== 'string' || next.length < 8)
@@ -48,18 +47,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       { error: 'New password must be at least 8 characters' },
       { status: 400 },
     )
+  if (typeof next === 'string' && next.length > 128)
+    return json(
+      { error: 'New password must be at most 128 characters' },
+      { status: 400 },
+    )
 
-  const [row] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1)
+  const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1)
   if (!row || !(await verifyPassword(String(current), row.passwordHash)))
     return json({ error: 'Current password is incorrect' }, { status: 400 })
 
   await db
     .update(users)
     .set({ passwordHash: await hashPassword(next) })
-    .where(eq(users.id, user.id))
+    .where(eq(users.id, id))
   return json({ success: true })
 }

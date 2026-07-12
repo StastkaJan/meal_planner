@@ -20,9 +20,12 @@ export const MEAL_TYPES = [
 export type MealType = (typeof MEAL_TYPES)[number]
 
 export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const
-export type Day = (typeof DAYS)[number]
 
-export const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+export const DIFF_LABEL: Record<string, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+}
 
 export const CUISINE_OPTIONS = [
   'Italian',

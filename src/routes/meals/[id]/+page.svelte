@@ -2,15 +2,10 @@
   import { goto } from '$app/navigation'
   import MealEditForm from './MealEditForm.svelte'
   import type { PageData } from './$types'
+  import { DIFF_LABEL } from '$lib/types'
 
   let { data }: { data: PageData } = $props()
   let editing = $state(false)
-
-  const diffLabel: Record<string, string> = {
-    easy: 'Easy',
-    medium: 'Medium',
-    hard: 'Hard',
-  }
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
   // rescales the displayed numbers only (ingredient text is free-form, left untouched).
@@ -70,7 +65,7 @@
             >{/if}
           {#if data.meal.difficulty}<span
               class="badge diff-{data.meal.difficulty}"
-              >{diffLabel[data.meal.difficulty] ?? data.meal.difficulty}</span
+              >{DIFF_LABEL[data.meal.difficulty] ?? data.meal.difficulty}</span
             >{/if}
         </div>
       </div>

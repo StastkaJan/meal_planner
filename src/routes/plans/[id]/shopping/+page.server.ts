@@ -1,11 +1,15 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { weekSlots, meals } from '$lib/schema'
-import { ownedPlan, validWeek, mergeIngredients } from '$lib/server/plans'
+import {
+  requireOwnedPlan,
+  validWeek,
+  mergeIngredients,
+} from '$lib/server/plans'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-  const plan = await ownedPlan(Number(params.id), locals.user!.id)
+  const plan = await requireOwnedPlan(locals, params.id)
   const week = validWeek(url.searchParams.get('week') ?? plan.weekStart)
 
   const rows = await db

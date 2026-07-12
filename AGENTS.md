@@ -41,9 +41,10 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 ## Auth flow
 
-1. Register/login → server creates `sessions` row, sets `session` cookie (httpOnly)
+1. Register/login → `createSession()` in `src/lib/auth.ts` creates `sessions` row, sets `session` cookie (httpOnly). Login uses constant-time dummy hash when user not found.
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
-3. Slot ownership enforced server-side: plan must belong to `locals.user`
+3. Slot ownership enforced server-side: `requireUser(locals)` at the top of every `+server.ts`; plan ownership via `ownedPlan()`, meal ownership via `assertCanEdit()` (both in `src/lib/server/`)
+4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)
 
 ## Common commands
 

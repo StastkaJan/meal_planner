@@ -9,13 +9,23 @@ import {
 
 describe('canAccessMeal', () => {
   it('lets anyone access a global meal', () => {
-    expect(canAccessMeal({ userId: null }, 1)).toBe(true)
-    expect(canAccessMeal({ userId: null }, undefined)).toBe(true)
+    expect(canAccessMeal({ userId: null, archivedAt: null }, 1)).toBe(true)
+    expect(canAccessMeal({ userId: null, archivedAt: null }, undefined)).toBe(
+      true,
+    )
   })
   it('lets only the owner access a personal meal', () => {
-    expect(canAccessMeal({ userId: 1 }, 1)).toBe(true)
-    expect(canAccessMeal({ userId: 1 }, 2)).toBe(false)
-    expect(canAccessMeal({ userId: 1 }, undefined)).toBe(false)
+    expect(canAccessMeal({ userId: 1, archivedAt: null }, 1)).toBe(true)
+    expect(canAccessMeal({ userId: 1, archivedAt: null }, 2)).toBe(false)
+    expect(canAccessMeal({ userId: 1, archivedAt: null }, undefined)).toBe(
+      false,
+    )
+  })
+  it('rejects archived meals', () => {
+    expect(canAccessMeal({ userId: null, archivedAt: new Date() }, 1)).toBe(
+      false,
+    )
+    expect(canAccessMeal({ userId: 1, archivedAt: new Date() }, 1)).toBe(false)
   })
 })
 
