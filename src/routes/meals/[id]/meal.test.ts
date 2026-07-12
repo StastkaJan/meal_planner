@@ -30,7 +30,7 @@ describe('REST /meals/:id', () => {
 
   describe('PATCH', () => {
     it('rejects non-owner with 403', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 2 }])
+      mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
       await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
         status: 403,
       })
@@ -44,40 +44,51 @@ describe('REST /meals/:id', () => {
     })
 
     it('allows editing own meal', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 1 }])
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
       mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
       await PATCH(makeEvent({ name: 'updated' }))
       expect(mockDb.update).toHaveBeenCalled()
     })
 
     it('allows editing global meal', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: null }])
+      mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
       mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
       await PATCH(makeEvent({ name: 'updated' }))
       expect(mockDb.update).toHaveBeenCalled()
+    })
+
+    it('rejects archived meal with 403', async () => {
+      mockDb.limit.mockResolvedValueOnce([
+        { userId: 1, archivedAt: new Date() },
+      ])
+      await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
+        status: 403,
+      })
     })
   })
 
   describe('DELETE', () => {
     it('rejects non-owner with 403', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 2 }])
+      mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
       await expect(DELETE(makeEvent())).rejects.toMatchObject({
         status: 403,
       })
     })
 
     it('returns 404 for non-existent meal', async () => {
-      mockDb.limit.mockResolvedValueOnce([])
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
+      mockDb.returning.mockResolvedValueOnce([])
       await expect(DELETE(makeEvent())).rejects.toMatchObject({
         status: 404,
       })
     })
 
-    it('deletes own meal and returns 204', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 1 }])
+    it('soft-deletes own meal and returns 204', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
+      mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
       const res = await DELETE(makeEvent())
       expect(res.status).toBe(204)
-      expect(mockDb.delete).toHaveBeenCalled()
+      expect(mockDb.update).toHaveBeenCalled()
     })
   })
 

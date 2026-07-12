@@ -23,6 +23,11 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
   if (!locals.user) error(401, 'Not authenticated')
   const id = Number(params.id)
   await assertCanEdit(id, locals.user.id)
-  await db.delete(meals).where(eq(meals.id, id))
+  const [deleted] = await db
+    .update(meals)
+    .set({ archivedAt: new Date() })
+    .where(eq(meals.id, id))
+    .returning()
+  if (!deleted) error(404, 'Meal not found')
   return new Response(null, { status: 204 })
 }

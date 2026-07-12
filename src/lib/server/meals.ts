@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit'
-import { or, isNull, eq } from 'drizzle-orm'
+import { and, or, isNull, eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { meals } from '$lib/schema'
 
@@ -8,17 +8,21 @@ import { meals } from '$lib/schema'
 // set: if you can see a meal, it's yours to edit/delete.
 export const visibleToUser = (userId?: number) =>
   userId == null
-    ? isNull(meals.userId)
-    : or(isNull(meals.userId), eq(meals.userId, userId))
+    ? and(isNull(meals.userId), isNull(meals.archivedAt))
+    : and(
+        isNull(meals.archivedAt),
+        or(isNull(meals.userId), eq(meals.userId, userId)),
+      )
 
 export const canAccessMeal = (
-  meal: { userId: number | null },
+  meal: { userId: number | null; archivedAt: Date | null },
   userId?: number,
-) => meal.userId === null || meal.userId === userId
+) =>
+  meal.archivedAt === null && (meal.userId === null || meal.userId === userId)
 
 export async function assertCanEdit(id: number, userId: number) {
   const [meal] = await db
-    .select({ userId: meals.userId })
+    .select({ userId: meals.userId, archivedAt: meals.archivedAt })
     .from(meals)
     .where(eq(meals.id, id))
     .limit(1)
