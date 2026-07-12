@@ -2,14 +2,13 @@ import { error } from '@sveltejs/kit'
 import { and, eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { meals } from '$lib/schema'
-import { ownedPlan, validWeek, upsertSlot } from '$lib/server/plans'
+import { requireOwnedPlan, validWeek, upsertSlot } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
 import { MEAL_TYPES } from '$lib/types'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
-  const planId = Number(params.id)
-  const plan = await ownedPlan(planId, locals.user!.id)
+  const plan = await requireOwnedPlan(locals, params.id)
 
   const { week, dayOfWeek, mealType, mealId } = await request.json()
   validWeek(week)

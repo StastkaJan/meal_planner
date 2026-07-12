@@ -1,12 +1,12 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 const autocomposeSlots = vi.hoisted(() => vi.fn())
-const mockOwnedPlan = vi.hoisted(() => vi.fn())
+const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockGetUserSettings = vi.hoisted(() => vi.fn())
 
 vi.mock('$lib/server/plans', () => ({
   autocomposeSlots,
-  ownedPlan: mockOwnedPlan,
+  requireOwnedPlan: mockRequireOwnedPlan,
   validWeek: (w: string) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(w))
       throw Object.assign(new Error('Invalid week'), { status: 400 })
@@ -29,14 +29,14 @@ describe('POST /plans/:id/autocompose', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('throws 404 when plan is not owned by the user', async () => {
-    mockOwnedPlan.mockRejectedValueOnce(
+    mockRequireOwnedPlan.mockRejectedValueOnce(
       Object.assign(new Error('Not found'), { status: 404 }),
     )
     await expect(POST(makeEvent())).rejects.toMatchObject({ status: 404 })
   })
 
   it("passes the owner's resolved calorie target to autocompose", async () => {
-    mockOwnedPlan.mockResolvedValueOnce({
+    mockRequireOwnedPlan.mockResolvedValueOnce({
       id: 1,
       weekStart: '2026-06-29',
       userId: 1,
@@ -59,7 +59,7 @@ describe('POST /plans/:id/autocompose', () => {
   })
 
   it('falls back to the default calorie target when the user has none set', async () => {
-    mockOwnedPlan.mockResolvedValueOnce({
+    mockRequireOwnedPlan.mockResolvedValueOnce({
       id: 1,
       weekStart: '2026-06-29',
       userId: 1,

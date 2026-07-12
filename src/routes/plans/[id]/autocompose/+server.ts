@@ -1,5 +1,5 @@
 import {
-  ownedPlan,
+  requireOwnedPlan,
   validWeek,
   getUserSettings,
   autocomposeSlots,
@@ -8,8 +8,7 @@ import { resolveTargets } from '$lib/types'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {
-  const planId = Number(params.id)
-  const plan = await ownedPlan(planId, locals.user!.id)
+  const plan = await requireOwnedPlan(locals, params.id)
   const { week } = (await request.json().catch(() => ({}))) as { week?: string }
 
   await autocomposeSlots(

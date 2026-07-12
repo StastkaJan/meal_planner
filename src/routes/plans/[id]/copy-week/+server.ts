@@ -1,10 +1,9 @@
 import { error } from '@sveltejs/kit'
-import { ownedPlan, validWeek, copyWeek } from '$lib/server/plans'
+import { requireOwnedPlan, validWeek, copyWeek } from '$lib/server/plans'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
-  const planId = Number(params.id)
-  const plan = await ownedPlan(planId, locals.user!.id)
+  const plan = await requireOwnedPlan(locals, params.id)
 
   const { from, to } = await request.json()
   const fromWeek = validWeek(from)

@@ -5,6 +5,7 @@ import { plans, weekSlots, meals, userSettings } from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES } from '$lib/types'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
+import { requireUser } from '$lib/auth'
 import { visibleToUser } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
@@ -15,6 +16,14 @@ export async function ownedPlan(id: number, userId: number): Promise<Plan> {
     .limit(1)
   if (!plan) error(404, 'Plan not found')
   return plan
+}
+
+export async function requireOwnedPlan(
+  locals: App.Locals,
+  id: number | string,
+): Promise<Plan> {
+  const user = requireUser(locals)
+  return ownedPlan(Number(id), user.id)
 }
 
 export async function getUserSettings(userId: number) {
