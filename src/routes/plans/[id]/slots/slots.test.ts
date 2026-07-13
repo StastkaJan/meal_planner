@@ -14,10 +14,10 @@ vi.mock('$lib/db', () => ({ db: mockDb }))
 vi.mock('$lib/server/plans', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
   upsertSlot: mockUpsertSlot,
-  validWeek: (w: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(w))
-      throw Object.assign(new Error('Invalid week'), { status: 400 })
-    return w
+  validDateStr: (d: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d))
+      throw Object.assign(new Error('Invalid date'), { status: 400 })
+    return d
   },
 }))
 
@@ -41,8 +41,7 @@ describe('PUT /plans/:id/slots', () => {
     await expect(
       PUT(
         makeEvent({
-          week: '2026-06-30',
-          dayOfWeek: 0,
+          date: '2026-06-30',
           mealType: 'lunch',
           mealId: 1,
         }),
@@ -50,24 +49,30 @@ describe('PUT /plans/:id/slots', () => {
     ).rejects.toMatchObject({ status: 404 })
   })
 
+  it('rejects an invalid date with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PUT(
+        makeEvent({
+          date: 'not-a-date',
+          mealType: 'lunch',
+          mealId: 1,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
   it('deletes the slot and returns 204 when mealId is null', async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     const res = await PUT(
       makeEvent({
-        week: '2026-06-30',
-        dayOfWeek: 0,
+        date: '2026-06-30',
         mealType: 'lunch',
         mealId: null,
       }),
     )
     expect(res.status).toBe(204)
-    expect(mockUpsertSlot).toHaveBeenCalledWith(
-      1,
-      '2026-06-30',
-      0,
-      'lunch',
-      null,
-    )
+    expect(mockUpsertSlot).toHaveBeenCalledWith(1, '2026-06-30', 'lunch', null)
   })
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
@@ -75,56 +80,13 @@ describe('PUT /plans/:id/slots', () => {
     mockDb.limit.mockResolvedValueOnce([{ id: 5 }])
     const res = await PUT(
       makeEvent({
-        week: '2026-06-30',
-        dayOfWeek: 0,
+        date: '2026-06-30',
         mealType: 'lunch',
         mealId: 5,
       }),
     )
     expect(res.status).toBe(204)
-    expect(mockUpsertSlot).toHaveBeenCalledWith(1, '2026-06-30', 0, 'lunch', 5)
-  })
-
-  it('rejects invalid week format with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    await expect(
-      PUT(
-        makeEvent({
-          week: 'not-a-date',
-          dayOfWeek: 0,
-          mealType: 'lunch',
-          mealId: null,
-        }),
-      ),
-    ).rejects.toMatchObject({ status: 400 })
-  })
-
-  it('rejects invalid dayOfWeek with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    await expect(
-      PUT(
-        makeEvent({
-          week: '2026-06-30',
-          dayOfWeek: 7,
-          mealType: 'lunch',
-          mealId: null,
-        }),
-      ),
-    ).rejects.toMatchObject({ status: 400 })
-  })
-
-  it('rejects non-integer dayOfWeek with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    await expect(
-      PUT(
-        makeEvent({
-          week: '2026-06-30',
-          dayOfWeek: 1.5,
-          mealType: 'lunch',
-          mealId: null,
-        }),
-      ),
-    ).rejects.toMatchObject({ status: 400 })
+    expect(mockUpsertSlot).toHaveBeenCalledWith(1, '2026-06-30', 'lunch', 5)
   })
 
   it('rejects invalid mealType with 400', async () => {
@@ -132,8 +94,7 @@ describe('PUT /plans/:id/slots', () => {
     await expect(
       PUT(
         makeEvent({
-          week: '2026-06-30',
-          dayOfWeek: 0,
+          date: '2026-06-30',
           mealType: 'brunch',
           mealId: null,
         }),
@@ -151,8 +112,7 @@ describe('PUT /plans/:id/slots', () => {
         request: {
           json: () =>
             Promise.resolve({
-              week: '2026-06-30',
-              dayOfWeek: 0,
+              date: '2026-06-30',
               mealType: 'lunch',
               mealId: null,
             }),

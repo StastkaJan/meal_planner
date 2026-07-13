@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
+  import { addDays } from '$lib/date'
   import WeekTable from '$lib/components/WeekTable.svelte'
   import PlanSettings from '$lib/components/PlanSettings.svelte'
 
@@ -23,9 +24,7 @@
   }
 
   function shiftWeek(delta: number) {
-    const d = new Date(data.viewWeek) // ISO date string → UTC midnight, no tz shift
-    d.setUTCDate(d.getUTCDate() + delta * 7)
-    const nextWeek = d.toISOString().slice(0, 10)
+    const nextWeek = addDays(data.viewWeek, delta * 7)
     goto(planUrl(data.activePlanId, nextWeek), {
       noScroll: true,
       keepFocus: true,
@@ -57,7 +56,7 @@
   }
 
   async function handleSlotChange(
-    day: number,
+    date: string,
     mealType: string,
     mealId: number | null,
   ) {
@@ -65,12 +64,7 @@
     await fetch(`/plans/${plan.id}/slots`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        week: data.viewWeek,
-        dayOfWeek: day,
-        mealType,
-        mealId,
-      }),
+      body: JSON.stringify({ date, mealType, mealId }),
     })
     await refreshPlan()
   }
@@ -87,9 +81,7 @@
 
   async function handleCopyWeek() {
     if (!plan) return
-    const d = new Date(data.viewWeek)
-    d.setUTCDate(d.getUTCDate() - 7)
-    const from = d.toISOString().slice(0, 10)
+    const from = addDays(data.viewWeek, -7)
     if (
       !confirm(
         'Copy last week into this week? Existing slots will be overwritten.',

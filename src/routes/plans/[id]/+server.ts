@@ -3,11 +3,15 @@ import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { plans } from '$lib/schema'
 import type { RequestHandler } from './$types'
-import { requireOwnedPlan, validWeek, getPlanDetail } from '$lib/server/plans'
+import {
+  requireOwnedPlan,
+  validDateStr,
+  getPlanDetail,
+} from '$lib/server/plans'
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const plan = await requireOwnedPlan(locals, params.id)
-  const week = validWeek(url.searchParams.get('week') ?? plan.weekStart)
+  const week = validDateStr(url.searchParams.get('week') ?? plan.weekStart)
   const result = await getPlanDetail(plan, week)
   return json(result)
 }

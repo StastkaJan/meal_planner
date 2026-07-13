@@ -6,7 +6,7 @@ PUT {{base}}/plans/{{planId}}/slots
 Content-Type: application/json
 
 {
-  "dayOfWeek": 0,
+  "date": "2026-06-29",
   "mealType": "breakfast",
   "mealId": 1
 }
@@ -16,7 +16,7 @@ PUT {{base}}/plans/{{planId}}/slots
 Content-Type: application/json
 
 {
-  "dayOfWeek": 0,
+  "date": "2026-06-29",
   "mealType": "breakfast",
   "mealId": null
 }

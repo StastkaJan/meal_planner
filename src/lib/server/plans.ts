@@ -1,11 +1,12 @@
 import { error } from '@sveltejs/kit'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { plans, weekSlots, meals, userSettings } from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES } from '$lib/types'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
 import { requireUser } from '$lib/auth'
+import { addDays } from '$lib/date'
 import { visibleToUser } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
@@ -40,9 +41,18 @@ export async function getUserSettings(userId: number) {
   return u ?? null
 }
 
-export function validWeek(w: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) error(400, 'Invalid week')
-  return w
+export function validDateStr(d: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) error(400, 'Invalid date')
+  return d
+}
+
+// slots whose date falls in the Mon–Sun window starting at `week` (a Monday)
+export function inWeek(planId: number, week: string) {
+  return and(
+    eq(weekSlots.planId, planId),
+    gte(weekSlots.date, week),
+    lt(weekSlots.date, addDays(week, 7)),
+  )
 }
 
 export async function getPlanDetail(
@@ -52,8 +62,7 @@ export async function getPlanDetail(
   const rows = await db
     .select({
       planId: weekSlots.planId,
-      week: weekSlots.week,
-      dayOfWeek: weekSlots.dayOfWeek,
+      date: weekSlots.date,
       mealType: weekSlots.mealType,
       mealId: weekSlots.mealId,
       mealName: meals.name,
@@ -64,15 +73,14 @@ export async function getPlanDetail(
     })
     .from(weekSlots)
     .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-    .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week)))
+    .where(inWeek(plan.id, week))
 
   return { ...plan, slots: rows as SlotWithMeal[] }
 }
 
 export async function upsertSlot(
   planId: number,
-  week: string,
-  dayOfWeek: number,
+  date: string,
   mealType: string,
   mealId: number | null,
 ) {
@@ -82,8 +90,7 @@ export async function upsertSlot(
       .where(
         and(
           eq(weekSlots.planId, planId),
-          eq(weekSlots.week, week),
-          eq(weekSlots.dayOfWeek, dayOfWeek),
+          eq(weekSlots.date, date),
           eq(weekSlots.mealType, mealType),
         ),
       )
@@ -92,48 +99,39 @@ export async function upsertSlot(
 
   await db
     .insert(weekSlots)
-    .values({ planId, week, dayOfWeek, mealType, mealId })
+    .values({ planId, date, mealType, mealId })
     .onConflictDoUpdate({
-      target: [
-        weekSlots.planId,
-        weekSlots.week,
-        weekSlots.dayOfWeek,
-        weekSlots.mealType,
-      ],
+      target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
       set: { mealId },
     })
 }
 
 // Copy every slot from one week into another (overwriting the target week's slots).
+// Each slot's date shifts by the same offset between the two Mondays.
 export async function copyWeek(planId: number, from: string, to: string) {
   const rows = await db
     .select({
-      dayOfWeek: weekSlots.dayOfWeek,
+      date: weekSlots.date,
       mealType: weekSlots.mealType,
       mealId: weekSlots.mealId,
     })
     .from(weekSlots)
-    .where(and(eq(weekSlots.planId, planId), eq(weekSlots.week, from)))
+    .where(inWeek(planId, from))
   if (!rows.length) return
 
+  const shift = Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
   await db
     .insert(weekSlots)
     .values(
       rows.map((r) => ({
         planId,
-        week: to,
-        dayOfWeek: r.dayOfWeek,
+        date: addDays(r.date, shift),
         mealType: r.mealType,
         mealId: r.mealId,
       })),
     )
     .onConflictDoUpdate({
-      target: [
-        weekSlots.planId,
-        weekSlots.week,
-        weekSlots.dayOfWeek,
-        weekSlots.mealType,
-      ],
+      target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
       set: { mealId: sql`excluded.meal_id` },
     })
 }
@@ -268,7 +266,7 @@ export async function autocomposeSlots(
       .where(visibleToUser(ownerId)),
     db
       .select({
-        dayOfWeek: weekSlots.dayOfWeek,
+        date: weekSlots.date,
         mealType: weekSlots.mealType,
         mealId: weekSlots.mealId,
         calories: meals.calories,
@@ -278,7 +276,7 @@ export async function autocomposeSlots(
       })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-      .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.week, week))),
+      .where(inWeek(plan.id, week)),
   ])
 
   if (!allMealsRaw.length) return
@@ -296,9 +294,7 @@ export async function autocomposeSlots(
     plan.cuisinePrefs,
     plan.dietaryRestrictions,
   )
-  const filled = new Set(
-    existingSlots.map((s) => `${s.dayOfWeek}-${s.mealType}`),
-  )
+  const filled = new Set(existingSlots.map((s) => `${s.date}-${s.mealType}`))
   // seed with meals already on the plan this week so we don't duplicate them
   const used = new Set<number>(
     existingSlots
@@ -307,21 +303,21 @@ export async function autocomposeSlots(
   )
   const toInsert: {
     planId: number
-    week: string
-    dayOfWeek: number
+    date: string
     mealType: string
     mealId: number
   }[] = []
 
   for (const day of DAYS) {
-    const dayFilled = existingSlots.filter((s) => s.dayOfWeek === day)
+    const date = addDays(week, day)
+    const dayFilled = existingSlots.filter((s) => s.date === date)
     const consumed = {
       calories: dayFilled.reduce((sum, s) => sum + (s.calories ?? 0), 0),
       proteinG: dayFilled.reduce((sum, s) => sum + toNum(s.proteinG), 0),
       carbsG: dayFilled.reduce((sum, s) => sum + toNum(s.carbsG), 0),
       fatG: dayFilled.reduce((sum, s) => sum + toNum(s.fatG), 0),
     }
-    const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(`${day}-${mt}`))
+    const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(`${date}-${mt}`))
     let remaining = emptySlots.length
 
     for (const mealType of emptySlots) {
@@ -339,8 +335,7 @@ export async function autocomposeSlots(
       used.add(chosen.id)
       toInsert.push({
         planId: plan.id,
-        week,
-        dayOfWeek: day,
+        date,
         mealType,
         mealId: chosen.id,
       })
