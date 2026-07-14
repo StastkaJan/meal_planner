@@ -8,6 +8,14 @@ export const MEAL_TYPES = [
 
 export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const
 
+export const PLAN_MODES = ['simple', 'calendar'] as const
+
+// zero-padded 24h "HH:MM", matching what <input type="time"> emits — zero-padding is
+// what makes plain string sort double as chronological sort for calendar-mode slots
+export function isValidTime(t: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(t)
+}
+
 export function mealFitsSlot(
   allowedSlots: string[],
   mealType: string,

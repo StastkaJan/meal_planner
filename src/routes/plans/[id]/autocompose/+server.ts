@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit'
 import {
   requireOwnedPlan,
   validDateStr,
@@ -9,6 +10,8 @@ import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {
   const plan = await requireOwnedPlan(locals, params.id)
+  if (plan.mode !== 'simple')
+    error(400, 'Auto-compose is only available for simple-mode plans')
   const { week } = (await request.json().catch(() => ({}))) as { week?: string }
 
   await autocomposeSlots(

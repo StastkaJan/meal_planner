@@ -36,6 +36,15 @@ families juggling dietary needs. A logged-in user, since plans are private.
 
 ## How it works
 
+A plan is created in one of two modes, chosen once and fixed thereafter:
+**simple mode** (the 5-fixed-slot grid described below) or **calendar
+mode**, where meals are placed at any exact hour:minute instead of a named
+slot, any number of times per day. Both modes share the same underlying
+row shape — calendar mode just stores a time (e.g. `14:30`) where simple
+mode stores a slot name. Auto-compose is simple-mode only, since its
+calorie-budget split assumes a fixed slot count per day; Copy-from-last-week
+and the shopping list work unchanged in both modes.
+
 Each plan owns a grid of slots keyed by `(plan, date, meal type)`; filling
 a slot points it at a meal, clearing it removes it. Both the manual picker and
 auto-compose only offer meals whose `allowedSlots` includes the slot's meal

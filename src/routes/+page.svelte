@@ -9,6 +9,7 @@
 
   let creating = $state(false)
   let newPlanName = $state('')
+  let newPlanMode = $state<'simple' | 'calendar'>('simple')
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
 
@@ -42,9 +43,10 @@
     const created = await fetch('/plans', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: newPlanName.trim() }),
+      body: JSON.stringify({ name: newPlanName.trim(), mode: newPlanMode }),
     }).then((r) => r.json())
     newPlanName = ''
+    newPlanMode = 'simple'
     creating = false
     await goto(planUrl(created.id, created.weekStart))
   }
@@ -132,6 +134,10 @@
           }}
           autofocus
         />
+        <select class="new-mode" bind:value={newPlanMode}>
+          <option value="simple">Simple (5 slots/day)</option>
+          <option value="calendar">Calendar (exact time)</option>
+        </select>
         <button class="btn" onclick={createPlan}>Add</button>
         <button class="btn ghost" onclick={() => (creating = false)}
           >Cancel</button
@@ -162,7 +168,7 @@
       weekStart={data.viewWeek}
       targets={data.targets}
       onSlotChange={handleSlotChange}
-      onAutoCompose={handleAutoCompose}
+      onAutoCompose={plan.mode === 'simple' ? handleAutoCompose : undefined}
       onCopyWeek={handleCopyWeek}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
@@ -229,6 +235,13 @@
       outline: 2px solid $color-accent;
       border-color: transparent;
     }
+  }
+  .new-mode {
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 5px 10px;
+    color: $color-text;
   }
   .btn {
     display: inline-flex;

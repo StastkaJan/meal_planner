@@ -3,6 +3,7 @@
   import { MEAL_TYPES } from '$lib/constants'
   import type { Meal } from '$lib/schema'
   import MealCell from './MealCell.svelte'
+  import DayTimeline from './DayTimeline.svelte'
   import NutritionBar from './NutritionBar.svelte'
 
   let {
@@ -105,21 +106,38 @@
         </tr>
       </thead>
       <tbody>
-        {#each MEAL_TYPES as mt}
+        {#if plan.mode === 'calendar'}
           <tr>
-            <td class="row-label">{mt.replaceAll('_', ' ')}</td>
+            <td class="row-label">meals</td>
             {#each weekDates as dt}
               <td class="slot-cell">
-                <MealCell
-                  slot={slotMap.get(`${isoDate(dt)}-${mt}`) ?? null}
+                <DayTimeline
+                  date={isoDate(dt)}
+                  slots={plan.slots}
                   {meals}
-                  mealType={mt}
-                  onPick={(mealId) => onSlotChange(isoDate(dt), mt, mealId)}
+                  onPick={(time, mealId) =>
+                    onSlotChange(isoDate(dt), time, mealId)}
                 />
               </td>
             {/each}
           </tr>
-        {/each}
+        {:else}
+          {#each MEAL_TYPES as mt}
+            <tr>
+              <td class="row-label">{mt.replaceAll('_', ' ')}</td>
+              {#each weekDates as dt}
+                <td class="slot-cell">
+                  <MealCell
+                    slot={slotMap.get(`${isoDate(dt)}-${mt}`) ?? null}
+                    {meals}
+                    mealType={mt}
+                    onPick={(mealId) => onSlotChange(isoDate(dt), mt, mealId)}
+                  />
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        {/if}
         <tr class="nutrition-row">
           <td class="row-label nutrition-label">nutrition</td>
           {#each dailyNutrition as dn}

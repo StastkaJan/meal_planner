@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   const { id: userId } = requireUser(locals)
-  const { name } = await request.json()
+  const { name, mode } = await request.json()
   const d = new Date()
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)) // snap to Monday
   const weekStart = d.toISOString().slice(0, 10)
@@ -29,6 +29,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       name,
       weekStart,
       userId,
+      mode: mode === 'calendar' ? 'calendar' : 'simple',
       cuisinePrefs: s?.cuisinePrefs ?? [],
       dietaryRestrictions: s?.dietaryRestrictions ?? [],
     })

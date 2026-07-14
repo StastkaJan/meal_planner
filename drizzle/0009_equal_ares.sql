@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD COLUMN "mode" text DEFAULT 'simple' NOT NULL;

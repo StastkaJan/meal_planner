@@ -4,7 +4,7 @@ import { db } from '$lib/db'
 import { meals } from '$lib/schema'
 import { requireOwnedPlan, validDateStr, upsertSlot } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
-import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'
+import { MEAL_TYPES, isValidTime, mealFitsSlot } from '$lib/constants'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
@@ -12,8 +12,11 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
   const { date, mealType, mealId } = await request.json()
   validDateStr(date)
-  if (!(MEAL_TYPES as readonly string[]).includes(mealType))
-    error(400, 'Invalid mealType')
+  const validMealType =
+    plan.mode === 'calendar'
+      ? isValidTime(mealType)
+      : (MEAL_TYPES as readonly string[]).includes(mealType)
+  if (!validMealType) error(400, 'Invalid mealType')
 
   if (mealId != null) {
     const [m] = await db
@@ -22,7 +25,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
       .where(and(eq(meals.id, mealId), visibleToUser(plan.userId)))
       .limit(1)
     if (!m) error(404, 'Meal not found')
-    if (!mealFitsSlot(m.allowedSlots, mealType))
+    if (plan.mode !== 'calendar' && !mealFitsSlot(m.allowedSlots, mealType))
       error(400, 'Meal not allowed for this slot type')
   }
 

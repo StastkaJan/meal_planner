@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Meal } from '$lib/schema'
-  import { mealFitsSlot } from '$lib/constants'
+  import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 
   let {
     meals,
@@ -16,11 +16,14 @@
 
   let search = $state('')
 
+  // allowedSlots restrictions only apply to the 5 named simple-mode slots — a calendar-mode
+  // time string (e.g. "08:30") never matches a named slot, so skip the filter for those
   const filtered = $derived(
     meals.filter(
       (m) =>
         m.name.toLowerCase().includes(search.toLowerCase()) &&
-        mealFitsSlot(m.allowedSlots, mealType),
+        (!(MEAL_TYPES as readonly string[]).includes(mealType) ||
+          mealFitsSlot(m.allowedSlots, mealType)),
     ),
   )
 </script>

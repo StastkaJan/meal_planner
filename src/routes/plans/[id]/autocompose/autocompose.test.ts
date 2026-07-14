@@ -40,6 +40,7 @@ describe('POST /plans/:id/autocompose', () => {
       id: 1,
       weekStart: '2026-06-29',
       userId: 1,
+      mode: 'simple',
       cuisinePrefs: [],
       dietaryRestrictions: [],
     })
@@ -63,6 +64,7 @@ describe('POST /plans/:id/autocompose', () => {
       id: 1,
       weekStart: '2026-06-29',
       userId: 1,
+      mode: 'simple',
       cuisinePrefs: [],
       dietaryRestrictions: [],
     })
@@ -73,5 +75,18 @@ describe('POST /plans/:id/autocompose', () => {
       expect.objectContaining({ calories: 2000 }),
       1,
     )
+  })
+
+  it('rejects auto-compose for a calendar-mode plan with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      mode: 'calendar',
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    await expect(POST(makeEvent())).rejects.toMatchObject({ status: 400 })
+    expect(autocomposeSlots).not.toHaveBeenCalled()
   })
 })

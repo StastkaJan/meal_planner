@@ -5,6 +5,7 @@ import {
   CUISINE_OPTIONS,
   DIET_OPTIONS,
   mealFitsSlot,
+  isValidTime,
 } from './constants'
 
 describe('tag categories', () => {
@@ -51,5 +52,20 @@ describe('resolveTargets', () => {
     expect(t.carbsG).toBe(200)
     expect(t.proteinG).toBe(NUTRITION_TARGETS.proteinG) // untouched
     expect(t.fatG).toBe(NUTRITION_TARGETS.fatG)
+  })
+})
+
+describe('isValidTime', () => {
+  it('accepts zero-padded 24h HH:MM', () => {
+    expect(isValidTime('08:30')).toBe(true)
+    expect(isValidTime('23:59')).toBe(true)
+    expect(isValidTime('00:00')).toBe(true)
+  })
+
+  it('rejects unpadded, out-of-range, or malformed times', () => {
+    expect(isValidTime('8:30')).toBe(false)
+    expect(isValidTime('24:00')).toBe(false)
+    expect(isValidTime('12:60')).toBe(false)
+    expect(isValidTime('lunch')).toBe(false)
   })
 })

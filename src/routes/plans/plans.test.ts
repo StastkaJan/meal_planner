@@ -62,4 +62,18 @@ describe('POST /plans', () => {
     const inserted = mockDb.values.mock.calls[0][0]
     expect(inserted.weekStart).not.toBe('2026-01-01')
   })
+
+  it('defaults mode to simple when not provided', async () => {
+    mockDb.returning.mockResolvedValueOnce([{ id: 1, name: 'test' }])
+    await POST(makeEvent({ name: 'test' }))
+    const inserted = mockDb.values.mock.calls[0][0]
+    expect(inserted.mode).toBe('simple')
+  })
+
+  it('persists calendar mode when provided', async () => {
+    mockDb.returning.mockResolvedValueOnce([{ id: 1, name: 'test' }])
+    await POST(makeEvent({ name: 'test', mode: 'calendar' }))
+    const inserted = mockDb.values.mock.calls[0][0]
+    expect(inserted.mode).toBe('calendar')
+  })
 })

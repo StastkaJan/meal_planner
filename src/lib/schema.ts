@@ -92,6 +92,7 @@ export const plans = pgTable('plans', {
     .array()
     .notNull()
     .default(sql`'{}'`),
+  mode: text('mode').notNull().default('simple'),
 })
 
 export const weekSlots = pgTable(
