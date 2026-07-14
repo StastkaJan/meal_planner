@@ -4,6 +4,7 @@ import {
   NUTRITION_TARGETS,
   CUISINE_OPTIONS,
   DIET_OPTIONS,
+  mealFitsSlot,
 } from './types'
 
 describe('tag categories', () => {
@@ -12,6 +13,17 @@ describe('tag categories', () => {
       expect(DIET_OPTIONS).toContain(t)
       expect(CUISINE_OPTIONS).not.toContain(t)
     }
+  })
+})
+
+describe('mealFitsSlot', () => {
+  it('treats an empty allowedSlots as valid for any slot', () => {
+    expect(mealFitsSlot([], 'breakfast')).toBe(true)
+    expect(mealFitsSlot([], 'dinner')).toBe(true)
+  })
+  it('restricts to the listed slot types', () => {
+    expect(mealFitsSlot(['breakfast'], 'breakfast')).toBe(true)
+    expect(mealFitsSlot(['breakfast'], 'dinner')).toBe(false)
   })
 })
 

@@ -1,20 +1,27 @@
 <script lang="ts">
   import type { Meal } from '$lib/schema'
+  import { mealFitsSlot } from '$lib/types'
 
   let {
     meals,
     current,
+    mealType,
     onSelect,
   }: {
     meals: Meal[]
     current: number | null
+    mealType: string
     onSelect: (mealId: number | null) => void
   } = $props()
 
   let search = $state('')
 
   const filtered = $derived(
-    meals.filter((m) => m.name.toLowerCase().includes(search.toLowerCase())),
+    meals.filter(
+      (m) =>
+        m.name.toLowerCase().includes(search.toLowerCase()) &&
+        mealFitsSlot(m.allowedSlots, mealType),
+    ),
   )
 </script>
 

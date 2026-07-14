@@ -21,6 +21,13 @@ export type MealType = (typeof MEAL_TYPES)[number]
 
 export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const
 
+export function mealFitsSlot(
+  allowedSlots: string[],
+  mealType: string,
+): boolean {
+  return !allowedSlots.length || allowedSlots.includes(mealType)
+}
+
 export const DIFF_LABEL: Record<string, string> = {
   easy: 'Easy',
   medium: 'Medium',

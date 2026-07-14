@@ -1,11 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { plans as plansTable, meals as mealsTable } from '$lib/schema'
-import {
-  getPlanDetail,
-  validDateStr,
-  getUserSettings,
-} from '$lib/server/plans'
+import { getPlanDetail, validDateStr, getUserSettings } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
 import { resolveTargets } from '$lib/types'
 import type { PageServerLoad } from './$types'

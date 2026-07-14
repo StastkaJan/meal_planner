@@ -37,7 +37,10 @@ families juggling dietary needs. A logged-in user, since plans are private.
 ## How it works
 
 Each plan owns a grid of slots keyed by `(plan, date, meal type)`; filling
-a slot points it at a meal, clearing it removes it. Auto-compose filters the
+a slot points it at a meal, clearing it removes it. Both the manual picker and
+auto-compose only offer meals whose `allowedSlots` includes the slot's meal
+type (empty `allowedSlots` = suitable for any slot), so a dinner-only recipe
+can't land in breakfast. Auto-compose also filters the
 meal library by the plan's cuisine (any-match) and dietary (all-match)
 preferences, then fills empty slots by splitting the user's daily calorie target
 across them, keeping meals within 1.3× the per-slot calorie budget, and among

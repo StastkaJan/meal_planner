@@ -70,7 +70,9 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
   meal (personal meals are owner-only). No admin/owner distinction on the shared library.
 - **Shared tag space** — cuisine and diet still share one tag column. `Vegetarian`/`Vegan`
   now live in the diet list (AND-match) rather than cuisines (OR-match), but nothing stops
-  a meal from carrying a cuisine tag in the diet slot or vice versa.
+  a meal from carrying a cuisine tag in the diet slot or vice versa. `allowedSlots` (which
+  slot types a meal is suitable for) is a separate column, not part of this shared space —
+  it's a hard restriction, not an OR/AND preference match.
 
 ## Future opportunities
 

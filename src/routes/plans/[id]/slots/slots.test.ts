@@ -77,7 +77,7 @@ describe('PUT /plans/:id/slots', () => {
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    mockDb.limit.mockResolvedValueOnce([{ id: 5 }])
+    mockDb.limit.mockResolvedValueOnce([{ id: 5, allowedSlots: [] }])
     const res = await PUT(
       makeEvent({
         date: '2026-06-30',
@@ -87,6 +87,21 @@ describe('PUT /plans/:id/slots', () => {
     )
     expect(res.status).toBe(204)
     expect(mockUpsertSlot).toHaveBeenCalledWith(1, '2026-06-30', 'lunch', 5)
+  })
+
+  it('rejects a meal not allowed for the slot type with 400', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockDb.limit.mockResolvedValueOnce([{ id: 5, allowedSlots: ['breakfast'] }])
+    await expect(
+      PUT(
+        makeEvent({
+          date: '2026-06-30',
+          mealType: 'lunch',
+          mealId: 5,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+    expect(mockUpsertSlot).not.toHaveBeenCalled()
   })
 
   it('rejects invalid mealType with 400', async () => {

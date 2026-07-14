@@ -8,10 +8,10 @@ import {
 } from './plans'
 
 const meals = [
-  { id: 1, calories: 100, tags: ['Italian', 'no_gluten'] },
-  { id: 2, calories: 400, tags: ['Chinese', 'Vegan'] },
-  { id: 3, calories: 700, tags: ['Mediterranean'] },
-  { id: 4, calories: 900, tags: [] },
+  { id: 1, calories: 100, tags: ['Italian', 'no_gluten'], allowedSlots: [] },
+  { id: 2, calories: 400, tags: ['Chinese', 'Vegan'], allowedSlots: [] },
+  { id: 3, calories: 700, tags: ['Mediterranean'], allowedSlots: [] },
+  { id: 4, calories: 900, tags: [], allowedSlots: [] },
 ]
 
 describe('candidateMeals', () => {
@@ -27,8 +27,8 @@ describe('candidateMeals', () => {
 
   it('treats null calories as 0 (always fits)', () => {
     const withNull = [
-      { id: 5, calories: null, tags: [] },
-      { id: 6, calories: 999, tags: [] },
+      { id: 5, calories: null, tags: [], allowedSlots: [] },
+      { id: 6, calories: 999, tags: [], allowedSlots: [] },
     ]
     const result = candidateMeals(withNull, 100)
     expect(result.map((m) => m.id)).toContain(5)
@@ -113,6 +113,7 @@ describe('rankByMacros', () => {
     id,
     calories: 100,
     tags: [],
+    allowedSlots: [],
     proteinG,
     carbsG,
     fatG,

@@ -57,6 +57,13 @@
       "when": 1783882528899,
       "tag": "0007_slot_date",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783966259149,
+      "tag": "0008_allowed_slots",
+      "breakpoints": true
     }
   ]
 }
