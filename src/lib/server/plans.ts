@@ -3,7 +3,7 @@ import { and, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { plans, weekSlots, meals, userSettings } from '$lib/schema'
 import type { Plan } from '$lib/schema'
-import { DAYS, MEAL_TYPES } from '$lib/types'
+import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
 import { requireUser } from '$lib/auth'
 import { addDays } from '$lib/date'
@@ -166,6 +166,7 @@ type CandidateMeal = {
   id: number
   calories: number | null
   tags: string[]
+  allowedSlots: string[]
   proteinG?: number
   carbsG?: number
   fatG?: number
@@ -258,6 +259,7 @@ export async function autocomposeSlots(
         id: meals.id,
         calories: meals.calories,
         tags: meals.tags,
+        allowedSlots: meals.allowedSlots,
         proteinG: meals.proteinG,
         carbsG: meals.carbsG,
         fatG: meals.fatG,
@@ -285,6 +287,7 @@ export async function autocomposeSlots(
     id: m.id,
     calories: m.calories,
     tags: m.tags,
+    allowedSlots: m.allowedSlots,
     proteinG: toNum(m.proteinG),
     carbsG: toNum(m.carbsG),
     fatG: toNum(m.fatG),
@@ -321,9 +324,16 @@ export async function autocomposeSlots(
     let remaining = emptySlots.length
 
     for (const mealType of emptySlots) {
+      const slotMeals = prefilteredMeals.filter((m) =>
+        mealFitsSlot(m.allowedSlots, mealType),
+      )
+      if (!slotMeals.length) {
+        remaining--
+        continue
+      }
       // calorie ceiling first, then prefer meals whose macros land closest to the remaining budget
       const fits = candidateMeals(
-        prefilteredMeals,
+        slotMeals,
         (targets.calories - consumed.calories) / remaining,
       )
       const macroBudget = {

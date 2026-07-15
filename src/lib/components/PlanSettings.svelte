@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/types'
+  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/constants'
   import type { Plan } from '$lib/schema'
 
   let {

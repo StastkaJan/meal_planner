@@ -12,7 +12,7 @@
 | GET    | /plans/[id]             | yes  | get plan + week slots (`?week=` optional, defaults to plan's weekStart)                                                      |
 | PATCH  | /plans/[id]             | yes  | update plan                                                                                                                  |
 | DELETE | /plans/[id]             | yes  | delete plan                                                                                                                  |
-| PUT    | /plans/[id]/slots       | yes  | upsert/clear one slot (`{date, mealType, mealId}`)                                                                           |
+| PUT    | /plans/[id]/slots       | yes  | upsert/clear one slot (`{date, mealType, mealId}`); 400 if the meal's `allowedSlots` excludes `mealType`                     |
 | POST   | /plans/[id]/autocompose | yes  | auto-fill empty week slots                                                                                                   |
 | POST   | /plans/[id]/copy-week   | yes  | copy one week's slots to another (`{from, to}`)                                                                              |
 | PATCH  | /profile                | yes  | upsert cuisine/dietary defaults (`{cuisinePrefs?, dietaryRestrictions?}`); nutrition targets use the `?/targets` form action |

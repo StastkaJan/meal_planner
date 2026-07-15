@@ -4,7 +4,7 @@ import {
   getUserSettings,
   autocomposeSlots,
 } from '$lib/server/plans'
-import { resolveTargets } from '$lib/types'
+import { resolveTargets } from '$lib/constants'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {

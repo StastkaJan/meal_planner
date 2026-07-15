@@ -1,0 +1,1 @@
+ALTER TABLE "meals" ADD COLUMN "allowed_slots" text[] DEFAULT '{}' NOT NULL;

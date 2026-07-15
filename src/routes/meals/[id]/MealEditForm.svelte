@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { CUISINE_OPTIONS, DIET_OPTIONS, DIFF_LABEL } from '$lib/types'
+  import {
+    CUISINE_OPTIONS,
+    DIET_OPTIONS,
+    DIFF_LABEL,
+    MEAL_TYPES,
+  } from '$lib/constants'
   import type { Meal } from '$lib/schema'
 
   let {
@@ -13,9 +18,16 @@
   } = $props()
 
   let tags = $derived(meal.tags ?? [])
+  let allowedSlots = $derived(meal.allowedSlots ?? [])
 
   function toggleTag(opt: string) {
     tags = tags.includes(opt) ? tags.filter((t) => t !== opt) : [...tags, opt]
+  }
+
+  function toggleSlot(opt: string) {
+    allowedSlots = allowedSlots.includes(opt)
+      ? allowedSlots.filter((t) => t !== opt)
+      : [...allowedSlots, opt]
   }
 
   async function handleSave(e: SubmitEvent) {
@@ -23,6 +35,7 @@
     const fd = new FormData(e.target as HTMLFormElement)
     const body: Record<string, unknown> = Object.fromEntries(fd)
     body.tags = fd.getAll('tags')
+    body.allowedSlots = fd.getAll('allowedSlots')
     const res = await fetch(`/meals/${meal.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -134,6 +147,23 @@
             value={opt}
             checked={tags.includes(opt)}
             onchange={() => toggleTag(opt)}
+          />
+          {opt.replace('_', ' ')}
+        </label>
+      {/each}
+    </div>
+  </fieldset>
+  <fieldset class="tags-field">
+    <legend>Allowed slots <span class="hint">(none = any)</span></legend>
+    <div class="chips">
+      {#each MEAL_TYPES as opt}
+        <label class="chip" class:active={allowedSlots.includes(opt)}>
+          <input
+            type="checkbox"
+            name="allowedSlots"
+            value={opt}
+            checked={allowedSlots.includes(opt)}
+            onchange={() => toggleSlot(opt)}
           />
           {opt.replace('_', ' ')}
         </label>

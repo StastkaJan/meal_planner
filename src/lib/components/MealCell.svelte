@@ -47,7 +47,12 @@
 
 <dialog bind:this={dialogEl} onclose={() => (open = false)}>
   {#if open}
-    <MealPicker {meals} current={slot?.mealId ?? null} onSelect={handlePick} />
+    <MealPicker
+      {meals}
+      current={slot?.mealId ?? null}
+      {mealType}
+      onSelect={handlePick}
+    />
   {/if}
 </dialog>
 

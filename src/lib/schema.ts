@@ -58,6 +58,10 @@ export const meals = pgTable('meals', {
     .array()
     .notNull()
     .default(sql`'{}'`),
+  allowedSlots: text('allowed_slots')
+    .array()
+    .notNull()
+    .default(sql`'{}'`),
   imageUrl: text('image_url'),
   description: text('description'),
   ingredients: text('ingredients')

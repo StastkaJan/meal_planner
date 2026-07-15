@@ -39,6 +39,7 @@ const WRITABLE = [
   'carbsG',
   'fatG',
   'tags',
+  'allowedSlots',
   'imageUrl',
   'description',
   'ingredients',

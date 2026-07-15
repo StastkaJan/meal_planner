@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
-  import { DIFF_LABEL } from '$lib/types'
+  import { DIFF_LABEL } from '$lib/constants'
 
   let { data }: { data: PageData } = $props()
 

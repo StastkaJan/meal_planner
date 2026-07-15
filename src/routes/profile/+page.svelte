@@ -1,6 +1,6 @@
 <script lang="ts">
   import PlanSettings from '$lib/components/PlanSettings.svelte'
-  import { NUTRITION_TARGETS } from '$lib/types'
+  import { NUTRITION_TARGETS } from '$lib/constants'
 
   let { data } = $props()
 

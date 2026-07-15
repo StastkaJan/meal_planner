@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation'
   import MealEditForm from './MealEditForm.svelte'
   import type { PageData } from './$types'
-  import { DIFF_LABEL } from '$lib/types'
+  import { DIFF_LABEL } from '$lib/constants'
 
   let { data }: { data: PageData } = $props()
   let editing = $state(false)

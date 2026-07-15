@@ -35,8 +35,14 @@ describe('pickMealFields', () => {
       name: 'Soup',
       calories: 300,
       tags: ['Italian'],
+      allowedSlots: ['dinner'],
     })
-    expect(out).toEqual({ name: 'Soup', calories: 300, tags: ['Italian'] })
+    expect(out).toEqual({
+      name: 'Soup',
+      calories: 300,
+      tags: ['Italian'],
+      allowedSlots: ['dinner'],
+    })
   })
 
   it('drops unknown/server-owned fields (mass-assignment guard)', () => {
