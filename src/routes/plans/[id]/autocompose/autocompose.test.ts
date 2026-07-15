@@ -7,7 +7,7 @@ const mockGetUserSettings = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/plans', () => ({
   autocomposeSlots,
   requireOwnedPlan: mockRequireOwnedPlan,
-  validWeek: (w: string) => {
+  validDateStr: (w: string) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(w))
       throw Object.assign(new Error('Invalid week'), { status: 400 })
     return w
