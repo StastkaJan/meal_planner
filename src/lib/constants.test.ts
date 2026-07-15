@@ -5,7 +5,7 @@ import {
   CUISINE_OPTIONS,
   DIET_OPTIONS,
   mealFitsSlot,
-} from './types'
+} from './constants'
 
 describe('tag categories', () => {
   it('treats Vegetarian/Vegan as diet restrictions, not cuisines', () => {

@@ -3,7 +3,7 @@ import { db } from '$lib/db'
 import { plans as plansTable, meals as mealsTable } from '$lib/schema'
 import { getPlanDetail, validDateStr, getUserSettings } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
-import { resolveTargets } from '$lib/types'
+import { resolveTargets } from '$lib/constants'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {

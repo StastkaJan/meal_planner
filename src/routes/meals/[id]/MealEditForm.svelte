@@ -4,7 +4,7 @@
     DIET_OPTIONS,
     DIFF_LABEL,
     MEAL_TYPES,
-  } from '$lib/types'
+  } from '$lib/constants'
   import type { Meal } from '$lib/schema'
 
   let {

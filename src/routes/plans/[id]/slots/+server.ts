@@ -4,7 +4,7 @@ import { db } from '$lib/db'
 import { meals } from '$lib/schema'
 import { requireOwnedPlan, validDateStr, upsertSlot } from '$lib/server/plans'
 import { visibleToUser } from '$lib/server/meals'
-import { MEAL_TYPES, mealFitsSlot } from '$lib/types'
+import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
