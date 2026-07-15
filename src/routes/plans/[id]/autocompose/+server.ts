@@ -1,6 +1,6 @@
 import {
   requireOwnedPlan,
-  validWeek,
+  validDateStr,
   getUserSettings,
   autocomposeSlots,
 } from '$lib/server/plans'
@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
 
   await autocomposeSlots(
     plan,
-    validWeek(week ?? plan.weekStart),
+    validDateStr(week ?? plan.weekStart),
     resolveTargets(await getUserSettings(plan.userId)),
     plan.userId,
   )
