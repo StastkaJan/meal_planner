@@ -69,6 +69,11 @@ export type ImportedRecipe = {
   instructions?: string
   calories?: number
   timeMinutes?: number
+  proteinG?: number
+  carbsG?: number
+  fatG?: number
+  servings?: number
+  tags?: string[]
 }
 
 // Find the Recipe node among parsed JSON-LD documents (handles arrays and @graph containers).
@@ -153,6 +158,50 @@ export function parseRecipeJsonLd(recipe: Record<string, any>): ImportedRecipe {
     isoDurationToMinutes(recipe.totalTime) ??
     isoDurationToMinutes(recipe.cookTime)
   if (mins) out.timeMinutes = mins
+
+  return out
+}
+
+// ---- Edamam Recipe Search v2 import --------------------------------------
+
+// Maps a `hits[].recipe` object from the Edamam Recipe Search API v2 response. Edamam's
+// calories/nutrients/yield are whole-recipe totals, matching how this app already stores
+// and rescales macros by a servings stepper — no per-serving division needed.
+export function parseEdamamRecipe(recipe: Record<string, any>): ImportedRecipe {
+  const out: ImportedRecipe = {}
+  if (typeof recipe.label === 'string') out.name = recipe.label.trim()
+  if (typeof recipe.image === 'string') out.imageUrl = recipe.image
+
+  if (Array.isArray(recipe.ingredientLines)) {
+    out.ingredients = recipe.ingredientLines
+      .map(String)
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+  }
+
+  if (Number.isFinite(recipe.calories))
+    out.calories = Math.round(recipe.calories)
+  if (Number.isFinite(recipe.totalTime) && recipe.totalTime > 0)
+    out.timeMinutes = Math.round(recipe.totalTime)
+  if (Number.isFinite(recipe.yield) && recipe.yield > 0)
+    out.servings = Math.round(recipe.yield)
+
+  const protein = recipe.totalNutrients?.PROCNT?.quantity
+  if (Number.isFinite(protein)) out.proteinG = Math.round(protein)
+  const carbs = recipe.totalNutrients?.CHOCDF?.quantity
+  if (Number.isFinite(carbs)) out.carbsG = Math.round(carbs)
+  const fat = recipe.totalNutrients?.FAT?.quantity
+  if (Number.isFinite(fat)) out.fatG = Math.round(fat)
+
+  const tags = [
+    ...(Array.isArray(recipe.dietLabels) ? recipe.dietLabels : []),
+    ...(Array.isArray(recipe.cuisineType) ? recipe.cuisineType : []),
+    ...(Array.isArray(recipe.mealType) ? recipe.mealType : []),
+  ]
+    .map(String)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+  if (tags.length) out.tags = [...new Set(tags)]
 
   return out
 }

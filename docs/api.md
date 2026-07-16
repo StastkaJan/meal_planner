@@ -7,6 +7,7 @@
 | PATCH  | /meals/[id]             | yes  | update meal                                                                                                                  |
 | DELETE | /meals/[id]             | yes  | delete meal                                                                                                                  |
 | POST   | /meals/import           | yes  | parse a recipe from `{url}` or `{text}` (schema.org JSON-LD) → fields, no insert                                             |
+| POST   | /meals/import/edamam    | yes  | search Edamam by `{query}`, map the top hit → fields, no insert (needs `EDAMAM_APP_ID`/`EDAMAM_APP_KEY`)                     |
 | GET    | /plans                  | yes  | list user plans                                                                                                              |
 | POST   | /plans                  | yes  | create plan                                                                                                                  |
 | GET    | /plans/[id]             | yes  | get plan + week slots (`?week=` optional, defaults to plan's weekStart)                                                      |

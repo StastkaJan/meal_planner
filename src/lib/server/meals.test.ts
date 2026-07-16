@@ -5,6 +5,7 @@ import {
   findRecipeNode,
   isoDurationToMinutes,
   parseRecipeJsonLd,
+  parseEdamamRecipe,
 } from './meals'
 
 describe('canAccessMeal', () => {
@@ -125,5 +126,53 @@ describe('parseRecipeJsonLd', () => {
     expect(out.instructions).toBe('Step A\nStep B')
     expect(out.calories).toBeUndefined()
     expect(out.ingredients).toBeUndefined()
+  })
+})
+
+describe('parseEdamamRecipe', () => {
+  it('maps a full Edamam hit', () => {
+    const out = parseEdamamRecipe({
+      label: 'Chicken Tikka Masala',
+      image: 'http://img/tikka.jpg',
+      ingredientLines: [' 1 lb chicken ', '1 cup yogurt'],
+      calories: 1234.6,
+      totalTime: 45,
+      yield: 4,
+      totalNutrients: {
+        PROCNT: { quantity: 88.2, unit: 'g' },
+        CHOCDF: { quantity: 30.1, unit: 'g' },
+        FAT: { quantity: 60.9, unit: 'g' },
+      },
+      dietLabels: ['High-Protein'],
+      cuisineType: ['Indian'],
+      mealType: ['Dinner'],
+    })
+    expect(out).toEqual({
+      name: 'Chicken Tikka Masala',
+      imageUrl: 'http://img/tikka.jpg',
+      ingredients: ['1 lb chicken', '1 cup yogurt'],
+      calories: 1235,
+      timeMinutes: 45,
+      servings: 4,
+      proteinG: 88,
+      carbsG: 30,
+      fatG: 61,
+      tags: ['high-protein', 'indian', 'dinner'],
+    })
+  })
+
+  it('tolerates missing optional fields', () => {
+    const out = parseEdamamRecipe({
+      label: 'Bare',
+      ingredientLines: ['water'],
+      calories: 100,
+      totalTime: 0,
+      yield: 0,
+    })
+    expect(out).toEqual({
+      name: 'Bare',
+      ingredients: ['water'],
+      calories: 100,
+    })
   })
 })

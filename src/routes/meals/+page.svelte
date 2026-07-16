@@ -12,6 +12,11 @@
   let importError = $state('')
   let importBusy = $state(false)
 
+  let importingEdamam = $state(false)
+  let edamamQuery = $state('')
+  let edamamError = $state('')
+  let edamamBusy = $state(false)
+
   async function handleCreate(e: SubmitEvent) {
     e.preventDefault()
     const fd = new FormData(e.target as HTMLFormElement)
@@ -32,6 +37,21 @@
     await goto('/meals')
   }
 
+  // Shared by both import sources: takes the parsed fields, creates a personal draft, and
+  // navigates to it for review. Returns an error message on failure, or null on success.
+  async function createImportedMeal(fields: object): Promise<string | null> {
+    const createRes = await fetch('/meals', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...fields, scope: 'personal' }),
+    })
+    if (!createRes.ok)
+      return "Imported the recipe but couldn't save it (missing a name?)"
+    const created = await createRes.json()
+    await goto(`/meals/${created.id}`)
+    return null
+  }
+
   // Import parses schema.org data, then creates a personal draft you review/edit on its page.
   async function importRecipe() {
     if (!importUrl.trim() || importBusy) return
@@ -48,23 +68,35 @@
           (await res.json().catch(() => ({}))).message ?? 'Import failed'
         return
       }
-      const fields = await res.json()
-      const createRes = await fetch('/meals', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...fields, scope: 'personal' }),
-      })
-      if (!createRes.ok) {
-        importError =
-          "Imported the recipe but couldn't save it (missing a name?)"
-        return
-      }
-      const created = await createRes.json()
-      await goto(`/meals/${created.id}`)
+      importError = (await createImportedMeal(await res.json())) ?? ''
     } catch {
       importError = 'Something went wrong'
     } finally {
       importBusy = false
+    }
+  }
+
+  // Searches Edamam and imports the top hit, same review flow as URL import.
+  async function importFromEdamam() {
+    if (!edamamQuery.trim() || edamamBusy) return
+    edamamError = ''
+    edamamBusy = true
+    try {
+      const res = await fetch('/meals/import/edamam', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: edamamQuery.trim() }),
+      })
+      if (!res.ok) {
+        edamamError =
+          (await res.json().catch(() => ({}))).message ?? 'Import failed'
+        return
+      }
+      edamamError = (await createImportedMeal(await res.json())) ?? ''
+    } catch {
+      edamamError = 'Something went wrong'
+    } finally {
+      edamamBusy = false
     }
   }
 </script>
@@ -79,6 +111,13 @@
           importing = !importing
           importError = ''
         }}>Import from URL</button
+      >
+      <button
+        class="btn ghost"
+        onclick={() => {
+          importingEdamam = !importingEdamam
+          edamamError = ''
+        }}>Import from Edamam</button
       >
       <button
         class="btn"
@@ -110,6 +149,30 @@
         }}>Cancel</button
       >
       {#if importError}<span class="import-error">{importError}</span>{/if}
+    </div>
+  {/if}
+
+  {#if importingEdamam}
+    <div class="import-bar">
+      <input
+        type="text"
+        placeholder="Search Edamam, e.g. “chicken tikka masala”"
+        bind:value={edamamQuery}
+        onkeydown={(e) => {
+          if (e.key === 'Enter') importFromEdamam()
+        }}
+      />
+      <button class="btn sm" onclick={importFromEdamam} disabled={edamamBusy}
+        >{edamamBusy ? 'Importing…' : 'Import'}</button
+      >
+      <button
+        class="btn sm ghost"
+        onclick={() => {
+          importingEdamam = false
+          edamamError = ''
+        }}>Cancel</button
+      >
+      {#if edamamError}<span class="import-error">{edamamError}</span>{/if}
     </div>
   {/if}
 
