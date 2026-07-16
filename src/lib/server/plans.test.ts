@@ -5,6 +5,7 @@ import {
   pickUnused,
   mergeIngredients,
   rankByMacros,
+  fillDaySlots,
 } from './plans'
 
 const meals = [
@@ -134,5 +135,116 @@ describe('rankByMacros', () => {
     expect(
       rankByMacros(cands, { proteinG: 1, carbsG: 1, fatG: 1 }, 2),
     ).toHaveLength(2)
+  })
+})
+
+describe('fillDaySlots', () => {
+  const targets = { calories: 2000, proteinG: 100, carbsG: 200, fatG: 70 }
+
+  it('fills an empty slot and shrinks the mutated consumed/used state', () => {
+    const only = [
+      {
+        id: 1,
+        calories: 400,
+        tags: [],
+        allowedSlots: [],
+        proteinG: 20,
+        carbsG: 40,
+        fatG: 15,
+      },
+    ]
+    const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+    const used = new Set<number>()
+
+    const toInsert = fillDaySlots(
+      1,
+      '2026-07-16',
+      ['breakfast'],
+      only,
+      targets,
+      consumed,
+      used,
+    )
+
+    expect(toInsert).toEqual([
+      { planId: 1, date: '2026-07-16', mealType: 'breakfast', mealId: 1 },
+    ])
+    expect(consumed).toEqual({
+      calories: 400,
+      proteinG: 20,
+      carbsG: 40,
+      fatG: 15,
+    })
+    expect(used.has(1)).toBe(true)
+  })
+
+  it('skips a slot with no allowedSlots-fitting meal, without consuming budget', () => {
+    const dinnerOnly = [
+      {
+        id: 1,
+        calories: 400,
+        tags: [],
+        allowedSlots: ['dinner'],
+        proteinG: 20,
+        carbsG: 40,
+        fatG: 15,
+      },
+    ]
+    const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+    const used = new Set<number>()
+
+    const toInsert = fillDaySlots(
+      1,
+      '2026-07-16',
+      ['breakfast'],
+      dinnerOnly,
+      targets,
+      consumed,
+      used,
+    )
+
+    expect(toInsert).toEqual([])
+    expect(consumed).toEqual({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })
+  })
+
+  it('fills every empty slot, one distinct meal each, in order', () => {
+    const twoMeals = [
+      {
+        id: 1,
+        calories: 300,
+        tags: [],
+        allowedSlots: ['breakfast'],
+        proteinG: 10,
+        carbsG: 20,
+        fatG: 5,
+      },
+      {
+        id: 2,
+        calories: 500,
+        tags: [],
+        allowedSlots: ['lunch'],
+        proteinG: 30,
+        carbsG: 50,
+        fatG: 20,
+      },
+    ]
+    const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+    const used = new Set<number>()
+
+    const toInsert = fillDaySlots(
+      1,
+      '2026-07-16',
+      ['breakfast', 'lunch'],
+      twoMeals,
+      targets,
+      consumed,
+      used,
+    )
+
+    expect(toInsert.map((r) => [r.mealType, r.mealId])).toEqual([
+      ['breakfast', 1],
+      ['lunch', 2],
+    ])
+    expect(consumed.calories).toBe(800)
   })
 })

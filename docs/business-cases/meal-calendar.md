@@ -33,6 +33,9 @@ families juggling dietary needs. A logged-in user, since plans are private.
 - **Live nutrition feedback** shows each day's calories and macros against a
   per-user target set on the profile (falling back to a 2000 kcal / fixed-macro
   default), so the plan stays balanced without a spreadsheet.
+- **Bonus items + recalculate** cover going off-plan (a pizza lunch with
+  friends, a drink) without abandoning the day's budget — log it, then
+  re-fill the rest of the day to fit what's left.
 
 ## How it works
 
@@ -60,7 +63,17 @@ live in the URL, so a shared or
 bookmarked link reopens the exact view. Plans are per-user and enforced
 server-side.
 
-See [../schema.md](../schema.md) (`plans`, `weekSlots`) and
+Off-plan consumption is logged as **bonus items** — a name plus optional
+calories/macros, attached to a day rather than a slot (so a pizza lunch and a
+drink can both be logged the same day). They count toward that day's
+nutrition bars immediately. A **Recalculate** action per day re-fills that
+day's still-empty slots the same way auto-compose does, except the budget
+starts from what's already consumed — filled slots plus that day's bonus
+items — so a blown lunch shrinks what dinner gets picked to fit. It only
+touches empty slots; replacing an already-assigned meal means clearing it
+first via the picker, same as everywhere else in the calendar.
+
+See [../schema.md](../schema.md) (`plans`, `weekSlots`, `bonusItems`) and
 [../api.md](../api.md) (`/plans/*`) for the data and endpoints.
 
 ## Success signals

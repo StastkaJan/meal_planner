@@ -103,6 +103,41 @@
     await refreshPlan()
   }
 
+  async function handleAddBonus(
+    date: string,
+    fields: {
+      name: string
+      calories: number | null
+      proteinG: number | null
+      carbsG: number | null
+      fatG: number | null
+    },
+  ) {
+    if (!plan) return
+    await fetch(`/plans/${plan.id}/bonus`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date, ...fields }),
+    })
+    await refreshPlan()
+  }
+
+  async function handleDeleteBonus(id: number) {
+    if (!plan) return
+    await fetch(`/plans/${plan.id}/bonus/${id}`, { method: 'DELETE' })
+    await refreshPlan()
+  }
+
+  async function handleRecalcDay(date: string) {
+    if (!plan) return
+    await fetch(`/plans/${plan.id}/recalc-day`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date }),
+    })
+    await refreshPlan()
+  }
+
   async function handleSettingsChange(patch: object) {
     if (!plan) return
     const updated = await fetch(`/plans/${plan.id}`, {
@@ -171,6 +206,9 @@
       onSlotChange={handleSlotChange}
       onAutoCompose={handleAutoCompose}
       onCopyWeek={handleCopyWeek}
+      onAddBonus={handleAddBonus}
+      onDeleteBonus={handleDeleteBonus}
+      onRecalcDay={handleRecalcDay}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
     />

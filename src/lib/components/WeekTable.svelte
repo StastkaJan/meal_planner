@@ -4,6 +4,7 @@
   import type { Meal } from '$lib/schema'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
+  import BonusItems from './BonusItems.svelte'
 
   let {
     plan,
@@ -13,6 +14,9 @@
     onSlotChange,
     onAutoCompose,
     onCopyWeek,
+    onAddBonus,
+    onDeleteBonus,
+    onRecalcDay,
     onPrevWeek,
     onNextWeek,
   }: {
@@ -27,6 +31,18 @@
     ) => void
     onAutoCompose?: (favoritesOnly: boolean) => void
     onCopyWeek?: () => void
+    onAddBonus: (
+      date: string,
+      fields: {
+        name: string
+        calories: number | null
+        proteinG: number | null
+        carbsG: number | null
+        fatG: number | null
+      },
+    ) => void
+    onDeleteBonus: (id: number) => void
+    onRecalcDay: (date: string) => void
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
@@ -66,17 +82,20 @@
   const dailyNutrition = $derived(
     weekDates.map((dt) => {
       const daySlots = plan.slots.filter((s) => s.date === isoDate(dt))
+      const dayBonus = plan.bonus.filter((b) => b.date === isoDate(dt))
       return {
-        calories: daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0),
-        proteinG: daySlots.reduce(
-          (sum, s) => sum + parseFloat(s.proteinG ?? '0'),
-          0,
-        ),
-        carbsG: daySlots.reduce(
-          (sum, s) => sum + parseFloat(s.carbsG ?? '0'),
-          0,
-        ),
-        fatG: daySlots.reduce((sum, s) => sum + parseFloat(s.fatG ?? '0'), 0),
+        calories:
+          daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0) +
+          dayBonus.reduce((sum, b) => sum + (b.calories ?? 0), 0),
+        proteinG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.proteinG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.proteinG ?? '0'), 0),
+        carbsG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.carbsG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.carbsG ?? '0'), 0),
+        fatG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.fatG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.fatG ?? '0'), 0),
       }
     }),
   )
@@ -122,6 +141,25 @@
             {/each}
           </tr>
         {/each}
+        <tr class="extras-row">
+          <td class="row-label nutrition-label">extras</td>
+          {#each weekDates as dt}
+            <td class="slot-cell extras-cell">
+              <BonusItems
+                date={isoDate(dt)}
+                items={plan.bonus.filter((b) => b.date === isoDate(dt))}
+                onAdd={onAddBonus}
+                onDelete={onDeleteBonus}
+              />
+              <button
+                class="btn-recalc"
+                onclick={() => onRecalcDay(isoDate(dt))}
+                title="Re-fill this day's empty slots to fit the remaining budget"
+                >Recalculate</button
+              >
+            </td>
+          {/each}
+        </tr>
         <tr class="nutrition-row">
           <td class="row-label nutrition-label">nutrition</td>
           {#each dailyNutrition as dn}
@@ -284,6 +322,28 @@
   .nutrition-cell {
     padding: 6px 8px;
     vertical-align: middle;
+  }
+
+  .extras-cell {
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-recalc {
+    align-self: flex-start;
+    padding: 2px 6px;
+    background: $color-surface-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    color: $color-text-muted;
+    cursor: pointer;
+    font-size: 0.65rem;
+    &:hover {
+      color: $color-text;
+      border-color: $color-accent-dim;
+    }
   }
 
   .foot-actions {

@@ -124,6 +124,21 @@ export const mealFavorites = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.mealId] })],
 )
 
+// Off-plan consumption (e.g. an unplanned lunch out, a drink) logged against a day.
+// Not tied to a mealType/slot, so multiple can exist per day.
+export const bonusItems = pgTable('bonus_items', {
+  id: serial('id').primaryKey(),
+  planId: integer('plan_id')
+    .notNull()
+    .references(() => plans.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  name: text('name').notNull(),
+  calories: integer('calories'),
+  proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
+  carbsG: numeric('carbs_g', { precision: 6, scale: 1 }),
+  fatG: numeric('fat_g', { precision: 6, scale: 1 }),
+})
+
 export type User = typeof users.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
 export type Session = typeof sessions.$inferSelect
@@ -131,3 +146,4 @@ export type Meal = typeof meals.$inferSelect
 export type Plan = typeof plans.$inferSelect
 export type WeekSlot = typeof weekSlots.$inferSelect
 export type MealFavorite = typeof mealFavorites.$inferSelect
+export type BonusItem = typeof bonusItems.$inferSelect
