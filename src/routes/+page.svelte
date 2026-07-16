@@ -69,12 +69,12 @@
     await refreshPlan()
   }
 
-  async function handleAutoCompose() {
+  async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
     await fetch(`/plans/${plan.id}/autocompose`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: data.viewWeek }),
+      body: JSON.stringify({ week: data.viewWeek, favoritesOnly }),
     })
     await refreshPlan()
   }

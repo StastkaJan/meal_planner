@@ -5,6 +5,9 @@
 
   let { data }: { data: PageData } = $props()
 
+  // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
+  let meals = $derived(data.meals)
+
   let creating = $state(false)
 
   let importing = $state(false)
@@ -30,6 +33,15 @@
     if (!confirm('Delete this meal?')) return
     await fetch(`/meals/${id}`, { method: 'DELETE' })
     await goto('/meals')
+  }
+
+  async function toggleFavorite(id: number, next: boolean) {
+    await fetch(`/meals/${id}/favorite`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ favorite: next }),
+    })
+    meals = meals.map((m) => (m.id === id ? { ...m, isFavorite: next } : m))
   }
 
   // Import parses schema.org data, then creates a personal draft you review/edit on its page.
@@ -151,7 +163,7 @@
           </tr>
         {/if}
 
-        {#each data.meals as meal (meal.id)}
+        {#each meals as meal (meal.id)}
           <tr>
             <td class="meal-name">
               <a href="/meals/{meal.id}">{meal.name}</a>
@@ -164,6 +176,16 @@
             >
             <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
             <td class="actions">
+              <button
+                class="btn sm favorite"
+                class:active={meal.isFavorite}
+                type="button"
+                aria-label={meal.isFavorite
+                  ? 'Unfavourite'
+                  : 'Mark as favourite'}
+                onclick={() => toggleFavorite(meal.id, !meal.isFavorite)}
+                >{meal.isFavorite ? '★' : '☆'}</button
+              >
               <button
                 class="btn sm danger"
                 type="button"
@@ -341,6 +363,15 @@
     }
     &.danger {
       background: $color-danger;
+    }
+    &.favorite {
+      background: $color-surface;
+      color: $color-text-muted;
+      border: 1px solid $color-border;
+      &.active {
+        color: $color-accent;
+        border-color: $color-accent-dim;
+      }
     }
   }
 

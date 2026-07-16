@@ -25,11 +25,13 @@
       mealType: string,
       mealId: number | null,
     ) => void
-    onAutoCompose?: () => void
+    onAutoCompose?: (favoritesOnly: boolean) => void
     onCopyWeek?: () => void
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
+
+  let favoritesOnly = $state(false)
 
   const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
     d.toLocaleDateString('en', { timeZone: 'UTC', ...opts })
@@ -140,8 +142,13 @@
         >
       {/if}
       {#if onAutoCompose}
-        <button class="btn-autocompose" onclick={onAutoCompose}
-          >Auto-compose</button
+        <label class="favorites-only">
+          <input type="checkbox" bind:checked={favoritesOnly} />
+          Favourites only
+        </label>
+        <button
+          class="btn-autocompose"
+          onclick={() => onAutoCompose(favoritesOnly)}>Auto-compose</button
         >
       {/if}
     </div>
@@ -300,6 +307,15 @@
       color: $color-text;
       border-color: $color-accent-dim;
     }
+  }
+
+  .favorites-only {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: $color-text-muted;
+    cursor: pointer;
   }
 
   .btn-autocompose {

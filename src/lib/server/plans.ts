@@ -7,7 +7,7 @@ import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
 import { requireUser } from '$lib/auth'
 import { addDays } from '$lib/date'
-import { visibleToUser } from './meals'
+import { visibleToUser, favoriteMealIds } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
   const [plan] = await db
@@ -252,8 +252,9 @@ export async function autocomposeSlots(
   week: string,
   targets: NutritionTargets,
   ownerId: number,
+  favoritesOnly = false,
 ) {
-  const [allMealsRaw, existingSlots] = await Promise.all([
+  const [allMealsRaw, existingSlots, favIds] = await Promise.all([
     db
       .select({
         id: meals.id,
@@ -279,11 +280,12 @@ export async function autocomposeSlots(
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(inWeek(plan.id, week)),
+    favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
   ])
 
   if (!allMealsRaw.length) return
 
-  const allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
+  let allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
     id: m.id,
     calories: m.calories,
     tags: m.tags,
@@ -292,6 +294,9 @@ export async function autocomposeSlots(
     carbsG: toNum(m.carbsG),
     fatG: toNum(m.fatG),
   }))
+  if (favIds) allMeals = allMeals.filter((m) => favIds.has(m.id))
+  if (!allMeals.length) return
+
   const prefilteredMeals = filterByPrefs(
     allMeals,
     plan.cuisinePrefs,
