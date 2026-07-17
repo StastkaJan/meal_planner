@@ -44,6 +44,13 @@
     meals = meals.map((m) => (m.id === id ? { ...m, isFavorite: next } : m))
   }
 
+  function toggleFavoritesFilter() {
+    goto(data.favoritesOnly ? '/meals' : '/meals?favorites=1', {
+      noScroll: true,
+      keepFocus: true,
+    })
+  }
+
   // Import parses schema.org data, then creates a personal draft you review/edit on its page.
   async function importRecipe() {
     if (!importUrl.trim() || importBusy) return
@@ -85,6 +92,12 @@
   <div class="top-bar">
     <h2>Meals</h2>
     <div class="top-actions">
+      <button
+        class="btn ghost"
+        class:active={data.favoritesOnly}
+        onclick={toggleFavoritesFilter}
+        >{data.favoritesOnly ? 'Show all' : 'Favourites only'}</button
+      >
       <button
         class="btn ghost"
         onclick={() => {
@@ -195,7 +208,9 @@
           </tr>
         {:else}
           <tr>
-            <td colspan="4" class="empty">No meals yet.</td>
+            <td colspan="4" class="empty"
+              >{data.favoritesOnly ? 'No favourites yet.' : 'No meals yet.'}</td
+            >
           </tr>
         {/each}
       </tbody>
@@ -360,6 +375,10 @@
       background: $color-surface;
       color: $color-text-muted;
       border: 1px solid $color-border;
+      &.active {
+        color: $color-accent;
+        border-color: $color-accent-dim;
+      }
     }
     &.danger {
       background: $color-danger;

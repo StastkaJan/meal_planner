@@ -3,7 +3,7 @@ import { meals } from '$lib/schema'
 import { visibleToUser, favoriteMealIds } from '$lib/server/meals'
 import type { PageServerLoad } from './$types'
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   const [rows, favIds] = await Promise.all([
     db
       .select()
@@ -12,7 +12,11 @@ export const load: PageServerLoad = async ({ locals }) => {
       .orderBy(meals.name),
     favoriteMealIds(locals.user?.id),
   ])
+  const favoritesOnly = url.searchParams.get('favorites') === '1'
   return {
-    meals: rows.map((m) => ({ ...m, isFavorite: favIds.has(m.id) })),
+    meals: rows
+      .map((m) => ({ ...m, isFavorite: favIds.has(m.id) }))
+      .filter((m) => !favoritesOnly || m.isFavorite),
+    favoritesOnly,
   }
 }

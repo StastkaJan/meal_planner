@@ -32,15 +32,22 @@ describe('PUT /meals/:id/favorite', () => {
     ).rejects.toMatchObject({ status: 401 })
   })
 
-  it('returns 404 for a meal not visible to the user', async () => {
+  it('returns 404 for a non-existent meal', async () => {
     mockDb.limit.mockResolvedValueOnce([])
     await expect(PUT(makeEvent({ favorite: true }))).rejects.toMatchObject({
       status: 404,
     })
   })
 
+  it("rejects another user's personal meal with 403", async () => {
+    mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
+    await expect(PUT(makeEvent({ favorite: true }))).rejects.toMatchObject({
+      status: 403,
+    })
+  })
+
   it('inserts a favorite row when favorite: true', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
     const res = await PUT(makeEvent({ favorite: true }))
     expect(mockDb.insert).toHaveBeenCalled()
     expect(mockDb.values).toHaveBeenCalledWith({ userId: 1, mealId: 1 })
@@ -48,7 +55,7 @@ describe('PUT /meals/:id/favorite', () => {
   })
 
   it('deletes the favorite row when favorite: false', async () => {
-    mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+    mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
     const res = await PUT(makeEvent({ favorite: false }))
     expect(mockDb.delete).toHaveBeenCalled()
     expect(res.status).toBe(204)
