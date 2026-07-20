@@ -451,13 +451,14 @@ export async function autocomposeSlots(
 
 // Re-fills one day's empty slots to fit whatever budget is left after that day's already
 // filled slots and logged bonus items (e.g. an off-plan lunch) — the "recalculate" a user
-// reaches for after going off-plan earlier in the day.
+// reaches for after going off-plan earlier in the day. Returns the number of slots filled,
+// so callers can tell "nothing to fill" (day already full) from an unremarkable no-op.
 export async function recalcDaySlots(
   plan: PlanPrefs,
   date: string,
   targets: NutritionTargets,
   ownerId: number,
-) {
+): Promise<number> {
   const [allMealsRaw, daySlots, dayBonus] = await Promise.all([
     db
       .select({
@@ -494,7 +495,7 @@ export async function recalcDaySlots(
       .where(and(eq(bonusItems.planId, plan.id), eq(bonusItems.date, date))),
   ])
 
-  if (!allMealsRaw.length) return
+  if (!allMealsRaw.length) return 0
 
   const allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
     id: m.id,
@@ -530,7 +531,7 @@ export async function recalcDaySlots(
       dayBonus.reduce((sum, b) => sum + toNum(b.fatG), 0),
   }
   const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(mt))
-  if (!emptySlots.length) return
+  if (!emptySlots.length) return 0
 
   const toInsert = fillDaySlots(
     plan.id,
@@ -542,4 +543,5 @@ export async function recalcDaySlots(
     used,
   )
   if (toInsert.length) await db.insert(weekSlots).values(toInsert)
+  return toInsert.length
 }

@@ -44,7 +44,7 @@ describe('POST /plans/:id/recalc-day', () => {
     })
   })
 
-  it("passes the owner's resolved targets and date to recalcDaySlots", async () => {
+  it("passes the owner's resolved targets and date to recalcDaySlots, returns the fill count", async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     mockGetUserSettings.mockResolvedValueOnce({
       calorieTarget: 1800,
@@ -52,13 +52,23 @@ describe('POST /plans/:id/recalc-day', () => {
       carbsTarget: null,
       fatTarget: null,
     })
+    mockRecalcDaySlots.mockResolvedValueOnce(2)
     const res = await POST(makeEvent({ date: '2026-06-30' }))
-    expect(res.status).toBe(204)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ filled: 2 })
     expect(mockRecalcDaySlots).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1 }),
       '2026-06-30',
       expect.objectContaining({ calories: 1800 }),
       1,
     )
+  })
+
+  it('reports filled: 0 when the day has no empty slots', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockGetUserSettings.mockResolvedValueOnce(null)
+    mockRecalcDaySlots.mockResolvedValueOnce(0)
+    const res = await POST(makeEvent({ date: '2026-06-30' }))
+    expect(await res.json()).toEqual({ filled: 0 })
   })
 })

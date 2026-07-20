@@ -130,11 +130,13 @@
 
   async function handleRecalcDay(date: string) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/recalc-day`, {
+    const { filled } = await fetch(`/plans/${plan.id}/recalc-day`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ date }),
-    })
+    }).then((r) => r.json())
+    if (filled === 0)
+      alert('Nothing to recalculate — that day has no empty slots.')
     await refreshPlan()
   }
 
