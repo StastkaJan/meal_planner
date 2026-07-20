@@ -145,18 +145,20 @@
           <td class="row-label nutrition-label">extras</td>
           {#each weekDates as dt}
             <td class="slot-cell extras-cell">
-              <BonusItems
-                date={isoDate(dt)}
-                items={plan.bonus.filter((b) => b.date === isoDate(dt))}
-                onAdd={onAddBonus}
-                onDelete={onDeleteBonus}
-              />
-              <button
-                class="btn-recalc"
-                onclick={() => onRecalcDay(isoDate(dt))}
-                title="Re-fill this day's empty slots to fit the remaining budget"
-                >Recalculate</button
-              >
+              <div class="extras-inner">
+                <BonusItems
+                  date={isoDate(dt)}
+                  items={plan.bonus.filter((b) => b.date === isoDate(dt))}
+                  onAdd={onAddBonus}
+                  onDelete={onDeleteBonus}
+                />
+                <button
+                  class="btn-recalc"
+                  onclick={() => onRecalcDay(isoDate(dt))}
+                  title="Re-fill this day's empty slots to fit the remaining budget"
+                  >Recalculate</button
+                >
+              </div>
             </td>
           {/each}
         </tr>
@@ -326,6 +328,9 @@
 
   .extras-cell {
     padding: 6px 8px;
+  }
+
+  .extras-inner {
     display: flex;
     flex-direction: column;
     gap: 4px;
