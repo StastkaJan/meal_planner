@@ -24,32 +24,23 @@
   let dialogEl: HTMLDialogElement
   let open = $state(false)
   let name = $state('')
-  let calories = $state('')
-  let proteinG = $state('')
-  let carbsG = $state('')
-  let fatG = $state('')
+  // bind:value on type="number" inputs gives a number (or null when empty), not a string
+  let calories: number | null = $state(null)
+  let proteinG: number | null = $state(null)
+  let carbsG: number | null = $state(null)
+  let fatG: number | null = $state(null)
 
   function openForm() {
-    name = calories = proteinG = carbsG = fatG = ''
+    name = ''
+    calories = proteinG = carbsG = fatG = null
     open = true
     dialogEl?.showModal()
-  }
-
-  function toNum(v: string): number | null {
-    const n = Number(v)
-    return v.trim() && Number.isFinite(n) ? n : null
   }
 
   function submit(e: Event) {
     e.preventDefault()
     if (!name.trim()) return
-    onAdd(date, {
-      name: name.trim(),
-      calories: toNum(calories),
-      proteinG: toNum(proteinG),
-      carbsG: toNum(carbsG),
-      fatG: toNum(fatG),
-    })
+    onAdd(date, { name: name.trim(), calories, proteinG, carbsG, fatG })
     dialogEl?.close()
     open = false
   }
