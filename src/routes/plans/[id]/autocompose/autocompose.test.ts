@@ -94,4 +94,17 @@ describe('POST /plans/:id/autocompose', () => {
       true,
     )
   })
+
+  it('reports how many slots were filled, so the caller can tell a no-op apart', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    autocomposeSlots.mockResolvedValueOnce(0)
+    const res = await POST(makeEvent('1', 1, { favoritesOnly: true }))
+    expect(await res.json()).toEqual({ filled: 0 })
+  })
 })

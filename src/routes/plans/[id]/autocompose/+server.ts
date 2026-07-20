@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit'
 import {
   requireOwnedPlan,
   validDateStr,
@@ -14,12 +15,12 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
     favoritesOnly?: boolean
   }
 
-  await autocomposeSlots(
+  const filled = await autocomposeSlots(
     plan,
     validDateStr(week ?? plan.weekStart),
     resolveTargets(await getUserSettings(plan.userId)),
     plan.userId,
     !!favoritesOnly,
   )
-  return new Response(null, { status: 204 })
+  return json({ filled })
 }

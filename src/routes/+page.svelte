@@ -71,11 +71,18 @@
 
   async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/autocompose`, {
+    const { filled } = await fetch(`/plans/${plan.id}/autocompose`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ week: data.viewWeek, favoritesOnly }),
-    })
+    }).then((r) => r.json())
+    if (filled === 0) {
+      alert(
+        favoritesOnly
+          ? "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'."
+          : 'No empty slots to fill.',
+      )
+    }
     await refreshPlan()
   }
 

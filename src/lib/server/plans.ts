@@ -247,13 +247,15 @@ type PlanPrefs = {
   dietaryRestrictions: string[]
 }
 
+// Returns the number of slots filled, so callers can tell "nothing to fill" (already full,
+// or no favourites when favoritesOnly) from an unremarkable no-op.
 export async function autocomposeSlots(
   plan: PlanPrefs,
   week: string,
   targets: NutritionTargets,
   ownerId: number,
   favoritesOnly = false,
-) {
+): Promise<number> {
   const [allMealsRaw, existingSlots, favIds] = await Promise.all([
     db
       .select({
@@ -283,7 +285,7 @@ export async function autocomposeSlots(
     favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
   ])
 
-  if (!allMealsRaw.length) return
+  if (!allMealsRaw.length) return 0
 
   let allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
     id: m.id,
@@ -295,7 +297,7 @@ export async function autocomposeSlots(
     fatG: toNum(m.fatG),
   }))
   if (favIds) allMeals = allMeals.filter((m) => favIds.has(m.id))
-  if (!allMeals.length) return
+  if (!allMeals.length) return 0
 
   const prefilteredMeals = filterByPrefs(
     allMeals,
@@ -363,4 +365,5 @@ export async function autocomposeSlots(
   }
 
   if (toInsert.length) await db.insert(weekSlots).values(toInsert)
+  return toInsert.length
 }
