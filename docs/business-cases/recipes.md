@@ -74,9 +74,16 @@ See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
   slot types a meal is suitable for) is a separate column, not part of this shared space —
   it's a hard restriction, not an OR/AND preference match.
 
+## How favouriting works
+
+Any meal (global or personal) can be favourited per-user via a star toggle on `/meals` — a
+bookmark, not a copy. Auto-compose (see [meal calendar](./meal-calendar.md)) has a "favourites
+only" option that restricts slot candidates to the caller's favourited meals.
+
 ## Future opportunities
 
-- **Favorite/duplicate global → personal**, so a user can fork a shared recipe to tweak.
+- **Duplicate global → personal**, so a user can fork a shared recipe to tweak (distinct from
+  favouriting/bookmarking, which is now implemented).
 - **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
   (or with just microdata/plain HTML) fall back to a manual entry.
 - **Ingredient-quantity scaling** — the detail view already rescales nutrition by a

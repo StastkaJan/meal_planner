@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit'
 import { and, or, isNull, eq } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { meals } from '$lib/schema'
+import { meals, mealFavorites } from '$lib/schema'
 
 // A meal is visible to a user if it's global (no owner) or owned by them. An anonymous
 // caller (no userId) sees only global meals. Visibility and edit-permission are the same
@@ -28,6 +28,15 @@ export async function assertCanEdit(id: number, userId: number) {
     .limit(1)
   if (!meal) error(404, 'Meal not found')
   if (!canAccessMeal(meal, userId)) error(403, 'Not allowed')
+}
+
+export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
+  if (userId == null) return new Set()
+  const rows = await db
+    .select({ mealId: mealFavorites.mealId })
+    .from(mealFavorites)
+    .where(eq(mealFavorites.userId, userId))
+  return new Set(rows.map((r) => r.mealId))
 }
 
 // Whitelist of columns a client may write on a meal. Prevents mass-assignment

@@ -48,7 +48,10 @@ those preferring the ones whose protein/carb/fat land closest to the remaining
 macro budget — picking at random within the top few so the week stays varied,
 with a fallback so a sparse or untagged library never stalls it. It tracks the meals
 already placed that week (including ones already in the plan) and prefers unused
-ones, so a large enough library yields a distinct meal per slot. A **Copy from
+ones, so a large enough library yields a distinct meal per slot. A **favourites-only**
+checkbox next to Auto-compose restricts candidates to the caller's favourited meals
+(see [recipe library](./recipes.md)), leaving a slot empty rather than falling back to
+non-favourites if none fit. A **Copy from
 last week** action clones the previous week's slots into the current one
 (overwriting it) to reuse a good plan. A **Shopping list** view
 (`/plans/[id]/shopping`) flattens every assigned meal's ingredients for the week

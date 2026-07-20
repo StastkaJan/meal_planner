@@ -7,7 +7,7 @@ import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
 import { requireUser } from '$lib/auth'
 import { addDays } from '$lib/date'
-import { visibleToUser } from './meals'
+import { visibleToUser, favoriteMealIds } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
   const [plan] = await db
@@ -247,13 +247,16 @@ type PlanPrefs = {
   dietaryRestrictions: string[]
 }
 
+// Returns the number of slots filled, so callers can tell "nothing to fill" (already full,
+// or no favourites when favoritesOnly) from an unremarkable no-op.
 export async function autocomposeSlots(
   plan: PlanPrefs,
   week: string,
   targets: NutritionTargets,
   ownerId: number,
-) {
-  const [allMealsRaw, existingSlots] = await Promise.all([
+  favoritesOnly = false,
+): Promise<number> {
+  const [allMealsRaw, existingSlots, favIds] = await Promise.all([
     db
       .select({
         id: meals.id,
@@ -279,11 +282,12 @@ export async function autocomposeSlots(
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(inWeek(plan.id, week)),
+    favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
   ])
 
-  if (!allMealsRaw.length) return
+  if (!allMealsRaw.length) return 0
 
-  const allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
+  let allMeals: CandidateMeal[] = allMealsRaw.map((m) => ({
     id: m.id,
     calories: m.calories,
     tags: m.tags,
@@ -292,6 +296,9 @@ export async function autocomposeSlots(
     carbsG: toNum(m.carbsG),
     fatG: toNum(m.fatG),
   }))
+  if (favIds) allMeals = allMeals.filter((m) => favIds.has(m.id))
+  if (!allMeals.length) return 0
+
   const prefilteredMeals = filterByPrefs(
     allMeals,
     plan.cuisinePrefs,
@@ -358,4 +365,5 @@ export async function autocomposeSlots(
   }
 
   if (toInsert.length) await db.insert(weekSlots).values(toInsert)
+  return toInsert.length
 }

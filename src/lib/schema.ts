@@ -109,9 +109,25 @@ export const weekSlots = pgTable(
   (t) => [primaryKey({ columns: [t.planId, t.date, t.mealType] })],
 )
 
+// Per-user bookmark on a meal. A join table (not a boolean on `meals`) because meals can be
+// global/shared: favouriting is per-user, not a property of the meal itself.
+export const mealFavorites = pgTable(
+  'meal_favorites',
+  {
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    mealId: integer('meal_id')
+      .notNull()
+      .references(() => meals.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.mealId] })],
+)
+
 export type User = typeof users.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Meal = typeof meals.$inferSelect
 export type Plan = typeof plans.$inferSelect
 export type WeekSlot = typeof weekSlots.$inferSelect
+export type MealFavorite = typeof mealFavorites.$inferSelect

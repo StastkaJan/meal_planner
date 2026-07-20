@@ -17,10 +17,10 @@ vi.mock('$lib/server/plans', () => ({
 
 import { POST } from './+server'
 
-function makeEvent(planId = '1', userId = 1) {
+function makeEvent(planId = '1', userId = 1, body: object = {}) {
   return {
     params: { id: planId },
-    request: { json: () => Promise.resolve({}) },
+    request: { json: () => Promise.resolve(body) },
     locals: { user: { id: userId } },
   } as any
 }
@@ -55,6 +55,7 @@ describe('POST /plans/:id/autocompose', () => {
       '2026-06-29',
       expect.objectContaining({ calories: 1800 }),
       1,
+      false,
     )
   })
 
@@ -72,6 +73,38 @@ describe('POST /plans/:id/autocompose', () => {
       '2026-06-29',
       expect.objectContaining({ calories: 2000 }),
       1,
+      false,
     )
+  })
+
+  it('passes favoritesOnly through to autocomposeSlots', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    await POST(makeEvent('1', 1, { favoritesOnly: true }))
+    expect(autocomposeSlots).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1 }),
+      '2026-06-29',
+      expect.anything(),
+      1,
+      true,
+    )
+  })
+
+  it('reports how many slots were filled, so the caller can tell a no-op apart', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    autocomposeSlots.mockResolvedValueOnce(0)
+    const res = await POST(makeEvent('1', 1, { favoritesOnly: true }))
+    expect(await res.json()).toEqual({ filled: 0 })
   })
 })

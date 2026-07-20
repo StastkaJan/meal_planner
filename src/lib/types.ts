@@ -11,6 +11,8 @@ export type SlotWithMeal = WeekSlot & {
 
 export type PlanDetail = Plan & { slots: SlotWithMeal[] }
 
+export type MealWithFavorite = Meal & { isFavorite: boolean }
+
 export type MealType = (typeof MEAL_TYPES)[number]
 
 export type NutritionTargets = typeof NUTRITION_TARGETS
