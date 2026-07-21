@@ -36,6 +36,9 @@ families juggling dietary needs. A logged-in user, since plans are private.
 - **Bonus items + recalculate** cover going off-plan (a pizza lunch with
   friends, a drink) without abandoning the day's budget — log it, then
   re-fill the rest of the day to fit what's left.
+- **Repeat patterns** let a meal type (e.g. lunch) reuse the same meal across a
+  run of days (e.g. Mon-Tue / Wed-Thu / Fri-Sun) instead of choosing fresh every
+  day — for people who batch-cook rather than cook daily.
 
 ## How it works
 
@@ -51,7 +54,10 @@ those preferring the ones whose protein/carb/fat land closest to the remaining
 macro budget — picking at random within the top few so the week stays varied,
 with a fallback so a sparse or untagged library never stalls it. It tracks the meals
 already placed that week (including ones already in the plan) and prefers unused
-ones, so a large enough library yields a distinct meal per slot. A **favourites-only**
+ones, so a large enough library yields a distinct meal per slot. Each meal type can
+also have a **weekly repeat pattern** (`slotRepeats`) — a partition of Mon-Sun into
+groups that share one meal; setting a slot in a grouped meal type fills the whole
+group, and auto-compose picks one meal per group instead of one per day. A **favourites-only**
 checkbox next to Auto-compose restricts candidates to the caller's favourited meals
 (see [recipe library](./recipes.md)), leaving a slot empty rather than falling back to
 non-favourites if none fit. A **Copy from
@@ -77,7 +83,7 @@ items — so a blown lunch shrinks what dinner gets picked to fit. It only
 touches empty slots; replacing an already-assigned meal means clearing it
 first via the picker, same as everywhere else in the calendar.
 
-See [../schema.md](../schema.md) (`plans`, `weekSlots`, `bonusItems`) and
+See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`, `bonusItems`) and
 [../api.md](../api.md) (`/plans/*`) for the data and endpoints.
 
 ## Success signals

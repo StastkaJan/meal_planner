@@ -1,6 +1,6 @@
 {
-  "id": "72e2f871-6f56-4832-8f94-27d1d71bfbad",
-  "prevId": "c49951f3-0ec7-46f8-9bf7-ae4a57d0f256",
+  "id": "4ae0b479-9d23-465a-a729-689697df62ba",
+  "prevId": "a4a0761c-0b4f-49c0-8ea0-dc6d552b3392",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -63,14 +63,51 @@
           "name": "bonus_items_plan_id_plans_id_fk",
           "tableFrom": "bonus_items",
           "tableTo": "plans",
-          "columnsFrom": ["plan_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ingredients": {
+      "name": "ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ingredients_name_unique": {
+          "name": "ingredients_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -98,8 +135,12 @@
           "name": "meal_favorites_user_id_users_id_fk",
           "tableFrom": "meal_favorites",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -107,8 +148,12 @@
           "name": "meal_favorites_meal_id_meals_id_fk",
           "tableFrom": "meal_favorites",
           "tableTo": "meals",
-          "columnsFrom": ["meal_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "meal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -116,9 +161,88 @@
       "compositePrimaryKeys": {
         "meal_favorites_user_id_meal_id_pk": {
           "name": "meal_favorites_user_id_meal_id_pk",
-          "columns": ["user_id", "meal_id"]
+          "columns": [
+            "user_id",
+            "meal_id"
+          ]
         }
       },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.meal_ingredients": {
+      "name": "meal_ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "meal_id": {
+          "name": "meal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingredient_id": {
+          "name": "ingredient_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "qty": {
+          "name": "qty",
+          "type": "numeric(10, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "meal_ingredients_meal_id_meals_id_fk": {
+          "name": "meal_ingredients_meal_id_meals_id_fk",
+          "tableFrom": "meal_ingredients",
+          "tableTo": "meals",
+          "columnsFrom": [
+            "meal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "meal_ingredients_ingredient_id_ingredients_id_fk": {
+          "name": "meal_ingredients_ingredient_id_ingredients_id_fk",
+          "tableFrom": "meal_ingredients",
+          "tableTo": "ingredients",
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -196,13 +320,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "ingredients": {
-          "name": "ingredients",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
-        },
         "instructions": {
           "name": "instructions",
           "type": "text",
@@ -241,8 +358,12 @@
           "name": "meals_user_id_users_id_fk",
           "tableFrom": "meals",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -304,8 +425,12 @@
           "name": "plans_user_id_users_id_fk",
           "tableFrom": "plans",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -345,13 +470,70 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.slot_repeats": {
+      "name": "slot_repeats",
+      "schema": "",
+      "columns": {
+        "plan_id": {
+          "name": "plan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "meal_type": {
+          "name": "meal_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_breaks": {
+          "name": "group_breaks",
+          "type": "boolean[]",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "slot_repeats_plan_id_plans_id_fk": {
+          "name": "slot_repeats_plan_id_plans_id_fk",
+          "tableFrom": "slot_repeats",
+          "tableTo": "plans",
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "slot_repeats_plan_id_meal_type_pk": {
+          "name": "slot_repeats_plan_id_meal_type_pk",
+          "columns": [
+            "plan_id",
+            "meal_type"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -412,8 +594,12 @@
           "name": "user_settings_user_id_users_id_fk",
           "tableFrom": "user_settings",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -454,7 +640,9 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -496,8 +684,12 @@
           "name": "week_slots_plan_id_plans_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "plans",
-          "columnsFrom": ["plan_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -505,8 +697,12 @@
           "name": "week_slots_meal_id_meals_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "meals",
-          "columnsFrom": ["meal_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "meal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -514,7 +710,11 @@
       "compositePrimaryKeys": {
         "week_slots_plan_id_date_meal_type_pk": {
           "name": "week_slots_plan_id_date_meal_type_pk",
-          "columns": ["plan_id", "date", "meal_type"]
+          "columns": [
+            "plan_id",
+            "date",
+            "meal_type"
+          ]
         }
       },
       "uniqueConstraints": {},
