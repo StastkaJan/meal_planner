@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit'
-import { and, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, eq, gte, lt, sql, inArray } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { plans, weekSlots, meals, userSettings } from '$lib/schema'
+import { plans, weekSlots, meals, userSettings, slotRepeats } from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
 import { requireUser } from '$lib/auth'
-import { addDays } from '$lib/date'
+import { addDays, groupWindow } from '$lib/date'
 import { visibleToUser, favoriteMealIds } from './meals'
 
 export async function ownedPlan(id: number, userId: number): Promise<Plan> {
@@ -59,38 +59,67 @@ export async function getPlanDetail(
   plan: Plan,
   week: string,
 ): Promise<PlanDetail> {
-  const rows = await db
-    .select({
-      planId: weekSlots.planId,
-      date: weekSlots.date,
-      mealType: weekSlots.mealType,
-      mealId: weekSlots.mealId,
-      mealName: meals.name,
-      calories: meals.calories,
-      proteinG: meals.proteinG,
-      carbsG: meals.carbsG,
-      fatG: meals.fatG,
-    })
-    .from(weekSlots)
-    .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-    .where(inWeek(plan.id, week))
+  const [rows, repeats] = await Promise.all([
+    db
+      .select({
+        planId: weekSlots.planId,
+        date: weekSlots.date,
+        mealType: weekSlots.mealType,
+        mealId: weekSlots.mealId,
+        mealName: meals.name,
+        calories: meals.calories,
+        proteinG: meals.proteinG,
+        carbsG: meals.carbsG,
+        fatG: meals.fatG,
+      })
+      .from(weekSlots)
+      .leftJoin(meals, eq(weekSlots.mealId, meals.id))
+      .where(inWeek(plan.id, week)),
+    db
+      .select({
+        mealType: slotRepeats.mealType,
+        groupBreaks: slotRepeats.groupBreaks,
+      })
+      .from(slotRepeats)
+      .where(eq(slotRepeats.planId, plan.id)),
+  ])
 
-  return { ...plan, slots: rows as SlotWithMeal[] }
+  return { ...plan, slots: rows as SlotWithMeal[], slotRepeats: repeats }
 }
 
+async function getGroupBreaks(
+  planId: number,
+  mealType: string,
+): Promise<boolean[] | null> {
+  const [row] = await db
+    .select({ groupBreaks: slotRepeats.groupBreaks })
+    .from(slotRepeats)
+    .where(
+      and(eq(slotRepeats.planId, planId), eq(slotRepeats.mealType, mealType)),
+    )
+    .limit(1)
+  return row?.groupBreaks ?? null
+}
+
+// Setting or clearing a slot that belongs to a repeat group applies to every date in that
+// group, not just the one given (see groupWindow in $lib/date) — this is how a manual edit
+// "repeats" across the days the user configured for this meal type.
 export async function upsertSlot(
   planId: number,
   date: string,
   mealType: string,
   mealId: number | null,
 ) {
+  const groupBreaks = await getGroupBreaks(planId, mealType)
+  const dates = groupBreaks ? groupWindow(date, groupBreaks) : [date]
+
   if (mealId === null) {
     await db
       .delete(weekSlots)
       .where(
         and(
           eq(weekSlots.planId, planId),
-          eq(weekSlots.date, date),
+          inArray(weekSlots.date, dates),
           eq(weekSlots.mealType, mealType),
         ),
       )
@@ -99,7 +128,7 @@ export async function upsertSlot(
 
   await db
     .insert(weekSlots)
-    .values({ planId, date, mealType, mealId })
+    .values(dates.map((d) => ({ planId, date: d, mealType, mealId })))
     .onConflictDoUpdate({
       target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
       set: { mealId },
@@ -256,7 +285,7 @@ export async function autocomposeSlots(
   ownerId: number,
   favoritesOnly = false,
 ): Promise<number> {
-  const [allMealsRaw, existingSlots, favIds] = await Promise.all([
+  const [allMealsRaw, existingSlots, favIds, repeatRows] = await Promise.all([
     db
       .select({
         id: meals.id,
@@ -283,6 +312,13 @@ export async function autocomposeSlots(
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(inWeek(plan.id, week)),
     favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
+    db
+      .select({
+        mealType: slotRepeats.mealType,
+        groupBreaks: slotRepeats.groupBreaks,
+      })
+      .from(slotRepeats)
+      .where(eq(slotRepeats.planId, plan.id)),
   ])
 
   if (!allMealsRaw.length) return 0
@@ -311,6 +347,24 @@ export async function autocomposeSlots(
       .map((s) => s.mealId)
       .filter((id): id is number => id !== null),
   )
+
+  // A repeat group never crosses a week boundary (see groupWindow), so seeding the
+  // group→meal map from this week's existingSlots is sufficient — no need to look outside it.
+  const breaksByType = new Map(
+    repeatRows.map((r) => [r.mealType, r.groupBreaks]),
+  )
+  const groupKey = (date: string, mealType: string) => {
+    const breaks = breaksByType.get(mealType)
+    return breaks ? `${mealType}|${groupWindow(date, breaks)[0]}` : null
+  }
+  const groupMealId = new Map<string, number>()
+  for (const s of existingSlots) {
+    if (s.mealId === null) continue
+    const key = groupKey(s.date, s.mealType)
+    if (key) groupMealId.set(key, s.mealId)
+  }
+  const mealsById = new Map(allMeals.map((m) => [m.id, m]))
+
   const toInsert: {
     planId: number
     date: string
@@ -331,25 +385,37 @@ export async function autocomposeSlots(
     let remaining = emptySlots.length
 
     for (const mealType of emptySlots) {
-      const slotMeals = prefilteredMeals.filter((m) =>
-        mealFitsSlot(m.allowedSlots, mealType),
-      )
-      if (!slotMeals.length) {
+      const key = groupKey(date, mealType)
+      const groupChosen = key
+        ? mealsById.get(groupMealId.get(key) ?? -1)
+        : undefined
+
+      const chosen =
+        groupChosen ??
+        (() => {
+          const slotMeals = prefilteredMeals.filter((m) =>
+            mealFitsSlot(m.allowedSlots, mealType),
+          )
+          if (!slotMeals.length) return null
+          // calorie ceiling first, then prefer meals whose macros land closest to the remaining budget
+          const fits = candidateMeals(
+            slotMeals,
+            (targets.calories - consumed.calories) / remaining,
+          )
+          const macroBudget = {
+            proteinG: (targets.proteinG - consumed.proteinG) / remaining,
+            carbsG: (targets.carbsG - consumed.carbsG) / remaining,
+            fatG: (targets.fatG - consumed.fatG) / remaining,
+          }
+          return pickUnused(rankByMacros(fits, macroBudget), used)
+        })()
+
+      if (!chosen) {
         remaining--
         continue
       }
-      // calorie ceiling first, then prefer meals whose macros land closest to the remaining budget
-      const fits = candidateMeals(
-        slotMeals,
-        (targets.calories - consumed.calories) / remaining,
-      )
-      const macroBudget = {
-        proteinG: (targets.proteinG - consumed.proteinG) / remaining,
-        carbsG: (targets.carbsG - consumed.carbsG) / remaining,
-        fatG: (targets.fatG - consumed.fatG) / remaining,
-      }
-      const chosen = pickUnused(rankByMacros(fits, macroBudget), used)
       used.add(chosen.id)
+      if (key) groupMealId.set(key, chosen.id)
       toInsert.push({
         planId: plan.id,
         date,
