@@ -5,6 +5,7 @@ import {
   findRecipeNode,
   isoDurationToMinutes,
   parseRecipeJsonLd,
+  parseIngredientLine,
 } from './meals'
 
 describe('canAccessMeal', () => {
@@ -83,6 +84,37 @@ describe('findRecipeNode', () => {
   })
   it('returns null when absent', () => {
     expect(findRecipeNode([{ '@type': 'Article' }])).toBeNull()
+  })
+})
+
+describe('parseIngredientLine', () => {
+  it('splits a leading integer off the name', () => {
+    expect(parseIngredientLine('2 carrots')).toEqual({
+      qty: 2,
+      name: 'carrots',
+    })
+  })
+
+  it('splits a leading decimal and a leading fraction', () => {
+    expect(parseIngredientLine('1.5 cups flour')).toEqual({
+      qty: 1.5,
+      name: 'cups flour',
+    })
+    expect(parseIngredientLine('1/2 cup sugar')).toEqual({
+      qty: 0.5,
+      name: 'cup sugar',
+    })
+  })
+
+  it('returns a null qty when there is no leading number', () => {
+    expect(parseIngredientLine('salt and pepper')).toEqual({
+      qty: null,
+      name: 'salt and pepper',
+    })
+    expect(parseIngredientLine('200g Greek yogurt')).toEqual({
+      qty: null,
+      name: '200g Greek yogurt',
+    })
   })
 })
 

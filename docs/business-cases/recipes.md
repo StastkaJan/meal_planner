@@ -87,4 +87,6 @@ only" option that restricts slot candidates to the caller's favourited meals.
 - **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
   (or with just microdata/plain HTML) fall back to a manual entry.
 - **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
-  servings stepper; scaling the free-text ingredient amounts is the harder next step.
+  servings stepper; scaling the free-text ingredient amounts (rather than just summing them
+  across a week, which the shopping list now does — see `mealIngredients` in
+  [../schema.md](../schema.md)) is the harder next step.

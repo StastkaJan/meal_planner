@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { weekSlots, meals } from '$lib/schema'
+import { weekSlots, meals, mealIngredients, ingredients } from '$lib/schema'
 import {
   requireOwnedPlan,
   validDateStr,
-  mergeIngredients,
+  sumIngredients,
   inWeek,
 } from '$lib/server/plans'
 import type { PageServerLoad } from './$types'
@@ -14,15 +14,17 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
   const week = validDateStr(url.searchParams.get('week') ?? plan.weekStart)
 
   const rows = await db
-    .select({ ingredients: meals.ingredients })
+    .select({ name: ingredients.name, qty: mealIngredients.qty })
     .from(weekSlots)
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
+    .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
+    .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
     .where(inWeek(plan.id, week))
 
   return {
     planId: plan.id,
     planName: plan.name,
     week,
-    items: mergeIngredients(rows.map((r) => r.ingredients)),
+    items: sumIngredients(rows),
   }
 }

@@ -17,8 +17,14 @@
         <li>
           <label>
             <input type="checkbox" />
-            <span>{item.name}</span>
-            {#if item.count > 1}<span class="count">×{item.count}</span>{/if}
+            <span
+              >{item.qty !== null
+                ? `${item.qty} ${item.name}`
+                : item.name}</span
+            >
+            {#if item.qty === null && item.count > 1}<span class="count"
+                >×{item.count}</span
+              >{/if}
           </label>
         </li>
       {/each}
