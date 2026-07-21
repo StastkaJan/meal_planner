@@ -55,7 +55,9 @@ non-favourites if none fit. A **Copy from
 last week** action clones the previous week's slots into the current one
 (overwriting it) to reuse a good plan. A **Shopping list** view
 (`/plans/[id]/shopping`) flattens every assigned meal's ingredients for the week
-into one deduped, checkable list (no quantity math — ingredients are free text). Week and plan
+into one deduped, checkable list, summing quantities when every occurrence of an
+ingredient name has a leading number (e.g. "2 carrots" + "2 carrots" → "4 Carrots";
+falls back to a plain "×N" count otherwise, e.g. "Salt"). Week and plan
 live in the URL, so a shared or
 bookmarked link reopens the exact view. Plans are per-user and enforced
 server-side.

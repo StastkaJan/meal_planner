@@ -3,7 +3,7 @@ import {
   candidateMeals,
   filterByPrefs,
   pickUnused,
-  mergeIngredients,
+  sumIngredients,
   rankByMacros,
 } from './plans'
 
@@ -88,23 +88,49 @@ describe('filterByPrefs', () => {
   })
 })
 
-describe('mergeIngredients', () => {
-  it('dedups case-insensitively, unifies to a capitalized name, counts, sorts by name', () => {
-    const result = mergeIngredients([
-      ['Eggs', 'flour', ' Milk '],
-      ['eggs', 'Sugar'],
+describe('sumIngredients', () => {
+  it('dedups case-insensitively and sorts by name', () => {
+    const result = sumIngredients([
+      { name: 'Eggs', qty: null },
+      { name: 'Flour', qty: null },
+      { name: 'Milk', qty: null },
+      { name: 'eggs', qty: null },
+      { name: 'Sugar', qty: null },
     ])
     expect(result).toEqual([
-      { name: 'Eggs', count: 2 },
-      { name: 'Flour', count: 1 },
-      { name: 'Milk', count: 1 },
-      { name: 'Sugar', count: 1 },
+      { name: 'Eggs', count: 2, qty: null },
+      { name: 'Flour', count: 1, qty: null },
+      { name: 'Milk', count: 1, qty: null },
+      { name: 'Sugar', count: 1, qty: null },
     ])
   })
 
-  it('skips blank entries and handles no meals', () => {
-    expect(mergeIngredients([['', '  '], []])).toEqual([])
-    expect(mergeIngredients([])).toEqual([])
+  it('handles no rows', () => {
+    expect(sumIngredients([])).toEqual([])
+  })
+
+  it('sums quantities for the same ingredient across meals', () => {
+    const result = sumIngredients([
+      { name: 'Carrots', qty: '2' },
+      { name: 'Carrots', qty: '2' },
+    ])
+    expect(result).toEqual([{ name: 'Carrots', count: 2, qty: 4 }])
+  })
+
+  it('sums differing quantities', () => {
+    const result = sumIngredients([
+      { name: 'Onion', qty: '1' },
+      { name: 'Onion', qty: '2' },
+    ])
+    expect(result).toEqual([{ name: 'Onion', count: 2, qty: 3 }])
+  })
+
+  it('falls back to a plain count when any occurrence lacks a quantity', () => {
+    const result = sumIngredients([
+      { name: 'Carrots', qty: '2' },
+      { name: 'Carrots', qty: null },
+    ])
+    expect(result).toEqual([{ name: 'Carrots', count: 2, qty: null }])
   })
 })
 

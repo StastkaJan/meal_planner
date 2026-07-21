@@ -1,7 +1,9 @@
 import { error } from '@sveltejs/kit'
 import { and, or, isNull, eq } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { meals, mealFavorites } from '$lib/schema'
+import { meals, mealFavorites, ingredients, mealIngredients } from '$lib/schema'
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 // A meal is visible to a user if it's global (no owner) or owned by them. An anonymous
 // caller (no userId) sees only global meals. Visibility and edit-permission are the same
@@ -66,6 +68,65 @@ export function pickMealFields(
     if (body[k] !== undefined) out[k] = body[k]
   }
   return out
+}
+
+// ---- structured ingredient links (backs the shopping list's quantity summing) ----
+
+// Splits a leading quantity off a free-text ingredient line ("2 carrots" -> {qty: 2, name:
+// "carrots"}). Only handles integers, decimals, and simple fractions (n/d) — no units, no
+// mixed numbers; lines without a leading number (e.g. "salt and pepper") get qty: null.
+export function parseIngredientLine(raw: string): {
+  qty: number | null
+  name: string
+} {
+  const match = raw.match(/^(\d+\/\d+|\d+(?:\.\d+)?)\s+(.+)$/)
+  if (!match) return { qty: null, name: raw }
+  const [, qtyStr, rest] = match
+  const qty = qtyStr.includes('/')
+    ? Number(qtyStr.split('/')[0]) / Number(qtyStr.split('/')[1])
+    : Number(qtyStr)
+  return { qty, name: rest }
+}
+
+async function findOrCreateIngredient(tx: Tx, name: string): Promise<number> {
+  const display = name[0].toUpperCase() + name.slice(1)
+  const [inserted] = await tx
+    .insert(ingredients)
+    .values({ name: display })
+    .onConflictDoNothing({ target: ingredients.name })
+    .returning({ id: ingredients.id })
+  if (inserted) return inserted.id
+  const [existing] = await tx
+    .select({ id: ingredients.id })
+    .from(ingredients)
+    .where(eq(ingredients.name, display))
+    .limit(1)
+  return existing.id
+}
+
+// Replaces a meal's structured ingredient links from its free-text ingredient lines. Call
+// this whenever meals.ingredients is written so mealIngredients stays in sync — the shopping
+// list sums the qty column here instead of re-parsing free text on every read.
+export async function syncMealIngredients(
+  tx: Tx,
+  mealId: number,
+  lines: string[],
+) {
+  await tx.delete(mealIngredients).where(eq(mealIngredients.mealId, mealId))
+  let position = 0
+  for (const raw of lines) {
+    const trimmed = raw.trim()
+    if (!trimmed) continue
+    const { qty, name } = parseIngredientLine(trimmed)
+    const ingredientId = await findOrCreateIngredient(tx, name)
+    await tx.insert(mealIngredients).values({
+      mealId,
+      ingredientId,
+      position: position++,
+      qty: qty !== null ? String(qty) : null,
+      raw: trimmed,
+    })
+  }
 }
 
 // ---- schema.org Recipe (JSON-LD) import ----------------------------------

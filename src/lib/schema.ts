@@ -75,6 +75,30 @@ export const meals = pgTable('meals', {
   archivedAt: timestamp('archived_at'),
 })
 
+// Canonical ingredient names, deduped case-insensitively (name is always stored
+// capitalized-first-letter, so the unique constraint doubles as the case-fold).
+export const ingredients = pgTable('ingredients', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+})
+
+// One row per ingredient line on a meal, derived from meals.ingredients (free text) whenever
+// a meal is written — see syncMealIngredients in src/lib/server/meals.ts. Lets the shopping
+// list sum real qty columns instead of re-parsing free text on every read. qty is the
+// line's leading numeric quantity if it had one (NULL otherwise, e.g. "salt and pepper").
+export const mealIngredients = pgTable('meal_ingredients', {
+  id: serial('id').primaryKey(),
+  mealId: integer('meal_id')
+    .notNull()
+    .references(() => meals.id, { onDelete: 'cascade' }),
+  ingredientId: integer('ingredient_id')
+    .notNull()
+    .references(() => ingredients.id),
+  position: integer('position').notNull(),
+  qty: numeric('qty', { precision: 10, scale: 3 }),
+  raw: text('raw').notNull(),
+})
+
 export const plans = pgTable('plans', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id, {
@@ -128,6 +152,8 @@ export type User = typeof users.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Meal = typeof meals.$inferSelect
+export type Ingredient = typeof ingredients.$inferSelect
+export type MealIngredient = typeof mealIngredients.$inferSelect
 export type Plan = typeof plans.$inferSelect
 export type WeekSlot = typeof weekSlots.$inferSelect
 export type MealFavorite = typeof mealFavorites.$inferSelect
