@@ -7,6 +7,7 @@ import {
   date,
   primaryKey,
   timestamp,
+  boolean,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -109,6 +110,21 @@ export const weekSlots = pgTable(
   (t) => [primaryKey({ columns: [t.planId, t.date, t.mealType] })],
 )
 
+// Per-(plan, mealType) weekly repeat pattern: 6 booleans for the gaps Mon|Tue, Tue|Wed,
+// Wed|Thu, Thu|Fri, Fri|Sat, Sat|Sun. true = split (different meal on each side), false =
+// joined (same meal spans the gap). No row = every day independent (default behavior).
+export const slotRepeats = pgTable(
+  'slot_repeats',
+  {
+    planId: integer('plan_id')
+      .notNull()
+      .references(() => plans.id, { onDelete: 'cascade' }),
+    mealType: text('meal_type').notNull(),
+    groupBreaks: boolean('group_breaks').array().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.planId, t.mealType] })],
+)
+
 // Per-user bookmark on a meal. A join table (not a boolean on `meals`) because meals can be
 // global/shared: favouriting is per-user, not a property of the meal itself.
 export const mealFavorites = pgTable(
@@ -130,4 +146,5 @@ export type Session = typeof sessions.$inferSelect
 export type Meal = typeof meals.$inferSelect
 export type Plan = typeof plans.$inferSelect
 export type WeekSlot = typeof weekSlots.$inferSelect
+export type SlotRepeat = typeof slotRepeats.$inferSelect
 export type MealFavorite = typeof mealFavorites.$inferSelect

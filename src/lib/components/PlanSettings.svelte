@@ -1,15 +1,19 @@
 <script lang="ts">
-  import { CUISINE_OPTIONS, DIET_OPTIONS } from '$lib/constants'
-  import type { Plan } from '$lib/schema'
+  import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
+  import type { Plan, SlotRepeat } from '$lib/schema'
 
   let {
     plan,
     onChange,
+    onRepeatChange,
   }: {
-    plan: Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>
+    plan: Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'> & {
+      slotRepeats?: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
+    }
     onChange: (
       patch: Partial<Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>>,
     ) => void
+    onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
   } = $props()
 
   let cuisinePrefs = $derived(plan.cuisinePrefs ?? [])
@@ -31,6 +35,23 @@
     dietaryRestrictions = toggle(dietaryRestrictions, val)
     clearTimeout(debounce)
     debounce = setTimeout(() => onChange({ dietaryRestrictions }), 400)
+  }
+
+  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  // no saved row = every day independent, same as all gaps split
+  const NO_GROUPING = [true, true, true, true, true, true]
+
+  function breaksFor(mealType: string): boolean[] {
+    return (
+      plan.slotRepeats?.find((r) => r.mealType === mealType)?.groupBreaks ??
+      NO_GROUPING
+    )
+  }
+
+  function toggleGap(mealType: string, gapIdx: number) {
+    const breaks = [...breaksFor(mealType)]
+    breaks[gapIdx] = !breaks[gapIdx]
+    onRepeatChange?.(mealType, breaks)
   }
 </script>
 
@@ -68,6 +89,34 @@
         {/each}
       </div>
     </section>
+
+    {#if onRepeatChange}
+      <section>
+        <h4>Repeat pattern</h4>
+        {#each MEAL_TYPES as mealType}
+          {@const breaks = breaksFor(mealType)}
+          <div class="repeat-row">
+            <span class="mt-label">{mealType.replace('_', ' ')}</span>
+            <div class="days">
+              {#each DAY_LABELS as day, i}
+                <span class="day">{day}</span>
+                {#if i < 6}
+                  <button
+                    type="button"
+                    class="gap"
+                    class:joined={!breaks[i]}
+                    title={breaks[i] ? 'Different meal' : 'Same meal'}
+                    onclick={() => toggleGap(mealType, i)}
+                  >
+                    {breaks[i] ? '·' : '—'}
+                  </button>
+                {/if}
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </section>
+    {/if}
   </div>
 </details>
 
@@ -129,6 +178,47 @@
 
     input {
       display: none;
+    }
+  }
+  .repeat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+  }
+  .mt-label {
+    width: 100px;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: $color-text-muted;
+    text-transform: capitalize;
+  }
+  .days {
+    display: flex;
+    align-items: center;
+  }
+  .day {
+    font-size: 0.72rem;
+    color: $color-text-muted;
+    width: 28px;
+    text-align: center;
+  }
+  .gap {
+    width: 16px;
+    height: 20px;
+    border: none;
+    background: none;
+    color: $color-border;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+
+    &.joined {
+      color: $color-accent;
+      font-weight: 700;
+    }
+    &:hover {
+      color: $color-accent;
     }
   }
 </style>

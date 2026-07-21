@@ -1,4 +1,4 @@
-import type { Meal, Plan, WeekSlot } from './schema'
+import type { Meal, Plan, WeekSlot, SlotRepeat } from './schema'
 import { MEAL_TYPES, NUTRITION_TARGETS } from './constants'
 
 export type SlotWithMeal = WeekSlot & {
@@ -9,7 +9,10 @@ export type SlotWithMeal = WeekSlot & {
   fatG: string | null
 }
 
-export type PlanDetail = Plan & { slots: SlotWithMeal[] }
+export type PlanDetail = Plan & {
+  slots: SlotWithMeal[]
+  slotRepeats: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
+}
 
 export type MealWithFavorite = Meal & { isFavorite: boolean }
 

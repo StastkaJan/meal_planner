@@ -33,6 +33,9 @@ families juggling dietary needs. A logged-in user, since plans are private.
 - **Live nutrition feedback** shows each day's calories and macros against a
   per-user target set on the profile (falling back to a 2000 kcal / fixed-macro
   default), so the plan stays balanced without a spreadsheet.
+- **Repeat patterns** let a meal type (e.g. lunch) reuse the same meal across a
+  run of days (e.g. Mon-Tue / Wed-Thu / Fri-Sun) instead of choosing fresh every
+  day — for people who batch-cook rather than cook daily.
 
 ## How it works
 
@@ -48,7 +51,10 @@ those preferring the ones whose protein/carb/fat land closest to the remaining
 macro budget — picking at random within the top few so the week stays varied,
 with a fallback so a sparse or untagged library never stalls it. It tracks the meals
 already placed that week (including ones already in the plan) and prefers unused
-ones, so a large enough library yields a distinct meal per slot. A **favourites-only**
+ones, so a large enough library yields a distinct meal per slot. Each meal type can
+also have a **weekly repeat pattern** (`slotRepeats`) — a partition of Mon-Sun into
+groups that share one meal; setting a slot in a grouped meal type fills the whole
+group, and auto-compose picks one meal per group instead of one per day. A **favourites-only**
 checkbox next to Auto-compose restricts candidates to the caller's favourited meals
 (see [recipe library](./recipes.md)), leaving a slot empty rather than falling back to
 non-favourites if none fit. A **Copy from
