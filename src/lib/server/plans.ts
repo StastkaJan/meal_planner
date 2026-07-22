@@ -46,6 +46,12 @@ export function validDateStr(d: string) {
   return d
 }
 
+// Monday of the ISO week containing `date` ('YYYY-MM-DD', UTC)
+export function mondayOf(date: string): string {
+  const dayOfWeek = new Date(date).getUTCDay() // 0=Sun..6=Sat
+  return addDays(date, -((dayOfWeek + 6) % 7))
+}
+
 // slots whose date falls in the Mon–Sun window starting at `week` (a Monday)
 export function inWeek(planId: number, week: string) {
   return and(
@@ -299,6 +305,25 @@ type Consumed = {
   fatG: number
 }
 
+type NutritionRow = {
+  calories: number | null
+  proteinG: string | null
+  carbsG: string | null
+  fatG: string | null
+}
+
+// Sum calories/macros across rows sharing this shape (weekSlots joined with meals, or
+// bonusItems rows), treating null as 0. Shared by autocomposeSlots and recalcDaySlots so
+// "what has this day already consumed" is computed one way, including bonus items in both.
+export function sumNutrition(rows: NutritionRow[]): Consumed {
+  return {
+    calories: rows.reduce((sum, r) => sum + (r.calories ?? 0), 0),
+    proteinG: rows.reduce((sum, r) => sum + toNum(r.proteinG), 0),
+    carbsG: rows.reduce((sum, r) => sum + toNum(r.carbsG), 0),
+    fatG: rows.reduce((sum, r) => sum + toNum(r.fatG), 0),
+  }
+}
+
 // Pick a meal for each empty slot on one day. Mutates `consumed`/`used` as it goes, so
 // each pick shrinks the remaining per-slot budget for the next slot that day. Shared by
 // autocomposeSlots (called once per day of the week) and recalcDaySlots (called once,
@@ -360,7 +385,7 @@ export async function autocomposeSlots(
   ownerId: number,
   favoritesOnly = false,
 ): Promise<number> {
-  const [allMealsRaw, existingSlots, favIds] = await Promise.all([
+  const [allMealsRaw, existingSlots, favIds, weekBonus] = await Promise.all([
     db
       .select({
         id: meals.id,
@@ -387,6 +412,16 @@ export async function autocomposeSlots(
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
       .where(inWeek(plan.id, week)),
     favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
+    db
+      .select({
+        date: bonusItems.date,
+        calories: bonusItems.calories,
+        proteinG: bonusItems.proteinG,
+        carbsG: bonusItems.carbsG,
+        fatG: bonusItems.fatG,
+      })
+      .from(bonusItems)
+      .where(bonusInWeek(plan.id, week)),
   ])
 
   if (!allMealsRaw.length) return 0
@@ -425,12 +460,8 @@ export async function autocomposeSlots(
   for (const day of DAYS) {
     const date = addDays(week, day)
     const dayFilled = existingSlots.filter((s) => s.date === date)
-    const consumed = {
-      calories: dayFilled.reduce((sum, s) => sum + (s.calories ?? 0), 0),
-      proteinG: dayFilled.reduce((sum, s) => sum + toNum(s.proteinG), 0),
-      carbsG: dayFilled.reduce((sum, s) => sum + toNum(s.carbsG), 0),
-      fatG: dayFilled.reduce((sum, s) => sum + toNum(s.fatG), 0),
-    }
+    const dayBonus = weekBonus.filter((b) => b.date === date)
+    const consumed = sumNutrition([...dayFilled, ...dayBonus])
     const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(`${date}-${mt}`))
     toInsert.push(
       ...fillDaySlots(
@@ -459,7 +490,26 @@ export async function recalcDaySlots(
   targets: NutritionTargets,
   ownerId: number,
 ): Promise<number> {
-  const [allMealsRaw, daySlots, dayBonus] = await Promise.all([
+  // Cheap, single-table check first — most "Recalculate" clicks land on an already-full
+  // day, so this avoids the full meal-library fetch below when there's nothing to do.
+  const daySlots = await db
+    .select({
+      mealType: weekSlots.mealType,
+      mealId: weekSlots.mealId,
+      calories: meals.calories,
+      proteinG: meals.proteinG,
+      carbsG: meals.carbsG,
+      fatG: meals.fatG,
+    })
+    .from(weekSlots)
+    .leftJoin(meals, eq(weekSlots.mealId, meals.id))
+    .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.date, date)))
+
+  const filled = new Set(daySlots.map((s) => s.mealType))
+  const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(mt))
+  if (!emptySlots.length) return 0
+
+  const [allMealsRaw, dayBonus, weekSlotsForDedup] = await Promise.all([
     db
       .select({
         id: meals.id,
@@ -474,18 +524,6 @@ export async function recalcDaySlots(
       .where(visibleToUser(ownerId)),
     db
       .select({
-        mealType: weekSlots.mealType,
-        mealId: weekSlots.mealId,
-        calories: meals.calories,
-        proteinG: meals.proteinG,
-        carbsG: meals.carbsG,
-        fatG: meals.fatG,
-      })
-      .from(weekSlots)
-      .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-      .where(and(eq(weekSlots.planId, plan.id), eq(weekSlots.date, date))),
-    db
-      .select({
         calories: bonusItems.calories,
         proteinG: bonusItems.proteinG,
         carbsG: bonusItems.carbsG,
@@ -493,6 +531,12 @@ export async function recalcDaySlots(
       })
       .from(bonusItems)
       .where(and(eq(bonusItems.planId, plan.id), eq(bonusItems.date, date))),
+    // whole week (not just this day) so recalculate doesn't duplicate a meal already
+    // used elsewhere that week — matching autocomposeSlots's variety guarantee
+    db
+      .select({ mealId: weekSlots.mealId })
+      .from(weekSlots)
+      .where(inWeek(plan.id, mondayOf(date))),
   ])
 
   if (!allMealsRaw.length) return 0
@@ -512,26 +556,12 @@ export async function recalcDaySlots(
     plan.dietaryRestrictions,
   )
 
-  const filled = new Set(daySlots.map((s) => s.mealType))
   const used = new Set<number>(
-    daySlots.map((s) => s.mealId).filter((id): id is number => id !== null),
+    weekSlotsForDedup
+      .map((s) => s.mealId)
+      .filter((id): id is number => id !== null),
   )
-  const consumed: Consumed = {
-    calories:
-      daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0) +
-      dayBonus.reduce((sum, b) => sum + (b.calories ?? 0), 0),
-    proteinG:
-      daySlots.reduce((sum, s) => sum + toNum(s.proteinG), 0) +
-      dayBonus.reduce((sum, b) => sum + toNum(b.proteinG), 0),
-    carbsG:
-      daySlots.reduce((sum, s) => sum + toNum(s.carbsG), 0) +
-      dayBonus.reduce((sum, b) => sum + toNum(b.carbsG), 0),
-    fatG:
-      daySlots.reduce((sum, s) => sum + toNum(s.fatG), 0) +
-      dayBonus.reduce((sum, b) => sum + toNum(b.fatG), 0),
-  }
-  const emptySlots = MEAL_TYPES.filter((mt) => !filled.has(mt))
-  if (!emptySlots.length) return 0
+  const consumed = sumNutrition([...daySlots, ...dayBonus])
 
   const toInsert = fillDaySlots(
     plan.id,

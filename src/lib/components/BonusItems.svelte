@@ -50,7 +50,7 @@
   {#each items as item (item.id)}
     <div class="bonus-item">
       <span class="name" title={item.name}>{item.name}</span>
-      {#if item.calories}<span class="kcal">{item.calories}</span>{/if}
+      {#if item.calories !== null}<span class="kcal">{item.calories}</span>{/if}
       <button
         class="del"
         onclick={() => onDelete(item.id)}

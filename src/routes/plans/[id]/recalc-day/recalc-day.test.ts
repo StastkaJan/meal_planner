@@ -71,4 +71,15 @@ describe('POST /plans/:id/recalc-day', () => {
     const res = await POST(makeEvent({ date: '2026-06-30' }))
     expect(await res.json()).toEqual({ filled: 0 })
   })
+
+  it('rejects a malformed request body with 400 instead of throwing unhandled', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      POST({
+        params: { id: '1' },
+        request: { json: () => Promise.reject(new Error('bad body')) },
+        locals: { user: { id: 1 } },
+      } as any),
+    ).rejects.toMatchObject({ status: 400 })
+  })
 })

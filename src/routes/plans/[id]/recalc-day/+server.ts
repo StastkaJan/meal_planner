@@ -10,7 +10,7 @@ import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {
   const plan = await requireOwnedPlan(locals, params.id)
-  const { date } = await request.json()
+  const { date } = await request.json().catch(() => ({}))
   validDateStr(date)
 
   // requireOwnedPlan only ever returns plans where plans.userId = the current user's id,

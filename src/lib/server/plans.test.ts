@@ -6,6 +6,8 @@ import {
   mergeIngredients,
   rankByMacros,
   fillDaySlots,
+  sumNutrition,
+  mondayOf,
 } from './plans'
 
 const meals = [
@@ -246,5 +248,49 @@ describe('fillDaySlots', () => {
       ['lunch', 2],
     ])
     expect(consumed.calories).toBe(800)
+  })
+})
+
+describe('sumNutrition', () => {
+  it('sums calories and macros across rows, treating null as 0', () => {
+    const rows = [
+      { calories: 300, proteinG: '10.0', carbsG: '20.0', fatG: '5.0' },
+      { calories: null, proteinG: null, carbsG: null, fatG: null },
+      { calories: 200, proteinG: '5.0', carbsG: '10.0', fatG: '2.0' },
+    ]
+    expect(sumNutrition(rows)).toEqual({
+      calories: 500,
+      proteinG: 15,
+      carbsG: 30,
+      fatG: 7,
+    })
+  })
+
+  it('combines weekSlots-shaped and bonusItems-shaped rows via concatenation', () => {
+    const slots = [
+      { calories: 400, proteinG: '20.0', carbsG: '40.0', fatG: '15.0' },
+    ]
+    const bonus = [{ calories: 900, proteinG: null, carbsG: null, fatG: null }]
+    expect(sumNutrition([...slots, ...bonus]).calories).toBe(1300)
+  })
+
+  it('returns all zeros for an empty list', () => {
+    expect(sumNutrition([])).toEqual({
+      calories: 0,
+      proteinG: 0,
+      carbsG: 0,
+      fatG: 0,
+    })
+  })
+})
+
+describe('mondayOf', () => {
+  it('returns the same date when given a Monday', () => {
+    expect(mondayOf('2026-07-20')).toBe('2026-07-20') // a Monday
+  })
+
+  it('returns the prior Monday for any other day of the week', () => {
+    expect(mondayOf('2026-07-22')).toBe('2026-07-20') // Wednesday
+    expect(mondayOf('2026-07-26')).toBe('2026-07-20') // Sunday
   })
 })

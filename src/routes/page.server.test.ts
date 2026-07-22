@@ -13,6 +13,7 @@ vi.mock('$lib/server/plans', () => ({
   getPlanDetail: vi.fn(async (plan: any, week: string) => ({
     ...plan,
     slots: [],
+    bonus: [],
     week,
   })),
   validDateStr: (w: string) => {

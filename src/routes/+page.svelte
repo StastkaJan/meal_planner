@@ -103,6 +103,15 @@
     await refreshPlan()
   }
 
+  // Surfaces a server-side error (validation, ownership) that would otherwise be
+  // silently discarded; returns true if it alerted, so the caller can bail out.
+  async function alertIfFailed(res: Response): Promise<boolean> {
+    if (res.ok) return false
+    const body = await res.json().catch(() => ({}))
+    alert(body.message ?? 'Something went wrong.')
+    return true
+  }
+
   async function handleAddBonus(
     date: string,
     fields: {
@@ -114,27 +123,33 @@
     },
   ) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/bonus`, {
+    const res = await fetch(`/plans/${plan.id}/bonus`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ date, ...fields }),
     })
+    if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleDeleteBonus(id: number) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/bonus/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/plans/${plan.id}/bonus/${id}`, {
+      method: 'DELETE',
+    })
+    if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleRecalcDay(date: string) {
     if (!plan) return
-    const { filled } = await fetch(`/plans/${plan.id}/recalc-day`, {
+    const res = await fetch(`/plans/${plan.id}/recalc-day`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ date }),
-    }).then((r) => r.json())
+    })
+    if (await alertIfFailed(res)) return
+    const { filled } = await res.json()
     if (filled === 0)
       alert('Nothing to recalculate — that day has no empty slots.')
     await refreshPlan()

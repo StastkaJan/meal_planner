@@ -64,4 +64,32 @@ describe('POST /plans/:id/bonus', () => {
       fatG: null,
     })
   })
+
+  it('coerces a non-numeric calorie value to null instead of passing it through', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockAddBonusItem.mockResolvedValueOnce({ id: 9, name: 'Pizza' })
+    await POST(
+      makeEvent({
+        date: '2026-06-30',
+        name: 'Pizza',
+        calories: 'not-a-number',
+      }),
+    )
+    expect(mockAddBonusItem).toHaveBeenCalledWith(
+      1,
+      '2026-06-30',
+      expect.objectContaining({ calories: null }),
+    )
+  })
+
+  it('rejects a malformed request body with 400 instead of throwing unhandled', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      POST({
+        params: { id: '1' },
+        request: { json: () => Promise.reject(new Error('bad body')) },
+        locals: { user: { id: 1 } },
+      } as any),
+    ).rejects.toMatchObject({ status: 400 })
+  })
 })

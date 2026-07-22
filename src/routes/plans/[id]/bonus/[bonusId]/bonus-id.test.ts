@@ -33,4 +33,12 @@ describe('DELETE /plans/:id/bonus/:bonusId', () => {
     expect(res.status).toBe(204)
     expect(mockDeleteBonusItem).toHaveBeenCalledWith(1, 9)
   })
+
+  it('rejects a non-numeric bonusId with 400 instead of querying with NaN', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(DELETE(makeEvent('not-a-number'))).rejects.toMatchObject({
+      status: 400,
+    })
+    expect(mockDeleteBonusItem).not.toHaveBeenCalled()
+  })
 })
