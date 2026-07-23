@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit'
-import { and, or, isNull, eq } from 'drizzle-orm'
+import { and, or, isNull, eq, inArray } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { meals, mealFavorites, ingredients, mealIngredients } from '$lib/schema'
 
@@ -88,20 +88,22 @@ export function parseIngredientLine(raw: string): {
   return { qty, name: rest }
 }
 
-async function findOrCreateIngredient(tx: Tx, name: string): Promise<number> {
-  const display = name[0].toUpperCase() + name.slice(1)
-  const [inserted] = await tx
+// Resolves each name to its ingredients.id, creating any that don't exist yet. Batched (one
+// insert + one select for the whole set) instead of one round-trip pair per name.
+async function findOrCreateIngredientIds(
+  tx: Tx,
+  names: string[],
+): Promise<Map<string, number>> {
+  if (!names.length) return new Map()
+  await tx
     .insert(ingredients)
-    .values({ name: display })
+    .values(names.map((name) => ({ name })))
     .onConflictDoNothing({ target: ingredients.name })
-    .returning({ id: ingredients.id })
-  if (inserted) return inserted.id
-  const [existing] = await tx
-    .select({ id: ingredients.id })
+  const rows = await tx
+    .select({ id: ingredients.id, name: ingredients.name })
     .from(ingredients)
-    .where(eq(ingredients.name, display))
-    .limit(1)
-  return existing.id
+    .where(inArray(ingredients.name, names))
+  return new Map(rows.map((r) => [r.name, r.id]))
 }
 
 // Replaces a meal's structured ingredient links from its free-text ingredient lines. Call
@@ -113,20 +115,54 @@ export async function syncMealIngredients(
   lines: string[],
 ) {
   await tx.delete(mealIngredients).where(eq(mealIngredients.mealId, mealId))
-  let position = 0
-  for (const raw of lines) {
-    const trimmed = raw.trim()
-    if (!trimmed) continue
-    const { qty, name } = parseIngredientLine(trimmed)
-    const ingredientId = await findOrCreateIngredient(tx, name)
-    await tx.insert(mealIngredients).values({
+  const parsed = lines
+    .map((raw) => raw.trim())
+    .filter(Boolean)
+    .map((raw) => ({ raw, ...parseIngredientLine(raw) }))
+  if (!parsed.length) return
+
+  const displayName = (name: string) => name[0].toUpperCase() + name.slice(1)
+  const names = [...new Set(parsed.map((p) => displayName(p.name)))]
+  const idByName = await findOrCreateIngredientIds(tx, names)
+
+  await tx.insert(mealIngredients).values(
+    parsed.map((p, position) => ({
       mealId,
-      ingredientId,
-      position: position++,
-      qty: qty !== null ? String(qty) : null,
-      raw: trimmed,
-    })
-  }
+      ingredientId: idByName.get(displayName(p.name))!,
+      position,
+      qty: p.qty !== null ? String(p.qty) : null,
+      raw: p.raw,
+    })),
+  )
+}
+
+// Single choke point for meal creation: insert + structured-ingredient sync, one transaction.
+export async function createMeal(values: {
+  name: string
+  [k: string]: unknown
+}) {
+  return db.transaction(async (tx) => {
+    const [meal] = await tx.insert(meals).values(values).returning()
+    await syncMealIngredients(tx, meal.id, meal.ingredients)
+    return meal
+  })
+}
+
+// Single choke point for meal updates: update + structured-ingredient resync (only when
+// ingredients was part of this write), one transaction.
+export async function updateMeal(id: number, values: Record<string, unknown>) {
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(meals)
+      .set(values)
+      .where(eq(meals.id, id))
+      .returning()
+    if (!updated) return updated
+    if (values.ingredients !== undefined) {
+      await syncMealIngredients(tx, id, updated.ingredients)
+    }
+    return updated
+  })
 }
 
 // ---- schema.org Recipe (JSON-LD) import ----------------------------------
