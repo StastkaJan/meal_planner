@@ -1,7 +1,9 @@
 import { error } from '@sveltejs/kit'
-import { and, or, isNull, eq } from 'drizzle-orm'
+import { and, or, isNull, eq, inArray } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { meals, mealFavorites } from '$lib/schema'
+import { meals, mealFavorites, ingredients, mealIngredients } from '$lib/schema'
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 // A meal is visible to a user if it's global (no owner) or owned by them. An anonymous
 // caller (no userId) sees only global meals. Visibility and edit-permission are the same
@@ -66,6 +68,101 @@ export function pickMealFields(
     if (body[k] !== undefined) out[k] = body[k]
   }
   return out
+}
+
+// ---- structured ingredient links (backs the shopping list's quantity summing) ----
+
+// Splits a leading quantity off a free-text ingredient line ("2 carrots" -> {qty: 2, name:
+// "carrots"}). Only handles integers, decimals, and simple fractions (n/d) — no units, no
+// mixed numbers; lines without a leading number (e.g. "salt and pepper") get qty: null.
+export function parseIngredientLine(raw: string): {
+  qty: number | null
+  name: string
+} {
+  const match = raw.match(/^(\d+\/\d+|\d+(?:\.\d+)?)\s+(.+)$/)
+  if (!match) return { qty: null, name: raw }
+  const [, qtyStr, rest] = match
+  const qty = qtyStr.includes('/')
+    ? Number(qtyStr.split('/')[0]) / Number(qtyStr.split('/')[1])
+    : Number(qtyStr)
+  return { qty, name: rest }
+}
+
+// Resolves each name to its ingredients.id, creating any that don't exist yet. Batched (one
+// insert + one select for the whole set) instead of one round-trip pair per name.
+async function findOrCreateIngredientIds(
+  tx: Tx,
+  names: string[],
+): Promise<Map<string, number>> {
+  if (!names.length) return new Map()
+  await tx
+    .insert(ingredients)
+    .values(names.map((name) => ({ name })))
+    .onConflictDoNothing({ target: ingredients.name })
+  const rows = await tx
+    .select({ id: ingredients.id, name: ingredients.name })
+    .from(ingredients)
+    .where(inArray(ingredients.name, names))
+  return new Map(rows.map((r) => [r.name, r.id]))
+}
+
+// Replaces a meal's structured ingredient links from its free-text ingredient lines. Call
+// this whenever meals.ingredients is written so mealIngredients stays in sync — the shopping
+// list sums the qty column here instead of re-parsing free text on every read.
+export async function syncMealIngredients(
+  tx: Tx,
+  mealId: number,
+  lines: string[],
+) {
+  await tx.delete(mealIngredients).where(eq(mealIngredients.mealId, mealId))
+  const parsed = lines
+    .map((raw) => raw.trim())
+    .filter(Boolean)
+    .map((raw) => ({ raw, ...parseIngredientLine(raw) }))
+  if (!parsed.length) return
+
+  const displayName = (name: string) => name[0].toUpperCase() + name.slice(1)
+  const names = [...new Set(parsed.map((p) => displayName(p.name)))]
+  const idByName = await findOrCreateIngredientIds(tx, names)
+
+  await tx.insert(mealIngredients).values(
+    parsed.map((p, position) => ({
+      mealId,
+      ingredientId: idByName.get(displayName(p.name))!,
+      position,
+      qty: p.qty !== null ? String(p.qty) : null,
+      raw: p.raw,
+    })),
+  )
+}
+
+// Single choke point for meal creation: insert + structured-ingredient sync, one transaction.
+export async function createMeal(values: {
+  name: string
+  [k: string]: unknown
+}) {
+  return db.transaction(async (tx) => {
+    const [meal] = await tx.insert(meals).values(values).returning()
+    await syncMealIngredients(tx, meal.id, meal.ingredients)
+    return meal
+  })
+}
+
+// Single choke point for meal updates: update + structured-ingredient resync (only when
+// ingredients was part of this write), one transaction.
+export async function updateMeal(id: number, values: Record<string, unknown>) {
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(meals)
+      .set(values)
+      .where(eq(meals.id, id))
+      .returning()
+    if (!updated) return updated
+    if (values.ingredients !== undefined) {
+      await syncMealIngredients(tx, id, updated.ingredients)
+    }
+    return updated
+  })
 }
 
 // ---- schema.org Recipe (JSON-LD) import ----------------------------------

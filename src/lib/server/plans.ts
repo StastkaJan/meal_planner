@@ -136,27 +136,28 @@ export async function copyWeek(planId: number, from: string, to: string) {
     })
 }
 
-// Flatten every meal's ingredient list into one deduped shopping list. Grouping is
-// case-insensitive; each name is displayed with a unified case (capitalized first letter)
-// so the list reads consistently. count = how many meals use it.
-// ponytail: no quantity summing — ingredients are free-text strings, so "2 eggs" and
-// "eggs" don't combine; upgrade to a parser only if users ask.
-export function mergeIngredients(
-  lists: string[][],
-): { name: string; count: number }[] {
-  const map = new Map<string, { name: string; count: number }>()
-  for (const list of lists) {
-    for (const raw of list) {
-      const trimmed = raw.trim()
-      if (!trimmed) continue
-      const key = trimmed.toLowerCase()
-      const existing = map.get(key)
-      if (existing) existing.count++
-      else
-        map.set(key, {
-          name: trimmed[0].toUpperCase() + trimmed.slice(1),
-          count: 1,
-        })
+// Sums each week's structured meal-ingredient links (mealIngredients.qty, joined via
+// ingredients.name — see src/lib/server/meals.ts for how those get populated from a meal's
+// free-text ingredient lines) into one deduped shopping list. count = how many meal-ingredient
+// rows share this name; qty = their summed quantity, or null if any of them lacked one
+// (e.g. "salt and pepper" has no leading number) — falls back to a plain count in that case.
+export function sumIngredients(
+  rows: { name: string; qty: string | null }[],
+): { name: string; count: number; qty: number | null }[] {
+  const map = new Map<
+    string,
+    { name: string; count: number; qty: number | null }
+  >()
+  for (const { name, qty: qtyStr } of rows) {
+    const qty = qtyStr === null ? null : Number(qtyStr)
+    const key = name.toLowerCase()
+    const existing = map.get(key)
+    if (existing) {
+      existing.count++
+      existing.qty =
+        qty !== null && existing.qty !== null ? existing.qty + qty : null
+    } else {
+      map.set(key, { name, count: 1, qty })
     }
   }
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
