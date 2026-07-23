@@ -53,6 +53,7 @@ npm run dev           # start dev server
 npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed dummy data
+npm run db:backfill-ingredients  # one-time: sync mealIngredients for meals that predate migration 0010
 npm run test          # playwright E2E (needs docker compose up)
 npm run test:unit     # vitest unit tests
 docker compose up -d  # start postgres + app

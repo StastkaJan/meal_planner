@@ -2,11 +2,7 @@ import { json, error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import { db } from '$lib/db'
 import { meals } from '$lib/schema'
-import {
-  pickMealFields,
-  assertCanEdit,
-  syncMealIngredients,
-} from '$lib/server/meals'
+import { pickMealFields, assertCanEdit, updateMeal } from '$lib/server/meals'
 import type { RequestHandler } from './$types'
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
@@ -14,18 +10,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   const id = Number(params.id)
   await assertCanEdit(id, locals.user.id)
   const values = pickMealFields(await request.json())
-  const updated = await db.transaction(async (tx) => {
-    const [updated] = await tx
-      .update(meals)
-      .set(values)
-      .where(eq(meals.id, id))
-      .returning()
-    if (!updated) return updated
-    if (values.ingredients !== undefined) {
-      await syncMealIngredients(tx, id, updated.ingredients)
-    }
-    return updated
-  })
+  const updated = await updateMeal(id, values)
   if (!updated) error(404, 'Meal not found')
   return json(updated)
 }

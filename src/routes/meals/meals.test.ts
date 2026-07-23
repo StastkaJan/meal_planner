@@ -1,25 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-const mockDb = vi.hoisted(() => {
-  const db: any = {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn(),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn(),
-    transaction: vi.fn((cb: (tx: any) => unknown) => cb(db)),
-  }
-  return db
-})
-
-vi.mock('$lib/db', () => ({ db: mockDb }))
-
-const syncMealIngredients = vi.hoisted(() => vi.fn())
+const createMeal = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/meals', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  syncMealIngredients,
+  createMeal,
 }))
 
 import { POST } from './+server'
@@ -47,15 +31,30 @@ describe('POST /meals', () => {
     await expect(POST(makeEvent({}))).rejects.toMatchObject({ status: 400 })
   })
 
-  it('creates a meal and syncs its ingredients within a transaction', async () => {
-    mockDb.returning.mockResolvedValueOnce([
-      { id: 1, name: 'Soup', ingredients: ['2 carrots'] },
-    ])
+  it('delegates to createMeal with server-set ownership', async () => {
+    createMeal.mockResolvedValueOnce({
+      id: 1,
+      name: 'Soup',
+      ingredients: ['2 carrots'],
+    })
     const res = await POST(
-      makeEvent({ name: 'Soup', ingredients: ['2 carrots'] }),
+      makeEvent({
+        name: 'Soup',
+        ingredients: ['2 carrots'],
+        scope: 'personal',
+      }),
     )
     expect(res.status).toBe(201)
-    expect(mockDb.transaction).toHaveBeenCalled()
-    expect(syncMealIngredients).toHaveBeenCalledWith(mockDb, 1, ['2 carrots'])
+    expect(createMeal).toHaveBeenCalledWith({
+      name: 'Soup',
+      ingredients: ['2 carrots'],
+      userId: 1,
+    })
+  })
+
+  it('creates a global meal when scope is not personal', async () => {
+    createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew', ingredients: [] })
+    await POST(makeEvent({ name: 'Stew' }))
+    expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: null })
   })
 })

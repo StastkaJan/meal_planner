@@ -9,6 +9,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "npx tsx src/lib/seed.ts",
+    "db:backfill-ingredients": "npx tsx src/lib/backfill-ingredients.ts",
     "test": "playwright test",
     "test:unit": "vitest run",
     "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",

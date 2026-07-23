@@ -1,21 +1,23 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-const mockDb = vi.hoisted(() => {
-  const db: any = {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn(),
-    update: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    returning: vi.fn(),
-    delete: vi.fn().mockReturnThis(),
-    transaction: vi.fn((cb: (tx: any) => unknown) => cb(db)),
-  }
-  return db
-})
+const mockDb = vi.hoisted(() => ({
+  select: vi.fn().mockReturnThis(),
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  limit: vi.fn(),
+  update: vi.fn().mockReturnThis(),
+  set: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+  delete: vi.fn().mockReturnThis(),
+}))
 
 vi.mock('$lib/db', () => ({ db: mockDb }))
+
+const updateMeal = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/meals', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  updateMeal,
+}))
 
 import { PATCH, DELETE } from './+server'
 
@@ -47,18 +49,26 @@ describe('REST /meals/:id', () => {
       })
     })
 
-    it('allows editing own meal', async () => {
+    it('returns 404 when updateMeal finds nothing to update', async () => {
       mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
-      mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
-      await PATCH(makeEvent({ name: 'updated' }))
-      expect(mockDb.update).toHaveBeenCalled()
+      updateMeal.mockResolvedValueOnce(undefined)
+      await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
+        status: 404,
+      })
     })
 
-    it('allows editing global meal', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
-      mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
+    it('delegates to updateMeal for an own meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
+      updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
       await PATCH(makeEvent({ name: 'updated' }))
-      expect(mockDb.update).toHaveBeenCalled()
+      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' })
+    })
+
+    it('delegates to updateMeal for a global meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
+      updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
+      await PATCH(makeEvent({ name: 'updated' }))
+      expect(updateMeal).toHaveBeenCalled()
     })
 
     it('rejects archived meal with 403', async () => {
