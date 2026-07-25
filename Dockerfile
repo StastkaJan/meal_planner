@@ -13,6 +13,9 @@ COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/src/lib/seed.ts ./src/lib/seed.ts
 COPY --from=build /app/src/lib/schema.ts ./src/lib/schema.ts
+COPY --from=build /app/src/lib/db.ts ./src/lib/db.ts
+COPY --from=build /app/src/lib/backfill-ingredients.ts ./src/lib/backfill-ingredients.ts
+COPY --from=build /app/src/lib/server ./src/lib/server
 COPY --from=build /app/entrypoint.sh .
 RUN npm ci --omit=dev && npm install drizzle-kit tsx
 RUN chmod +x entrypoint.sh

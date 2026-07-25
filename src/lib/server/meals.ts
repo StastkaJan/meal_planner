@@ -1,7 +1,6 @@
-import { error } from '@sveltejs/kit'
 import { and, or, isNull, eq, inArray } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { meals, mealFavorites, ingredients, mealIngredients } from '$lib/schema'
+import { db } from '../db'
+import { meals, mealFavorites, ingredients, mealIngredients } from '../schema'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -22,14 +21,19 @@ export const canAccessMeal = (
 ) =>
   meal.archivedAt === null && (meal.userId === null || meal.userId === userId)
 
+// error() is imported lazily so this module stays loadable from the standalone
+// seed/backfill scripts (run via bare tsx, outside SvelteKit's resolver — see
+// syncMealIngredients callers), which don't have @sveltejs/kit installed.
 export async function assertCanEdit(id: number, userId: number) {
   const [meal] = await db
     .select({ userId: meals.userId, archivedAt: meals.archivedAt })
     .from(meals)
     .where(eq(meals.id, id))
     .limit(1)
-  if (!meal) error(404, 'Meal not found')
-  if (!canAccessMeal(meal, userId)) error(403, 'Not allowed')
+  if (!meal || !canAccessMeal(meal, userId)) {
+    const { error } = await import('@sveltejs/kit')
+    error(!meal ? 404 : 403, !meal ? 'Meal not found' : 'Not allowed')
+  }
 }
 
 export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
