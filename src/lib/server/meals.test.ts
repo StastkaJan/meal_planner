@@ -118,40 +118,56 @@ describe('findRecipeNode', () => {
 })
 
 describe('parseIngredientLine', () => {
-  it('splits a leading integer off the name', () => {
+  it('splits a leading integer off the name (no recognized unit)', () => {
     expect(parseIngredientLine('2 carrots')).toEqual({
       qty: 2,
+      unit: null,
       name: 'carrots',
     })
   })
 
-  it('splits a leading decimal and a leading fraction', () => {
+  it('splits qty, unit and name for a leading decimal and a leading fraction', () => {
     expect(parseIngredientLine('1.5 cups flour')).toEqual({
       qty: 1.5,
-      name: 'cups flour',
+      unit: 'cup',
+      name: 'flour',
     })
     expect(parseIngredientLine('1/2 cup sugar')).toEqual({
       qty: 0.5,
-      name: 'cup sugar',
+      unit: 'cup',
+      name: 'sugar',
     })
   })
 
-  it('returns a null qty when there is no leading number', () => {
+  it('splits a unit glued directly to the quantity', () => {
+    expect(parseIngredientLine('200g Greek yogurt')).toEqual({
+      qty: 200,
+      unit: 'g',
+      name: 'Greek yogurt',
+    })
+  })
+
+  it('falls back to the whole remainder as name when the first word is not a unit', () => {
+    expect(parseIngredientLine('1 large apple')).toEqual({
+      qty: 1,
+      unit: null,
+      name: 'large apple',
+    })
+  })
+
+  it('returns a null qty and unit when there is no leading number', () => {
     expect(parseIngredientLine('salt and pepper')).toEqual({
       qty: null,
+      unit: null,
       name: 'salt and pepper',
-    })
-    expect(parseIngredientLine('200g Greek yogurt')).toEqual({
-      qty: null,
-      name: '200g Greek yogurt',
     })
   })
 })
 
 describe('createMeal / updateMeal ingredient sync', () => {
-  it('createMeal syncs mealIngredients when the new meal has ingredient lines', async () => {
+  it('createMeal syncs mealIngredients when the new meal has ingredients', async () => {
     const tx = makeTx([
-      [{ id: 1, ingredients: ['2 carrots'] }], // insert(meals).values().returning()
+      [{ id: 1, name: 'Soup' }], // insert(meals).values().returning()
       undefined, // delete(mealIngredients).where()
       undefined, // insert(ingredients).values().onConflictDoNothing()
       [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
@@ -160,15 +176,18 @@ describe('createMeal / updateMeal ingredient sync', () => {
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
       cb(tx),
     )
-    const meal = await createMeal({ name: 'Soup', ingredients: ['2 carrots'] })
-    expect(meal).toEqual({ id: 1, ingredients: ['2 carrots'] })
+    const meal = await createMeal({
+      name: 'Soup',
+      ingredients: [{ name: 'carrots', qty: 2, unit: null }],
+    })
+    expect(meal).toEqual({ id: 1, name: 'Soup' })
     expect(tx.delete).toHaveBeenCalled()
     expect(tx.insert).toHaveBeenCalledTimes(3) // meals, ingredients, mealIngredients
   })
 
-  it('createMeal skips ingredient-table writes when the new meal has no ingredient lines', async () => {
+  it('createMeal skips ingredient-table writes when the new meal has no ingredients', async () => {
     const tx = makeTx([
-      [{ id: 2, ingredients: [] }], // insert(meals).values().returning()
+      [{ id: 2, name: 'Water' }], // insert(meals).values().returning()
       undefined, // delete(mealIngredients).where() — still runs unconditionally
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
@@ -181,7 +200,7 @@ describe('createMeal / updateMeal ingredient sync', () => {
 
   it('updateMeal resyncs mealIngredients when ingredients is part of the write', async () => {
     const tx = makeTx([
-      [{ id: 1, ingredients: ['2 carrots'] }], // update(meals).set().where().returning()
+      [{ id: 1, name: 'Soup' }], // update(meals).set().where().returning()
       undefined, // delete(mealIngredients).where()
       undefined, // insert(ingredients).values().onConflictDoNothing()
       [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
@@ -190,9 +209,30 @@ describe('createMeal / updateMeal ingredient sync', () => {
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
       cb(tx),
     )
-    await updateMeal(1, { ingredients: ['2 carrots'] })
+    await updateMeal(1, {
+      ingredients: [{ name: 'carrots', qty: 2, unit: null }],
+    })
     expect(tx.delete).toHaveBeenCalled()
     expect(tx.insert).toHaveBeenCalledTimes(2) // ingredients, mealIngredients
+  })
+
+  it('updateMeal looks the row up instead of updating when ingredients is the only field written', async () => {
+    const tx = makeTx([
+      [{ id: 1, name: 'Soup' }], // select(meals).where() — mealValues is empty, no .update()
+      undefined, // delete(mealIngredients).where()
+      undefined, // insert(ingredients).values().onConflictDoNothing()
+      [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
+      undefined, // insert(mealIngredients).values()
+    ])
+    mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
+      cb(tx),
+    )
+    const updated = await updateMeal(1, {
+      ingredients: [{ name: 'carrots', qty: 2, unit: null }],
+    })
+    expect(updated).toEqual({ id: 1, name: 'Soup' })
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(tx.delete).toHaveBeenCalled()
   })
 
   it('updateMeal does not touch ingredient tables when ingredients is not part of the write', async () => {
@@ -212,7 +252,9 @@ describe('createMeal / updateMeal ingredient sync', () => {
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
       cb(tx),
     )
-    const result = await updateMeal(999, { ingredients: ['2 carrots'] })
+    const result = await updateMeal(999, {
+      ingredients: [{ name: 'carrots', qty: 2, unit: null }],
+    })
     expect(result).toBeUndefined()
     expect(tx.delete).not.toHaveBeenCalled()
   })
@@ -237,7 +279,10 @@ describe('parseRecipeJsonLd', () => {
       name: 'Pancakes',
       description: 'Fluffy',
       imageUrl: 'http://img/1.jpg',
-      ingredients: ['2 eggs', '1 cup flour'],
+      ingredients: [
+        { qty: 2, unit: null, name: 'eggs' },
+        { qty: 1, unit: 'cup', name: 'flour' },
+      ],
       instructions: 'Mix\nFry',
       calories: 320,
       timeMinutes: 25,

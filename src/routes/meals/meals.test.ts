@@ -35,25 +35,24 @@ describe('POST /meals', () => {
     createMeal.mockResolvedValueOnce({
       id: 1,
       name: 'Soup',
-      ingredients: ['2 carrots'],
     })
     const res = await POST(
       makeEvent({
         name: 'Soup',
-        ingredients: ['2 carrots'],
+        ingredients: [{ name: 'carrots', qty: 2, unit: null }],
         scope: 'personal',
       }),
     )
     expect(res.status).toBe(201)
     expect(createMeal).toHaveBeenCalledWith({
       name: 'Soup',
-      ingredients: ['2 carrots'],
+      ingredients: [{ name: 'carrots', qty: 2, unit: null }],
       userId: 1,
     })
   })
 
   it('creates a global meal when scope is not personal', async () => {
-    createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew', ingredients: [] })
+    createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew' })
     await POST(makeEvent({ name: 'Stew' }))
     expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: null })
   })

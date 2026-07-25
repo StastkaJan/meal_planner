@@ -64,10 +64,6 @@ export const meals = pgTable('meals', {
     .default(sql`'{}'`),
   imageUrl: text('image_url'),
   description: text('description'),
-  ingredients: text('ingredients')
-    .array()
-    .notNull()
-    .default(sql`'{}'`),
   instructions: text('instructions'),
   timeMinutes: integer('time_minutes'),
   difficulty: text('difficulty'),
@@ -82,10 +78,10 @@ export const ingredients = pgTable('ingredients', {
   name: text('name').notNull().unique(),
 })
 
-// One row per ingredient line on a meal, derived from meals.ingredients (free text) whenever
-// a meal is written — see syncMealIngredients in src/lib/server/meals.ts. Lets the shopping
-// list sum real qty columns instead of re-parsing free text on every read. qty is the
-// line's leading numeric quantity if it had one (NULL otherwise, e.g. "salt and pepper").
+// One row per ingredient on a meal — the structured source of truth for a meal's ingredient
+// list (name/qty/unit are entered directly via the edit form). Backs both the meal detail
+// display and the shopping list's quantity summing — see syncMealIngredients in
+// src/lib/server/meals.ts. qty/unit are nullable for ingredients with no count (e.g. "salt").
 export const mealIngredients = pgTable('meal_ingredients', {
   id: serial('id').primaryKey(),
   mealId: integer('meal_id')
@@ -96,7 +92,7 @@ export const mealIngredients = pgTable('meal_ingredients', {
     .references(() => ingredients.id),
   position: integer('position').notNull(),
   qty: numeric('qty', { precision: 10, scale: 3 }),
-  raw: text('raw').notNull(),
+  unit: text('unit'),
 })
 
 export const plans = pgTable('plans', {

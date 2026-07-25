@@ -187,28 +187,29 @@ export async function copyWeek(planId: number, from: string, to: string) {
     })
 }
 
-// Sums each week's structured meal-ingredient links (mealIngredients.qty, joined via
-// ingredients.name — see src/lib/server/meals.ts for how those get populated from a meal's
-// free-text ingredient lines) into one deduped shopping list. count = how many meal-ingredient
-// rows share this name; qty = their summed quantity, or null if any of them lacked one
-// (e.g. "salt and pepper" has no leading number) — falls back to a plain count in that case.
+// Sums each week's structured meal-ingredient links (mealIngredients.qty/unit, joined via
+// ingredients.name) into one deduped shopping list, grouped by (name, unit) — two ingredients
+// with the same name but different units (e.g. "tbsp olive oil" vs "ml olive oil") stay
+// separate line items rather than being summed together incorrectly. count = how many
+// meal-ingredient rows share this name+unit; qty = their summed quantity, or null if any of
+// them lacked one (e.g. "salt and pepper" has no count) — falls back to a plain count then.
 export function sumIngredients(
-  rows: { name: string; qty: string | null }[],
-): { name: string; count: number; qty: number | null }[] {
+  rows: { name: string; qty: string | null; unit: string | null }[],
+): { name: string; unit: string | null; count: number; qty: number | null }[] {
   const map = new Map<
     string,
-    { name: string; count: number; qty: number | null }
+    { name: string; unit: string | null; count: number; qty: number | null }
   >()
-  for (const { name, qty: qtyStr } of rows) {
+  for (const { name, qty: qtyStr, unit } of rows) {
     const qty = qtyStr === null ? null : Number(qtyStr)
-    const key = name.toLowerCase()
+    const key = `${name.toLowerCase()}|${unit ?? ''}`
     const existing = map.get(key)
     if (existing) {
       existing.count++
       existing.qty =
         qty !== null && existing.qty !== null ? existing.qty + qty : null
     } else {
-      map.set(key, { name, count: 1, qty })
+      map.set(key, { name, unit, count: 1, qty })
     }
   }
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))

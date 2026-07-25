@@ -8,6 +8,23 @@ export const MEAL_TYPES = [
 
 export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const
 
+export const UNIT_OPTIONS = [
+  'g',
+  'kg',
+  'ml',
+  'l',
+  'tsp',
+  'tbsp',
+  'cup',
+  'piece',
+  'clove',
+  'pinch',
+  'slice',
+  'can',
+  'oz',
+  'lb',
+] as const
+
 export function mealFitsSlot(
   allowedSlots: string[],
   mealType: string,

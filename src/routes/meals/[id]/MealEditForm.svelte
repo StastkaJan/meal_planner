@@ -4,21 +4,45 @@
     DIET_OPTIONS,
     DIFF_LABEL,
     MEAL_TYPES,
+    UNIT_OPTIONS,
   } from '$lib/constants'
   import type { Meal } from '$lib/schema'
+  import type { IngredientInput } from '$lib/types'
 
   let {
     meal,
+    ingredients,
     onCancel,
     onSaved,
   }: {
     meal: Meal
+    ingredients: IngredientInput[]
     onCancel: () => void
     onSaved: () => void
   } = $props()
 
   let tags = $derived(meal.tags ?? [])
   let allowedSlots = $derived(meal.allowedSlots ?? [])
+
+  type IngredientRow = { name: string; qty: number | ''; unit: string }
+  const emptyRow = (): IngredientRow => ({ name: '', qty: '', unit: '' })
+  let ingredientRows = $state<IngredientRow[]>(
+    ingredients.length
+      ? ingredients.map((i) => ({
+          name: i.name,
+          qty: i.qty ?? '',
+          unit: i.unit ?? '',
+        }))
+      : [emptyRow()],
+  )
+
+  function addIngredientRow() {
+    ingredientRows = [...ingredientRows, emptyRow()]
+  }
+
+  function removeIngredientRow(i: number) {
+    ingredientRows = ingredientRows.filter((_, idx) => idx !== i)
+  }
 
   function toggleTag(opt: string) {
     tags = tags.includes(opt) ? tags.filter((t) => t !== opt) : [...tags, opt]
@@ -36,6 +60,13 @@
     const body: Record<string, unknown> = Object.fromEntries(fd)
     body.tags = fd.getAll('tags')
     body.allowedSlots = fd.getAll('allowedSlots')
+    body.ingredients = ingredientRows
+      .filter((r) => r.name.trim())
+      .map((r) => ({
+        name: r.name.trim(),
+        qty: r.qty === '' ? null : Number(r.qty),
+        unit: r.unit || null,
+      }))
     const res = await fetch(`/meals/${meal.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -175,12 +206,38 @@
       >{meal.description ?? ''}</textarea
     ></label
   >
-  <label
-    >Ingredients <span class="hint">(one per line)</span>
-    <textarea name="ingredients" rows="6"
-      >{meal.ingredients?.join('\n') ?? ''}</textarea
+  <fieldset class="ingredients-field">
+    <legend>Ingredients</legend>
+    <div class="ingredient-rows">
+      {#each ingredientRows as row, i}
+        <div class="ingredient-row">
+          <input type="text" placeholder="Ingredient" bind:value={row.name} />
+          <input
+            type="number"
+            step="any"
+            min="0"
+            placeholder="Qty"
+            bind:value={row.qty}
+          />
+          <select bind:value={row.unit}>
+            <option value="">—</option>
+            {#each UNIT_OPTIONS as u}
+              <option value={u}>{u}</option>
+            {/each}
+          </select>
+          <button
+            class="btn sm ghost"
+            type="button"
+            aria-label="Remove ingredient"
+            onclick={() => removeIngredientRow(i)}>×</button
+          >
+        </div>
+      {/each}
+    </div>
+    <button class="btn sm ghost" type="button" onclick={addIngredientRow}
+      >+ Add ingredient</button
     >
-  </label>
+  </fieldset>
   <label
     >Instructions<textarea name="instructions" rows="8"
       >{meal.instructions ?? ''}</textarea
@@ -217,10 +274,6 @@
     font-weight: 500;
     color: $color-text-muted;
     min-width: 0;
-
-    .hint {
-      font-weight: 400;
-    }
 
     input,
     select,
@@ -289,6 +342,49 @@
     }
   }
 
+  .ingredients-field {
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    legend {
+      padding: 0;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: $color-text-muted;
+    }
+  }
+
+  .ingredient-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ingredient-row {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr auto;
+    gap: 8px;
+
+    input,
+    select {
+      background: $color-surface-2;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      padding: 6px 8px;
+      color: $color-text;
+      font-size: 0.875rem;
+      width: 100%;
+      &:focus {
+        outline: 2px solid $color-accent;
+        border-color: transparent;
+      }
+    }
+  }
+
   .form-actions {
     display: flex;
     gap: 8px;
@@ -306,6 +402,10 @@
     transition: opacity 0.15s;
     &:hover {
       opacity: 0.85;
+    }
+    &.sm {
+      padding: 3px 10px;
+      font-size: 0.8rem;
     }
     &.ghost {
       background: $color-surface;

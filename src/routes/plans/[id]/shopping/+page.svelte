@@ -18,7 +18,10 @@
           <label>
             <input type="checkbox" />
             {#if item.qty !== null}
-              <span>{item.qty} {item.name}</span>
+              <span
+                >{item.qty}{item.unit ? ` ${item.unit}` : ''}
+                {item.name}</span
+              >
             {:else}
               <span>{item.name}</span>
               {#if item.count > 1}<span class="count">×{item.count}</span>{/if}

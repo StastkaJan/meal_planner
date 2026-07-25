@@ -42,15 +42,16 @@ chosen when the meal is created.
 draft you then review on its detail page).
 `/meals/[id]` renders the full recipe, showing only the fields that are filled,
 and swaps to an edit form covering every field — numeric macros, tag chips,
-and multi-line ingredients/instructions. These meal records are exactly what the
+structured ingredient rows (name/qty/unit), and multi-line instructions. These
+meal records are exactly what the
 [meal calendar](./meal-calendar.md) assigns to slots and filters during
 auto-compose. Meal writes require login. On create you choose the meal's scope:
 **global** (shared, and — like the seeded library — communally editable by any
 logged-in user) or **personal** (only you can see or edit it). The calendar and
 auto-compose only ever offer a user their visible set (global + own).
 
-See [../schema.md](../schema.md) (`meals`) and [../api.md](../api.md)
-(`/meals/*`) for the fields and endpoints.
+See [../schema.md](../schema.md) (`meals`, `ingredients`, `mealIngredients`)
+and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 ## Success signals
 
@@ -87,6 +88,5 @@ only" option that restricts slot candidates to the caller's favourited meals.
 - **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
   (or with just microdata/plain HTML) fall back to a manual entry.
 - **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
-  servings stepper; scaling the free-text ingredient amounts (rather than just summing them
-  across a week, which the shopping list now does — see `mealIngredients` in
-  [../schema.md](../schema.md)) is the harder next step.
+  servings stepper; scaling structured ingredient qty (see `mealIngredients` in
+  [../schema.md](../schema.md)) by the same factor is the natural next step.

@@ -14,7 +14,11 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
   const week = validDateStr(url.searchParams.get('week') ?? plan.weekStart)
 
   const rows = await db
-    .select({ name: ingredients.name, qty: mealIngredients.qty })
+    .select({
+      name: ingredients.name,
+      qty: mealIngredients.qty,
+      unit: mealIngredients.unit,
+    })
     .from(weekSlots)
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
     .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))

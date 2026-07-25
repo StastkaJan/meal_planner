@@ -72,7 +72,10 @@ describe('POST /meals/import', () => {
     )
     const out = await POST(makeEvent({ url: 'https://recipes.example.com/r' }))
     expect(out.status).toBe(200)
-    expect(await out.json()).toEqual({ name: 'Soup', ingredients: ['water'] })
+    expect(await out.json()).toEqual({
+      name: 'Soup',
+      ingredients: [{ qty: null, unit: null, name: 'water' }],
+    })
   })
 
   it('parses pasted JSON-LD text without any fetch', async () => {

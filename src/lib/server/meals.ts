@@ -1,6 +1,7 @@
 import { and, or, isNull, eq, inArray } from 'drizzle-orm'
 import { db } from '../db'
 import { meals, mealFavorites, ingredients, mealIngredients } from '../schema'
+import type { IngredientInput } from '../types'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -74,22 +75,71 @@ export function pickMealFields(
   return out
 }
 
-// ---- structured ingredient links (backs the shopping list's quantity summing) ----
+// ---- structured ingredient links (source of truth for a meal's ingredients) ----
 
-// Splits a leading quantity off a free-text ingredient line ("2 carrots" -> {qty: 2, name:
-// "carrots"}). Only handles integers, decimals, and simple fractions (n/d) — no units, no
-// mixed numbers; lines without a leading number (e.g. "salt and pepper") get qty: null.
-export function parseIngredientLine(raw: string): {
-  qty: number | null
-  name: string
-} {
-  const match = raw.match(/^(\d+\/\d+|\d+(?:\.\d+)?)\s+(.+)$/)
-  if (!match) return { qty: null, name: raw }
+// Recognized unit words/synonyms an imported (free-text) ingredient line might use, mapped
+// to the canonical UNIT_OPTIONS value.
+const UNIT_SYNONYMS: Record<string, string> = {
+  g: 'g',
+  gram: 'g',
+  grams: 'g',
+  kg: 'kg',
+  kilogram: 'kg',
+  kilograms: 'kg',
+  ml: 'ml',
+  milliliter: 'ml',
+  milliliters: 'ml',
+  l: 'l',
+  liter: 'l',
+  liters: 'l',
+  litre: 'l',
+  litres: 'l',
+  tsp: 'tsp',
+  teaspoon: 'tsp',
+  teaspoons: 'tsp',
+  tbsp: 'tbsp',
+  tablespoon: 'tbsp',
+  tablespoons: 'tbsp',
+  cup: 'cup',
+  cups: 'cup',
+  piece: 'piece',
+  pieces: 'piece',
+  pcs: 'piece',
+  clove: 'clove',
+  cloves: 'clove',
+  pinch: 'pinch',
+  pinches: 'pinch',
+  slice: 'slice',
+  slices: 'slice',
+  can: 'can',
+  cans: 'can',
+  oz: 'oz',
+  ounce: 'oz',
+  ounces: 'oz',
+  lb: 'lb',
+  lbs: 'lb',
+  pound: 'lb',
+  pounds: 'lb',
+}
+
+// Best-effort split of a free-text ingredient line (e.g. from recipe import) into qty/unit/
+// name — "2 tbsp olive oil" -> {qty: 2, unit: 'tbsp', name: 'olive oil'}. Only recognizes a
+// unit as the token immediately after the quantity; ponytail: "2 garlic cloves" (unit after
+// the name) and "1 large apple" ("large" isn't a real unit) both fall through to the whole
+// remainder as name — acceptable, user can fix up unit/qty in the edit form after import.
+export function parseIngredientLine(raw: string): IngredientInput {
+  const match = raw.match(/^(\d+\/\d+|\d+(?:\.\d+)?)\s*(.+)$/)
+  if (!match) return { qty: null, unit: null, name: raw }
   const [, qtyStr, rest] = match
   const qty = qtyStr.includes('/')
     ? Number(qtyStr.split('/')[0]) / Number(qtyStr.split('/')[1])
     : Number(qtyStr)
-  return { qty, name: rest }
+  const unitMatch = rest.match(/^([a-zA-Z]+)\s+(.+)$/)
+  if (unitMatch) {
+    const unit = UNIT_SYNONYMS[unitMatch[1].toLowerCase()]
+    if (unit) return { qty, unit, name: unitMatch[2] }
+  }
+  return { qty, unit: null, name: rest }
 }
 
 // Resolves each name to its ingredients.id, creating any that don't exist yet. Batched (one
@@ -110,32 +160,30 @@ async function findOrCreateIngredientIds(
   return new Map(rows.map((r) => [r.name, r.id]))
 }
 
-// Replaces a meal's structured ingredient links from its free-text ingredient lines. Call
-// this whenever meals.ingredients is written so mealIngredients stays in sync — the shopping
-// list sums the qty column here instead of re-parsing free text on every read.
+// Replaces a meal's structured ingredient rows. Call this whenever a meal's ingredients are
+// written so mealIngredients stays in sync — the shopping list sums the qty column here.
 export async function syncMealIngredients(
   tx: Tx,
   mealId: number,
-  lines: string[],
+  items: IngredientInput[],
 ) {
   await tx.delete(mealIngredients).where(eq(mealIngredients.mealId, mealId))
-  const parsed = lines
-    .map((raw) => raw.trim())
-    .filter(Boolean)
-    .map((raw) => ({ raw, ...parseIngredientLine(raw) }))
-  if (!parsed.length) return
+  const cleaned = items
+    .map((it) => ({ ...it, name: it.name.trim() }))
+    .filter((it) => it.name)
+  if (!cleaned.length) return
 
   const displayName = (name: string) => name[0].toUpperCase() + name.slice(1)
-  const names = [...new Set(parsed.map((p) => displayName(p.name)))]
+  const names = [...new Set(cleaned.map((it) => displayName(it.name)))]
   const idByName = await findOrCreateIngredientIds(tx, names)
 
   await tx.insert(mealIngredients).values(
-    parsed.map((p, position) => ({
+    cleaned.map((it, position) => ({
       mealId,
-      ingredientId: idByName.get(displayName(p.name))!,
+      ingredientId: idByName.get(displayName(it.name))!,
       position,
-      qty: p.qty !== null ? String(p.qty) : null,
-      raw: p.raw,
+      qty: it.qty !== null ? String(it.qty) : null,
+      unit: it.unit,
     })),
   )
 }
@@ -143,11 +191,13 @@ export async function syncMealIngredients(
 // Single choke point for meal creation: insert + structured-ingredient sync, one transaction.
 export async function createMeal(values: {
   name: string
+  ingredients?: IngredientInput[]
   [k: string]: unknown
 }) {
+  const { ingredients: ingredientInput, ...mealValues } = values
   return db.transaction(async (tx) => {
-    const [meal] = await tx.insert(meals).values(values).returning()
-    await syncMealIngredients(tx, meal.id, meal.ingredients)
+    const [meal] = await tx.insert(meals).values(mealValues).returning()
+    await syncMealIngredients(tx, meal.id, ingredientInput ?? [])
     return meal
   })
 }
@@ -155,15 +205,20 @@ export async function createMeal(values: {
 // Single choke point for meal updates: update + structured-ingredient resync (only when
 // ingredients was part of this write), one transaction.
 export async function updateMeal(id: number, values: Record<string, unknown>) {
+  const { ingredients: ingredientInput, ...mealValues } = values
   return db.transaction(async (tx) => {
-    const [updated] = await tx
-      .update(meals)
-      .set(values)
-      .where(eq(meals.id, id))
-      .returning()
+    // An ingredients-only write (nothing else changed) leaves mealValues empty — drizzle's
+    // .set({}) throws, so just look the row up instead of no-op updating it.
+    const [updated] = Object.keys(mealValues).length
+      ? await tx
+          .update(meals)
+          .set(mealValues)
+          .where(eq(meals.id, id))
+          .returning()
+      : await tx.select().from(meals).where(eq(meals.id, id))
     if (!updated) return updated
-    if (values.ingredients !== undefined) {
-      await syncMealIngredients(tx, id, updated.ingredients)
+    if (ingredientInput !== undefined) {
+      await syncMealIngredients(tx, id, ingredientInput as IngredientInput[])
     }
     return updated
   })
@@ -175,7 +230,7 @@ export type ImportedRecipe = {
   name?: string
   description?: string
   imageUrl?: string
-  ingredients?: string[]
+  ingredients?: IngredientInput[]
   instructions?: string
   calories?: number
   timeMinutes?: number
@@ -243,6 +298,7 @@ export function parseRecipeJsonLd(recipe: Record<string, any>): ImportedRecipe {
       .map(String)
       .map((s: string) => s.trim())
       .filter(Boolean)
+      .map(parseIngredientLine)
   }
 
   const steps = flattenSteps(recipe.recipeInstructions)
