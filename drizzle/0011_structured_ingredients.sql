@@ -10,8 +10,9 @@ CREATE TABLE "meal_ingredients" (
 	"ingredient_id" integer NOT NULL,
 	"position" integer NOT NULL,
 	"qty" numeric(10, 3),
-	"raw" text NOT NULL
+	"unit" text
 );
 --> statement-breakpoint
 ALTER TABLE "meal_ingredients" ADD CONSTRAINT "meal_ingredients_meal_id_meals_id_fk" FOREIGN KEY ("meal_id") REFERENCES "public"."meals"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "meal_ingredients" ADD CONSTRAINT "meal_ingredients_ingredient_id_ingredients_id_fk" FOREIGN KEY ("ingredient_id") REFERENCES "public"."ingredients"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "meal_ingredients" ADD CONSTRAINT "meal_ingredients_ingredient_id_ingredients_id_fk" FOREIGN KEY ("ingredient_id") REFERENCES "public"."ingredients"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "meals" DROP COLUMN "ingredients";

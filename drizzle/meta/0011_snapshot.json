@@ -1,5 +1,5 @@
 {
-  "id": "699bb10d-51a9-488a-a7c3-226805cf822b",
+  "id": "a4a0761c-0b4f-49c0-8ea0-dc6d552b3392",
   "prevId": "72e2f871-6f56-4832-8f94-27d1d71bfbad",
   "version": "7",
   "dialect": "postgresql",
@@ -189,11 +189,11 @@
           "primaryKey": false,
           "notNull": false
         },
-        "raw": {
-          "name": "raw",
+        "unit": {
+          "name": "unit",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
@@ -294,13 +294,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "ingredients": {
-          "name": "ingredients",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
         },
         "instructions": {
           "name": "instructions",
