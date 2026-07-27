@@ -2,7 +2,6 @@
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
-  import { parseIngredientLine } from '$lib/ingredients'
 
   let { data }: { data: PageData } = $props()
 
@@ -69,7 +68,13 @@
         return
       }
       const fields = await res.json()
-      const ingredients = (fields.ingredients ?? []).map(parseIngredientLine)
+      // Import gives free-text lines; drop each straight into its own name field (qty/unit
+      // blank) rather than guessing a split — the edit form has separate inputs for that.
+      const ingredients = (fields.ingredients ?? []).map((name: string) => ({
+        name,
+        qty: null,
+        unit: null,
+      }))
       const createRes = await fetch('/meals', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
