@@ -2,7 +2,8 @@ import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
 import * as schema from './schema.js'
 import { meals, plans } from './schema.js'
-import { parseIngredientLine, syncMealIngredients } from './server/meals.js'
+import { parseIngredientLine } from './ingredients.js'
+import { syncMealIngredients } from './server/meals.js'
 
 const pool = new pg.Pool({
   connectionString:

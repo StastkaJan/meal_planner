@@ -1,7 +1,15 @@
 import { error } from '@sveltejs/kit'
 import { and, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { plans, weekSlots, meals, userSettings, bonusItems } from '$lib/schema'
+import {
+  plans,
+  weekSlots,
+  meals,
+  userSettings,
+  bonusItems,
+  mealIngredients,
+  ingredients,
+} from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
@@ -187,32 +195,33 @@ export async function copyWeek(planId: number, from: string, to: string) {
     })
 }
 
-// Sums each week's structured meal-ingredient links (mealIngredients.qty/unit, joined via
-// ingredients.name) into one deduped shopping list, grouped by (name, unit) — two ingredients
-// with the same name but different units (e.g. "tbsp olive oil" vs "ml olive oil") stay
-// separate line items rather than being summed together incorrectly. count = how many
-// meal-ingredient rows share this name+unit; qty = their summed quantity, or null if any of
-// them lacked one (e.g. "salt and pepper" has no count) — falls back to a plain count then.
-export function sumIngredients(
-  rows: { name: string; qty: string | null; unit: string | null }[],
-): { name: string; unit: string | null; count: number; qty: number | null }[] {
-  const map = new Map<
-    string,
-    { name: string; unit: string | null; count: number; qty: number | null }
-  >()
-  for (const { name, qty: qtyStr, unit } of rows) {
-    const qty = qtyStr === null ? null : Number(qtyStr)
-    const key = `${name.toLowerCase()}|${unit ?? ''}`
-    const existing = map.get(key)
-    if (existing) {
-      existing.count++
-      existing.qty =
-        qty !== null && existing.qty !== null ? existing.qty + qty : null
-    } else {
-      map.set(key, { name, unit, count: 1, qty })
-    }
-  }
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
+// Sums a week's structured meal-ingredient links into one deduped shopping list, grouped by
+// (name, unit) in SQL — two ingredients with the same name but different units (e.g. "tbsp
+// olive oil" vs "ml olive oil") stay separate line items rather than being summed together
+// incorrectly. count = how many meal-ingredient rows share this name+unit; qty = their summed
+// quantity, or null if any of them lacked one (e.g. "salt and pepper") — a plain count then.
+export async function getShoppingList(planId: number, week: string) {
+  const rows = await db
+    .select({
+      name: ingredients.name,
+      unit: mealIngredients.unit,
+      qty: sql<
+        string | null
+      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty}) end`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(weekSlots)
+    .innerJoin(meals, eq(weekSlots.mealId, meals.id))
+    .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
+    .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
+    .where(inWeek(planId, week))
+    .groupBy(ingredients.name, mealIngredients.unit)
+    .orderBy(ingredients.name)
+
+  return rows.map((r) => ({
+    ...r,
+    qty: r.qty !== null ? Number(r.qty) : null,
+  }))
 }
 
 type CandidateMeal = {

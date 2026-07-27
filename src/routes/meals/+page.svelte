@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
+  import { parseIngredientLine } from '$lib/ingredients'
 
   let { data }: { data: PageData } = $props()
 
@@ -68,10 +69,11 @@
         return
       }
       const fields = await res.json()
+      const ingredients = (fields.ingredients ?? []).map(parseIngredientLine)
       const createRes = await fetch('/meals', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...fields, scope: 'personal' }),
+        body: JSON.stringify({ ...fields, ingredients, scope: 'personal' }),
       })
       if (!createRes.ok) {
         importError =

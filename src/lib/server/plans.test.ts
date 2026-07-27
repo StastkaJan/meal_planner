@@ -3,7 +3,6 @@ import {
   candidateMeals,
   filterByPrefs,
   pickUnused,
-  sumIngredients,
   rankByMacros,
   fillDaySlots,
   sumNutrition,
@@ -88,65 +87,6 @@ describe('filterByPrefs', () => {
   it('returns all meals when prefs are empty', () => {
     const result = filterByPrefs(meals, [], [])
     expect(result).toEqual(meals)
-  })
-})
-
-describe('sumIngredients', () => {
-  it('dedups case-insensitively and sorts by name', () => {
-    const result = sumIngredients([
-      { name: 'Eggs', qty: null, unit: null },
-      { name: 'Flour', qty: null, unit: null },
-      { name: 'Milk', qty: null, unit: null },
-      { name: 'eggs', qty: null, unit: null },
-      { name: 'Sugar', qty: null, unit: null },
-    ])
-    expect(result).toEqual([
-      { name: 'Eggs', unit: null, count: 2, qty: null },
-      { name: 'Flour', unit: null, count: 1, qty: null },
-      { name: 'Milk', unit: null, count: 1, qty: null },
-      { name: 'Sugar', unit: null, count: 1, qty: null },
-    ])
-  })
-
-  it('handles no rows', () => {
-    expect(sumIngredients([])).toEqual([])
-  })
-
-  it('sums quantities for the same ingredient and unit across meals', () => {
-    const result = sumIngredients([
-      { name: 'Carrots', qty: '2', unit: 'g' },
-      { name: 'Carrots', qty: '2', unit: 'g' },
-    ])
-    expect(result).toEqual([{ name: 'Carrots', unit: 'g', count: 2, qty: 4 }])
-  })
-
-  it('sums differing quantities', () => {
-    const result = sumIngredients([
-      { name: 'Onion', qty: '1', unit: null },
-      { name: 'Onion', qty: '2', unit: null },
-    ])
-    expect(result).toEqual([{ name: 'Onion', unit: null, count: 2, qty: 3 }])
-  })
-
-  it('falls back to a plain count when any occurrence lacks a quantity', () => {
-    const result = sumIngredients([
-      { name: 'Carrots', qty: '2', unit: 'g' },
-      { name: 'Carrots', qty: null, unit: 'g' },
-    ])
-    expect(result).toEqual([
-      { name: 'Carrots', unit: 'g', count: 2, qty: null },
-    ])
-  })
-
-  it('keeps the same ingredient in different units as separate line items', () => {
-    const result = sumIngredients([
-      { name: 'Olive oil', qty: '2', unit: 'tbsp' },
-      { name: 'Olive oil', qty: '30', unit: 'ml' },
-    ])
-    expect(result).toEqual([
-      { name: 'Olive oil', unit: 'tbsp', count: 1, qty: 2 },
-      { name: 'Olive oil', unit: 'ml', count: 1, qty: 30 },
-    ])
   })
 })
 
