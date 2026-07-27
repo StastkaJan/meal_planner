@@ -1,13 +1,15 @@
 import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
+import * as schema from './schema.js'
 import { meals, plans } from './schema.js'
+import { syncMealIngredients } from './server/meals.js'
 
 const pool = new pg.Pool({
   connectionString:
     process.env.DATABASE_URL ??
     'postgresql://mealplan:mealplan@localhost:5432/mealplan',
 })
-const db = drizzle(pool)
+const db = drizzle(pool, { schema })
 
 const existing = await db.select().from(plans).limit(1)
 if (existing.length === 0) {
@@ -19,7 +21,7 @@ if (existing.length === 0) {
 
 const existingMeals = await db.select().from(meals).limit(1)
 if (existingMeals.length === 0) {
-  await db.insert(meals).values([
+  const mealDefs = [
     {
       name: 'Oatmeal with Berries',
       calories: 320,
@@ -31,10 +33,10 @@ if (existingMeals.length === 0) {
       timeMinutes: 10,
       difficulty: 'easy',
       ingredients: [
-        '1 cup rolled oats',
-        '2 cups water',
-        '1/2 cup mixed berries',
-        '1 tbsp honey',
+        { name: 'Rolled oats', qty: 1, unit: 'cup' },
+        { name: 'Water', qty: 2, unit: 'cup' },
+        { name: 'Mixed berries', qty: 0.5, unit: 'cup' },
+        { name: 'Honey', qty: 1, unit: 'tbsp' },
       ],
       instructions:
         'Bring water to a boil. Add oats and simmer 5 min, stirring occasionally. Top with berries and a drizzle of honey.',
@@ -50,10 +52,10 @@ if (existingMeals.length === 0) {
       timeMinutes: 10,
       difficulty: 'easy',
       ingredients: [
-        '3 eggs',
-        '2 slices sourdough bread',
-        '1 tbsp butter',
-        'salt and pepper',
+        { name: 'Eggs', qty: 3, unit: 'piece' },
+        { name: 'Sourdough bread', qty: 2, unit: 'slice' },
+        { name: 'Butter', qty: 1, unit: 'tbsp' },
+        { name: 'Salt and pepper', qty: null, unit: null },
       ],
       instructions:
         'Beat eggs with salt and pepper. Melt butter in pan over medium-low heat, add eggs and fold gently until just set. Serve on toasted bread.',
@@ -69,10 +71,10 @@ if (existingMeals.length === 0) {
       timeMinutes: 5,
       difficulty: 'easy',
       ingredients: [
-        '200g Greek yogurt',
-        '1 tbsp honey',
-        '1 tbsp walnuts',
-        'pinch of cinnamon',
+        { name: 'Greek yogurt', qty: 200, unit: 'g' },
+        { name: 'Honey', qty: 1, unit: 'tbsp' },
+        { name: 'Walnuts', qty: 1, unit: 'tbsp' },
+        { name: 'Cinnamon', qty: 1, unit: 'pinch' },
       ],
       instructions:
         'Spoon yogurt into a bowl. Drizzle honey on top, scatter walnuts and dust with cinnamon.',
@@ -87,7 +89,10 @@ if (existingMeals.length === 0) {
       description: 'Crisp apple slices with creamy almond butter.',
       timeMinutes: 5,
       difficulty: 'easy',
-      ingredients: ['1 large apple', '2 tbsp almond butter'],
+      ingredients: [
+        { name: 'Large apple', qty: 1, unit: 'piece' },
+        { name: 'Almond butter', qty: 2, unit: 'tbsp' },
+      ],
       instructions:
         'Core and slice the apple. Serve with almond butter for dipping.',
     },
@@ -110,13 +115,13 @@ if (existingMeals.length === 0) {
       timeMinutes: 25,
       difficulty: 'medium',
       ingredients: [
-        '200g chicken breast',
-        '100g mixed greens',
-        '1/2 cucumber',
-        '10 cherry tomatoes',
-        '2 tbsp olive oil',
-        '1 lemon',
-        'salt and pepper',
+        { name: 'Chicken breast', qty: 200, unit: 'g' },
+        { name: 'Mixed greens', qty: 100, unit: 'g' },
+        { name: 'Cucumber', qty: 0.5, unit: 'piece' },
+        { name: 'Cherry tomatoes', qty: 10, unit: 'piece' },
+        { name: 'Olive oil', qty: 2, unit: 'tbsp' },
+        { name: 'Lemon', qty: 1, unit: 'piece' },
+        { name: 'Salt and pepper', qty: null, unit: null },
       ],
       instructions:
         'Season chicken and grill 6–7 min per side until cooked through. Slice and place over greens. Whisk olive oil and lemon juice, drizzle over salad.',
@@ -139,13 +144,13 @@ if (existingMeals.length === 0) {
       timeMinutes: 35,
       difficulty: 'easy',
       ingredients: [
-        '1 cup red lentils',
-        '1 onion',
-        '2 garlic cloves',
-        '1 tsp cumin',
-        '1 tsp smoked paprika',
-        '4 cups vegetable stock',
-        '2 tbsp olive oil',
+        { name: 'Red lentils', qty: 1, unit: 'cup' },
+        { name: 'Onion', qty: 1, unit: 'piece' },
+        { name: 'Garlic', qty: 2, unit: 'clove' },
+        { name: 'Cumin', qty: 1, unit: 'tsp' },
+        { name: 'Smoked paprika', qty: 1, unit: 'tsp' },
+        { name: 'Vegetable stock', qty: 4, unit: 'cup' },
+        { name: 'Olive oil', qty: 2, unit: 'tbsp' },
       ],
       instructions:
         'Sauté onion and garlic in oil 5 min. Add spices, then lentils and stock. Simmer 25 min until lentils are soft. Blend partially for a creamy texture.',
@@ -162,12 +167,12 @@ if (existingMeals.length === 0) {
       timeMinutes: 20,
       difficulty: 'easy',
       ingredients: [
-        '1 can tuna in water',
-        '1 cup cooked rice',
-        '1/2 avocado',
-        '1 tbsp soy sauce',
-        '1 tsp sesame oil',
-        'spring onions',
+        { name: 'Tuna in water', qty: 1, unit: 'can' },
+        { name: 'Cooked rice', qty: 1, unit: 'cup' },
+        { name: 'Avocado', qty: 0.5, unit: 'piece' },
+        { name: 'Soy sauce', qty: 1, unit: 'tbsp' },
+        { name: 'Sesame oil', qty: 1, unit: 'tsp' },
+        { name: 'Spring onions', qty: null, unit: null },
       ],
       instructions:
         'Cook rice. Drain tuna and mix with soy sauce and sesame oil. Arrange over rice with sliced avocado. Top with spring onions.',
@@ -183,7 +188,10 @@ if (existingMeals.length === 0) {
         'Ripe banana with natural peanut butter — a quick energy snack.',
       timeMinutes: 2,
       difficulty: 'easy',
-      ingredients: ['1 banana', '2 tbsp peanut butter'],
+      ingredients: [
+        { name: 'Banana', qty: 1, unit: 'piece' },
+        { name: 'Peanut butter', qty: 2, unit: 'tbsp' },
+      ],
       instructions:
         'Peel banana, slice if desired, and spread or dip with peanut butter.',
     },
@@ -199,10 +207,10 @@ if (existingMeals.length === 0) {
       timeMinutes: 5,
       difficulty: 'easy',
       ingredients: [
-        '200g cottage cheese',
-        '1/2 cup strawberries',
-        '1/2 peach',
-        '1 tsp honey',
+        { name: 'Cottage cheese', qty: 200, unit: 'g' },
+        { name: 'Strawberries', qty: 0.5, unit: 'cup' },
+        { name: 'Peach', qty: 0.5, unit: 'piece' },
+        { name: 'Honey', qty: 1, unit: 'tsp' },
       ],
       instructions:
         'Spoon cottage cheese into a bowl. Top with sliced fruit and drizzle with honey.',
@@ -225,12 +233,12 @@ if (existingMeals.length === 0) {
       timeMinutes: 35,
       difficulty: 'medium',
       ingredients: [
-        '180g salmon fillet',
-        '1 large sweet potato',
-        '2 tbsp olive oil',
-        '1 lemon',
-        'fresh dill',
-        'salt and pepper',
+        { name: 'Salmon fillet', qty: 180, unit: 'g' },
+        { name: 'Large sweet potato', qty: 1, unit: 'piece' },
+        { name: 'Olive oil', qty: 2, unit: 'tbsp' },
+        { name: 'Lemon', qty: 1, unit: 'piece' },
+        { name: 'Fresh dill', qty: null, unit: null },
+        { name: 'Salt and pepper', qty: null, unit: null },
       ],
       instructions:
         'Preheat oven to 200°C. Toss sweet potato wedges with oil, season and roast 20 min. Place salmon on a lined tray, squeeze lemon over, bake 15 min. Serve with dill.',
@@ -246,15 +254,15 @@ if (existingMeals.length === 0) {
       timeMinutes: 50,
       difficulty: 'medium',
       ingredients: [
-        '300g tagliatelle',
-        '250g ground beef',
-        '1 onion',
-        '2 garlic cloves',
-        '400g canned tomatoes',
-        '1 carrot',
-        '2 tbsp olive oil',
-        'salt and pepper',
-        'parmesan to serve',
+        { name: 'Tagliatelle', qty: 300, unit: 'g' },
+        { name: 'Ground beef', qty: 250, unit: 'g' },
+        { name: 'Onion', qty: 1, unit: 'piece' },
+        { name: 'Garlic', qty: 2, unit: 'clove' },
+        { name: 'Canned tomatoes', qty: 400, unit: 'g' },
+        { name: 'Carrot', qty: 1, unit: 'piece' },
+        { name: 'Olive oil', qty: 2, unit: 'tbsp' },
+        { name: 'Salt and pepper', qty: null, unit: null },
+        { name: 'Parmesan to serve', qty: null, unit: null },
       ],
       instructions:
         'Sauté onion, carrot and garlic in oil 5 min. Add beef and brown. Add tomatoes, season, simmer 30 min. Cook pasta al dente. Toss together, top with parmesan.',
@@ -271,19 +279,31 @@ if (existingMeals.length === 0) {
       timeMinutes: 20,
       difficulty: 'medium',
       ingredients: [
-        '200g firm tofu',
-        '1 bell pepper',
-        '1 zucchini',
-        '2 tbsp soy sauce',
-        '1 tsp grated ginger',
-        '1 garlic clove',
-        '1 tbsp sesame oil',
-        '1 cup cooked rice',
+        { name: 'Firm tofu', qty: 200, unit: 'g' },
+        { name: 'Bell pepper', qty: 1, unit: 'piece' },
+        { name: 'Zucchini', qty: 1, unit: 'piece' },
+        { name: 'Soy sauce', qty: 2, unit: 'tbsp' },
+        { name: 'Grated ginger', qty: 1, unit: 'tsp' },
+        { name: 'Garlic', qty: 1, unit: 'clove' },
+        { name: 'Sesame oil', qty: 1, unit: 'tbsp' },
+        { name: 'Cooked rice', qty: 1, unit: 'cup' },
       ],
       instructions:
         'Press tofu, cube and fry in sesame oil until golden. Remove. Stir-fry vegetables with garlic and ginger 3 min. Add tofu and soy sauce, toss and serve over rice.',
     },
-  ])
+  ]
+  const inserted = await db
+    .insert(meals)
+    .values(mealDefs.map(({ ingredients, ...m }) => m))
+    .returning({ id: meals.id, name: meals.name })
+  const ingredientsByName = new Map(
+    mealDefs.map((m) => [m.name, m.ingredients]),
+  )
+  await db.transaction(async (tx) => {
+    for (const m of inserted) {
+      await syncMealIngredients(tx, m.id, ingredientsByName.get(m.name) ?? [])
+    }
+  })
   console.log('Seeded dummy meals.')
 } else {
   console.log('Meals seed skipped — data exists.')

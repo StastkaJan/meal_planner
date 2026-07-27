@@ -68,10 +68,17 @@
         return
       }
       const fields = await res.json()
+      // Import gives free-text lines; drop each straight into its own name field (qty/unit
+      // blank) rather than guessing a split — the edit form has separate inputs for that.
+      const ingredients = (fields.ingredients ?? []).map((name: string) => ({
+        name,
+        qty: null,
+        unit: null,
+      }))
       const createRes = await fetch('/meals', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...fields, scope: 'personal' }),
+        body: JSON.stringify({ ...fields, ingredients, scope: 'personal' }),
       })
       if (!createRes.ok) {
         importError =

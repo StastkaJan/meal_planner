@@ -3,7 +3,6 @@ import {
   candidateMeals,
   filterByPrefs,
   pickUnused,
-  mergeIngredients,
   rankByMacros,
   fillDaySlots,
   sumNutrition,
@@ -88,26 +87,6 @@ describe('filterByPrefs', () => {
   it('returns all meals when prefs are empty', () => {
     const result = filterByPrefs(meals, [], [])
     expect(result).toEqual(meals)
-  })
-})
-
-describe('mergeIngredients', () => {
-  it('dedups case-insensitively, unifies to a capitalized name, counts, sorts by name', () => {
-    const result = mergeIngredients([
-      ['Eggs', 'flour', ' Milk '],
-      ['eggs', 'Sugar'],
-    ])
-    expect(result).toEqual([
-      { name: 'Eggs', count: 2 },
-      { name: 'Flour', count: 1 },
-      { name: 'Milk', count: 1 },
-      { name: 'Sugar', count: 1 },
-    ])
-  })
-
-  it('skips blank entries and handles no meals', () => {
-    expect(mergeIngredients([['', '  '], []])).toEqual([])
-    expect(mergeIngredients([])).toEqual([])
   })
 })
 

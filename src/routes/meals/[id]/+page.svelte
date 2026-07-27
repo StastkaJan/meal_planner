@@ -36,6 +36,7 @@
   {#if editing}
     <MealEditForm
       meal={data.meal}
+      ingredients={data.ingredients}
       onCancel={() => (editing = false)}
       onSaved={() => (editing = false)}
     />
@@ -110,12 +111,16 @@
         <p class="description">{data.meal.description}</p>
       {/if}
 
-      {#if data.meal.ingredients?.length}
+      {#if data.ingredients.length}
         <section>
           <h2>Ingredients</h2>
           <ul>
-            {#each data.meal.ingredients as ing}
-              <li>{ing}</li>
+            {#each data.ingredients as ing}
+              <li>
+                {ing.qty !== null
+                  ? `${ing.qty}${ing.unit ? ' ' + ing.unit : ''} `
+                  : ''}{ing.name}
+              </li>
             {/each}
           </ul>
         </section>

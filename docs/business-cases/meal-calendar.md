@@ -57,8 +57,12 @@ checkbox next to Auto-compose restricts candidates to the caller's favourited me
 non-favourites if none fit. A **Copy from
 last week** action clones the previous week's slots into the current one
 (overwriting it) to reuse a good plan. A **Shopping list** view
-(`/plans/[id]/shopping`) flattens every assigned meal's ingredients for the week
-into one deduped, checkable list (no quantity math — ingredients are free text). Week and plan
+(`/plans/[id]/shopping`) flattens every assigned meal's structured ingredients
+(name/qty/unit — see `mealIngredients` in [../schema.md](../schema.md)) for the week
+into one deduped, checkable list, summing quantities per (name, unit) pair
+(e.g. "2 tbsp olive oil" + "2 tbsp olive oil" → "4 tbsp Olive oil"; a name used with
+different units stays as separate line items rather than being summed incorrectly;
+falls back to a plain "×N" count for ingredients with no quantity, e.g. "Salt"). Week and plan
 live in the URL, so a shared or
 bookmarked link reopens the exact view. Plans are per-user and enforced
 server-side.

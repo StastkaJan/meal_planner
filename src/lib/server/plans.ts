@@ -1,7 +1,15 @@
 import { error } from '@sveltejs/kit'
 import { and, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '$lib/db'
-import { plans, weekSlots, meals, userSettings, bonusItems } from '$lib/schema'
+import {
+  plans,
+  weekSlots,
+  meals,
+  userSettings,
+  bonusItems,
+  mealIngredients,
+  ingredients,
+} from '$lib/schema'
 import type { Plan } from '$lib/schema'
 import { DAYS, MEAL_TYPES, mealFitsSlot } from '$lib/constants'
 import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
@@ -187,30 +195,33 @@ export async function copyWeek(planId: number, from: string, to: string) {
     })
 }
 
-// Flatten every meal's ingredient list into one deduped shopping list. Grouping is
-// case-insensitive; each name is displayed with a unified case (capitalized first letter)
-// so the list reads consistently. count = how many meals use it.
-// ponytail: no quantity summing — ingredients are free-text strings, so "2 eggs" and
-// "eggs" don't combine; upgrade to a parser only if users ask.
-export function mergeIngredients(
-  lists: string[][],
-): { name: string; count: number }[] {
-  const map = new Map<string, { name: string; count: number }>()
-  for (const list of lists) {
-    for (const raw of list) {
-      const trimmed = raw.trim()
-      if (!trimmed) continue
-      const key = trimmed.toLowerCase()
-      const existing = map.get(key)
-      if (existing) existing.count++
-      else
-        map.set(key, {
-          name: trimmed[0].toUpperCase() + trimmed.slice(1),
-          count: 1,
-        })
-    }
-  }
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
+// Sums a week's structured meal-ingredient links into one deduped shopping list, grouped by
+// (name, unit) in SQL — two ingredients with the same name but different units (e.g. "tbsp
+// olive oil" vs "ml olive oil") stay separate line items rather than being summed together
+// incorrectly. count = how many meal-ingredient rows share this name+unit; qty = their summed
+// quantity, or null if any of them lacked one (e.g. "salt and pepper") — a plain count then.
+export async function getShoppingList(planId: number, week: string) {
+  const rows = await db
+    .select({
+      name: ingredients.name,
+      unit: mealIngredients.unit,
+      qty: sql<
+        string | null
+      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty}) end`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(weekSlots)
+    .innerJoin(meals, eq(weekSlots.mealId, meals.id))
+    .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
+    .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
+    .where(inWeek(planId, week))
+    .groupBy(ingredients.name, mealIngredients.unit)
+    .orderBy(ingredients.name)
+
+  return rows.map((r) => ({
+    ...r,
+    qty: r.qty !== null ? Number(r.qty) : null,
+  }))
 }
 
 type CandidateMeal = {

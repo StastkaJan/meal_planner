@@ -64,15 +64,35 @@ export const meals = pgTable('meals', {
     .default(sql`'{}'`),
   imageUrl: text('image_url'),
   description: text('description'),
-  ingredients: text('ingredients')
-    .array()
-    .notNull()
-    .default(sql`'{}'`),
   instructions: text('instructions'),
   timeMinutes: integer('time_minutes'),
   difficulty: text('difficulty'),
   servings: integer('servings').notNull().default(1),
   archivedAt: timestamp('archived_at'),
+})
+
+// Canonical ingredient names, deduped case-insensitively (name is always stored
+// capitalized-first-letter, so the unique constraint doubles as the case-fold).
+export const ingredients = pgTable('ingredients', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+})
+
+// One row per ingredient on a meal — the structured source of truth for a meal's ingredient
+// list (name/qty/unit are entered directly via the edit form). Backs both the meal detail
+// display and the shopping list's quantity summing — see syncMealIngredients in
+// src/lib/server/meals.ts. qty/unit are nullable for ingredients with no count (e.g. "salt").
+export const mealIngredients = pgTable('meal_ingredients', {
+  id: serial('id').primaryKey(),
+  mealId: integer('meal_id')
+    .notNull()
+    .references(() => meals.id, { onDelete: 'cascade' }),
+  ingredientId: integer('ingredient_id')
+    .notNull()
+    .references(() => ingredients.id),
+  position: integer('position').notNull(),
+  qty: numeric('qty', { precision: 10, scale: 3 }),
+  unit: text('unit'),
 })
 
 export const plans = pgTable('plans', {
@@ -143,6 +163,8 @@ export type User = typeof users.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Meal = typeof meals.$inferSelect
+export type Ingredient = typeof ingredients.$inferSelect
+export type MealIngredient = typeof mealIngredients.$inferSelect
 export type Plan = typeof plans.$inferSelect
 export type WeekSlot = typeof weekSlots.$inferSelect
 export type MealFavorite = typeof mealFavorites.$inferSelect

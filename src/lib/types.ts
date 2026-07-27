@@ -13,6 +13,12 @@ export type PlanDetail = Plan & { slots: SlotWithMeal[]; bonus: BonusItem[] }
 
 export type MealWithFavorite = Meal & { isFavorite: boolean }
 
+export type IngredientInput = {
+  name: string
+  qty: number | null
+  unit: string | null
+}
+
 export type MealType = (typeof MEAL_TYPES)[number]
 
 export type NutritionTargets = typeof NUTRITION_TARGETS
