@@ -164,6 +164,16 @@
     }).then((r) => r.json())
     plan = { ...plan, ...updated }
   }
+
+  async function handleRepeatChange(mealType: string, groupBreaks: boolean[]) {
+    if (!plan) return
+    await fetch(`/plans/${plan.id}/slot-repeats`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mealType, groupBreaks }),
+    })
+    await refreshPlan()
+  }
 </script>
 
 <div class="page">
@@ -214,7 +224,11 @@
   </div>
 
   {#if plan}
-    <PlanSettings {plan} onChange={handleSettingsChange} />
+    <PlanSettings
+      {plan}
+      onChange={handleSettingsChange}
+      onRepeatChange={handleRepeatChange}
+    />
     <WeekTable
       {plan}
       meals={data.meals}

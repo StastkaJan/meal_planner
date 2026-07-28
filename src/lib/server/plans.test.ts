@@ -6,7 +6,6 @@ import {
   rankByMacros,
   fillDaySlots,
   sumNutrition,
-  mondayOf,
 } from './plans'
 
 const meals = [
@@ -260,16 +259,5 @@ describe('sumNutrition', () => {
       carbsG: 0,
       fatG: 0,
     })
-  })
-})
-
-describe('mondayOf', () => {
-  it('returns the same date when given a Monday', () => {
-    expect(mondayOf('2026-07-20')).toBe('2026-07-20') // a Monday
-  })
-
-  it('returns the prior Monday for any other day of the week', () => {
-    expect(mondayOf('2026-07-22')).toBe('2026-07-20') // Wednesday
-    expect(mondayOf('2026-07-26')).toBe('2026-07-20') // Sunday
   })
 })
