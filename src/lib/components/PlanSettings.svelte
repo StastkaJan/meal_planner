@@ -106,6 +106,8 @@
                     class="gap"
                     class:joined={!breaks[i]}
                     title={breaks[i] ? 'Different meal' : 'Same meal'}
+                    aria-label={`${mealType.replace('_', ' ')}: ${day} and ${DAY_LABELS[i + 1]} use the same meal`}
+                    aria-pressed={!breaks[i]}
                     onclick={() => toggleGap(mealType, i)}
                   >
                     {breaks[i] ? '·' : '—'}

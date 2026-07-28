@@ -18,22 +18,25 @@ import { requireUser } from '$lib/auth'
 import { addDays, groupWindow, mondayOf } from '$lib/date'
 import { visibleToUser, favoriteMealIds } from './meals'
 
-export { mondayOf }
+type OwnedPlan = Plan & { userId: number }
 
-export async function ownedPlan(id: number, userId: number): Promise<Plan> {
+export async function ownedPlan(
+  id: number,
+  userId: number,
+): Promise<OwnedPlan> {
   const [plan] = await db
     .select()
     .from(plans)
     .where(and(eq(plans.id, id), eq(plans.userId, userId)))
     .limit(1)
   if (!plan) error(404, 'Plan not found')
-  return plan
+  return plan as OwnedPlan
 }
 
 export async function requireOwnedPlan(
   locals: App.Locals,
   id: number | string,
-): Promise<Plan> {
+): Promise<OwnedPlan> {
   const user = requireUser(locals)
   return ownedPlan(Number(id), user.id)
 }
@@ -41,6 +44,8 @@ export async function requireOwnedPlan(
 export async function getUserSettings(userId: number) {
   const [u] = await db
     .select({
+      cuisinePrefs: userSettings.cuisinePrefs,
+      dietaryRestrictions: userSettings.dietaryRestrictions,
       calorieTarget: userSettings.calorieTarget,
       proteinTarget: userSettings.proteinTarget,
       carbsTarget: userSettings.carbsTarget,
@@ -422,50 +427,51 @@ export async function autocomposeSlots(
 ): Promise<number> {
   const [allMealsRaw, existingSlots, favIds, weekBonus, repeatRows] =
     await Promise.all([
-    db
-      .select({
-        id: meals.id,
-        calories: meals.calories,
-        tags: meals.tags,
-        allowedSlots: meals.allowedSlots,
-        proteinG: meals.proteinG,
-        carbsG: meals.carbsG,
-        fatG: meals.fatG,
-      })
-      .from(meals)
-      .where(visibleToUser(ownerId)),
-    db
-      .select({
-        date: weekSlots.date,
-        mealType: weekSlots.mealType,
-        mealId: weekSlots.mealId,
-        calories: meals.calories,
-        proteinG: meals.proteinG,
-        carbsG: meals.carbsG,
-        fatG: meals.fatG,
-      })
-      .from(weekSlots)
-      .leftJoin(meals, eq(weekSlots.mealId, meals.id))
-      .where(inWeek(plan.id, week)),
-    favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
-    db
-      .select({
-        date: bonusItems.date,
-        calories: bonusItems.calories,
-        proteinG: bonusItems.proteinG,
-        carbsG: bonusItems.carbsG,
-        fatG: bonusItems.fatG,
-      })
-      .from(bonusItems)
-      .where(bonusInWeek(plan.id, week)),
-    db
-      .select({
-        mealType: slotRepeats.mealType,
-        groupBreaks: slotRepeats.groupBreaks,
-      })
-      .from(slotRepeats)
-      .where(eq(slotRepeats.planId, plan.id)),
-  ])
+      db
+        .select({
+          id: meals.id,
+          calories: meals.calories,
+          tags: meals.tags,
+          allowedSlots: meals.allowedSlots,
+          proteinG: meals.proteinG,
+          carbsG: meals.carbsG,
+          fatG: meals.fatG,
+        })
+        .from(meals)
+        .where(visibleToUser(ownerId)),
+      db
+        .select({
+          date: weekSlots.date,
+          mealType: weekSlots.mealType,
+          mealId: weekSlots.mealId,
+          calories: meals.calories,
+          proteinG: meals.proteinG,
+          carbsG: meals.carbsG,
+          fatG: meals.fatG,
+        })
+        .from(weekSlots)
+        .leftJoin(meals, eq(weekSlots.mealId, meals.id))
+        .where(inWeek(plan.id, week))
+        .orderBy(weekSlots.date),
+      favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
+      db
+        .select({
+          date: bonusItems.date,
+          calories: bonusItems.calories,
+          proteinG: bonusItems.proteinG,
+          carbsG: bonusItems.carbsG,
+          fatG: bonusItems.fatG,
+        })
+        .from(bonusItems)
+        .where(bonusInWeek(plan.id, week)),
+      db
+        .select({
+          mealType: slotRepeats.mealType,
+          groupBreaks: slotRepeats.groupBreaks,
+        })
+        .from(slotRepeats)
+        .where(eq(slotRepeats.planId, plan.id)),
+    ])
 
   if (!allMealsRaw.length) return 0
 
@@ -478,8 +484,8 @@ export async function autocomposeSlots(
     carbsG: toNum(m.carbsG),
     fatG: toNum(m.fatG),
   }))
+  const visibleMealsById = new Map(allMeals.map((m) => [m.id, m]))
   if (favIds) allMeals = allMeals.filter((m) => favIds.has(m.id))
-  if (!allMeals.length) return 0
 
   const prefilteredMeals = filterByPrefs(
     allMeals,
@@ -507,10 +513,8 @@ export async function autocomposeSlots(
   for (const s of existingSlots) {
     if (s.mealId === null) continue
     const key = groupKey(s.date, s.mealType)
-    if (key) groupMealId.set(key, s.mealId)
+    if (key && !groupMealId.has(key)) groupMealId.set(key, s.mealId)
   }
-  const mealsById = new Map(allMeals.map((m) => [m.id, m]))
-
   const toInsert: {
     planId: number
     date: string
@@ -532,7 +536,7 @@ export async function autocomposeSlots(
     for (const mealType of emptySlots) {
       const key = groupKey(date, mealType)
       const groupChosen = key
-        ? mealsById.get(groupMealId.get(key) ?? -1)
+        ? visibleMealsById.get(groupMealId.get(key) ?? -1)
         : undefined
       if (!groupChosen) {
         freshSlots.push(mealType)
