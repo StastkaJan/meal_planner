@@ -4,106 +4,88 @@ _Plan a whole week of meals in minutes — or let the app plan it for you._
 
 ## Problem
 
-Deciding what to eat for every meal, every day, is a small chore that repeats
-forever. People fall back on the same handful of dishes, forget to balance
-nutrition, and lose the plan the moment it lives in their head or a scrap of
-paper. "What's for dinner?" is a daily tax.
+Deciding what to eat is a small chore that repeats several times a day. Plans
+kept in memory or on scraps of paper are easy to lose, while choosing from
+scratch encourages repetition and makes nutrition harder to balance.
 
 ## Solution
 
-A weekly calendar where each day has five slots (breakfast, morning snack,
-lunch, afternoon snack, dinner). Assign a meal to any slot from a searchable
-picker, and page forward/back through weeks. When you don't feel like choosing,
-one **Auto-compose** button fills every empty slot for you.
+A private weekly calendar with five slots per day: breakfast, morning snack,
+lunch, afternoon snack, and dinner. Users can assign meals manually, reuse a
+previous week, or ask **Auto-compose** to fill empty slots from their recipe
+library.
 
 ## Who it's for
 
-Anyone who plans meals ahead — home cooks, people tracking calories or macros,
-families juggling dietary needs. A logged-in user, since plans are private.
+Home cooks, people tracking calories or macros, and families planning around
+different dietary needs. Plans belong to a logged-in user and are private.
 
 ## Value
 
-- **Kills the daily "what's for dinner" decision** — the week is decided once.
-- **Auto-compose** removes the blank-page problem: a full, calorie-aware week
-  in one click.
-- **One continuous plan** per user keeps every week in one calendar without
-  extra plan navigation or overlapping settings.
-- **Profile preferences** (cuisines you like, diets you follow) shape what
-  auto-compose picks.
-- **Live nutrition feedback** shows each day's calories and macros against a
-  per-user target set on the profile (falling back to a 2000 kcal / fixed-macro
-  default), so the plan stays balanced without a spreadsheet.
-- **Bonus items + recalculate** cover going off-plan (a pizza lunch with
-  friends, a drink) without abandoning the day's budget — log it, then
-  re-fill the rest of the day to fit what's left.
-- **Repeat patterns** let a meal type (e.g. lunch) reuse the same meal across a
-  run of days (e.g. Mon-Tue / Wed-Thu / Fri-Sun) instead of choosing fresh every
-  day — for people who batch-cook rather than cook daily.
+- **One weekly planning session** replaces repeated daily decisions.
+- **Auto-compose** provides a calorie- and macro-aware starting point that
+  remains easy to edit.
+- **One continuous plan** per user keeps every week in one calendar, while
+  profile preferences shape what auto-compose picks.
+- **Live nutrition feedback** compares each day with profile targets, falling
+  back to the app defaults when a target is not set.
+- **Repeat patterns and week copying** support batch cooking and familiar
+  routines without repetitive data entry.
+- **Bonus items, recalculation, and a derived shopping list** keep the plan
+  useful when real life differs from the original schedule.
 
 ## How it works
 
-Each plan owns a grid of slots keyed by `(plan, date, meal type)`; filling
-a slot points it at a meal, clearing it removes it. Both the manual picker and
-auto-compose only offer meals whose `allowedSlots` includes the slot's meal
-type (empty `allowedSlots` = suitable for any slot), so a dinner-only recipe
-can't land in breakfast. Auto-compose filters the meal library by the user's
-profile cuisine (any-match) and dietary (all-match) preferences, then splits
-the remaining daily calorie target across empty slots. It ranks calorie fit
-first, macro fit second, and penalizes meals already used that week so one meal
-does not dominate the plan. Each meal type can
-also have a **weekly repeat pattern** (`slotRepeats`) — a partition of Mon-Sun into
-groups that share one meal; setting a slot in a grouped meal type fills the whole
-group, and auto-compose picks one meal per group instead of one per day. A **favourites-only**
-checkbox next to Auto-compose restricts candidates to the caller's favourited meals
-(see [recipe library](./recipes.md)), leaving a slot empty rather than falling back to
-non-favourites if none fit. A **Copy from
-last week** action clones the previous week's slots into the current one
-(overwriting it) to reuse a good plan. A **Shopping list** view
-(`/plans/[id]/shopping`) flattens every assigned meal's structured ingredients
-(name/qty/unit — see `mealIngredients` in [../schema.md](../schema.md)) for the week
-into one deduped, checkable list, summing quantities per (name, unit) pair
-(e.g. "2 tbsp olive oil" + "2 tbsp olive oil" → "4 tbsp Olive oil"; a name used with
-different units stays as separate line items rather than being summed incorrectly;
-falls back to a plain "×N" count for ingredients with no quantity, e.g. "Salt"). Week and plan
-live in the URL, so a shared or
-bookmarked link reopens the exact view. Plans are per-user and enforced
-server-side.
+- **Plan manually.** Each plan owns one slot per date and meal type. The
+  searchable picker only offers visible meals allowed in that slot; an empty
+  `allowedSlots` list means the meal can be used anywhere. The selected plan
+  and week live in the URL, so a bookmark reopens the same view.
+- **Auto-compose empty slots.** Cuisine preferences are any-match and dietary
+  restrictions are all-match. When no meal matches those preferences,
+  auto-compose falls back to the visible library, but visibility, slot
+  restrictions, and **Favourites only** remain hard filters. It ranks calorie
+  fit first, macro fit second, and favours meals not already used that week.
+  Filled slots are never replaced, and a slot stays empty when no permitted
+  meal exists.
+- **Repeat and reuse.** A weekly repeat pattern partitions Monday through
+  Sunday into groups that share a meal for one meal type. Manual changes update
+  the whole group, while auto-compose chooses once per group. **Copy from last
+  week** applies the previous week's filled slots to the corresponding days,
+  replacing assignments in those positions.
+- **Track changes to the day.** Bonus items record off-plan food with optional
+  calories and macros. They immediately contribute to the day's nutrition
+  totals. **Recalculate** fills only the remaining empty slots using the budget
+  left after assigned meals and bonus items; an existing meal must be cleared
+  before it can be replaced.
+- **Build a shopping list.** The weekly shopping view combines structured
+  ingredients from assigned meals. It groups matching names and units, sums
+  complete quantities, keeps different units separate, and uses a plain count
+  when quantities are missing.
 
-Off-plan consumption is logged as **bonus items** — a name plus optional
-calories/macros, attached to a day rather than a slot (so a pizza lunch and a
-drink can both be logged the same day). They count toward that day's
-nutrition bars immediately. A **Recalculate** action per day re-fills that
-day's still-empty slots the same way auto-compose does, except the budget
-starts from what's already consumed — filled slots plus that day's bonus
-items — so a blown lunch shrinks what dinner gets picked to fit. It only
-touches empty slots; replacing an already-assigned meal means clearing it
-first via the picker, same as everywhere else in the calendar.
-
-See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`, `bonusItems`) and
-[../api.md](../api.md) (`/plans/*`) for the data and endpoints.
+See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`,
+`bonusItems`) and [../api.md](../api.md) (`/plans/*`) for the data and
+endpoints.
 
 ## Success signals
 
 - Share of weeks that reach full slot coverage.
-- Auto-compose usage rate, and whether users keep vs. swap its picks.
+- Auto-compose usage and the share of its picks users keep.
 - Return rate week over week (planning ahead implies coming back).
 
 ## Non-goals
 
-- Not a grocery or pantry-inventory tracker — it plans meals, it doesn't count
-  what's in your kitchen.
-- Not a cooking companion (no step timers or in-kitchen mode; that's the
-  [recipe library](./recipes.md)'s job).
+- The shopping list is derived from the plan; it does not track pantry stock or
+  completed purchases.
+- The calendar is not an in-kitchen cooking companion; recipe details belong
+  in the [recipe library](./recipes.md).
 - Auto-compose is a starting point to edit, not a nutritionist's prescription.
 
 ## Known limitations
 
-- **Soft nutrition fit** — auto-compose prioritizes calories and treats
-  protein/carb/fat and variety as ranking preferences, not constraints
-  (`src/lib/server/services/plan-generation.ts` / `src/lib/domain/plan-generation.ts`). A library thin on
-  a given macro can still miss the target.
+- **Heuristic nutrition fit** — calorie and macro targets guide ranking rather
+  than act as guarantees. A limited library can still miss nutrition targets.
 
 ## Future opportunities
 
-- **Whole-week optimization** — auto-compose fills greedily slot by slot; solving
-  the week jointly could hit macro targets more tightly.
+- **Whole-week optimization** — auto-compose fills greedily slot by slot;
+  solving the week jointly could hit nutrition targets more tightly.
