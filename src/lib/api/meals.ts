@@ -5,7 +5,7 @@ export const createMeal = (body: object) =>
   requestJson<Meal>('/meals', { method: 'POST', body: jsonBody(body) })
 
 export const updateMeal = (id: number, body: object) =>
-  request(`/meals/${id}`, { method: 'PATCH', body: jsonBody(body) })
+  requestJson<Meal>(`/meals/${id}`, { method: 'PATCH', body: jsonBody(body) })
 
 export const deleteMeal = (id: number) =>
   request(`/meals/${id}`, { method: 'DELETE' })

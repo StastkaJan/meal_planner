@@ -23,15 +23,18 @@
     name: FormDataEntryValue | null,
     scope: FormDataEntryValue | null,
   ) {
-    await createMeal({ name, scope })
+    const created = await createMeal({ name, scope })
+    if (!data.favoritesOnly)
+      meals = [...meals, { ...created, isFavorite: false }].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      )
     creating = false
-    await goto('/meals')
   }
 
   async function deleteMeal(id: number) {
     if (!confirm('Delete this meal?')) return
     await removeMeal(id)
-    await goto('/meals')
+    meals = meals.filter((meal) => meal.id !== id)
   }
 
   async function toggleFavorite(id: number, next: boolean) {

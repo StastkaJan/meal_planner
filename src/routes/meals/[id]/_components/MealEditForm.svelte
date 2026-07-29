@@ -20,7 +20,7 @@
     meal: Meal
     ingredients: IngredientInput[]
     onCancel: () => void
-    onSaved: () => void
+    onSaved: (meal: Meal) => void
   } = $props()
 
   let tags = $derived(meal.tags ?? [])
@@ -69,8 +69,7 @@
         qty: r.qty === '' ? null : Number(r.qty),
         unit: r.unit || null,
       }))
-    const res = await updateMeal(meal.id, body)
-    if (res.ok) onSaved()
+    onSaved(await updateMeal(meal.id, body))
   }
 </script>
 

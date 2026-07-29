@@ -85,6 +85,13 @@ describe('pickMealFields', () => {
     const out = pickMealFields({ name: 'Soup', calories: undefined })
     expect('calories' in out).toBe(false)
   })
+
+  it('normalizes blank numeric form fields to null', () => {
+    expect(pickMealFields({ calories: '', timeMinutes: '' })).toEqual({
+      calories: null,
+      timeMinutes: null,
+    })
+  })
 })
 
 describe('isoDurationToMinutes', () => {

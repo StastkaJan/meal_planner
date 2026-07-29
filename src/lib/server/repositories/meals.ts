@@ -135,12 +135,22 @@ const WRITABLE = [
   'servings',
 ] as const
 
+const NULLABLE_NUMBERS = new Set([
+  'calories',
+  'proteinG',
+  'carbsG',
+  'fatG',
+  'timeMinutes',
+  'servings',
+])
+
 export function pickMealFields(
   body: Record<string, unknown>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const k of WRITABLE) {
-    if (body[k] !== undefined) out[k] = body[k]
+    if (body[k] !== undefined)
+      out[k] = body[k] === '' && NULLABLE_NUMBERS.has(k) ? null : body[k]
   }
   return out
 }

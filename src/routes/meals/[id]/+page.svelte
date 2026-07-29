@@ -6,20 +6,16 @@
   import { DIFF_LABEL } from '$lib/constants'
 
   let { data }: { data: PageData } = $props()
+  let meal = $derived(data.meal)
   let editing = $state(false)
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
   // rescales the displayed numbers only (ingredient text is free-form, left untouched).
-  const base = $derived(data.meal.servings || 1)
-  let servings = $derived(data.meal.servings || 1)
+  const base = $derived(meal.servings || 1)
+  let servings = $derived(meal.servings || 1)
   const factor = $derived(servings / base)
   const hasNutrition = $derived(
-    !!(
-      data.meal.calories ||
-      data.meal.proteinG ||
-      data.meal.carbsG ||
-      data.meal.fatG
-    ),
+    !!(meal.calories || meal.proteinG || meal.carbsG || meal.fatG),
   )
   const scale = (v: number | null) =>
     v == null ? null : Math.round(Number(v) * factor)
@@ -28,7 +24,7 @@
 
   async function deleteMeal() {
     if (!confirm('Delete this meal?')) return
-    await removeMeal(data.meal.id)
+    await removeMeal(meal.id)
     await goto('/meals')
   }
 </script>
@@ -36,10 +32,13 @@
 <div class="page">
   {#if editing}
     <MealEditForm
-      meal={data.meal}
+      {meal}
       ingredients={data.ingredients}
       onCancel={() => (editing = false)}
-      onSaved={() => (editing = false)}
+      onSaved={(updated) => {
+        meal = updated
+        editing = false
+      }}
     />
   {:else}
     <div class="top-bar">
@@ -55,26 +54,24 @@
     </div>
 
     <div class="detail">
-      {#if data.meal.imageUrl}
-        <img class="hero" src={data.meal.imageUrl} alt={data.meal.name} />
+      {#if meal.imageUrl}
+        <img class="hero" src={meal.imageUrl} alt={meal.name} />
       {/if}
 
       <div class="header">
-        <h1>{data.meal.name}</h1>
+        <h1>{meal.name}</h1>
         <div class="meta">
-          {#if data.meal.timeMinutes}<span class="badge"
-              >{data.meal.timeMinutes} min</span
+          {#if meal.timeMinutes}<span class="badge">{meal.timeMinutes} min</span
             >{/if}
-          {#if data.meal.difficulty}<span
-              class="badge diff-{data.meal.difficulty}"
-              >{DIFF_LABEL[data.meal.difficulty] ?? data.meal.difficulty}</span
+          {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
+              >{DIFF_LABEL[meal.difficulty] ?? meal.difficulty}</span
             >{/if}
         </div>
       </div>
 
-      {#if data.meal.tags?.length}
+      {#if meal.tags?.length}
         <div class="chips">
-          {#each data.meal.tags as tag}
+          {#each meal.tags as tag}
             <span class="chip">{tag.replace('_', ' ')}</span>
           {/each}
         </div>
@@ -96,20 +93,17 @@
             >
           </div>
           <div class="nutrition">
-            {#if data.meal.calories}<span>{scale(data.meal.calories)} kcal</span
+            {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
+            {#if meal.proteinG}<span>{scaleG(meal.proteinG)}g protein</span
               >{/if}
-            {#if data.meal.proteinG}<span
-                >{scaleG(data.meal.proteinG)}g protein</span
-              >{/if}
-            {#if data.meal.carbsG}<span>{scaleG(data.meal.carbsG)}g carbs</span
-              >{/if}
-            {#if data.meal.fatG}<span>{scaleG(data.meal.fatG)}g fat</span>{/if}
+            {#if meal.carbsG}<span>{scaleG(meal.carbsG)}g carbs</span>{/if}
+            {#if meal.fatG}<span>{scaleG(meal.fatG)}g fat</span>{/if}
           </div>
         </div>
       {/if}
 
-      {#if data.meal.description}
-        <p class="description">{data.meal.description}</p>
+      {#if meal.description}
+        <p class="description">{meal.description}</p>
       {/if}
 
       {#if data.ingredients.length}
@@ -127,10 +121,10 @@
         </section>
       {/if}
 
-      {#if data.meal.instructions}
+      {#if meal.instructions}
         <section>
           <h2>Instructions</h2>
-          <p class="instructions">{data.meal.instructions}</p>
+          <p class="instructions">{meal.instructions}</p>
         </section>
       {/if}
     </div>
