@@ -32,7 +32,6 @@
       type="search"
       placeholder="Search meals…"
       bind:value={search}
-      autofocus
     />
     <button class="close" onclick={() => onSelect(current)} aria-label="Cancel"
       >✕</button

@@ -1,6 +1,10 @@
 <script lang="ts">
-  import PlanSettings from '$lib/components/PlanSettings.svelte'
+  import PreferenceSettings from './_components/PreferenceSettings.svelte'
   import { NUTRITION_TARGETS } from '$lib/constants'
+  import {
+    changePassword as updatePassword,
+    updateProfile,
+  } from '$lib/api/profile'
 
   let { data } = $props()
 
@@ -9,22 +13,14 @@
   let passwordSuccess = $state('')
 
   async function patchProfile(patch: object) {
-    await fetch('/profile', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(patch),
-    })
+    await updateProfile(patch)
   }
 
   async function saveTargets(e: SubmitEvent) {
     e.preventDefault()
     const fd = new FormData(e.target as HTMLFormElement)
     const body = Object.fromEntries(fd)
-    await fetch('/profile', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    await updateProfile(body)
     targetsSaved = true
   }
 
@@ -33,15 +29,7 @@
     passwordError = ''
     passwordSuccess = ''
     const fd = new FormData(e.target as HTMLFormElement)
-    const res = await fetch('/profile', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        current: fd.get('current'),
-        next: fd.get('next'),
-      }),
-    })
-    const data = await res.json()
+    const data = await updatePassword(fd.get('current'), fd.get('next'))
     if (data.error) passwordError = data.error
     else if (data.success) passwordSuccess = 'Password updated.'
   }
@@ -55,7 +43,11 @@
   <p class="hint">
     New plans start with these cuisines and dietary restrictions.
   </p>
-  <PlanSettings plan={data} onChange={patchProfile} />
+  <PreferenceSettings
+    cuisinePrefs={data.cuisinePrefs}
+    dietaryRestrictions={data.dietaryRestrictions}
+    onChange={patchProfile}
+  />
 
   <h2>Nutrition targets</h2>
   <p class="hint">

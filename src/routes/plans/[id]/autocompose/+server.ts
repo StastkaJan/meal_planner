@@ -1,11 +1,7 @@
 import { json } from '@sveltejs/kit'
-import {
-  requireOwnedPlan,
-  validDateStr,
-  getUserSettings,
-  autocomposeSlots,
-} from '$lib/server/plans'
-import { resolveTargets } from '$lib/constants'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { validDateStr } from '$lib/server/plans'
+import { executePlanPopulation } from '$lib/server/services/plan-generation'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, locals, request }) => {
@@ -15,12 +11,15 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
     favoritesOnly?: boolean
   }
 
-  const filled = await autocomposeSlots(
+  const filled = await executePlanPopulation(
+    {
+      type: 'populate-plan',
+      planId: plan.id,
+      userId: plan.userId,
+      week: validDateStr(week ?? plan.weekStart),
+      favoritesOnly: !!favoritesOnly,
+    },
     plan,
-    validDateStr(week ?? plan.weekStart),
-    resolveTargets(await getUserSettings(plan.userId)),
-    plan.userId,
-    !!favoritesOnly,
   )
   return json({ filled })
 }

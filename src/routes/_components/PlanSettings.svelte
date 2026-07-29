@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
   import type { Plan, SlotRepeat } from '$lib/schema'
+  import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
+  import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
 
   let {
     plan,
@@ -21,18 +22,12 @@
 
   let debounce: ReturnType<typeof setTimeout>
 
-  function toggle(arr: string[], val: string): string[] {
-    return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]
-  }
-
-  function onCuisineChange(val: string) {
-    cuisinePrefs = toggle(cuisinePrefs, val)
+  function onCuisineChange() {
     clearTimeout(debounce)
     debounce = setTimeout(() => onChange({ cuisinePrefs }), 400)
   }
 
-  function onDietChange(val: string) {
-    dietaryRestrictions = toggle(dietaryRestrictions, val)
+  function onDietChange() {
     clearTimeout(debounce)
     debounce = setTimeout(() => onChange({ dietaryRestrictions }), 400)
   }
@@ -60,34 +55,21 @@
   <div class="body">
     <section>
       <h4>Cuisine preferences</h4>
-      <div class="chips">
-        {#each CUISINE_OPTIONS as opt}
-          <label class="chip" class:active={cuisinePrefs.includes(opt)}>
-            <input
-              type="checkbox"
-              checked={cuisinePrefs.includes(opt)}
-              onchange={() => onCuisineChange(opt)}
-            />
-            {opt}
-          </label>
-        {/each}
-      </div>
+      <ChoiceChips
+        options={CUISINE_OPTIONS}
+        bind:selected={cuisinePrefs}
+        onChange={onCuisineChange}
+      />
     </section>
 
     <section>
       <h4>Dietary restrictions</h4>
-      <div class="chips">
-        {#each DIET_OPTIONS as opt}
-          <label class="chip" class:active={dietaryRestrictions.includes(opt)}>
-            <input
-              type="checkbox"
-              checked={dietaryRestrictions.includes(opt)}
-              onchange={() => onDietChange(opt)}
-            />
-            {opt.replace('_', ' ')}
-          </label>
-        {/each}
-      </div>
+      <ChoiceChips
+        options={DIET_OPTIONS}
+        bind:selected={dietaryRestrictions}
+        format={(value) => value.replace('_', ' ')}
+        onChange={onDietChange}
+      />
     </section>
 
     {#if onRepeatChange}
@@ -152,35 +134,6 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 0 0 6px;
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .chip {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    background: $color-surface-2;
-    border: 1px solid $color-border;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    cursor: pointer;
-    transition:
-      background 0.1s,
-      border-color 0.1s;
-
-    &.active {
-      background: $color-accent-dim;
-      border-color: $color-accent;
-      color: $color-text;
-    }
-
-    input {
-      display: none;
-    }
   }
   .repeat-row {
     display: flex;

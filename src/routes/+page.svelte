@@ -2,8 +2,9 @@
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
   import { addDays } from '$lib/date'
-  import WeekTable from '$lib/components/WeekTable.svelte'
-  import PlanSettings from '$lib/components/PlanSettings.svelte'
+  import * as planApi from '$lib/api/plans'
+  import WeekTable from './_components/WeekTable.svelte'
+  import PlanSettings from './_components/PlanSettings.svelte'
 
   let { data }: { data: PageData } = $props()
 
@@ -14,9 +15,7 @@
 
   async function refreshPlan() {
     if (!plan) return
-    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
-      r.json(),
-    )
+    plan = await planApi.getPlan(plan.id, data.viewWeek)
   }
 
   function planUrl(planId: number, week: string) {
@@ -39,11 +38,7 @@
 
   async function createPlan() {
     if (!newPlanName.trim()) return
-    const created = await fetch('/plans', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: newPlanName.trim() }),
-    }).then((r) => r.json())
+    const created = await planApi.createPlan(newPlanName.trim())
     newPlanName = ''
     creating = false
     await goto(planUrl(created.id, created.weekStart))
@@ -51,7 +46,7 @@
 
   async function deletePlan(id: number) {
     if (!confirm('Delete this plan?')) return
-    await fetch(`/plans/${id}`, { method: 'DELETE' })
+    await planApi.deletePlan(id)
     await goto('/')
   }
 
@@ -61,21 +56,17 @@
     mealId: number | null,
   ) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/slots`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date, mealType, mealId }),
-    })
+    await planApi.setSlot(plan.id, date, mealType, mealId)
     await refreshPlan()
   }
 
   async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
-    const { filled } = await fetch(`/plans/${plan.id}/autocompose`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: data.viewWeek, favoritesOnly }),
-    }).then((r) => r.json())
+    const { filled } = await planApi.populatePlan(
+      plan.id,
+      data.viewWeek,
+      favoritesOnly,
+    )
     if (filled === 0) {
       alert(
         favoritesOnly
@@ -95,11 +86,7 @@
       )
     )
       return
-    await fetch(`/plans/${plan.id}/copy-week`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ from, to: data.viewWeek }),
-    })
+    await planApi.copyWeek(plan.id, from, data.viewWeek)
     await refreshPlan()
   }
 
@@ -123,31 +110,21 @@
     },
   ) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/bonus`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date, ...fields }),
-    })
+    const res = await planApi.addBonus(plan.id, { date, ...fields })
     if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleDeleteBonus(id: number) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/bonus/${id}`, {
-      method: 'DELETE',
-    })
+    const res = await planApi.deleteBonus(plan.id, id)
     if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleRecalcDay(date: string) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/recalc-day`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date }),
-    })
+    const res = await planApi.recalculateDay(plan.id, date)
     if (await alertIfFailed(res)) return
     const { filled } = await res.json()
     if (filled === 0)
@@ -157,21 +134,13 @@
 
   async function handleSettingsChange(patch: object) {
     if (!plan) return
-    const updated = await fetch(`/plans/${plan.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(patch),
-    }).then((r) => r.json())
+    const updated = await planApi.updatePlan(plan.id, patch)
     plan = { ...plan, ...updated }
   }
 
   async function handleRepeatChange(mealType: string, groupBreaks: boolean[]) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/slot-repeats`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mealType, groupBreaks }),
-    })
+    await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
     await refreshPlan()
   }
 </script>
@@ -199,7 +168,6 @@
             if (e.key === 'Enter') createPlan()
             if (e.key === 'Escape') creating = false
           }}
-          autofocus
         />
         <button class="btn" onclick={createPlan}>Add</button>
         <button class="btn ghost" onclick={() => (creating = false)}

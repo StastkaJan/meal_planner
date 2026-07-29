@@ -1,8 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { users } from '$lib/schema'
-import { createSession, verifyLogin, checkRateLimit } from '$lib/auth'
+import { createSession, checkRateLimit } from '$lib/auth'
+import { authenticate } from '$lib/server/services/auth'
 import type { Actions } from './$types'
 
 export const actions: Actions = {
@@ -16,16 +14,12 @@ export const actions: Actions = {
     const email = String(d.get('email')).toLowerCase().trim()
     const password = String(d.get('password'))
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1)
-    if (!(await verifyLogin(password, user?.passwordHash))) {
+    const user = await authenticate(email, password)
+    if (!user) {
       return fail(400, { error: 'Invalid email or password' })
     }
 
-    await createSession(user!.id, cookies)
+    await createSession(user.id, cookies)
     redirect(303, '/')
   },
 }

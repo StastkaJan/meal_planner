@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit'
-import { requireOwnedPlan, deleteBonusItem } from '$lib/server/plans'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { deleteBonusItem } from '$lib/server/plans'
 import type { RequestHandler } from './$types'
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {

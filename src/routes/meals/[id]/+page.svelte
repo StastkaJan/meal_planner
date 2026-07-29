@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import MealEditForm from './MealEditForm.svelte'
+  import { deleteMeal as removeMeal } from '$lib/api/meals'
+  import MealEditForm from './_components/MealEditForm.svelte'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
 
@@ -10,7 +11,7 @@
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
   // rescales the displayed numbers only (ingredient text is free-form, left untouched).
   const base = $derived(data.meal.servings || 1)
-  let servings = $state(data.meal.servings || 1)
+  let servings = $derived(data.meal.servings || 1)
   const factor = $derived(servings / base)
   const hasNutrition = $derived(
     !!(
@@ -27,7 +28,7 @@
 
   async function deleteMeal() {
     if (!confirm('Delete this meal?')) return
-    await fetch(`/meals/${data.meal.id}`, { method: 'DELETE' })
+    await removeMeal(data.meal.id)
     await goto('/meals')
   }
 </script>

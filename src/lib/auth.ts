@@ -1,9 +1,7 @@
 import { promisify } from 'util'
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
 import { error } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { sessions } from '$lib/schema'
+import { saveSession } from '$lib/server/repositories/sessions'
 import type { Cookies } from '@sveltejs/kit'
 
 const scryptAsync = promisify(scrypt)
@@ -69,11 +67,11 @@ export function requireUser(locals: App.Locals) {
 
 export async function createSession(userId: number, cookies: Cookies) {
   const token = generateToken()
-  await db.insert(sessions).values({
-    id: token,
+  await saveSession(
+    token,
     userId,
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-  })
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  )
   cookies.set('session', token, {
     path: '/',
     httpOnly: true,

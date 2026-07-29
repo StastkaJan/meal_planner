@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { SlotWithMeal } from '$lib/types'
   import type { Meal } from '$lib/schema'
+  import type { SlotWithMeal } from '$lib/types'
+  import Dialog from '$lib/components/ui/Dialog.svelte'
   import MealPicker from './MealPicker.svelte'
 
   let {
@@ -15,7 +16,7 @@
     onPick: (mealId: number | null) => void
   } = $props()
 
-  let dialogEl: HTMLDialogElement
+  let dialogEl = $state<HTMLDialogElement>()
   let open = $state(false)
 
   function openPicker() {
@@ -45,7 +46,11 @@
   {/if}
 </button>
 
-<dialog bind:this={dialogEl} onclose={() => (open = false)}>
+<Dialog
+  bind:element={dialogEl}
+  class="meal-dialog"
+  onclose={() => (open = false)}
+>
   {#if open}
     <MealPicker
       {meals}
@@ -54,7 +59,7 @@
       onSelect={handlePick}
     />
   {/if}
-</dialog>
+</Dialog>
 
 <style lang="scss">
   .cell {
@@ -106,17 +111,9 @@
     color: $color-text-muted;
     opacity: 0.4;
   }
-  dialog {
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius;
+  :global(.meal-dialog) {
     padding: 0;
     max-width: 420px;
     width: 90vw;
-    color: $color-text;
-
-    &::backdrop {
-      background: rgba(0, 0, 0, 0.6);
-    }
   }
 </style>

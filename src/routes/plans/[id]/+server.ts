@@ -1,13 +1,12 @@
 import { json } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { plans } from '$lib/schema'
 import type { RequestHandler } from './$types'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { validDateStr } from '$lib/server/plans'
 import {
-  requireOwnedPlan,
-  validDateStr,
+  deletePlan,
   getPlanDetail,
-} from '$lib/server/plans'
+  updatePlan,
+} from '$lib/server/services/plans'
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const plan = await requireOwnedPlan(locals, params.id)
@@ -19,16 +18,16 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   const plan = await requireOwnedPlan(locals, params.id)
   const { name, cuisinePrefs, dietaryRestrictions } = await request.json()
-  const [updated] = await db
-    .update(plans)
-    .set({ name, cuisinePrefs, dietaryRestrictions })
-    .where(eq(plans.id, plan.id))
-    .returning()
+  const updated = await updatePlan(plan.id, {
+    name,
+    cuisinePrefs,
+    dietaryRestrictions,
+  })
   return json(updated)
 }
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
   const plan = await requireOwnedPlan(locals, params.id)
-  await db.delete(plans).where(eq(plans.id, plan.id))
+  await deletePlan(plan.id)
   return new Response(null, { status: 204 })
 }

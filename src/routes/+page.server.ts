@@ -1,25 +1,16 @@
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { plans as plansTable, meals as mealsTable } from '$lib/schema'
-import { getPlanDetail, validDateStr, getUserSettings } from '$lib/server/plans'
-import { visibleToUser } from '$lib/server/meals'
+import { validDateStr } from '$lib/server/plans'
+import { getPlanDetail, listPlans } from '$lib/server/services/plans'
+import { listMeals } from '$lib/server/services/meals'
+import { getSettings } from '$lib/server/services/profile'
 import { resolveTargets } from '$lib/constants'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
   const [plans, meals, u] = await Promise.all([
-    db
-      .select()
-      .from(plansTable)
-      .where(eq(plansTable.userId, userId))
-      .orderBy(plansTable.id),
-    db
-      .select()
-      .from(mealsTable)
-      .where(visibleToUser(userId))
-      .orderBy(mealsTable.name),
-    getUserSettings(userId),
+    listPlans(userId),
+    listMeals(userId),
+    getSettings(userId),
   ])
   const targets = resolveTargets(u)
 

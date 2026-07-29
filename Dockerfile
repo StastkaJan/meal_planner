@@ -15,6 +15,6 @@ COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/scripts-dist/seed.js ./scripts-dist/seed.js
 COPY --from=build /app/entrypoint.sh .
 RUN npm ci --omit=dev && npm install drizzle-kit
-RUN chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 EXPOSE 3000
 CMD ["./entrypoint.sh"]

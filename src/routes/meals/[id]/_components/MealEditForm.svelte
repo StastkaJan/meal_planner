@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { updateMeal } from '$lib/api/meals'
+  import Textarea from '$lib/components/ui/Textarea.svelte'
   import {
     CUISINE_OPTIONS,
     DIET_OPTIONS,
@@ -26,7 +28,7 @@
 
   type IngredientRow = { name: string; qty: number | ''; unit: string }
   const emptyRow = (): IngredientRow => ({ name: '', qty: '', unit: '' })
-  let ingredientRows = $state<IngredientRow[]>(
+  let ingredientRows = $derived.by<IngredientRow[]>(() =>
     ingredients.length
       ? ingredients.map((i) => ({
           name: i.name,
@@ -67,20 +69,14 @@
         qty: r.qty === '' ? null : Number(r.qty),
         unit: r.unit || null,
       }))
-    const res = await fetch(`/meals/${meal.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    const res = await updateMeal(meal.id, body)
     if (res.ok) onSaved()
   }
 </script>
 
 <form method="POST" class="edit-form" onsubmit={handleSave}>
   <div class="field-row">
-    <label
-      >Name<input type="text" name="name" value={meal.name} autofocus /></label
-    >
+    <label>Name<input type="text" name="name" value={meal.name} /></label>
     <label
       >Image URL<input
         type="url"
@@ -202,9 +198,11 @@
     </div>
   </fieldset>
   <label
-    >Description<textarea name="description" rows="2"
-      >{meal.description ?? ''}</textarea
-    ></label
+    >Description<Textarea
+      name="description"
+      rows={2}
+      value={meal.description ?? ''}
+    /></label
   >
   <fieldset class="ingredients-field">
     <legend>Ingredients</legend>
@@ -239,9 +237,11 @@
     >
   </fieldset>
   <label
-    >Instructions<textarea name="instructions" rows="8"
-      >{meal.instructions ?? ''}</textarea
-    ></label
+    >Instructions<Textarea
+      name="instructions"
+      rows={8}
+      value={meal.instructions ?? ''}
+    /></label
   >
   <div class="form-actions">
     <button class="btn" type="submit">Save</button>
@@ -276,8 +276,7 @@
     min-width: 0;
 
     input,
-    select,
-    textarea {
+    select {
       width: 100%;
       background: $color-surface-2;
       border: 1px solid $color-border;
@@ -289,10 +288,6 @@
         outline: 2px solid $color-accent;
         border-color: transparent;
       }
-    }
-    textarea {
-      resize: vertical;
-      font-family: inherit;
     }
   }
 

@@ -69,7 +69,6 @@
         type="text"
         placeholder="Name (e.g. Pizza, Beer)"
         bind:value={name}
-        autofocus
       />
       <input
         type="number"

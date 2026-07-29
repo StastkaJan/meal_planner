@@ -13,12 +13,21 @@
 - **Tests**: Vitest (unit), Playwright (E2E)
 - **Infra**: Docker Compose (app + postgres)
 
+<!-- NOTE: Dockerfile normalizes entrypoint.sh line endings for Windows checkouts. -->
+
 ## Project layout
 
 ```
 src/
-  lib/          # db client, schema, auth helpers, shared components
-  routes/       # pages + API endpoints (colocated)
+  lib/
+    api/                 # browser-side REST clients
+    components/ui/       # reusable native-control primitives
+    server/
+      domain/            # pure business logic
+      repositories/      # Drizzle persistence by aggregate
+      services/          # application operations
+      guards.ts          # request auth/ownership guards
+  routes/                # pages, API endpoints, and route-local _components/
 drizzle/        # migrations (0000_*, 0001_*)
 tests/          # Playwright E2E
 docker-compose.yml
@@ -32,7 +41,9 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 ## Svelte conventions
 
-- Fetch page data via `load` in `+page.server.ts`/`+layout.server.ts` (queries `db` directly), not `onMount`/`$effect` in components. Consume it via `let { data }: { data: PageData } = $props()`.
+- Fetch page data via `load` in `+page.server.ts`/`+layout.server.ts` through server services/repositories, not `onMount`/`$effect` in components. Consume it via `let { data }: { data: PageData } = $props()`.
+- Keep reusable controls in `$lib/components/ui`; colocate feature components under the owning route's `_components/`.
+- Browser mutations go through `$lib/api`; server routes use guards/services, and only repositories import `db`.
 - Interactive state that should survive navigation/reload belongs in the URL (`?param=`) so `load` reruns automatically — don't shadow it in component `$state`.
 - This project does **not** use `invalidate`/`invalidateAll` and does **not** use `use:enhance`. All mutations use `fetch()` against the REST endpoints (`src/routes/**/+server.ts`), then update local state directly: for an in-place edit, derive a writable copy of load data with `$derived` (e.g. `let plan = $derived(data.plan)`) and reassign it after the `fetch` (see `handleSlotChange`/`handleSettingsChange` in `src/routes/+page.svelte`); for a create/delete that changes which rows exist, `goto()` the new/`/` URL to re-run `load` (see `createPlan`/`deletePlan` in `src/routes/+page.svelte`). If a REST endpoint doesn't exist yet for a form, add one in `+server.ts` — don't use form actions.
 - Note: `goto()` to the same route doesn't remount the component, so local `$state` for "is this form open" (e.g. `creating`) must be reset explicitly in the handler — see `createPlan` in `src/routes/+page.svelte`.
@@ -43,7 +54,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 1. Register/login → `createSession()` in `src/lib/auth.ts` creates `sessions` row, sets `session` cookie (httpOnly). Login uses constant-time dummy hash when user not found.
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
-3. Slot ownership enforced server-side: `requireUser(locals)` at the top of every `+server.ts`; plan ownership via `ownedPlan()`, meal ownership via `assertCanEdit()` (both in `src/lib/server/`)
+3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.
 4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)
 
 ## Common commands

@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit'
-import { requireOwnedPlan, validDateStr, addBonusItem } from '$lib/server/plans'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { addBonusItem, validDateStr } from '$lib/server/plans'
 import type { RequestHandler } from './$types'
 
 // non-finite (NaN/Infinity/non-numeric string) coerces to null rather than erroring,

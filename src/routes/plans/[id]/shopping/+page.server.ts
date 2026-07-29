@@ -1,8 +1,6 @@
-import {
-  requireOwnedPlan,
-  validDateStr,
-  getShoppingList,
-} from '$lib/server/plans'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { validDateStr } from '$lib/server/plans'
+import { getShoppingList } from '$lib/server/services/plans'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {

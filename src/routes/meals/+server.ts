@@ -1,25 +1,16 @@
 import { json, error } from '@sveltejs/kit'
-import { db } from '$lib/db'
-import { meals } from '$lib/schema'
-import { pickMealFields, visibleToUser, createMeal } from '$lib/server/meals'
+import { createUserMeal, listMeals } from '$lib/server/services/meals'
 import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const rows = await db
-    .select()
-    .from(meals)
-    .where(visibleToUser(locals.user?.id))
-    .orderBy(meals.name)
-  return json(rows)
+  return json(await listMeals(locals.user?.id))
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401, 'Not authenticated')
   const body = await request.json()
-  const values = pickMealFields(body)
-  if (!values.name) error(400, 'Name is required')
+  if (!body.name) error(400, 'Name is required')
   // ownership is server-set (never from the whitelist): scope=personal → mine, else global
-  values.userId = body.scope === 'personal' ? locals.user.id : null
-  const meal = await createMeal(values as { name: string })
+  const meal = await createUserMeal(locals.user.id, body)
   return json(meal, { status: 201 })
 }
