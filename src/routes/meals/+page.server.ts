@@ -1,4 +1,4 @@
-import { favoriteMealIds, listMeals } from '$lib/server/services/meals'
+import { favoriteMealIds, listMeals } from '$lib/server/repositories/meals'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {

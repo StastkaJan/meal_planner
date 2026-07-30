@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 const createMeal = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/meals', async (importOriginal) => ({
+vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   createMeal,
 }))

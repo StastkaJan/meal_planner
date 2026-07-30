@@ -1,7 +1,6 @@
-import { hashPassword, verifyPassword } from '$lib/auth'
+import { hashPassword, verifyPassword } from './auth'
 import {
   findUserById,
-  getSettings,
   saveSettings,
   updatePassword,
 } from '../repositories/accounts'
@@ -18,18 +17,16 @@ function toTarget(value: unknown): number | null {
   return Number.isFinite(target) && target > 0 ? target : null
 }
 
-export { getSettings }
-
 export async function updateProfileSettings(
   userId: number,
   body: Record<string, unknown>,
 ) {
   const patch: Record<string, unknown> = {}
-  if ('cuisinePrefs' in body) patch.cuisinePrefs = body.cuisinePrefs
-  if ('dietaryRestrictions' in body)
+  if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
+  if (body.dietaryRestrictions !== undefined)
     patch.dietaryRestrictions = body.dietaryRestrictions
   for (const field of TARGET_FIELDS) {
-    if (field in body) patch[field] = toTarget(body[field])
+    if (body[field] !== undefined) patch[field] = toTarget(body[field])
   }
   return Object.keys(patch).length ? saveSettings(userId, patch) : {}
 }

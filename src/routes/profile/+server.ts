@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit'
-import { MAX_PASSWORD } from '$lib/auth'
+import { MAX_PASSWORD } from '$lib/server/services/auth'
 import { requireUser } from '$lib/server/guards'
 import {
   changePassword,

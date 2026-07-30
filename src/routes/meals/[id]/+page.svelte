@@ -43,14 +43,16 @@
   {:else}
     <div class="top-bar">
       <a class="back" href="/meals">← Meals</a>
-      <div class="actions">
-        <button class="btn ghost sm" onclick={() => (editing = true)}
-          >Edit</button
-        >
-        <button class="btn danger sm" type="button" onclick={deleteMeal}
-          >Delete</button
-        >
-      </div>
+      {#if meal.userId}
+        <div class="actions">
+          <button class="btn ghost sm" onclick={() => (editing = true)}
+            >Edit</button
+          >
+          <button class="btn danger sm" type="button" onclick={deleteMeal}
+            >Delete</button
+          >
+        </div>
+      {/if}
     </div>
 
     <div class="detail">

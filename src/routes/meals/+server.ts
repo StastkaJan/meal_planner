@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit'
-import { createUserMeal, listMeals } from '$lib/server/services/meals'
+import { createUserMeal } from '$lib/server/services/meals'
+import { listMeals } from '$lib/server/repositories/meals'
 import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ locals }) => {

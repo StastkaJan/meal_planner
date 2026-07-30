@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit'
 import { requireUser } from '$lib/server/guards'
-import { createUserPlan, listPlans } from '$lib/server/services/plans'
+import { createUserPlan } from '$lib/server/services/plans'
+import { listPlans } from '$lib/server/repositories/plans'
 import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ locals }) => {

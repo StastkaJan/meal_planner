@@ -1,5 +1,5 @@
 import { requireUser } from '$lib/server/guards'
-import { getSettings } from '$lib/server/services/profile'
+import { getSettings } from '$lib/server/repositories/accounts'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

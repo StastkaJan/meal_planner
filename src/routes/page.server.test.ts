@@ -9,18 +9,14 @@ const mockDb = vi.hoisted(() => ({
 }))
 
 vi.mock('$lib/db', () => ({ db: mockDb }))
-vi.mock('$lib/server/plans', () => ({
+vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   getPlanDetail: vi.fn(async (plan: any, week: string) => ({
     ...plan,
     slots: [],
     bonus: [],
     week,
   })),
-  validDateStr: (w: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) throw new Error('Invalid date')
-    return w
-  },
-  getUserSettings: vi.fn(async () => null),
 }))
 
 import { load as loadImpl } from './+page.server'

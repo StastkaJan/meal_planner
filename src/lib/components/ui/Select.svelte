@@ -1,17 +1,22 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte'
   import type { HTMLSelectAttributes } from 'svelte/elements'
+
+  type Option = string | { value: string; label: string }
 
   let {
     value = $bindable(),
-    children,
+    options,
     class: className = '',
     ...rest
-  }: HTMLSelectAttributes & { children?: Snippet } = $props()
+  }: HTMLSelectAttributes & { options: readonly Option[] } = $props()
 </script>
 
 <select {...rest} bind:value class={`ui-select ${className}`}>
-  {@render children?.()}
+  {#each options as option}
+    <option value={typeof option === 'string' ? option : option.value}>
+      {typeof option === 'string' ? option : option.label}
+    </option>
+  {/each}
 </select>
 
 <style lang="scss">

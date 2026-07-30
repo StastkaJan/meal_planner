@@ -1,6 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit'
-import { createSession, checkRateLimit, MAX_PASSWORD } from '$lib/auth'
-import { register } from '$lib/server/services/auth'
+import {
+  checkRateLimit,
+  createSession,
+  MAX_PASSWORD,
+  register,
+} from '$lib/server/services/auth'
 import type { Actions } from './$types'
 
 export const actions: Actions = {

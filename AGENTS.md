@@ -52,7 +52,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 ## Auth flow
 
-1. Register/login → `createSession()` in `src/lib/auth.ts` creates `sessions` row, sets `session` cookie (httpOnly). Login uses constant-time dummy hash when user not found.
+1. Register/login → `createSession()` in `src/lib/server/services/auth.ts` creates a `sessions` row and sets the httpOnly cookie. Login uses a constant-time dummy hash when the user is absent.
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
 3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.
 4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)

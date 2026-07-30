@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit'
-import { findMeal, getMealIngredients } from '$lib/server/services/meals'
+import { findMeal, getMealIngredients } from '$lib/server/repositories/meals'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ params, locals }) => {

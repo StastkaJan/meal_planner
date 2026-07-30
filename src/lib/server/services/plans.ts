@@ -1,29 +1,6 @@
 import { mondayOf } from '$lib/date'
-import {
-  addBonusItem,
-  copyWeek,
-  createPlan,
-  deleteBonusItem,
-  deletePlan,
-  getShoppingList,
-  listPlans,
-  setSlotRepeat,
-  updatePlan,
-  upsertSlot,
-} from '../repositories/plans'
-import { getPlanDetail } from '../plans'
+import { createPlan } from '../repositories/plans'
 import { getSettings } from '../repositories/accounts'
-
-export {
-  addBonusItem,
-  copyWeek,
-  deleteBonusItem,
-  getPlanDetail,
-  getShoppingList,
-  listPlans,
-  setSlotRepeat,
-  upsertSlot,
-}
 
 export async function createUserPlan(userId: number, name: string) {
   const settings = await getSettings(userId)
@@ -34,5 +11,3 @@ export async function createUserPlan(userId: number, name: string) {
     dietaryRestrictions: settings?.dietaryRestrictions ?? [],
   })
 }
-
-export { deletePlan, updatePlan }

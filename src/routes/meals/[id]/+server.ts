@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit'
 import { requireEditableMeal } from '$lib/server/guards'
-import { archiveMeal, updateUserMeal } from '$lib/server/services/meals'
+import { archiveMeal } from '$lib/server/repositories/meals'
+import { updateUserMeal } from '$lib/server/services/meals'
 import type { RequestHandler } from './$types'
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {

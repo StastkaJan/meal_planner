@@ -26,3 +26,13 @@ export type IngredientInput = {
 export type MealType = (typeof MEAL_TYPES)[number]
 
 export type NutritionTargets = typeof NUTRITION_TARGETS
+
+export type ImportedRecipe = {
+  name?: string
+  description?: string
+  imageUrl?: string
+  ingredients?: string[]
+  instructions?: string
+  calories?: number
+  timeMinutes?: number
+}

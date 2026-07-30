@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/plans'
-import { copyWeek } from '$lib/server/services/plans'
+import { validDateStr } from '$lib/server/date'
+import { copyWeek } from '$lib/server/repositories/plans'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {

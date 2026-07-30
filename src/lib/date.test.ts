@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { addDays, mondayOf, groupWindow } from './date'
+import { addDays, mondayOf, groupWindow, isDateString } from './date'
+
+describe('isDateString', () => {
+  it('accepts real ISO dates and rejects malformed or impossible dates', () => {
+    expect(isDateString('2024-02-29')).toBe(true)
+    expect(isDateString('2023-02-29')).toBe(false)
+    expect(isDateString('2024-13-01')).toBe(false)
+    expect(isDateString('2024-1-01')).toBe(false)
+  })
+})
 
 describe('addDays', () => {
   it('adds and subtracts days across month/year boundaries', () => {

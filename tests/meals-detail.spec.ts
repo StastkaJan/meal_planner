@@ -12,7 +12,7 @@ test('meal name links to detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
   await Promise.all([
@@ -28,7 +28,7 @@ test('edit meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
   await Promise.all([
@@ -48,7 +48,7 @@ test('delete meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
   await Promise.all([

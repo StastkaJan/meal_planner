@@ -5,34 +5,36 @@ import type { IngredientInput } from '$lib/types'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-// A meal is visible to a user if it's global (no owner) or owned by them. An anonymous
-// caller (no userId) sees only global meals. Visibility and edit-permission are the same
-// set: if you can see a meal, it's yours to edit/delete.
-export const visibleToUser = (userId?: number) =>
-  userId == null
-    ? and(isNull(meals.userId), isNull(meals.archivedAt))
-    : and(
-        isNull(meals.archivedAt),
-        or(isNull(meals.userId), eq(meals.userId, userId)),
-      )
-
-export const canAccessMeal = (
-  meal: { userId: number | null; archivedAt: Date | null },
-  userId?: number,
-) =>
-  meal.archivedAt === null && (meal.userId === null || meal.userId === userId)
-
 export async function listMeals(userId?: number) {
   return db
     .select()
     .from(meals)
-    .where(visibleToUser(userId))
+    .where(
+      and(
+        isNull(meals.archivedAt),
+        userId == null
+          ? isNull(meals.userId)
+          : or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
     .orderBy(meals.name)
 }
 
 export async function findMeal(id: number, userId?: number) {
-  const [meal] = await db.select().from(meals).where(eq(meals.id, id)).limit(1)
-  return meal && canAccessMeal(meal, userId) ? meal : null
+  const [meal] = await db
+    .select()
+    .from(meals)
+    .where(
+      and(
+        eq(meals.id, id),
+        isNull(meals.archivedAt),
+        userId == null
+          ? isNull(meals.userId)
+          : or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
+    .limit(1)
+  return meal ?? null
 }
 
 export async function getMealIngredients(mealId: number) {
@@ -59,9 +61,46 @@ export async function findAllowedMeal(
   const [meal] = await db
     .select({ id: meals.id, allowedSlots: meals.allowedSlots })
     .from(meals)
-    .where(and(eq(meals.id, id), visibleToUser(userId)))
+    .where(
+      and(
+        eq(meals.id, id),
+        isNull(meals.archivedAt),
+        or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
     .limit(1)
   return meal ?? null
+}
+
+export async function findEditableMeal(id: number, userId: number) {
+  const [meal] = await db
+    .select({ id: meals.id })
+    .from(meals)
+    .where(
+      and(eq(meals.id, id), eq(meals.userId, userId), isNull(meals.archivedAt)),
+    )
+    .limit(1)
+  return meal ?? null
+}
+
+export async function listCandidateMeals(userId: number) {
+  return db
+    .select({
+      id: meals.id,
+      calories: meals.calories,
+      tags: meals.tags,
+      allowedSlots: meals.allowedSlots,
+      proteinG: meals.proteinG,
+      carbsG: meals.carbsG,
+      fatG: meals.fatG,
+    })
+    .from(meals)
+    .where(
+      and(
+        isNull(meals.archivedAt),
+        or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
 }
 
 export async function archiveMeal(id: number) {
@@ -92,21 +131,6 @@ export async function setMealFavorite(
     )
 }
 
-// error() is imported lazily so this module stays loadable from the standalone
-// seed/backfill scripts (run via bare tsx, outside SvelteKit's resolver — see
-// syncMealIngredients callers), which don't have @sveltejs/kit installed.
-export async function assertCanEdit(id: number, userId: number) {
-  const [meal] = await db
-    .select({ userId: meals.userId, archivedAt: meals.archivedAt })
-    .from(meals)
-    .where(eq(meals.id, id))
-    .limit(1)
-  if (!meal || !canAccessMeal(meal, userId)) {
-    const { error } = await import('@sveltejs/kit')
-    error(!meal ? 404 : 403, !meal ? 'Meal not found' : 'Not allowed')
-  }
-}
-
 export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
   if (userId == null) return new Set()
   const rows = await db
@@ -114,45 +138,6 @@ export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
     .from(mealFavorites)
     .where(eq(mealFavorites.userId, userId))
   return new Set(rows.map((r) => r.mealId))
-}
-
-// Whitelist of columns a client may write on a meal. Prevents mass-assignment
-// from a raw request body (id is server-owned).
-const WRITABLE = [
-  'name',
-  'calories',
-  'proteinG',
-  'carbsG',
-  'fatG',
-  'tags',
-  'allowedSlots',
-  'imageUrl',
-  'description',
-  'ingredients',
-  'instructions',
-  'timeMinutes',
-  'difficulty',
-  'servings',
-] as const
-
-const NULLABLE_NUMBERS = new Set([
-  'calories',
-  'proteinG',
-  'carbsG',
-  'fatG',
-  'timeMinutes',
-  'servings',
-])
-
-export function pickMealFields(
-  body: Record<string, unknown>,
-): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
-  for (const k of WRITABLE) {
-    if (body[k] !== undefined)
-      out[k] = body[k] === '' && NULLABLE_NUMBERS.has(k) ? null : body[k]
-  }
-  return out
 }
 
 // ---- structured ingredient links (source of truth for a meal's ingredients) ----

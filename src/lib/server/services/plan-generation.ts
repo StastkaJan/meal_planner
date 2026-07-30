@@ -1,7 +1,27 @@
-import { resolveTargets } from '$lib/constants'
-import { autocomposeSlots, getUserSettings, recalcDaySlots } from '../plans'
+import { DAYS, MEAL_TYPES, resolveTargets } from '$lib/constants'
+import { addDays, groupWindow, mondayOf } from '$lib/date'
 import type { Plan } from '$lib/schema'
-import { ownedPlan } from '../repositories/plans'
+import type { NutritionTargets } from '$lib/types'
+import {
+  fillDaySlots,
+  filterByPrefs,
+  sumNutrition,
+} from '../domain/plan-generation'
+import type { CandidateMeal } from '../domain/plan-generation'
+import { getSettings } from '../repositories/accounts'
+import { favoriteMealIds, listCandidateMeals } from '../repositories/meals'
+import {
+  getDayBonusNutrition,
+  getDaySlotsWithNutrition,
+  getSlotRepeats,
+  getWeekBonusNutrition,
+  getWeekMealIds,
+  getWeekSlotsWithNutrition,
+  insertSlots,
+  ownedPlan,
+} from '../repositories/plans'
+
+type PlanPrefs = Pick<Plan, 'id' | 'cuisinePrefs' | 'dietaryRestrictions'>
 
 export type PlanPopulationCommand = {
   type: 'populate-plan'
@@ -11,14 +31,169 @@ export type PlanPopulationCommand = {
   favoritesOnly: boolean
 }
 
-// Serializable input and idempotent slot inserts keep this callable from a worker later.
-// It runs inline until plan generation is slow enough to justify queue infrastructure.
+const toCandidate = (
+  meal: Awaited<ReturnType<typeof listCandidateMeals>>[number],
+): CandidateMeal => ({
+  ...meal,
+  proteinG: Number(meal.proteinG ?? 0) || 0,
+  carbsG: Number(meal.carbsG ?? 0) || 0,
+  fatG: Number(meal.fatG ?? 0) || 0,
+})
+
+async function autocomposeSlots(
+  plan: PlanPrefs,
+  week: string,
+  targets: NutritionTargets,
+  ownerId: number,
+  favoritesOnly: boolean,
+) {
+  const [mealRows, existingSlots, favoriteIds, weekBonus, repeatRows] =
+    await Promise.all([
+      listCandidateMeals(ownerId),
+      getWeekSlotsWithNutrition(plan.id, week),
+      favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
+      getWeekBonusNutrition(plan.id, week),
+      getSlotRepeats(plan.id),
+    ])
+  if (!mealRows.length) return 0
+
+  let candidateMeals = mealRows.map(toCandidate)
+  const visibleMealsById = new Map(
+    candidateMeals.map((meal) => [meal.id, meal]),
+  )
+  if (favoriteIds)
+    candidateMeals = candidateMeals.filter((meal) => favoriteIds.has(meal.id))
+
+  const filteredMeals = filterByPrefs(
+    candidateMeals,
+    plan.cuisinePrefs,
+    plan.dietaryRestrictions,
+  )
+  const filled = new Set(
+    existingSlots.map((slot) => `${slot.date}-${slot.mealType}`),
+  )
+  const used = new Set(
+    existingSlots
+      .map((slot) => slot.mealId)
+      .filter((id): id is number => id !== null),
+  )
+  const breaksByType = new Map(
+    repeatRows.map((row) => [row.mealType, row.groupBreaks]),
+  )
+  const groupKey = (date: string, mealType: string) => {
+    const breaks = breaksByType.get(mealType)
+    return breaks ? `${mealType}|${groupWindow(date, breaks)[0]}` : null
+  }
+  const groupMealId = new Map<string, number>()
+  for (const slot of existingSlots) {
+    if (slot.mealId === null) continue
+    const key = groupKey(slot.date, slot.mealType)
+    if (key && !groupMealId.has(key)) groupMealId.set(key, slot.mealId)
+  }
+
+  const rows: {
+    planId: number
+    date: string
+    mealType: string
+    mealId: number
+  }[] = []
+
+  for (const day of DAYS) {
+    const date = addDays(week, day)
+    const consumed = sumNutrition([
+      ...existingSlots.filter((slot) => slot.date === date),
+      ...weekBonus.filter((item) => item.date === date),
+    ])
+    const emptySlots = MEAL_TYPES.filter(
+      (mealType) => !filled.has(`${date}-${mealType}`),
+    )
+    const freshSlots: string[] = []
+
+    for (const mealType of emptySlots) {
+      const key = groupKey(date, mealType)
+      const repeatedMeal = key
+        ? visibleMealsById.get(groupMealId.get(key) ?? -1)
+        : undefined
+      if (!repeatedMeal) {
+        freshSlots.push(mealType)
+        continue
+      }
+      used.add(repeatedMeal.id)
+      rows.push({ planId: plan.id, date, mealType, mealId: repeatedMeal.id })
+      consumed.calories += repeatedMeal.calories ?? 0
+      consumed.proteinG += repeatedMeal.proteinG ?? 0
+      consumed.carbsG += repeatedMeal.carbsG ?? 0
+      consumed.fatG += repeatedMeal.fatG ?? 0
+    }
+
+    const generated = fillDaySlots(
+      plan.id,
+      date,
+      freshSlots,
+      filteredMeals,
+      targets,
+      consumed,
+      used,
+    )
+    for (const row of generated) {
+      const key = groupKey(row.date, row.mealType)
+      if (key) groupMealId.set(key, row.mealId)
+    }
+    rows.push(...generated)
+  }
+
+  await insertSlots(rows)
+  return rows.length
+}
+
+async function recalcDaySlots(
+  plan: PlanPrefs,
+  date: string,
+  targets: NutritionTargets,
+  ownerId: number,
+) {
+  const daySlots = await getDaySlotsWithNutrition(plan.id, date)
+  const filled = new Set(daySlots.map((slot) => slot.mealType))
+  const emptySlots = MEAL_TYPES.filter((mealType) => !filled.has(mealType))
+  if (!emptySlots.length) return 0
+
+  const [mealRows, dayBonus, weekMealIds] = await Promise.all([
+    listCandidateMeals(ownerId),
+    getDayBonusNutrition(plan.id, date),
+    getWeekMealIds(plan.id, mondayOf(date)),
+  ])
+  if (!mealRows.length) return 0
+
+  const candidateMeals = filterByPrefs(
+    mealRows.map(toCandidate),
+    plan.cuisinePrefs,
+    plan.dietaryRestrictions,
+  )
+  const used = new Set(
+    weekMealIds
+      .map((slot) => slot.mealId)
+      .filter((id): id is number => id !== null),
+  )
+  const rows = fillDaySlots(
+    plan.id,
+    date,
+    emptySlots,
+    candidateMeals,
+    targets,
+    sumNutrition([...daySlots, ...dayBonus]),
+    used,
+  )
+  await insertSlots(rows)
+  return rows.length
+}
+
 export async function executePlanPopulation(
   command: PlanPopulationCommand,
   loadedPlan?: Plan & { userId: number },
 ) {
   const plan = loadedPlan ?? (await ownedPlan(command.planId, command.userId))
-  const targets = resolveTargets(await getUserSettings(command.userId))
+  if (!plan) throw new Error('Plan not found')
+  const targets = resolveTargets(await getSettings(command.userId))
   return autocomposeSlots(
     plan,
     command.week,
@@ -36,7 +211,7 @@ export async function recalculatePlanDay(
   return recalcDaySlots(
     plan,
     date,
-    resolveTargets(await getUserSettings(userId)),
+    resolveTargets(await getSettings(userId)),
     userId,
   )
 }

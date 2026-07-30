@@ -1,14 +1,20 @@
-import { requireUser } from '$lib/auth'
-import { assertCanEdit } from './meals'
-import { requireOwnedPlan as findOwnedPlan } from './plans'
+import { error } from '@sveltejs/kit'
+import { findAllowedMeal, findEditableMeal } from './repositories/meals'
+import { ownedPlan } from './repositories/plans'
 
-export { requireUser }
+export function requireUser(locals: App.Locals) {
+  if (!locals.user) error(401, 'Not authenticated')
+  return locals.user
+}
 
 export async function requireOwnedPlan(
   locals: App.Locals,
   id: number | string,
 ) {
-  return findOwnedPlan(locals, id)
+  const user = requireUser(locals)
+  const plan = await ownedPlan(Number(id), user.id)
+  if (!plan) error(404, 'Plan not found')
+  return plan
 }
 
 export async function requireEditableMeal(
@@ -16,6 +22,17 @@ export async function requireEditableMeal(
   id: number | string,
 ) {
   const user = requireUser(locals)
-  await assertCanEdit(Number(id), user.id)
+  if (!(await findEditableMeal(Number(id), user.id)))
+    error(404, 'Meal not found')
+  return { user }
+}
+
+export async function requireVisibleMeal(
+  locals: App.Locals,
+  id: number | string,
+) {
+  const user = requireUser(locals)
+  if (!(await findAllowedMeal(Number(id), user.id)))
+    error(404, 'Meal not found')
   return { user }
 }

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { setSlotRepeat } from '$lib/server/services/plans'
+import { setSlotRepeat } from '$lib/server/repositories/plans'
 import { MEAL_TYPES } from '$lib/constants'
 import type { RequestHandler } from './$types'
 

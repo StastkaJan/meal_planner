@@ -27,37 +27,10 @@ function makeTx(responses: unknown[]) {
 const mockDb = vi.hoisted(() => ({ transaction: vi.fn() }))
 vi.mock('$lib/db', () => ({ db: mockDb }))
 
-const {
-  pickMealFields,
-  canAccessMeal,
-  findRecipeNode,
-  isoDurationToMinutes,
-  parseRecipeJsonLd,
-  createMeal,
-  updateMeal,
-} = await import('./meals')
-
-describe('canAccessMeal', () => {
-  it('lets anyone access a global meal', () => {
-    expect(canAccessMeal({ userId: null, archivedAt: null }, 1)).toBe(true)
-    expect(canAccessMeal({ userId: null, archivedAt: null }, undefined)).toBe(
-      true,
-    )
-  })
-  it('lets only the owner access a personal meal', () => {
-    expect(canAccessMeal({ userId: 1, archivedAt: null }, 1)).toBe(true)
-    expect(canAccessMeal({ userId: 1, archivedAt: null }, 2)).toBe(false)
-    expect(canAccessMeal({ userId: 1, archivedAt: null }, undefined)).toBe(
-      false,
-    )
-  })
-  it('rejects archived meals', () => {
-    expect(canAccessMeal({ userId: null, archivedAt: new Date() }, 1)).toBe(
-      false,
-    )
-    expect(canAccessMeal({ userId: 1, archivedAt: new Date() }, 1)).toBe(false)
-  })
-})
+const { createMeal, updateMeal } = await import('./repositories/meals')
+const { pickMealFields } = await import('./services/meals')
+const { findRecipeNode, parseRecipeJsonLd } =
+  await import('./services/recipe-import')
 
 describe('pickMealFields', () => {
   it('keeps only writable columns', () => {
@@ -91,18 +64,6 @@ describe('pickMealFields', () => {
       calories: null,
       timeMinutes: null,
     })
-  })
-})
-
-describe('isoDurationToMinutes', () => {
-  it('parses hours and minutes', () => {
-    expect(isoDurationToMinutes('PT1H30M')).toBe(90)
-    expect(isoDurationToMinutes('PT20M')).toBe(20)
-    expect(isoDurationToMinutes('PT2H')).toBe(120)
-  })
-  it('returns undefined for junk', () => {
-    expect(isoDurationToMinutes('banana')).toBeUndefined()
-    expect(isoDurationToMinutes(undefined)).toBeUndefined()
   })
 })
 

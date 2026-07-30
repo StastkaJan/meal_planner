@@ -1,12 +1,12 @@
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/plans'
+import { validDateStr } from '$lib/server/date'
 import {
   deletePlan,
   getPlanDetail,
   updatePlan,
-} from '$lib/server/services/plans'
+} from '$lib/server/repositories/plans'
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const plan = await requireOwnedPlan(locals, params.id)

@@ -1,22 +1,39 @@
-import {
-  archiveMeal,
-  favoriteMealIds,
-  findAllowedMeal,
-  findMeal,
-  getMealIngredients,
-  listMeals,
-  setMealFavorite,
-} from '../repositories/meals'
-import { createMeal, pickMealFields, updateMeal } from '../meals'
+import { createMeal, updateMeal } from '../repositories/meals'
 
-export {
-  archiveMeal,
-  favoriteMealIds,
-  findAllowedMeal,
-  findMeal,
-  getMealIngredients,
-  listMeals,
-  setMealFavorite,
+const WRITABLE = [
+  'name',
+  'calories',
+  'proteinG',
+  'carbsG',
+  'fatG',
+  'tags',
+  'allowedSlots',
+  'imageUrl',
+  'description',
+  'ingredients',
+  'instructions',
+  'timeMinutes',
+  'difficulty',
+  'servings',
+] as const
+
+const NULLABLE_NUMBERS = new Set([
+  'calories',
+  'proteinG',
+  'carbsG',
+  'fatG',
+  'timeMinutes',
+  'servings',
+])
+
+export function pickMealFields(body: Record<string, unknown>) {
+  const values: Record<string, unknown> = {}
+  for (const field of WRITABLE) {
+    if (body[field] !== undefined)
+      values[field] =
+        body[field] === '' && NULLABLE_NUMBERS.has(field) ? null : body[field]
+  }
+  return values
 }
 
 export async function createUserMeal(

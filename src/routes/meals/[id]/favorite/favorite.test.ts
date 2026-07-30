@@ -39,10 +39,10 @@ describe('PUT /meals/:id/favorite', () => {
     })
   })
 
-  it("rejects another user's personal meal with 403", async () => {
-    mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
+  it("hides another user's personal meal with 404", async () => {
+    mockDb.limit.mockResolvedValueOnce([])
     await expect(PUT(makeEvent({ favorite: true }))).rejects.toMatchObject({
-      status: 403,
+      status: 404,
     })
   })
 
