@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/date'
+import { validDateStr } from '$lib/server/services/date'
 import {
   deletePlan,
   getPlanDetail,

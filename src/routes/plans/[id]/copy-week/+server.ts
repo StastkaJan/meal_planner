@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/date'
+import { validDateStr } from '$lib/server/services/date'
 import { copyWeek } from '$lib/server/repositories/plans'
 import type { RequestHandler } from './$types'
 

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/date'
+import { validDateStr } from '$lib/server/services/date'
 import { findAllowedMeal } from '$lib/server/repositories/meals'
 import { upsertSlot } from '$lib/server/repositories/plans'
 import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'

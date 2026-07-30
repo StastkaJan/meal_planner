@@ -1,5 +1,5 @@
 import { requireOwnedPlan } from '$lib/server/guards'
-import { validDateStr } from '$lib/server/date'
+import { validDateStr } from '$lib/server/services/date'
 import { getShoppingList } from '$lib/server/repositories/plans'
 import type { PageServerLoad } from './$types'
 

@@ -6,7 +6,7 @@ import {
   rankByMacros,
   fillDaySlots,
   sumNutrition,
-} from './domain/plan-generation'
+} from '../domain/plan-generation'
 
 const meals = [
   { id: 1, calories: 100, tags: ['Italian', 'no_gluten'], allowedSlots: [] },

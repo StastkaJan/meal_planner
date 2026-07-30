@@ -27,10 +27,9 @@ function makeTx(responses: unknown[]) {
 const mockDb = vi.hoisted(() => ({ transaction: vi.fn() }))
 vi.mock('$lib/db', () => ({ db: mockDb }))
 
-const { createMeal, updateMeal } = await import('./repositories/meals')
-const { pickMealFields } = await import('./services/meals')
-const { findRecipeNode, parseRecipeJsonLd } =
-  await import('./services/recipe-import')
+const { createMeal, updateMeal } = await import('../repositories/meals')
+const { pickMealFields } = await import('./meals')
+const { findRecipeNode, parseRecipeJsonLd } = await import('./recipe-import')
 
 describe('pickMealFields', () => {
   it('keeps only writable columns', () => {

@@ -1,4 +1,4 @@
-import { validDateStr } from '$lib/server/date'
+import { validDateStr } from '$lib/server/services/date'
 import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
 import { listMeals } from '$lib/server/repositories/meals'
 import { getSettings } from '$lib/server/repositories/accounts'
