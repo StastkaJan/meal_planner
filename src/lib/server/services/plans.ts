@@ -1,4 +1,4 @@
-import { mondayOf } from '$lib/date'
+import { mondayOf } from '$lib/utils/date-time'
 import { createPlan } from '../repositories/plans'
 import { getSettings } from '../repositories/accounts'
 

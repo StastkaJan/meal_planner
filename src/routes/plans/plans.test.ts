@@ -11,7 +11,7 @@ const mockDb = vi.hoisted(() => ({
   returning: vi.fn(),
 }))
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 
 import { POST } from './+server'
 

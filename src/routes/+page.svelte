@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
-  import { addDays } from '$lib/date'
+  import { addDays } from '$lib/utils/date-time'
   import * as planApi from '$lib/api/plans'
   import WeekTable from './_components/WeekTable.svelte'
   import PlanSettings from './_components/PlanSettings.svelte'

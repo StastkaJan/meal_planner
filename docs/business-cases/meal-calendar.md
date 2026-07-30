@@ -104,7 +104,7 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`, `bonusIte
 
 - **Soft macro fit** — auto-compose enforces a hard calorie ceiling but treats
   protein/carb/fat as a ranking preference, not a constraint
-  (`src/lib/server/services/plan-generation.ts` / `domain/plan-generation.ts`). A library thin on
+  (`src/lib/server/services/plan-generation.ts` / `src/lib/domain/plan-generation.ts`). A library thin on
   a given macro can still miss the target.
 
 ## Future opportunities

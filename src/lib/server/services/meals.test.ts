@@ -25,7 +25,7 @@ function makeTx(responses: unknown[]) {
 }
 
 const mockDb = vi.hoisted(() => ({ transaction: vi.fn() }))
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 
 const { createMeal, updateMeal } = await import('../repositories/meals')
 const { pickMealFields } = await import('./meals')

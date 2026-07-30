@@ -1,6 +1,6 @@
 <script lang="ts">
   import PreferenceSettings from './_components/PreferenceSettings.svelte'
-  import { NUTRITION_TARGETS } from '$lib/constants'
+  import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import {
     changePassword as updatePassword,
     updateProfile,

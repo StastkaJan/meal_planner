@@ -3,7 +3,8 @@ import { requireOwnedPlan } from '$lib/server/guards'
 import { validDateStr } from '$lib/server/services/date'
 import { findAllowedMeal } from '$lib/server/repositories/meals'
 import { upsertSlot } from '$lib/server/repositories/plans'
-import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'
+import { MEAL_TYPES } from '$lib/constants'
+import { mealFitsSlot } from '$lib/domain/meals'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {

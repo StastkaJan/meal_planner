@@ -1,4 +1,4 @@
-import type { Meal } from '$lib/schema'
+import type { Meal } from '$lib/database/schema'
 import { jsonBody, request, requestJson } from './http'
 
 export const createMeal = (body: object) =>

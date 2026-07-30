@@ -1,13 +1,14 @@
-import { DAYS, MEAL_TYPES, resolveTargets } from '$lib/constants'
-import { addDays, groupWindow, mondayOf } from '$lib/date'
-import type { Plan } from '$lib/schema'
+import { MEAL_TYPES } from '$lib/constants'
+import { resolveTargets } from '$lib/domain/nutrition'
+import { addDays, groupWindow, mondayOf } from '$lib/utils/date-time'
+import type { Plan } from '$lib/database/schema'
 import type { NutritionTargets } from '$lib/types'
 import {
   fillDaySlots,
   filterByPrefs,
   sumNutrition,
-} from '../domain/plan-generation'
-import type { CandidateMeal } from '../domain/plan-generation'
+} from '$lib/domain/plan-generation'
+import type { CandidateMeal } from '$lib/domain/plan-generation'
 import { getSettings } from '../repositories/accounts'
 import { favoriteMealIds, listCandidateMeals } from '../repositories/meals'
 import {
@@ -98,7 +99,7 @@ async function autocomposeSlots(
     mealId: number
   }[] = []
 
-  for (const day of DAYS) {
+  for (let day = 0; day < 7; day++) {
     const date = addDays(week, day)
     const consumed = sumNutrition([
       ...existingSlots.filter((slot) => slot.date === date),

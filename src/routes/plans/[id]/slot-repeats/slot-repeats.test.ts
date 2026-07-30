@@ -10,7 +10,7 @@ const mockDb = vi.hoisted(() => ({
 
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
 }))

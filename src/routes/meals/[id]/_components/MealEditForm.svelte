@@ -8,7 +8,7 @@
     MEAL_TYPES,
     UNIT_OPTIONS,
   } from '$lib/constants'
-  import type { Meal } from '$lib/schema'
+  import type { Meal } from '$lib/database/schema'
   import type { IngredientInput } from '$lib/types'
 
   let {

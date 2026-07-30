@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Meal } from '$lib/schema'
-  import { mealFitsSlot } from '$lib/constants'
+  import type { Meal } from '$lib/database/schema'
+  import { mealFitsSlot } from '$lib/domain/meals'
 
   let {
     meals,

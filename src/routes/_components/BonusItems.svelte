@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BonusItem } from '$lib/schema'
+  import type { BonusItem } from '$lib/database/schema'
 
   type BonusFields = {
     name: string

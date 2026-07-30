@@ -8,7 +8,7 @@ const mockDb = vi.hoisted(() => ({
   limit: vi.fn(),
 }))
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   getPlanDetail: vi.fn(async (plan: any, week: string) => ({

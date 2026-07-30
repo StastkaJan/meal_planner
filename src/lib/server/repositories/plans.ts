@@ -1,5 +1,5 @@
 import { and, eq, gte, lt, sql, inArray } from 'drizzle-orm'
-import { db } from '$lib/db'
+import { db } from '$lib/database'
 import {
   plans,
   weekSlots,
@@ -8,10 +8,10 @@ import {
   mealIngredients,
   ingredients,
   slotRepeats,
-} from '$lib/schema'
-import type { Plan } from '$lib/schema'
+} from '$lib/database/schema'
+import type { Plan } from '$lib/database/schema'
 import type { SlotWithMeal, PlanDetail } from '$lib/types'
-import { addDays, groupWindow } from '$lib/date'
+import { addDays, groupWindow } from '$lib/utils/date-time'
 
 type OwnedPlan = Plan & { userId: number }
 

@@ -1,6 +1,6 @@
 import { and, eq, gt } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { sessions, users } from '$lib/schema'
+import { db } from '$lib/database'
+import { sessions, users } from '$lib/database/schema'
 
 export async function findSessionUser(token: string) {
   const [user] = await db

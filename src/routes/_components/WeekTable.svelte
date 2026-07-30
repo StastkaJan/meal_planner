@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
   import { MEAL_TYPES } from '$lib/constants'
-  import type { Meal } from '$lib/schema'
+  import type { Meal } from '$lib/database/schema'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'

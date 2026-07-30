@@ -11,7 +11,7 @@ const mockDb = vi.hoisted(() => ({
   delete: vi.fn().mockReturnThis(),
 }))
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 
 const updateMeal = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({

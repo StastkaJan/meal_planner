@@ -22,13 +22,18 @@ src/
   lib/
     api/                 # browser-side REST clients
     components/ui/       # reusable native-control primitives
+    database/
+      schema/            # one Drizzle table per file
+      index.ts           # database client
+      seed.ts
+    domain/              # pure shared business logic
     server/
-      domain/            # pure business logic
       repositories/      # Drizzle persistence by aggregate
       services/          # application operations
       guards.ts          # request auth/ownership guards
+    utils/               # shared technical helpers
   routes/                # pages, API endpoints, and route-local _components/
-drizzle/        # migrations (0000_*, 0001_*)
+drizzle/        # migrations
 tests/          # Playwright E2E
 docker-compose.yml
 ```

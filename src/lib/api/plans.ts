@@ -1,4 +1,4 @@
-import type { Plan } from '$lib/schema'
+import type { Plan } from '$lib/database/schema'
 import type { PlanDetail } from '$lib/types'
 import { jsonBody, request, requestJson } from './http'
 

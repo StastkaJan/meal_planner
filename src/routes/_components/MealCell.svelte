@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Meal } from '$lib/schema'
+  import type { Meal } from '$lib/database/schema'
   import type { SlotWithMeal } from '$lib/types'
   import Dialog from '$lib/components/ui/Dialog.svelte'
   import MealPicker from './MealPicker.svelte'

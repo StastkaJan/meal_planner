@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Meal } from '$lib/schema'
+  import type { Meal } from '$lib/database/schema'
   import { DIFF_LABEL } from '$lib/constants'
   import Button from '$lib/components/ui/Button.svelte'
   import Input from '$lib/components/ui/Input.svelte'

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { NUTRITION_TARGETS } from '$lib/constants'
+  import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import type { NutritionTargets } from '$lib/types'
 
   let {

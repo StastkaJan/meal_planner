@@ -1,4 +1,4 @@
-import { mealFitsSlot } from '$lib/constants'
+import { mealFitsSlot } from './meals'
 import type { NutritionTargets } from '$lib/types'
 
 export type CandidateMeal = {

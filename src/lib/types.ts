@@ -1,5 +1,11 @@
-import type { Meal, Plan, WeekSlot, BonusItem, SlotRepeat } from './schema'
-import { MEAL_TYPES, NUTRITION_TARGETS } from './constants'
+import type {
+  Meal,
+  Plan,
+  WeekSlot,
+  BonusItem,
+  SlotRepeat,
+} from './database/schema'
+import { MEAL_TYPES } from './constants'
 
 export type SlotWithMeal = WeekSlot & {
   mealName: string | null
@@ -25,7 +31,12 @@ export type IngredientInput = {
 
 export type MealType = (typeof MEAL_TYPES)[number]
 
-export type NutritionTargets = typeof NUTRITION_TARGETS
+export type NutritionTargets = {
+  calories: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+}
 
 export type ImportedRecipe = {
   name?: string

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Plan, SlotRepeat } from '$lib/schema'
+  import type { Plan, SlotRepeat } from '$lib/database/schema'
   import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
   import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
 

@@ -1,6 +1,11 @@
 import { and, or, isNull, eq, inArray } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { meals, mealFavorites, ingredients, mealIngredients } from '$lib/schema'
+import { db } from '$lib/database'
+import {
+  meals,
+  mealFavorites,
+  ingredients,
+  mealIngredients,
+} from '$lib/database/schema'
 import type { IngredientInput } from '$lib/types'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]

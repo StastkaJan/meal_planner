@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { addDays, mondayOf, groupWindow, isDateString } from './date'
+import {
+  addDays,
+  groupWindow,
+  isoDurationToMinutes,
+  isDateString,
+  mondayOf,
+} from './date-time'
 
 describe('isDateString', () => {
   it('accepts real ISO dates and rejects malformed or impossible dates', () => {
@@ -82,5 +88,17 @@ describe('groupWindow', () => {
       '2024-01-06',
       '2024-01-07',
     ])
+  })
+})
+
+describe('isoDurationToMinutes', () => {
+  it('parses days, hours, and minutes', () => {
+    expect(isoDurationToMinutes('P1DT1H30M')).toBe(1530)
+    expect(isoDurationToMinutes('PT20M')).toBe(20)
+  })
+
+  it('rejects invalid durations', () => {
+    expect(isoDurationToMinutes('banana')).toBeUndefined()
+    expect(isoDurationToMinutes(undefined)).toBeUndefined()
   })
 })
