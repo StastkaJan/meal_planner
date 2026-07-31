@@ -13,16 +13,17 @@
 <style lang="scss">
   .ui-textarea {
     width: 100%;
-    min-height: 6rem;
-    padding: 0.55rem 0.65rem;
+    min-height: 7rem;
+    padding: 0.7rem 0.75rem;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
-    background: $color-surface-2;
+    background: $color-surface;
     resize: vertical;
 
     &:focus {
       border-color: $color-accent;
-      outline: none;
+      box-shadow: 0 0 0 3px rgb(216 95 54 / 12%);
+      outline: 0;
     }
   }
 </style>

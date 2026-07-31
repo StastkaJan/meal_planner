@@ -22,14 +22,16 @@
 <style lang="scss">
   .ui-select {
     width: 100%;
-    padding: 0.55rem 0.65rem;
+    min-height: 42px;
+    padding: 0.65rem 2rem 0.65rem 0.75rem;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
-    background: $color-surface-2;
+    background: $color-surface;
 
     &:focus {
       border-color: $color-accent;
-      outline: none;
+      box-shadow: 0 0 0 3px rgb(216 95 54 / 12%);
+      outline: 0;
     }
   }
 </style>

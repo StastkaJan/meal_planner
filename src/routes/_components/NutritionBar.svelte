@@ -57,8 +57,8 @@
   .bar-col {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding: 4px;
+    gap: 5px;
+    padding: 2px;
   }
   .bar-row {
     display: flex;
@@ -67,8 +67,8 @@
   }
   .track {
     flex: 1;
-    height: 5px;
-    background: $color-surface-2;
+    height: 4px;
+    background: #e7e1d6;
     border-radius: 3px;
     overflow: hidden;
   }

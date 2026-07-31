@@ -19,7 +19,9 @@
 </script>
 
 <div class="auth-box">
+  <div class="auth-mark">M</div>
   <h1>{title}</h1>
+  <p class="intro">Plan better meals, one week at a time.</p>
   <form method="POST">
     {#if error}<p class="error">{error}</p>{/if}
     <Field label="Email" for="email">
@@ -41,17 +43,33 @@
 
 <style lang="scss">
   .auth-box {
-    max-width: 360px;
-    margin: 80px auto;
-    padding: 32px;
+    max-width: 420px;
+    margin: 7vh auto;
+    padding: 38px;
     border: 1px solid $color-border;
     border-radius: $radius;
     background: $color-surface;
+    box-shadow: 0 24px 70px rgb(41 39 33 / 10%);
+  }
+
+  .auth-mark {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 22px;
+    place-items: center;
+    border-radius: 15px 15px 15px 5px;
+    background: $color-accent;
+    color: white;
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
   }
 
   h1 {
-    margin: 0 0 24px;
-    font-size: 1.25rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
   }
 
   form {
@@ -74,7 +92,21 @@
     text-align: center;
   }
 
+  .intro {
+    margin: 5px 0 26px;
+    color: $color-text-muted;
+    text-align: left;
+  }
+
   a {
     color: $color-accent;
+    font-weight: 600;
+  }
+
+  @media (max-width: 480px) {
+    .auth-box {
+      margin: 3vh auto;
+      padding: 26px;
+    }
   }
 </style>

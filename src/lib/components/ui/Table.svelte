@@ -42,16 +42,18 @@
 <style lang="scss">
   .table-scroll {
     overflow-x: auto;
+    background: $color-surface;
   }
 
   .ui-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
   }
 
   :global(.ui-table th),
   :global(.ui-table td) {
-    padding: 0.65rem;
+    padding: 0.85rem 1rem;
     border-bottom: 1px solid $color-border;
     text-align: left;
   }
@@ -60,6 +62,8 @@
     color: $color-text-muted;
     font-size: 0.8rem;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #faf8f2;
   }
 
   :global(.ui-table .empty) {

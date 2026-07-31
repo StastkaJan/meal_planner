@@ -13,14 +13,20 @@
 <style lang="scss">
   .ui-input {
     width: 100%;
-    padding: 0.55rem 0.65rem;
+    min-height: 42px;
+    padding: 0.65rem 0.75rem;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
-    background: $color-surface-2;
+    background: $color-surface;
+    box-shadow: inset 0 1px 1px rgb(41 39 33 / 3%);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
 
     &:focus {
       border-color: $color-accent;
-      outline: none;
+      box-shadow: 0 0 0 3px rgb(216 95 54 / 12%);
+      outline: 0;
     }
   }
 </style>

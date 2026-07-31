@@ -45,12 +45,22 @@
   }
 
   label {
-    padding: 0.3rem 0.6rem;
+    position: relative;
+    padding: 0.42rem 0.72rem;
     border: 1px solid $color-border;
     border-radius: 999px;
     color: $color-text-muted;
     cursor: pointer;
     font-size: 0.85rem;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      color 0.15s;
+
+    &:hover {
+      border-color: $color-accent;
+      color: $color-text;
+    }
   }
 
   label.active {
@@ -59,8 +69,15 @@
     color: $color-text;
   }
 
+  label:focus-within {
+    outline: 3px solid rgb(216 95 54 / 22%);
+    outline-offset: 2px;
+  }
+
   .choices :global(input) {
     position: absolute;
+    inset: 0;
     opacity: 0;
+    pointer-events: none;
   }
 </style>

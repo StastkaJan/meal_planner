@@ -200,6 +200,8 @@
     border: 1px solid $color-border;
     border-radius: $radius;
     overflow: hidden;
+    background: $color-surface;
+    box-shadow: 0 16px 40px rgb(41 39 33 / 7%);
   }
 
   .cal-scroll {
@@ -214,16 +216,16 @@
   }
 
   .corner {
-    width: 90px;
+    width: 108px;
   }
 
   .week-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 8px;
+    padding: 12px 14px;
     border-bottom: 1px solid $color-border;
-    background: $color-surface;
+    background: #faf8f2;
   }
 
   .nav-btn {
@@ -231,10 +233,14 @@
     border: none;
     color: $color-text-muted;
     cursor: pointer;
-    font-size: 1rem;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    font-size: 1.4rem;
     line-height: 1;
-    padding: 2px 4px;
-    border-radius: $radius-sm;
+    padding: 0;
+    border-radius: 50%;
     &:hover {
       color: $color-text;
       background: $color-surface-2;
@@ -242,9 +248,10 @@
   }
 
   .month-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: $color-text-muted;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: $color-text;
     text-align: center;
     text-transform: none;
     letter-spacing: 0;
@@ -252,18 +259,18 @@
   }
 
   thead {
-    background: $color-surface;
-    border-bottom: 2px solid $color-border;
+    background: #faf8f2;
+    border-bottom: 1px solid $color-border;
   }
 
   .day-head {
-    padding: 8px 6px;
+    padding: 12px 6px;
     text-align: center;
     border-left: 1px solid $color-border;
 
     .day-name {
       display: block;
-      font-size: 0.68rem;
+      font-size: 0.64rem;
       font-weight: 700;
       color: $color-text-muted;
       text-transform: uppercase;
@@ -272,8 +279,8 @@
 
     .day-num {
       display: block;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      font-weight: 650;
       color: $color-text;
       line-height: 1.4;
     }
@@ -283,8 +290,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 30px;
+        height: 30px;
         background: $color-accent;
         color: #fff;
         border-radius: 50%;
@@ -294,14 +301,17 @@
   }
 
   .row-label {
-    padding: 0 10px;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    padding: 0 12px;
     font-size: 0.72rem;
     font-weight: 600;
     color: $color-text-muted;
     text-transform: capitalize;
     white-space: nowrap;
     border-top: 1px solid $color-border;
-    background: $color-surface;
+    background: #faf8f2;
     vertical-align: middle;
   }
 
@@ -318,16 +328,16 @@
   }
 
   .nutrition-row {
-    background: $color-surface;
+    background: #faf8f2;
   }
 
   .nutrition-cell {
-    padding: 6px 8px;
+    padding: 10px;
     vertical-align: middle;
   }
 
   .extras-cell {
-    padding: 6px 8px;
+    padding: 8px;
   }
 
   .extras-inner {
@@ -338,8 +348,8 @@
 
   .btn-recalc {
     align-self: flex-start;
-    padding: 2px 6px;
-    background: $color-surface-2;
+    padding: 4px 7px;
+    background: transparent;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
     color: $color-text-muted;
@@ -353,21 +363,24 @@
 
   .foot-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
-    gap: 6px;
-    padding: 8px;
+    gap: 10px;
+    padding: 12px 14px;
     border-top: 1px solid $color-border;
+    background: #faf8f2;
   }
 
   .btn-ghost {
-    padding: 4px 12px;
+    min-height: 36px;
+    padding: 7px 12px;
     background: $color-surface;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
     color: $color-text-muted;
     cursor: pointer;
     font-size: 0.78rem;
-    font-weight: 500;
+    font-weight: 600;
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
@@ -384,17 +397,36 @@
   }
 
   .btn-autocompose {
-    padding: 4px 12px;
+    min-height: 36px;
+    padding: 7px 13px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
     color: #fff;
     cursor: pointer;
     font-size: 0.78rem;
-    font-weight: 500;
-    opacity: 0.85;
+    font-weight: 650;
+    box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
     &:hover {
-      opacity: 1;
+      transform: translateY(-1px);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .cal-wrap {
+      margin-inline: -16px;
+      border-right: 0;
+      border-left: 0;
+      border-radius: 0;
+    }
+    .cal {
+      min-width: 780px;
+    }
+    .foot-actions {
+      position: sticky;
+      left: 0;
+      justify-content: flex-start;
+      overflow-x: auto;
     }
   }
 </style>

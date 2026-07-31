@@ -74,21 +74,23 @@
   .picker-header {
     display: flex;
     gap: 8px;
-    padding: 12px;
+    padding: 16px;
     border-bottom: 1px solid $color-border;
   }
   .search {
     flex: 1;
-    background: $color-surface-2;
+    min-height: 44px;
+    background: $color-surface;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
-    padding: 6px 10px;
+    padding: 9px 11px;
     color: $color-text;
     font-size: 0.9rem;
 
     &:focus {
-      outline: 2px solid $color-accent;
-      border-color: transparent;
+      border-color: $color-accent;
+      box-shadow: 0 0 0 3px rgb(216 95 54 / 12%);
+      outline: 0;
     }
   }
   .close {
@@ -105,18 +107,19 @@
   .list {
     list-style: none;
     margin: 0;
-    padding: 8px;
+    padding: 10px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
   .item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    padding: 8px 10px;
+    min-height: 46px;
+    padding: 10px 12px;
     background: none;
     border: 1px solid transparent;
     border-radius: $radius-sm;
@@ -127,7 +130,7 @@
     transition: background 0.1s;
 
     &:hover {
-      background: $color-surface-2;
+      background: #f5f1e9;
     }
     &.active {
       border-color: $color-accent;

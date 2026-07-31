@@ -76,7 +76,11 @@
 
 <div class="page">
   <div class="top-bar">
-    <h2>Meals</h2>
+    <div>
+      <p class="eyebrow">Recipe library</p>
+      <h1>Meals</h1>
+      <p class="subtitle">Keep your favourites ready for the week ahead.</p>
+    </div>
     <div class="top-actions">
       <Button
         variant="secondary"
@@ -134,7 +138,7 @@
 <style lang="scss">
   .page {
     display: grid;
-    gap: 1rem;
+    gap: 1.4rem;
   }
 
   .top-bar,
@@ -147,10 +151,30 @@
 
   .top-bar {
     justify-content: space-between;
+    align-items: flex-end;
   }
 
-  h2 {
-    font-size: 1.2rem;
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+
+  .subtitle {
+    margin-top: 8px;
+    color: $color-text-muted;
+    font-size: 0.95rem;
   }
 
   .top-actions :global(.active) {
@@ -159,10 +183,11 @@
   }
 
   .import-bar {
-    padding: 0.65rem;
+    padding: 0.8rem;
     border: 1px solid $color-border;
     border-radius: $radius;
     background: $color-surface;
+    box-shadow: 0 8px 24px rgb(41 39 33 / 4%);
   }
 
   .import-bar :global(.ui-input) {
@@ -172,5 +197,27 @@
   .import-error {
     color: $color-danger;
     font-size: 0.8rem;
+  }
+
+  @media (max-width: 720px) {
+    .top-bar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .top-actions {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .top-actions :global(.ui-button) {
+      flex: 0 0 auto;
+    }
+    .import-bar {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+    .import-bar :global(.ui-input) {
+      flex-basis: 100%;
+    }
   }
 </style>

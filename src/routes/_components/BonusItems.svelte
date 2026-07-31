@@ -123,9 +123,9 @@
     gap: 4px;
     font-size: 0.7rem;
     color: $color-text-muted;
-    background: $color-surface-2;
+    background: #f5f1e9;
     border-radius: $radius-sm;
-    padding: 2px 4px;
+    padding: 4px 6px;
   }
   .name {
     flex: 1;
@@ -165,30 +165,34 @@
     border: 1px solid $color-border;
     border-radius: $radius;
     padding: 0;
-    max-width: 320px;
+    max-width: 380px;
     width: 90vw;
     color: $color-text;
 
     &::backdrop {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgb(41 39 33 / 52%);
+      backdrop-filter: blur(3px);
     }
   }
   .bonus-form {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 14px;
+    gap: 12px;
+    padding: 20px;
 
     h4 {
       margin: 0;
-      font-size: 0.85rem;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.2rem;
+      font-weight: 500;
     }
 
     input {
-      background: $color-surface-2;
+      min-height: 42px;
+      background: $color-surface;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
-      padding: 6px 8px;
+      padding: 9px 10px;
       color: $color-text;
       font-size: 0.85rem;
       width: 100%;

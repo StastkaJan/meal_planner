@@ -252,11 +252,12 @@
   .edit-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 16px;
+    gap: 18px;
+    padding: 26px;
     background: $color-surface;
     border: 1px solid $color-border;
-    border-radius: $radius-sm;
+    border-radius: $radius;
+    box-shadow: 0 16px 40px rgb(41 39 33 / 6%);
   }
 
   .field-row {
@@ -277,10 +278,11 @@
     input,
     select {
       width: 100%;
-      background: $color-surface-2;
+      min-height: 42px;
+      background: $color-surface;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
-      padding: 6px 8px;
+      padding: 9px 10px;
       color: $color-text;
       font-size: 0.875rem;
       &:focus {
@@ -365,10 +367,11 @@
 
     input,
     select {
-      background: $color-surface-2;
+      background: $color-surface;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
-      padding: 6px 8px;
+      min-height: 40px;
+      padding: 8px 9px;
       color: $color-text;
       font-size: 0.875rem;
       width: 100%;
@@ -385,7 +388,8 @@
   }
 
   .btn {
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
@@ -405,6 +409,23 @@
       background: $color-surface;
       color: $color-text-muted;
       border: 1px solid $color-border;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .edit-form {
+      padding: 20px;
+    }
+    .field-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 440px) {
+    .field-row {
+      grid-template-columns: 1fr;
+    }
+    .ingredient-row {
+      grid-template-columns: 1fr 70px 70px auto;
     }
   }
 </style>

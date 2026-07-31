@@ -146,6 +146,13 @@
 </script>
 
 <div class="page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Weekly planner</p>
+      <h1>{plan?.name ?? 'Meal plans'}</h1>
+      <p class="subtitle">Plan the week, balance nutrition, shop once.</p>
+    </div>
+  </div>
   <div class="plan-bar">
     <div class="plan-tabs">
       {#each data.plans as p (p.id)}
@@ -222,26 +229,52 @@
   .page {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 18px;
+  }
+  .page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+  .subtitle {
+    margin-top: 8px;
+    color: $color-text-muted;
+    font-size: 0.95rem;
   }
   .plan-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    padding-bottom: 2px;
   }
   .plan-tabs {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
   }
   .tab {
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-surface;
     border: 1px solid $color-border;
-    border-radius: $radius-sm;
+    border-radius: 999px;
     cursor: pointer;
     font-size: 0.85rem;
     color: $color-text-muted;
@@ -252,21 +285,24 @@
       border-color: $color-accent-dim;
     }
     &.active {
-      background: $color-accent-dim;
+      background: $color-accent;
       border-color: $color-accent;
-      color: $color-text;
+      color: white;
+      box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
     }
   }
   .plan-actions {
     display: flex;
     gap: 6px;
     align-items: center;
+    flex-wrap: wrap;
   }
   .new-name {
+    min-height: 38px;
     background: $color-surface;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
-    padding: 5px 10px;
+    padding: 7px 11px;
     color: $color-text;
     width: 160px;
     &:focus {
@@ -278,17 +314,21 @@
     display: inline-flex;
     align-items: center;
     text-decoration: none;
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
     color: #fff;
     cursor: pointer;
     font-size: 0.85rem;
-    font-weight: 500;
-    transition: opacity 0.15s;
+    font-weight: 650;
+    transition:
+      transform 0.15s,
+      box-shadow 0.15s;
     &:hover {
-      opacity: 0.85;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgb(41 39 33 / 12%);
     }
     &.ghost {
       background: $color-surface;
@@ -296,13 +336,38 @@
       border: 1px solid $color-border;
     }
     &.danger {
-      background: $color-danger;
+      border: 1px solid rgb(184 59 50 / 18%);
+      background: #f9e4e1;
+      color: $color-danger;
     }
   }
   .empty-state {
     color: $color-text-muted;
     font-size: 0.9rem;
-    padding: 40px 0;
+    padding: 72px 24px;
+    border: 1px dashed $color-border;
+    border-radius: $radius;
+    background: rgb(255 253 249 / 55%);
     text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    .page {
+      gap: 14px;
+    }
+    .plan-bar {
+      align-items: flex-start;
+    }
+    .plan-tabs,
+    .plan-actions {
+      width: 100%;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 2px;
+    }
+    .tab,
+    .btn {
+      flex: 0 0 auto;
+    }
   }
 </style>

@@ -109,13 +109,13 @@
     background: $color-surface;
     border: 1px solid $color-border;
     border-radius: $radius;
-    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgb(41 39 33 / 4%);
   }
   summary {
-    padding: 10px 14px;
+    padding: 14px 18px;
     cursor: pointer;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 650;
     color: $color-text-muted;
     user-select: none;
     &:hover {
@@ -123,13 +123,13 @@
     }
   }
   .body {
-    padding: 0 14px 14px;
+    padding: 2px 18px 18px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
   }
   h4 {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: $color-text-muted;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -139,7 +139,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 4px 0;
+    padding: 5px 0;
   }
   .mt-label {
     width: 100px;
@@ -174,6 +174,21 @@
     }
     &:hover {
       color: $color-accent;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .repeat-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .days {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .day {
+      width: auto;
     }
   }
 </style>

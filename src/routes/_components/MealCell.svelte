@@ -68,37 +68,38 @@
     align-items: flex-start;
     gap: 2px;
     width: 100%;
-    min-height: 56px;
-    padding: 6px 8px;
+    min-height: 72px;
+    padding: 10px;
     background: transparent;
     border: none;
-    border-top: 3px solid transparent; // meal-type color accent
+    border-left: 3px solid transparent;
     cursor: pointer;
     text-align: left;
     transition: background 0.15s;
 
     &:hover {
-      background: $color-surface-2;
+      background: #faf8f2;
     }
 
     &.breakfast {
-      border-top-color: $color-breakfast;
+      border-left-color: $color-breakfast;
     }
     &.morning_snack {
-      border-top-color: $color-morning_snack;
+      border-left-color: $color-morning_snack;
     }
     &.lunch {
-      border-top-color: $color-lunch;
+      border-left-color: $color-lunch;
     }
     &.afternoon_snack {
-      border-top-color: $color-afternoon_snack;
+      border-left-color: $color-afternoon_snack;
     }
     &.dinner {
-      border-top-color: $color-dinner;
+      border-left-color: $color-dinner;
     }
   }
   .name {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 600;
     color: $color-text;
     line-height: 1.3;
   }
@@ -109,7 +110,7 @@
   .empty {
     font-size: 0.8rem;
     color: $color-text-muted;
-    opacity: 0.4;
+    opacity: 0.45;
   }
   :global(.meal-dialog) {
     padding: 0;

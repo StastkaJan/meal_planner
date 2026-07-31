@@ -92,13 +92,15 @@
     overflow: hidden;
     border: 1px solid $color-border;
     border-radius: $radius;
+    background: $color-surface;
+    box-shadow: 0 16px 40px rgb(41 39 33 / 6%);
   }
 
   .create-form {
     display: grid;
     grid-template-columns: 1fr 10rem auto auto;
-    gap: 0.4rem;
-    padding: 0.4rem;
+    gap: 0.6rem;
+    padding: 0.8rem;
     border-bottom: 1px solid $color-border;
   }
 
@@ -107,6 +109,7 @@
 
     a {
       color: $color-text;
+      font-weight: 650;
       text-decoration: none;
 
       &:hover {
@@ -118,9 +121,10 @@
   .own-tag {
     margin-left: 8px;
     padding: 1px 7px;
-    border: 1px solid $color-accent-dim;
+    border: 0;
     border-radius: 999px;
-    color: $color-accent;
+    background: $color-accent-dim;
+    color: #994427;
     font-size: 0.65rem;
     text-transform: uppercase;
   }
@@ -134,5 +138,14 @@
   .actions :global(.active) {
     border-color: $color-accent;
     color: $color-accent;
+  }
+
+  @media (max-width: 640px) {
+    .create-form {
+      grid-template-columns: 1fr 1fr;
+    }
+    .create-form :global(.ui-input) {
+      grid-column: 1 / -1;
+    }
   }
 </style>

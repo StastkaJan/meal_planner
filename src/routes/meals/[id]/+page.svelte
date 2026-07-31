@@ -61,7 +61,10 @@
       {/if}
 
       <div class="header">
-        <h1>{meal.name}</h1>
+        <div class="title">
+          <p class="eyebrow">Recipe</p>
+          <h1>{meal.name}</h1>
+        </div>
         <div class="meta">
           {#if meal.timeMinutes}<span class="badge">{meal.timeMinutes} min</span
             >{/if}
@@ -138,7 +141,8 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 720px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .top-bar {
@@ -163,14 +167,15 @@
   .detail {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
   }
 
   .hero {
     width: 100%;
-    max-height: 360px;
+    max-height: 480px;
     object-fit: cover;
-    border-radius: $radius-sm;
+    border-radius: $radius;
+    box-shadow: 0 18px 48px rgb(41 39 33 / 10%);
   }
 
   .header {
@@ -179,15 +184,29 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
+  .title {
     flex: 1;
   }
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
   h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 8px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    margin-bottom: 12px;
   }
 
   .meta {
@@ -222,7 +241,11 @@
   .nutrition-block {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    background: $color-surface;
   }
 
   .servings-step {
@@ -251,7 +274,7 @@
     display: flex;
     gap: 16px;
     font-size: 0.85rem;
-    color: $color-text-muted;
+    color: $color-text;
     flex-wrap: wrap;
   }
 
@@ -274,12 +297,19 @@
 
   .description {
     color: $color-text-muted;
-    line-height: 1.6;
+    max-width: 700px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem;
+    line-height: 1.7;
   }
 
   section {
     display: flex;
     flex-direction: column;
+    padding: 22px;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    background: $color-surface;
   }
 
   ul {
@@ -298,7 +328,8 @@
   }
 
   .btn {
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
@@ -320,7 +351,21 @@
       border: 1px solid $color-border;
     }
     &.danger {
-      background: $color-danger;
+      border: 1px solid rgb(184 59 50 / 18%);
+      background: #f9e4e1;
+      color: $color-danger;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .header {
+      flex-direction: column;
+    }
+    .meta {
+      padding-top: 0;
+    }
+    section {
+      padding: 18px;
     }
   }
 </style>

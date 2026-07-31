@@ -20,14 +20,15 @@
 <style lang="scss">
   .ui-dialog {
     max-width: min(36rem, calc(100vw - 2rem));
-    padding: 1.25rem;
+    padding: 1.5rem;
     border: 1px solid $color-border;
     border-radius: $radius;
     background: $color-surface;
     color: $color-text;
 
     &::backdrop {
-      background: rgb(0 0 0 / 65%);
+      background: rgb(41 39 33 / 52%);
+      backdrop-filter: blur(3px);
     }
   }
 </style>
