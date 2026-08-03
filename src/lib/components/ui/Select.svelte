@@ -24,7 +24,7 @@
     width: 100%;
     min-height: 42px;
     padding: 0.65rem 2rem 0.65rem 0.75rem;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     background: $color-surface;
 

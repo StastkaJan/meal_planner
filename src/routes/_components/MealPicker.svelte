@@ -81,7 +81,7 @@
     flex: 1;
     min-height: 44px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     padding: 9px 11px;
     color: $color-text;

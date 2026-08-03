@@ -205,7 +205,7 @@
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     color: $color-text;
     font-size: 0.875rem;
@@ -223,7 +223,7 @@
     cursor: pointer;
   }
   .error {
-    color: #f87171;
+    color: $color-danger;
     font-size: 0.875rem;
     margin-bottom: 12px;
   }

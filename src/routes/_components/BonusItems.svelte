@@ -190,7 +190,7 @@
     input {
       min-height: 42px;
       background: $color-surface;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
       border-radius: $radius-sm;
       padding: 9px 10px;
       color: $color-text;
@@ -214,7 +214,7 @@
   .btn-ghost {
     padding: 4px 12px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     color: $color-text-muted;
     cursor: pointer;

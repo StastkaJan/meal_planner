@@ -258,7 +258,7 @@
     button {
       width: 24px;
       height: 24px;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
       background: $color-surface-2;
       color: $color-text;
       border-radius: $radius-sm;
@@ -289,7 +289,7 @@
     gap: 4px;
     padding: 4px 10px;
     background: $color-surface-2;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: 999px;
     font-size: 0.78rem;
     color: $color-text-muted;
@@ -348,7 +348,7 @@
     &.ghost {
       background: $color-surface;
       color: $color-text-muted;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
     }
     &.danger {
       border: 1px solid rgb(184 59 50 / 18%);

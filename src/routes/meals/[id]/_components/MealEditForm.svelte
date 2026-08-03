@@ -280,7 +280,7 @@
       width: 100%;
       min-height: 42px;
       background: $color-surface;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
       border-radius: $radius-sm;
       padding: 9px 10px;
       color: $color-text;
@@ -319,7 +319,7 @@
     gap: 4px;
     padding: 4px 10px;
     background: $color-surface-2;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: 999px;
     font-size: 0.78rem;
     cursor: pointer;
@@ -368,7 +368,7 @@
     input,
     select {
       background: $color-surface;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
       border-radius: $radius-sm;
       min-height: 40px;
       padding: 8px 9px;
@@ -408,7 +408,7 @@
     &.ghost {
       background: $color-surface;
       color: $color-text-muted;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
     }
   }
 

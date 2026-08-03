@@ -70,7 +70,7 @@
 
   .secondary {
     background: $color-surface;
-    border-color: $color-border;
+    border-color: $color-border-strong;
     color: $color-text;
   }
 

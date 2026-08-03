@@ -126,7 +126,7 @@
   button {
     padding: 8px 12px;
     border-radius: $radius-sm;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     background: transparent;
     color: $color-text-muted;
     font-size: 0.875rem;

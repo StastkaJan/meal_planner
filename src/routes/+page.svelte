@@ -272,7 +272,7 @@
     min-height: 38px;
     padding: 7px 14px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: 999px;
     cursor: pointer;
     font-size: 0.85rem;
@@ -299,7 +299,7 @@
   .new-name {
     min-height: 38px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     padding: 7px 11px;
     color: $color-text;
@@ -332,7 +332,7 @@
     &.ghost {
       background: $color-surface;
       color: $color-text-muted;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
     }
     &.danger {
       border: 1px solid rgb(184 59 50 / 18%);

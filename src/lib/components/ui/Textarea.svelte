@@ -15,7 +15,7 @@
     width: 100%;
     min-height: 7rem;
     padding: 0.7rem 0.75rem;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     background: $color-surface;
     resize: vertical;

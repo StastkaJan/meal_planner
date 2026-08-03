@@ -47,7 +47,7 @@
   label {
     position: relative;
     padding: 0.42rem 0.72rem;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: 999px;
     color: $color-text-muted;
     cursor: pointer;

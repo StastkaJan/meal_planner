@@ -350,7 +350,7 @@
     align-self: flex-start;
     padding: 4px 7px;
     background: transparent;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     color: $color-text-muted;
     cursor: pointer;
@@ -375,7 +375,7 @@
     min-height: 36px;
     padding: 7px 12px;
     background: $color-surface;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     color: $color-text-muted;
     cursor: pointer;
