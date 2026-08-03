@@ -52,9 +52,7 @@
                     aria-label={`${mealType.replace('_', ' ')}: ${day} and ${DAY_LABELS[i + 1]} use the same meal`}
                     aria-pressed={!breaks[i]}
                     onclick={() => toggleGap(mealType, i)}
-                  >
-                    {breaks[i] ? '·' : '—'}
-                  </button>
+                  ></button>
                 {/if}
               {/each}
             </div>
@@ -120,8 +118,7 @@
     text-align: center;
   }
   .gap {
-    display: grid;
-    place-items: center;
+    position: relative;
     width: 16px;
     height: 20px;
     padding: 0;
@@ -130,12 +127,25 @@
     color: $color-border;
     cursor: pointer;
 
-    font-size: 0.9rem;
-    line-height: 1;
+    &::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: currentColor;
+      content: '';
+      transform: translate(-50%, -50%);
+    }
 
     &.joined {
       color: $color-accent;
-      font-weight: 700;
+      &::before {
+        width: 16px;
+        height: 2px;
+        border-radius: 0;
+      }
     }
     &:hover {
       color: $color-accent;

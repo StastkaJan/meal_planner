@@ -32,35 +32,12 @@ type NutritionRow = {
 }
 
 const toNumber = (value: unknown) => Number(value ?? 0) || 0
-const pick = <T>(values: T[]) =>
-  values[Math.floor(Math.random() * values.length)]
-
-export function pickUnused(
-  candidates: CandidateMeal[],
-  used: Set<number>,
-): CandidateMeal {
-  const unused = candidates.filter((meal) => !used.has(meal.id))
-  return pick(unused.length ? unused : candidates)
-}
-
-export function candidateMeals(
-  meals: CandidateMeal[],
-  budget: number,
-): CandidateMeal[] {
-  const fitting = meals.filter((meal) => (meal.calories ?? 0) <= budget * 1.3)
-  return fitting.length
-    ? fitting
-    : [...meals]
-        .sort((left, right) => (left.calories ?? 0) - (right.calories ?? 0))
-        .slice(0, 3)
-}
-
 export function macroDistance(
   meal: CandidateMeal,
   budget: MacroBudget,
 ): number {
   const relativeDifference = (value: number, target: number) =>
-    target > 0 ? Math.abs(value - target) / target : 0
+    target > 0 ? Math.min(Math.abs(value - target) / target, 1) : 0
   return (
     relativeDifference(meal.proteinG ?? 0, budget.proteinG) +
     relativeDifference(meal.carbsG ?? 0, budget.carbsG) +
@@ -68,17 +45,23 @@ export function macroDistance(
   )
 }
 
-export function rankByMacros(
+export function rankByNutrition(
   candidates: CandidateMeal[],
+  calorieBudget: number,
   budget: MacroBudget,
-  count = 3,
+  usageCounts = new Map<number, number>(),
 ): CandidateMeal[] {
-  return [...candidates]
-    .sort(
-      (left, right) =>
-        macroDistance(left, budget) - macroDistance(right, budget),
+  const score = (meal: CandidateMeal) => {
+    const calorieDistance =
+      Math.abs((meal.calories ?? 0) - calorieBudget) /
+      Math.max(calorieBudget, 1)
+    return (
+      calorieDistance * 5 +
+      macroDistance(meal, budget) / 3 +
+      Math.log2((usageCounts.get(meal.id) ?? 0) + 1) * 0.4
     )
-    .slice(0, Math.max(1, count))
+  }
+  return [...candidates].sort((left, right) => score(left) - score(right))
 }
 
 export function filterByPrefs(
@@ -116,7 +99,7 @@ export function fillDaySlots(
   meals: CandidateMeal[],
   targets: NutritionTargets,
   consumed: Consumed,
-  used: Set<number>,
+  usageCounts: Map<number, number>,
 ): { planId: number; date: string; mealType: string; mealId: number }[] {
   const rows: {
     planId: number
@@ -134,17 +117,19 @@ export function fillDaySlots(
       remaining--
       continue
     }
-    const calorieMatches = candidateMeals(
-      slotMeals,
-      (targets.calories - consumed.calories) / remaining,
-    )
+    const calorieBudget = (targets.calories - consumed.calories) / remaining
     const macroBudget = {
       proteinG: (targets.proteinG - consumed.proteinG) / remaining,
       carbsG: (targets.carbsG - consumed.carbsG) / remaining,
       fatG: (targets.fatG - consumed.fatG) / remaining,
     }
-    const meal = pickUnused(rankByMacros(calorieMatches, macroBudget), used)
-    used.add(meal.id)
+    const [meal] = rankByNutrition(
+      slotMeals,
+      calorieBudget,
+      macroBudget,
+      usageCounts,
+    )
+    usageCounts.set(meal.id, (usageCounts.get(meal.id) ?? 0) + 1)
     rows.push({ planId, date, mealType, mealId: meal.id })
     consumed.calories += meal.calories ?? 0
     consumed.proteinG += meal.proteinG ?? 0

@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  candidateMeals,
   filterByPrefs,
-  pickUnused,
-  rankByMacros,
+  rankByNutrition,
   fillDaySlots,
   sumNutrition,
 } from './plan-generation'
@@ -14,53 +12,6 @@ const meals = [
   { id: 3, calories: 700, tags: ['Mediterranean'], allowedSlots: [] },
   { id: 4, calories: 900, tags: [], allowedSlots: [] },
 ]
-
-describe('candidateMeals', () => {
-  it('returns meals within budget (calories <= budget * 1.3)', () => {
-    const result = candidateMeals(meals, 310) // threshold: 403, includes 100 and 400
-    expect(result.map((m) => m.id)).toEqual([1, 2])
-  })
-
-  it('falls back to 3 lightest when nothing fits', () => {
-    const result = candidateMeals(meals, 50) // threshold: 65, nothing fits
-    expect(result.map((m) => m.id)).toEqual([1, 2, 3])
-  })
-
-  it('treats null calories as 0 (always fits)', () => {
-    const withNull = [
-      { id: 5, calories: null, tags: [], allowedSlots: [] },
-      { id: 6, calories: 999, tags: [], allowedSlots: [] },
-    ]
-    const result = candidateMeals(withNull, 100)
-    expect(result.map((m) => m.id)).toContain(5)
-  })
-
-  it('does not mutate the input array when falling back', () => {
-    const input = [...meals]
-    candidateMeals(input, 50)
-    expect(input.map((m) => m.id)).toEqual([1, 2, 3, 4])
-  })
-})
-
-describe('pickUnused', () => {
-  it('never returns a used meal while fresh ones remain', () => {
-    const used = new Set<number>()
-    const seen = new Set<number>()
-    for (let i = 0; i < meals.length; i++) {
-      const chosen = pickUnused(meals, used)
-      expect(used.has(chosen.id)).toBe(false) // no repeat within the week
-      used.add(chosen.id)
-      seen.add(chosen.id)
-    }
-    expect(seen.size).toBe(meals.length) // every distinct meal got used once
-  })
-
-  it('falls back to the full list once all are used', () => {
-    const used = new Set(meals.map((m) => m.id))
-    const chosen = pickUnused(meals, used)
-    expect(meals.map((m) => m.id)).toContain(chosen.id)
-  })
-})
 
 describe('filterByPrefs', () => {
   it('filters by cuisinePrefs (OR logic)', () => {
@@ -89,10 +40,16 @@ describe('filterByPrefs', () => {
   })
 })
 
-describe('rankByMacros', () => {
-  const m = (id: number, proteinG: number, carbsG: number, fatG: number) => ({
+describe('rankByNutrition', () => {
+  const m = (
+    id: number,
+    calories: number,
+    proteinG: number,
+    carbsG: number,
+    fatG: number,
+  ) => ({
     id,
-    calories: 100,
+    calories,
     tags: [],
     allowedSlots: [],
     proteinG,
@@ -100,28 +57,43 @@ describe('rankByMacros', () => {
     fatG,
   })
 
-  it('ranks meals closest to the macro budget first', () => {
-    const cands = [m(1, 40, 10, 5), m(2, 10, 60, 25), m(3, 25, 30, 12)]
-    const ranked = rankByMacros(
-      cands,
-      { proteinG: 25, carbsG: 30, fatG: 12 },
-      3,
-    )
-    expect(ranked[0].id).toBe(3) // exact match wins
+  it('prioritizes calorie fit over a better macro fit', () => {
+    const cands = [m(1, 500, 1, 1, 1), m(2, 300, 25, 30, 12)]
+    const ranked = rankByNutrition(cands, 500, {
+      proteinG: 25,
+      carbsG: 30,
+      fatG: 12,
+    })
+    expect(ranked[0].id).toBe(1)
   })
 
-  it('caps the shortlist at k so variety survives', () => {
-    const cands = [m(1, 1, 1, 1), m(2, 2, 2, 2), m(3, 3, 3, 3), m(4, 4, 4, 4)]
+  it('uses macros to choose between equal-calorie meals', () => {
+    const cands = [m(1, 500, 1, 1, 1), m(2, 500, 25, 30, 12)]
+    const ranked = rankByNutrition(cands, 500, {
+      proteinG: 25,
+      carbsG: 30,
+      fatG: 12,
+    })
+    expect(ranked[0].id).toBe(2)
+  })
+
+  it('trades a small calorie difference for substantially better variety', () => {
+    const cands = [m(1, 500, 25, 30, 12), m(2, 450, 25, 30, 12)]
     expect(
-      rankByMacros(cands, { proteinG: 1, carbsG: 1, fatG: 1 }, 2),
-    ).toHaveLength(2)
+      rankByNutrition(
+        cands,
+        500,
+        { proteinG: 25, carbsG: 30, fatG: 12 },
+        new Map([[1, 4]]),
+      )[0].id,
+    ).toBe(2)
   })
 })
 
 describe('fillDaySlots', () => {
   const targets = { calories: 2000, proteinG: 100, carbsG: 200, fatG: 70 }
 
-  it('fills an empty slot and shrinks the mutated consumed/used state', () => {
+  it('fills an empty slot and updates consumed nutrition and usage count', () => {
     const only = [
       {
         id: 1,
@@ -134,7 +106,7 @@ describe('fillDaySlots', () => {
       },
     ]
     const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
-    const used = new Set<number>()
+    const usageCounts = new Map<number, number>()
 
     const toInsert = fillDaySlots(
       1,
@@ -143,7 +115,7 @@ describe('fillDaySlots', () => {
       only,
       targets,
       consumed,
-      used,
+      usageCounts,
     )
 
     expect(toInsert).toEqual([
@@ -155,7 +127,7 @@ describe('fillDaySlots', () => {
       carbsG: 40,
       fatG: 15,
     })
-    expect(used.has(1)).toBe(true)
+    expect(usageCounts.get(1)).toBe(1)
   })
 
   it('skips a slot with no allowedSlots-fitting meal, without consuming budget', () => {
@@ -171,7 +143,7 @@ describe('fillDaySlots', () => {
       },
     ]
     const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
-    const used = new Set<number>()
+    const usageCounts = new Map<number, number>()
 
     const toInsert = fillDaySlots(
       1,
@@ -180,7 +152,7 @@ describe('fillDaySlots', () => {
       dinnerOnly,
       targets,
       consumed,
-      used,
+      usageCounts,
     )
 
     expect(toInsert).toEqual([])
@@ -209,7 +181,7 @@ describe('fillDaySlots', () => {
       },
     ]
     const consumed = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
-    const used = new Set<number>()
+    const usageCounts = new Map<number, number>()
 
     const toInsert = fillDaySlots(
       1,
@@ -218,7 +190,7 @@ describe('fillDaySlots', () => {
       twoMeals,
       targets,
       consumed,
-      used,
+      usageCounts,
     )
 
     expect(toInsert.map((r) => [r.mealType, r.mealId])).toEqual([

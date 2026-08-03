@@ -73,11 +73,11 @@ async function autocomposeSlots(
   const filled = new Set(
     existingSlots.map((slot) => `${slot.date}-${slot.mealType}`),
   )
-  const used = new Set(
-    existingSlots
-      .map((slot) => slot.mealId)
-      .filter((id): id is number => id !== null),
-  )
+  const usageCounts = new Map<number, number>()
+  for (const { mealId } of existingSlots) {
+    if (mealId !== null)
+      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
+  }
   const breaksByType = new Map(
     repeatRows.map((row) => [row.mealType, row.groupBreaks]),
   )
@@ -119,7 +119,10 @@ async function autocomposeSlots(
         freshSlots.push(mealType)
         continue
       }
-      used.add(repeatedMeal.id)
+      usageCounts.set(
+        repeatedMeal.id,
+        (usageCounts.get(repeatedMeal.id) ?? 0) + 1,
+      )
       rows.push({ planId: plan.id, date, mealType, mealId: repeatedMeal.id })
       consumed.calories += repeatedMeal.calories ?? 0
       consumed.proteinG += repeatedMeal.proteinG ?? 0
@@ -134,7 +137,7 @@ async function autocomposeSlots(
       filteredMeals,
       targets,
       consumed,
-      used,
+      usageCounts,
     )
     for (const row of generated) {
       const key = groupKey(row.date, row.mealType)
@@ -170,11 +173,11 @@ async function recalcDaySlots(
     plan.cuisinePrefs,
     plan.dietaryRestrictions,
   )
-  const used = new Set(
-    weekMealIds
-      .map((slot) => slot.mealId)
-      .filter((id): id is number => id !== null),
-  )
+  const usageCounts = new Map<number, number>()
+  for (const { mealId } of weekMealIds) {
+    if (mealId !== null)
+      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
+  }
   const rows = fillDaySlots(
     plan.id,
     date,
@@ -182,7 +185,7 @@ async function recalcDaySlots(
     candidateMeals,
     targets,
     sumNutrition([...daySlots, ...dayBonus]),
-    used,
+    usageCounts,
   )
   await insertSlots(rows)
   return rows.length

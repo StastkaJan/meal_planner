@@ -26,9 +26,9 @@ families juggling dietary needs. A logged-in user, since plans are private.
 - **Kills the daily "what's for dinner" decision** — the week is decided once.
 - **Auto-compose** removes the blank-page problem: a full, calorie-aware week
   in one click.
-- **Multiple plans** per user (e.g. "Family", "Cutting") switch via tabs, so
-  different goals or people don't collide.
-- **Per-plan preferences** (cuisines you like, diets you follow) shape what
+- **One continuous plan** per user keeps every week in one calendar without
+  extra plan navigation or overlapping settings.
+- **Profile preferences** (cuisines you like, diets you follow) shape what
   auto-compose picks.
 - **Live nutrition feedback** shows each day's calories and macros against a
   per-user target set on the profile (falling back to a 2000 kcal / fixed-macro
@@ -46,15 +46,11 @@ Each plan owns a grid of slots keyed by `(plan, date, meal type)`; filling
 a slot points it at a meal, clearing it removes it. Both the manual picker and
 auto-compose only offer meals whose `allowedSlots` includes the slot's meal
 type (empty `allowedSlots` = suitable for any slot), so a dinner-only recipe
-can't land in breakfast. Auto-compose also filters the
-meal library by the plan's cuisine (any-match) and dietary (all-match)
-preferences, then fills empty slots by splitting the user's daily calorie target
-across them, keeping meals within 1.3× the per-slot calorie budget, and among
-those preferring the ones whose protein/carb/fat land closest to the remaining
-macro budget — picking at random within the top few so the week stays varied,
-with a fallback so a sparse or untagged library never stalls it. It tracks the meals
-already placed that week (including ones already in the plan) and prefers unused
-ones, so a large enough library yields a distinct meal per slot. Each meal type can
+can't land in breakfast. Auto-compose filters the meal library by the user's
+profile cuisine (any-match) and dietary (all-match) preferences, then splits
+the remaining daily calorie target across empty slots. It ranks calorie fit
+first, macro fit second, and penalizes meals already used that week so one meal
+does not dominate the plan. Each meal type can
 also have a **weekly repeat pattern** (`slotRepeats`) — a partition of Mon-Sun into
 groups that share one meal; setting a slot in a grouped meal type fills the whole
 group, and auto-compose picks one meal per group instead of one per day. A **favourites-only**
@@ -102,8 +98,8 @@ See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`, `bonusIte
 
 ## Known limitations
 
-- **Soft macro fit** — auto-compose enforces a hard calorie ceiling but treats
-  protein/carb/fat as a ranking preference, not a constraint
+- **Soft nutrition fit** — auto-compose prioritizes calories and treats
+  protein/carb/fat and variety as ranking preferences, not constraints
   (`src/lib/server/services/plan-generation.ts` / `src/lib/domain/plan-generation.ts`). A library thin on
   a given macro can still miss the target.
 
