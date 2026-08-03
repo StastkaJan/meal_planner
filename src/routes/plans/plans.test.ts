@@ -25,29 +25,28 @@ function makeEvent(body: object, userId = 1) {
 describe('POST /plans', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // user meal-preference defaults lookup; overridden per-test when relevant
-    mockDb.limit.mockResolvedValue([
-      { cuisinePrefs: [], dietaryRestrictions: [] },
-    ])
+    mockDb.orderBy.mockResolvedValue([])
   })
 
-  it('inherits the user meal-preference defaults into the new plan', async () => {
-    mockDb.limit.mockResolvedValueOnce([
-      { cuisinePrefs: ['Italian'], dietaryRestrictions: ['no_gluten'] },
-    ])
+  it('rejects a second plan for the same user', async () => {
+    mockDb.orderBy.mockResolvedValueOnce([{ id: 1, userId: 1 }])
+
+    await expect(POST(makeEvent({}))).rejects.toMatchObject({ status: 409 })
+    expect(mockDb.insert).not.toHaveBeenCalled()
+  })
+
+  it('creates a plan without duplicating user preferences', async () => {
     mockDb.returning.mockResolvedValueOnce([{ id: 1 }])
-    await POST(makeEvent({ name: 'Week 1' }))
+    await POST(makeEvent({}))
     const inserted = mockDb.values.mock.calls[0][0]
-    expect(inserted.cuisinePrefs).toEqual(['Italian'])
-    expect(inserted.dietaryRestrictions).toEqual(['no_gluten'])
+    expect(inserted.cuisinePrefs).toEqual([])
+    expect(inserted.dietaryRestrictions).toEqual([])
     expect(inserted.userId).toBe(1)
   })
 
   it('inserts a plan with weekStart snapped to Monday', async () => {
-    mockDb.returning.mockResolvedValueOnce([
-      { id: 1, name: 'test', weekStart: '2026-06-29' },
-    ])
-    await POST(makeEvent({ name: 'test' }))
+    mockDb.returning.mockResolvedValueOnce([{ id: 1, weekStart: '2026-06-29' }])
+    await POST(makeEvent({}))
     const inserted = mockDb.values.mock.calls[0][0]
     const ws = new Date(inserted.weekStart)
     // Monday = 1 in local, but we stored UTC ISO so check via UTC day
@@ -55,10 +54,8 @@ describe('POST /plans', () => {
   })
 
   it('ignores client-supplied weekStart', async () => {
-    mockDb.returning.mockResolvedValueOnce([
-      { id: 1, name: 'test', weekStart: '2026-06-29' },
-    ])
-    await POST(makeEvent({ name: 'test', weekStart: '2026-01-01' }))
+    mockDb.returning.mockResolvedValueOnce([{ id: 1, weekStart: '2026-06-29' }])
+    await POST(makeEvent({ weekStart: '2026-01-01' }))
     const inserted = mockDb.values.mock.calls[0][0]
     expect(inserted.weekStart).not.toBe('2026-01-01')
   })

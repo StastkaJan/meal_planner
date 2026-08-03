@@ -11,6 +11,10 @@ test('profile controls stay visible and save settings', async ({ page }) => {
   await expect(calories).toBeVisible()
   await expect(page.getByLabel('Current password')).toBeVisible()
 
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  await page.goto('/profile')
+
   await Promise.all([
     page.waitForResponse(
       (response) =>
@@ -27,4 +31,10 @@ test('profile controls stay visible and save settings', async ({ page }) => {
   await page.reload()
   await expect(page.getByRole('checkbox', { name: 'Italian' })).toBeChecked()
   await expect(calories).toHaveValue('2100')
+
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Auto-compose' }).click()
+  await expect(page.locator('button.cell').first()).toContainText(
+    'Pasta Bolognese',
+  )
 })

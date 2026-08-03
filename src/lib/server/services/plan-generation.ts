@@ -194,11 +194,15 @@ export async function executePlanPopulation(
 ) {
   const plan = loadedPlan ?? (await ownedPlan(command.planId, command.userId))
   if (!plan) throw new Error('Plan not found')
-  const targets = resolveTargets(await getSettings(command.userId))
+  const settings = await getSettings(command.userId)
   return autocomposeSlots(
-    plan,
+    {
+      ...plan,
+      cuisinePrefs: settings?.cuisinePrefs ?? [],
+      dietaryRestrictions: settings?.dietaryRestrictions ?? [],
+    },
     command.week,
-    targets,
+    resolveTargets(settings),
     command.userId,
     command.favoritesOnly,
   )
@@ -209,10 +213,15 @@ export async function recalculatePlanDay(
   userId: number,
   date: string,
 ) {
+  const settings = await getSettings(userId)
   return recalcDaySlots(
-    plan,
+    {
+      ...plan,
+      cuisinePrefs: settings?.cuisinePrefs ?? [],
+      dietaryRestrictions: settings?.dietaryRestrictions ?? [],
+    },
     date,
-    resolveTargets(await getSettings(userId)),
+    resolveTargets(settings),
     userId,
   )
 }

@@ -1,6 +1,6 @@
 # Meal Plan
 
-Weekly meal planner. Create plans, assign meals to a breakfast/lunch/dinner grid across 7 days, and configure per-plan cuisine preferences and dietary restrictions.
+Weekly meal planner. Assign meals to a breakfast/lunch/dinner grid across 7 days, and configure cuisine preferences and dietary restrictions.
 
 ## Stack
 

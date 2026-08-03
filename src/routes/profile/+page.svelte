@@ -44,9 +44,9 @@
 
   <div class="settings-grid">
     <section class="card preferences-card">
-      <h2>Meal preference defaults</h2>
+      <h2>Meal preferences</h2>
       <p class="hint">
-        New plans start with these cuisines and dietary restrictions.
+        Auto-compose uses these cuisines and dietary restrictions.
       </p>
       <PreferenceSettings
         cuisinePrefs={data.cuisinePrefs}

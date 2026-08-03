@@ -8,8 +8,6 @@
 
   let { data }: { data: PageData } = $props()
 
-  let creating = $state(false)
-  let newPlanName = $state('')
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
 
@@ -31,15 +29,8 @@
     })
   }
 
-  function switchPlan(id: number) {
-    goto(planUrl(id, data.viewWeek), { noScroll: true, keepFocus: true })
-  }
-
   async function createPlan() {
-    if (!newPlanName.trim()) return
-    const created = await planApi.createPlan(newPlanName.trim())
-    newPlanName = ''
-    creating = false
+    const created = await planApi.createPlan()
     await goto(planUrl(created.id, created.weekStart))
   }
 
@@ -131,12 +122,6 @@
     await refreshPlan()
   }
 
-  async function handleSettingsChange(patch: object) {
-    if (!plan) return
-    const updated = await planApi.updatePlan(plan.id, patch)
-    plan = { ...plan, ...updated }
-  }
-
   async function handleRepeatChange(mealType: string, groupBreaks: boolean[]) {
     if (!plan) return
     await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
@@ -148,61 +133,29 @@
   <div class="page-heading">
     <div>
       <p class="eyebrow">Weekly planner</p>
-      <h1>{plan?.name ?? 'Meal plans'}</h1>
+      <h1>Meal plan</h1>
       <p class="subtitle">Plan the week, balance nutrition, shop once.</p>
     </div>
   </div>
   <div class="plan-bar">
-    <div class="plan-tabs">
-      {#each data.plans as p (p.id)}
-        <button
-          class="tab"
-          class:active={p.id === data.activePlanId}
-          onclick={() => switchPlan(p.id)}>{p.name}</button
-        >
-      {/each}
-    </div>
-
     <div class="plan-actions">
-      {#if creating}
-        <input
-          class="new-name"
-          type="text"
-          placeholder="Plan name…"
-          bind:value={newPlanName}
-          onkeydown={(e) => {
-            if (e.key === 'Enter') createPlan()
-            if (e.key === 'Escape') creating = false
-          }}
-        />
-        <button class="btn" onclick={createPlan}>Add</button>
-        <button class="btn ghost" onclick={() => (creating = false)}
-          >Cancel</button
-        >
+      {#if !plan}
+        <button class="btn" onclick={createPlan}>Create plan</button>
       {:else}
-        <button class="btn" onclick={() => (creating = true)}>+ New plan</button
+        <a
+          class="btn"
+          href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
+          >Shopping list</a
         >
-        {#if data.activePlanId}
-          <a
-            class="btn"
-            href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
-            >Shopping list</a
-          >
-          <button
-            class="btn danger"
-            onclick={() => deletePlan(data.activePlanId)}>Delete</button
-          >
-        {/if}
+        <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
+          >Delete</button
+        >
       {/if}
     </div>
   </div>
 
   {#if plan}
-    <PlanSettings
-      {plan}
-      onChange={handleSettingsChange}
-      onRepeatChange={handleRepeatChange}
-    />
+    <PlanSettings {plan} onRepeatChange={handleRepeatChange} />
     <WeekTable
       {plan}
       meals={data.meals}
@@ -218,7 +171,7 @@
       onNextWeek={() => shiftWeek(1)}
     />
   {:else if data.plans.length === 0}
-    <p class="empty-state">No plans yet. Create one to get started.</p>
+    <p class="empty-state">Create your meal plan to get started.</p>
   {:else}
     <p class="empty-state">Loading…</p>
   {/if}
@@ -258,56 +211,16 @@
   .plan-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 12px;
     padding-bottom: 2px;
-  }
-  .plan-tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .tab {
-    min-height: 38px;
-    padding: 7px 14px;
-    background: $color-surface;
-    border: 1px solid $color-border-strong;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: $color-text-muted;
-    transition: all 0.15s;
-
-    &:hover {
-      color: $color-text;
-      border-color: $color-accent-dim;
-    }
-    &.active {
-      background: $color-accent;
-      border-color: $color-accent;
-      color: white;
-      box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
-    }
   }
   .plan-actions {
     display: flex;
     gap: 6px;
     align-items: center;
     flex-wrap: wrap;
-  }
-  .new-name {
-    min-height: 38px;
-    background: $color-surface;
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-sm;
-    padding: 7px 11px;
-    color: $color-text;
-    width: 160px;
-    &:focus {
-      outline: 2px solid $color-accent;
-      border-color: transparent;
-    }
   }
   .btn {
     display: inline-flex;
@@ -328,11 +241,6 @@
     &:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgb(41 39 33 / 12%);
-    }
-    &.ghost {
-      background: $color-surface;
-      color: $color-text-muted;
-      border: 1px solid $color-border-strong;
     }
     &.danger {
       border: 1px solid rgb(184 59 50 / 18%);
@@ -357,14 +265,12 @@
     .plan-bar {
       align-items: flex-start;
     }
-    .plan-tabs,
     .plan-actions {
       width: 100%;
       overflow-x: auto;
       flex-wrap: nowrap;
       padding-bottom: 2px;
     }
-    .tab,
     .btn {
       flex: 0 0 auto;
     }

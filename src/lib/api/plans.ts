@@ -5,17 +5,10 @@ import { jsonBody, request, requestJson } from './http'
 export const getPlan = (id: number, week: string) =>
   requestJson<PlanDetail>(`/plans/${id}?week=${week}`)
 
-export const createPlan = (name: string) =>
-  requestJson<Plan>('/plans', { method: 'POST', body: jsonBody({ name }) })
+export const createPlan = () => requestJson<Plan>('/plans', { method: 'POST' })
 
 export const deletePlan = (id: number) =>
   request(`/plans/${id}`, { method: 'DELETE' })
-
-export const updatePlan = (id: number, patch: object) =>
-  requestJson<Partial<Plan>>(`/plans/${id}`, {
-    method: 'PATCH',
-    body: jsonBody(patch),
-  })
 
 export const setSlot = (
   planId: number,

@@ -1,36 +1,16 @@
 <script lang="ts">
-  import type { Plan, SlotRepeat } from '$lib/database/schema'
-  import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
-  import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
+  import type { SlotRepeat } from '$lib/database/schema'
+  import { MEAL_TYPES } from '$lib/constants'
 
   let {
     plan,
-    onChange,
     onRepeatChange,
   }: {
-    plan: Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'> & {
+    plan: {
       slotRepeats?: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
     }
-    onChange: (
-      patch: Partial<Pick<Plan, 'cuisinePrefs' | 'dietaryRestrictions'>>,
-    ) => void
     onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
   } = $props()
-
-  let cuisinePrefs = $derived(plan.cuisinePrefs ?? [])
-  let dietaryRestrictions = $derived(plan.dietaryRestrictions ?? [])
-
-  let debounce: ReturnType<typeof setTimeout>
-
-  function onCuisineChange() {
-    clearTimeout(debounce)
-    debounce = setTimeout(() => onChange({ cuisinePrefs }), 400)
-  }
-
-  function onDietChange() {
-    clearTimeout(debounce)
-    debounce = setTimeout(() => onChange({ dietaryRestrictions }), 400)
-  }
 
   const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   // no saved row = every day independent, same as all gaps split
@@ -53,25 +33,6 @@
 <details class="settings">
   <summary>Plan settings</summary>
   <div class="body">
-    <section>
-      <h4>Cuisine preferences</h4>
-      <ChoiceChips
-        options={CUISINE_OPTIONS}
-        bind:selected={cuisinePrefs}
-        onChange={onCuisineChange}
-      />
-    </section>
-
-    <section>
-      <h4>Dietary restrictions</h4>
-      <ChoiceChips
-        options={DIET_OPTIONS}
-        bind:selected={dietaryRestrictions}
-        format={(value) => value.replace('_', ' ')}
-        onChange={onDietChange}
-      />
-    </section>
-
     {#if onRepeatChange}
       <section>
         <h4>Repeat pattern</h4>
@@ -159,12 +120,16 @@
     text-align: center;
   }
   .gap {
+    display: grid;
+    place-items: center;
     width: 16px;
     height: 20px;
+    padding: 0;
     border: none;
     background: none;
     color: $color-border;
     cursor: pointer;
+
     font-size: 0.9rem;
     line-height: 1;
 

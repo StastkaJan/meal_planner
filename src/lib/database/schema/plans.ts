@@ -4,9 +4,11 @@ import { users } from './users'
 
 export const plans = pgTable('plans', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, {
-    onDelete: 'cascade',
-  }),
+  userId: integer('user_id')
+    .references(() => users.id, {
+      onDelete: 'cascade',
+    })
+    .unique(),
   name: text('name').notNull().default('New Plan'),
   weekStart: date('week_start')
     .notNull()

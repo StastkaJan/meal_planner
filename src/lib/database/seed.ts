@@ -13,7 +13,7 @@ const db = drizzle(pool, { schema })
 
 const existing = await db.select().from(plans).limit(1)
 if (existing.length === 0) {
-  await db.insert(plans).values({ name: 'Week 1' })
+  await db.insert(plans).values({})
   console.log('Seeded default plan.')
 } else {
   console.log('Seed skipped — data exists.')

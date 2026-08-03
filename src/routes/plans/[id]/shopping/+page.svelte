@@ -3,9 +3,7 @@
 </script>
 
 <div class="shopping">
-  <a class="back" href="/?plan={data.planId}&week={data.week}"
-    >← {data.planName}</a
-  >
+  <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
   <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
   <p class="week">Week of {data.week}</p>

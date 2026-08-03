@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
   return {
     planId: plan.id,
-    planName: plan.name,
     week,
     items: await getShoppingList(plan.id, week),
   }

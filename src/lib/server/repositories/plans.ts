@@ -26,7 +26,6 @@ export async function listPlans(userId: number) {
 export async function createPlan(
   userId: number,
   values: {
-    name: string
     weekStart: string
     cuisinePrefs: string[]
     dietaryRestrictions: string[]
@@ -35,22 +34,6 @@ export async function createPlan(
   const [plan] = await db
     .insert(plans)
     .values({ userId, ...values })
-    .returning()
-  return plan
-}
-
-export async function updatePlan(
-  id: number,
-  values: {
-    name?: string
-    cuisinePrefs?: string[]
-    dietaryRestrictions?: string[]
-  },
-) {
-  const [plan] = await db
-    .update(plans)
-    .set(values)
-    .where(eq(plans.id, id))
     .returning()
   return plan
 }
