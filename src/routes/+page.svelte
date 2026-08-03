@@ -32,8 +32,7 @@
   }
 
   function switchPlan(id: number) {
-    const week = data.plans.find((p) => p.id === id)?.weekStart ?? data.viewWeek
-    goto(planUrl(id, week), { noScroll: true, keepFocus: true })
+    goto(planUrl(id, data.viewWeek), { noScroll: true, keepFocus: true })
   }
 
   async function createPlan() {

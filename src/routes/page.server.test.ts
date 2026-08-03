@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
@@ -37,7 +37,11 @@ describe('load /', () => {
     mockDb.limit.mockResolvedValue([])
   })
 
-  it('defaults to the last plan and its weekStart when no params given', async () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('defaults to the last plan and current week when no params given', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-30T12:00:00Z'))
     mockDb.orderBy
       .mockResolvedValueOnce([
         { id: 1, weekStart: '2026-06-22' },
@@ -46,7 +50,7 @@ describe('load /', () => {
       .mockResolvedValueOnce([])
     const result = await load(makeEvent())
     expect(result.activePlanId).toBe(2)
-    expect(result.viewWeek).toBe('2026-06-29')
+    expect(result.viewWeek).toBe('2026-07-27')
   })
 
   it('uses ?plan= and ?week= when both are provided', async () => {

@@ -13,7 +13,7 @@
 - **Tests**: Vitest (unit), Playwright (E2E)
 - **Infra**: Docker Compose (app + postgres)
 
-<!-- NOTE: Dockerfile normalizes entrypoint.sh line endings for Windows checkouts. -->
+<!-- NOTE: Dockerfile bundles database/seed.ts and normalizes entrypoint.sh line endings for Windows checkouts. -->
 
 ## Project layout
 

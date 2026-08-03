@@ -4,7 +4,7 @@ COPY package*.json .
 RUN npm ci
 COPY . .
 RUN npm run build
-RUN npx esbuild src/lib/seed.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts-dist/seed.js
+RUN npx esbuild src/lib/database/seed.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts-dist/seed.js
 
 FROM node:22-alpine
 WORKDIR /app

@@ -3,6 +3,7 @@ import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
 import { listMeals } from '$lib/server/repositories/meals'
 import { getSettings } from '$lib/server/repositories/accounts'
 import { resolveTargets } from '$lib/domain/nutrition'
+import { mondayOf } from '$lib/utils/date-time'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -22,7 +23,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   }
 
   const viewWeek = validDateStr(
-    url.searchParams.get('week') || activePlan.weekStart,
+    url.searchParams.get('week') ??
+      mondayOf(new Date().toISOString().slice(0, 10)),
   )
   const plan = await getPlanDetail(activePlan, viewWeek)
 
