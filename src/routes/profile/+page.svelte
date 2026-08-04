@@ -1,5 +1,4 @@
 <script lang="ts">
-  import PreferenceSettings from './_components/PreferenceSettings.svelte'
   import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import {
     changePassword as updatePassword,
@@ -11,10 +10,6 @@
   let targetsSaved = $state(false)
   let passwordError = $state('')
   let passwordSuccess = $state('')
-
-  async function patchProfile(patch: object) {
-    await updateProfile(patch)
-  }
 
   async function saveTargets(e: SubmitEvent) {
     e.preventDefault()
@@ -43,18 +38,6 @@
   </header>
 
   <div class="settings-grid">
-    <section class="card preferences-card">
-      <h2>Meal preferences</h2>
-      <p class="hint">
-        Auto-compose uses these cuisines and dietary restrictions.
-      </p>
-      <PreferenceSettings
-        cuisinePrefs={data.cuisinePrefs}
-        dietaryRestrictions={data.dietaryRestrictions}
-        onChange={patchProfile}
-      />
-    </section>
-
     <section class="card">
       <h2>Nutrition targets</h2>
       <p class="hint">
@@ -165,7 +148,7 @@
   }
   .settings-grid {
     display: grid;
-    grid-template-columns: 1.25fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 18px;
     align-items: start;
   }
@@ -175,9 +158,6 @@
     border-radius: $radius;
     background: $color-surface;
     box-shadow: 0 14px 36px rgb(41 39 33 / 5%);
-  }
-  .preferences-card {
-    grid-row: span 2;
   }
   .hint {
     color: $color-text-muted;
@@ -235,9 +215,6 @@
   @media (max-width: 760px) {
     .settings-grid {
       grid-template-columns: 1fr;
-    }
-    .preferences-card {
-      grid-row: auto;
     }
   }
   @media (max-width: 420px) {

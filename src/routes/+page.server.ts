@@ -14,12 +14,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     getSettings(userId),
   ])
   const targets = resolveTargets(u)
+  const preferences = {
+    cuisinePrefs: u?.cuisinePrefs ?? [],
+    dietaryRestrictions: u?.dietaryRestrictions ?? [],
+  }
 
   const requestedId = Number(url.searchParams.get('plan'))
   const activePlan = plans.find((p) => p.id === requestedId) ?? plans.at(-1)
 
   if (!activePlan) {
-    return { plans, meals, plan: null, activePlanId: 0, viewWeek: '', targets }
+    return {
+      plans,
+      meals,
+      plan: null,
+      activePlanId: 0,
+      viewWeek: '',
+      targets,
+      preferences,
+    }
   }
 
   const viewWeek = validDateStr(
@@ -28,5 +40,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   )
   const plan = await getPlanDetail(activePlan, viewWeek)
 
-  return { plans, meals, plan, activePlanId: activePlan.id, viewWeek, targets }
+  return {
+    plans,
+    meals,
+    plan,
+    activePlanId: activePlan.id,
+    viewWeek,
+    targets,
+    preferences,
+  }
 }

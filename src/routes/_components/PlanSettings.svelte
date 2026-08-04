@@ -1,14 +1,25 @@
 <script lang="ts">
   import type { SlotRepeat } from '$lib/database/schema'
-  import { MEAL_TYPES } from '$lib/constants'
+  import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
+  import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
 
   let {
     plan,
+    preferences,
+    onPreferenceChange,
     onRepeatChange,
   }: {
     plan: {
       slotRepeats?: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
     }
+    preferences: {
+      cuisinePrefs: string[]
+      dietaryRestrictions: string[]
+    }
+    onPreferenceChange: (patch: {
+      cuisinePrefs?: string[]
+      dietaryRestrictions?: string[]
+    }) => void
     onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
   } = $props()
 
@@ -33,6 +44,24 @@
 <details class="settings">
   <summary>Plan settings</summary>
   <div class="body">
+    <section>
+      <h4>Cuisine preferences</h4>
+      <ChoiceChips
+        options={CUISINE_OPTIONS}
+        selected={preferences.cuisinePrefs}
+        onChange={(cuisinePrefs) => onPreferenceChange({ cuisinePrefs })}
+      />
+    </section>
+    <section>
+      <h4>Dietary restrictions</h4>
+      <ChoiceChips
+        options={DIET_OPTIONS}
+        selected={preferences.dietaryRestrictions}
+        format={(value) => value.replace('_', ' ')}
+        onChange={(dietaryRestrictions) =>
+          onPreferenceChange({ dietaryRestrictions })}
+      />
+    </section>
     {#if onRepeatChange}
       <section>
         <h4>Repeat pattern</h4>

@@ -3,6 +3,7 @@
   import type { PageData } from './$types'
   import { addDays } from '$lib/utils/date-time'
   import * as planApi from '$lib/api/plans'
+  import { updateProfile } from '$lib/api/profile'
   import WeekTable from './_components/WeekTable.svelte'
   import PlanSettings from './_components/PlanSettings.svelte'
 
@@ -10,6 +11,7 @@
 
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
+  let preferences = $derived(data.preferences)
 
   async function refreshPlan() {
     if (!plan) return
@@ -127,6 +129,11 @@
     await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
     await refreshPlan()
   }
+
+  async function handlePreferenceChange(patch: Partial<typeof preferences>) {
+    await updateProfile(patch)
+    preferences = { ...preferences, ...patch }
+  }
 </script>
 
 <div class="page">
@@ -155,7 +162,12 @@
   </div>
 
   {#if plan}
-    <PlanSettings {plan} onRepeatChange={handleRepeatChange} />
+    <PlanSettings
+      {plan}
+      {preferences}
+      onPreferenceChange={handlePreferenceChange}
+      onRepeatChange={handleRepeatChange}
+    />
     <WeekTable
       {plan}
       meals={data.meals}

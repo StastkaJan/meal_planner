@@ -12,6 +12,10 @@ test('create a plan', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: 'Create plan' }),
   ).not.toBeVisible()
+  await page.getByText('Plan settings').click()
+  await expect(page.getByText('Cuisine preferences')).toBeVisible()
+  await expect(page.getByText('Dietary restrictions')).toBeVisible()
+  await expect(page.getByText('Repeat pattern')).toBeVisible()
 })
 
 test('delete a plan', async ({ page }) => {
