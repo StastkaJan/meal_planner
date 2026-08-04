@@ -45,4 +45,13 @@ test('a joined repeat pattern propagates a slot pick to the rest of the group', 
   await expect(lunchCells.nth(0)).toContainText('Grilled Chicken')
   await expect(lunchCells.nth(1)).toContainText('Grilled Chicken') // Tue joined to Mon
   await expect(lunchCells.nth(2)).not.toContainText('Grilled Chicken') // Wed not joined
+  await expect(
+    lunchCells.nth(0).getByRole('button', { name: 'Edit meal assignment' }),
+  ).toBeVisible()
+  await expect(
+    lunchCells.nth(0).getByRole('link', { name: 'Show recipe' }),
+  ).toHaveAttribute('href', /\/meals\/\d+/)
+  await lunchCells.nth(0).getByRole('button', { name: 'Remove meal' }).click()
+  await expect(lunchCells.nth(0)).not.toContainText('Grilled Chicken')
+  await expect(lunchCells.nth(1)).not.toContainText('Grilled Chicken')
 })
