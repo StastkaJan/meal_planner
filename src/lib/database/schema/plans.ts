@@ -10,6 +10,7 @@ export const plans = pgTable('plans', {
     })
     .unique(),
   name: text('name').notNull().default('New Plan'),
+  portions: integer('portions').notNull().default(1),
   weekStart: date('week_start')
     .notNull()
     .default(sql`CURRENT_DATE`),
