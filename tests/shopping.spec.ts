@@ -23,4 +23,10 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
 
   await page.getByRole('link', { name: 'Shopping list' }).click()
   await expect(page.getByText('2 tbsp Honey')).toBeVisible()
+  const exportLink = page.getByRole('link', { name: 'Export CSV' })
+  await expect(exportLink).toHaveAttribute(
+    'download',
+    /shopping-list-\d{4}-\d{2}-\d{2}\.csv/,
+  )
+  await expect(exportLink).toHaveAttribute('href', /^data:text\/csv/)
 })

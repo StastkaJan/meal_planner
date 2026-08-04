@@ -1,9 +1,32 @@
 <script lang="ts">
   let { data } = $props()
+
+  const csvCell = (value: unknown) =>
+    `"${String(value ?? '').replaceAll('"', '""')}"`
+  const csv = $derived(
+    [
+      ['Quantity', 'Unit', 'Ingredient'],
+      ...data.items.map((item) => [
+        item.qty ?? item.count,
+        item.unit,
+        item.name,
+      ]),
+    ]
+      .map((row) => row.map(csvCell).join(','))
+      .join('\r\n'),
+  )
+  const exportHref = $derived(
+    `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`,
+  )
 </script>
 
 <div class="shopping">
-  <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
+  <div class="toolbar">
+    <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
+    <a class="export" href={exportHref} download="shopping-list-{data.week}.csv"
+      >Export CSV</a
+    >
+  </div>
   <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
   <p class="week">Week of {data.week}</p>
@@ -47,6 +70,24 @@
     font-size: 0.8rem;
     text-decoration: none;
     &:hover {
+      color: $color-text;
+    }
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .export {
+    padding: 6px 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-sm;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+    text-decoration: none;
+    &:hover {
+      border-color: $color-accent;
       color: $color-text;
     }
   }
