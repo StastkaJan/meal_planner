@@ -81,8 +81,6 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 ## Future opportunities
 
-- **Duplicate global → personal** so a user can adapt a shared recipe without
-  changing it for everyone.
 - **Richer import** for sites that expose microdata or plain HTML instead of
   schema.org JSON-LD, including parsing ingredient quantities and units.
 - **Ingredient-quantity scaling** alongside the nutrition serving stepper.

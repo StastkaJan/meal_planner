@@ -1,4 +1,9 @@
-import { createMeal, updateMeal } from '../repositories/meals'
+import {
+  createMeal,
+  findMeal,
+  getMealIngredients,
+  updateMeal,
+} from '../repositories/meals'
 
 const WRITABLE = [
   'name',
@@ -50,4 +55,15 @@ export async function updateUserMeal(
   body: Record<string, unknown>,
 ) {
   return updateMeal(id, pickMealFields(body))
+}
+
+export async function duplicateGlobalMeal(userId: number, id: number) {
+  const source = await findMeal(id, userId)
+  if (!source || source.userId !== null) return null
+  return createMeal({
+    ...pickMealFields(source),
+    name: source.name,
+    userId,
+    ingredients: await getMealIngredients(id),
+  })
 }

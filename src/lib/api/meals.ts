@@ -10,6 +10,9 @@ export const updateMeal = (id: number, body: object) =>
 export const deleteMeal = (id: number) =>
   request(`/meals/${id}`, { method: 'DELETE' })
 
+export const duplicateMeal = (id: number) =>
+  requestJson<Meal>(`/meals/${id}/duplicate`, { method: 'POST' })
+
 export const setFavorite = (id: number, favorite: boolean) =>
   request(`/meals/${id}/favorite`, {
     method: 'PUT',

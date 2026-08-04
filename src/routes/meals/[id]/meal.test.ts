@@ -19,7 +19,14 @@ vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({
   updateMeal,
 }))
 
+const duplicateGlobalMeal = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/services/meals', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  duplicateGlobalMeal,
+}))
+
 import { PATCH, DELETE } from './+server'
+import { POST as DUPLICATE } from './duplicate/+server'
 
 function makeEvent(body?: object, id = '1', userId = 1) {
   return {
@@ -119,6 +126,24 @@ describe('REST /meals/:id', () => {
       await expect(
         DELETE({ params: { id: '1' }, locals: {} } as any),
       ).rejects.toMatchObject({ status: 401 })
+    })
+  })
+
+  describe('POST /duplicate', () => {
+    it('duplicates a visible global meal into the user library', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+      duplicateGlobalMeal.mockResolvedValueOnce({ id: 2, userId: 1 })
+      const response = await DUPLICATE(makeEvent())
+      expect(response.status).toBe(201)
+      expect(duplicateGlobalMeal).toHaveBeenCalledWith(1, 1)
+    })
+
+    it('rejects personal meals', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+      duplicateGlobalMeal.mockResolvedValueOnce(null)
+      await expect(DUPLICATE(makeEvent())).rejects.toMatchObject({
+        status: 400,
+      })
     })
   })
 })

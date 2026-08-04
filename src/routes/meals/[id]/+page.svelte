@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import { deleteMeal as removeMeal } from '$lib/api/meals'
+  import { deleteMeal as removeMeal, duplicateMeal } from '$lib/api/meals'
   import MealEditForm from './_components/MealEditForm.svelte'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
@@ -27,6 +27,11 @@
     await removeMeal(meal.id)
     await goto('/meals')
   }
+
+  async function duplicate() {
+    const copy = await duplicateMeal(meal.id)
+    await goto(`/meals/${copy.id}`)
+  }
 </script>
 
 <div class="page">
@@ -52,6 +57,10 @@
             >Delete</button
           >
         </div>
+      {:else}
+        <button class="btn ghost sm" type="button" onclick={duplicate}
+          >Make a personal copy</button
+        >
       {/if}
     </div>
 
