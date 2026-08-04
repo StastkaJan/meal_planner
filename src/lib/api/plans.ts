@@ -10,6 +10,12 @@ export const createPlan = () => requestJson<Plan>('/plans', { method: 'POST' })
 export const deletePlan = (id: number) =>
   request(`/plans/${id}`, { method: 'DELETE' })
 
+export const setPlanPortions = (id: number, portions: number) =>
+  requestJson<Plan>(`/plans/${id}`, {
+    method: 'PATCH',
+    body: jsonBody({ portions }),
+  })
+
 export const setSlot = (
   planId: number,
   date: string,

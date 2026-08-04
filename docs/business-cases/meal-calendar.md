@@ -59,8 +59,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
   before it can be replaced.
 - **Build a shopping list.** The weekly shopping view combines structured
   ingredients from assigned meals. It groups matching names and units, sums
-  complete quantities, keeps different units separate, and uses a plain count
-  when quantities are missing.
+  complete quantities, scales them for the plan's people count and each
+  recipe's serving count, keeps different units separate, and uses a plain
+  count when quantities are missing.
 
 See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`,
 `bonusItems`) and [../api.md](../api.md) (`/plans/*`) for the data and

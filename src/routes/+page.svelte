@@ -127,6 +127,11 @@
     await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
     await refreshPlan()
   }
+
+  async function handlePortionsChange(portions: number) {
+    if (!plan) return
+    plan = { ...plan, ...(await planApi.setPlanPortions(plan.id, portions)) }
+  }
 </script>
 
 <div class="page">
@@ -155,7 +160,11 @@
   </div>
 
   {#if plan}
-    <PlanSettings {plan} onRepeatChange={handleRepeatChange} />
+    <PlanSettings
+      {plan}
+      onPortionsChange={handlePortionsChange}
+      onRepeatChange={handleRepeatChange}
+    />
     <WeekTable
       {plan}
       meals={data.meals}
