@@ -29,7 +29,12 @@ vi.mock('$lib/database', () => ({ db: mockDb }))
 
 const { createMeal, updateMeal } = await import('../repositories/meals')
 const { pickMealFields } = await import('./meals')
-const { findRecipeNode, parseRecipeJsonLd } = await import('./recipe-import')
+const {
+  findRecipeNode,
+  parseIngredientLine,
+  parseRecipeHtml,
+  parseRecipeJsonLd,
+} = await import('./recipe-import')
 
 describe('pickMealFields', () => {
   it('keeps only writable columns', () => {
@@ -198,7 +203,10 @@ describe('parseRecipeJsonLd', () => {
       name: 'Pancakes',
       description: 'Fluffy',
       imageUrl: 'http://img/1.jpg',
-      ingredients: ['2 eggs', '1 cup flour'],
+      ingredients: [
+        { name: 'eggs', qty: 2, unit: null },
+        { name: 'flour', qty: 1, unit: 'cup' },
+      ],
       instructions: 'Mix\nFry',
       calories: 320,
       timeMinutes: 25,
@@ -218,5 +226,51 @@ describe('parseRecipeJsonLd', () => {
     expect(out.instructions).toBe('Step A\nStep B')
     expect(out.calories).toBeUndefined()
     expect(out.ingredients).toBeUndefined()
+  })
+
+  it('parses common ingredient quantities and known units', () => {
+    expect(parseIngredientLine('1 1/2 tablespoons olive oil')).toEqual({
+      name: 'olive oil',
+      qty: 1.5,
+      unit: 'tbsp',
+    })
+    expect(parseIngredientLine('½ cup flour')).toEqual({
+      name: 'flour',
+      qty: 0.5,
+      unit: 'cup',
+    })
+    expect(parseIngredientLine('Salt to taste')).toEqual({
+      name: 'Salt to taste',
+      qty: null,
+      unit: null,
+    })
+  })
+
+  it('falls back to schema.org microdata', () => {
+    const out = parseRecipeHtml(`
+      <article itemscope itemtype="https://schema.org/Recipe">
+        <meta itemprop="name" content="Soup">
+        <div itemprop="recipeIngredient">2 cups water</div>
+        <div itemprop="recipeInstructions">Stir &amp; serve.</div>
+      </article>
+    `)
+    expect(out).toMatchObject({
+      name: 'Soup',
+      ingredients: [{ name: 'water', qty: 2, unit: 'cup' }],
+      instructions: 'Stir & serve.',
+    })
+  })
+
+  it('falls back to common plain HTML recipe markup', () => {
+    const out = parseRecipeHtml(`
+      <meta property="og:title" content="Toast">
+      <li class="recipe-ingredient">2 slices bread</li>
+      <div class="recipe-instructions">Toast the bread.</div>
+    `)
+    expect(out).toMatchObject({
+      name: 'Toast',
+      ingredients: [{ name: 'bread', qty: 2, unit: 'slice' }],
+      instructions: 'Toast the bread.',
+    })
   })
 })

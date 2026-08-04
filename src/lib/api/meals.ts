@@ -1,4 +1,5 @@
 import type { Meal } from '$lib/database/schema'
+import type { ImportedRecipe } from '$lib/types'
 import { jsonBody, request, requestJson } from './http'
 
 export const createMeal = (body: object) =>
@@ -17,7 +18,7 @@ export const setFavorite = (id: number, favorite: boolean) =>
   })
 
 export const importRecipe = (url: string) =>
-  requestJson<Record<string, unknown>>('/meals/import', {
+  requestJson<ImportedRecipe>('/meals/import', {
     method: 'POST',
     body: jsonBody({ url }),
   })

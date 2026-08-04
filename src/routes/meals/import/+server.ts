@@ -1,28 +1,14 @@
 import { json, error } from '@sveltejs/kit'
 import {
   findRecipeNode,
+  parseRecipeHtml,
   parseRecipeJsonLd,
 } from '$lib/server/services/recipe-import'
+import type { ImportedRecipe } from '$lib/types'
 import type { RequestHandler } from './$types'
 
 const FETCH_TIMEOUT_MS = 8000
 const MAX_BODY_BYTES = 2_000_000
-
-// Pull every <script type="application/ld+json"> block out of an HTML string.
-function extractJsonLd(html: string): unknown[] {
-  const docs: unknown[] = []
-  const re =
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-  let m: RegExpExecArray | null
-  while ((m = re.exec(html))) {
-    try {
-      docs.push(JSON.parse(m[1].trim()))
-    } catch {
-      /* skip malformed block */
-    }
-  }
-  return docs
-}
 
 // Basic SSRF guard: only public http(s) URLs. ponytail: hostname-literal check only — does
 // not defend against DNS rebinding; fine for a personal tool, revisit if exposed publicly.
@@ -91,21 +77,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401, 'Not authenticated')
   const { url, text } = await request.json()
 
-  let docs: unknown[] = []
+  let recipe: ImportedRecipe | null = null
   if (typeof text === 'string' && text.trim()) {
     // pasted JSON-LD, or raw HTML source
     try {
-      docs = [JSON.parse(text)]
+      const node = findRecipeNode([JSON.parse(text)])
+      recipe = node ? parseRecipeJsonLd(node) : null
     } catch {
-      docs = extractJsonLd(text)
+      recipe = parseRecipeHtml(text)
     }
   } else if (typeof url === 'string' && url) {
-    docs = extractJsonLd(await fetchRecipeHtml(url))
+    recipe = parseRecipeHtml(await fetchRecipeHtml(url))
   } else {
     error(400, 'Provide a url or text')
   }
 
-  const recipe = findRecipeNode(docs)
   if (!recipe) error(422, "Couldn't find recipe data on that page")
-  return json(parseRecipeJsonLd(recipe))
+  return json(recipe)
 }
