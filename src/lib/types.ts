@@ -42,7 +42,7 @@ export type ImportedRecipe = {
   name?: string
   description?: string
   imageUrl?: string
-  ingredients?: string[]
+  ingredients?: IngredientInput[]
   instructions?: string
   calories?: number
   timeMinutes?: number

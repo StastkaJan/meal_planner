@@ -72,12 +72,9 @@
     importBusy = true
     try {
       const fields = await fetchRecipe(importUrl.trim())
-      const ingredients = (
-        (fields.ingredients as string[] | undefined) ?? []
-      ).map((name) => ({ name, qty: null, unit: null }))
       const created = await createMeal({
         ...fields,
-        ingredients,
+        ingredients: fields.ingredients ?? [],
         scope: 'personal',
       })
       await goto(`/meals/${created.id}`)
