@@ -1,15 +1,9 @@
-import { db } from '$lib/db'
-import { meals } from '$lib/schema'
-import { visibleToUser, favoriteMealIds } from '$lib/server/meals'
+import { favoriteMealIds, listMeals } from '$lib/server/repositories/meals'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const [rows, favIds] = await Promise.all([
-    db
-      .select()
-      .from(meals)
-      .where(visibleToUser(locals.user?.id))
-      .orderBy(meals.name),
+    listMeals(locals.user?.id),
     favoriteMealIds(locals.user?.id),
   ])
   const favoritesOnly = url.searchParams.get('favorites') === '1'

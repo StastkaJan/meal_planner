@@ -1,18 +1,13 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-const mockRecalcDaySlots = vi.hoisted(() => vi.fn())
+const mockRecalculatePlanDay = vi.hoisted(() => vi.fn())
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
-const mockGetUserSettings = vi.hoisted(() => vi.fn())
 
-vi.mock('$lib/server/plans', () => ({
-  recalcDaySlots: mockRecalcDaySlots,
+vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
-  validDateStr: (d: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d))
-      throw Object.assign(new Error('Invalid date'), { status: 400 })
-    return d
-  },
-  getUserSettings: mockGetUserSettings,
+}))
+vi.mock('$lib/server/services/plan-generation', () => ({
+  recalculatePlanDay: mockRecalculatePlanDay,
 }))
 
 import { POST } from './+server'
@@ -44,30 +39,19 @@ describe('POST /plans/:id/recalc-day', () => {
     })
   })
 
-  it("passes the owner's resolved targets and date to recalcDaySlots, returns the fill count", async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    mockGetUserSettings.mockResolvedValueOnce({
-      calorieTarget: 1800,
-      proteinTarget: null,
-      carbsTarget: null,
-      fatTarget: null,
-    })
-    mockRecalcDaySlots.mockResolvedValueOnce(2)
+  it('passes the plan and date to the generation service', async () => {
+    const plan = { id: 1, userId: 1 }
+    mockRequireOwnedPlan.mockResolvedValueOnce(plan)
+    mockRecalculatePlanDay.mockResolvedValueOnce(2)
     const res = await POST(makeEvent({ date: '2026-06-30' }))
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ filled: 2 })
-    expect(mockRecalcDaySlots).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 1 }),
-      '2026-06-30',
-      expect.objectContaining({ calories: 1800 }),
-      1,
-    )
+    expect(mockRecalculatePlanDay).toHaveBeenCalledWith(plan, 1, '2026-06-30')
   })
 
   it('reports filled: 0 when the day has no empty slots', async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
-    mockGetUserSettings.mockResolvedValueOnce(null)
-    mockRecalcDaySlots.mockResolvedValueOnce(0)
+    mockRecalculatePlanDay.mockResolvedValueOnce(0)
     const res = await POST(makeEvent({ date: '2026-06-30' }))
     expect(await res.json()).toEqual({ filled: 0 })
   })

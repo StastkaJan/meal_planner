@@ -10,15 +10,13 @@ const mockDb = vi.hoisted(() => ({
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockUpsertSlot = vi.hoisted(() => vi.fn())
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
-vi.mock('$lib/server/plans', () => ({
+vi.mock('$lib/database', () => ({ db: mockDb }))
+vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
+}))
+vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   upsertSlot: mockUpsertSlot,
-  validDateStr: (d: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d))
-      throw Object.assign(new Error('Invalid date'), { status: 400 })
-    return d
-  },
 }))
 
 import { PUT } from './+server'

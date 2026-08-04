@@ -7,30 +7,25 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('create a plan', async ({ page }) => {
-  await page.getByRole('button', { name: '+ New plan' }).click()
-  await page.getByPlaceholder('Plan name\u2026').fill('My Test Plan')
-  await page.getByRole('button', { name: 'Add' }).click()
-  await expect(page.locator('.tab', { hasText: 'My Test Plan' })).toBeVisible()
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Create plan' }),
+  ).not.toBeVisible()
 })
 
 test('delete a plan', async ({ page }) => {
-  await page.getByRole('button', { name: '+ New plan' }).click()
-  await page.getByPlaceholder('Plan name\u2026').fill('Delete Me')
-  await page.getByRole('button', { name: 'Add' }).click()
-  await expect(page.locator('.tab', { hasText: 'Delete Me' })).toBeVisible()
+  await page.getByRole('button', { name: 'Create plan' }).click()
 
   page.once('dialog', (d) => d.accept())
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
-  await expect(page.locator('.tab', { hasText: 'Delete Me' })).not.toBeVisible()
+  await expect(page.getByRole('button', { name: 'Create plan' })).toBeVisible()
 })
 
 test('a joined repeat pattern propagates a slot pick to the rest of the group', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '+ New plan' }).click()
-  await page.getByPlaceholder('Plan name\u2026').fill('Repeat Plan')
-  await page.getByRole('button', { name: 'Add' }).click()
-  await expect(page.locator('.tab', { hasText: 'Repeat Plan' })).toBeVisible()
+  await page.getByRole('button', { name: 'Create plan' }).click()
 
   await page.getByText('Plan settings').click()
   const lunchRepeatRow = page

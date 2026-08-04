@@ -3,9 +3,8 @@
 </script>
 
 <div class="shopping">
-  <a class="back" href="/?plan={data.planId}&week={data.week}"
-    >← {data.planName}</a
-  >
+  <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
+  <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
   <p class="week">Week of {data.week}</p>
 
@@ -35,11 +34,13 @@
 
 <style lang="scss">
   .shopping {
-    max-width: 480px;
-    padding: 32px;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 34px;
     background: $color-surface;
     border: 1px solid $color-border;
     border-radius: $radius;
+    box-shadow: 0 18px 48px rgb(41 39 33 / 7%);
   }
   .back {
     color: $color-text-muted;
@@ -50,13 +51,23 @@
     }
   }
   h1 {
-    margin: 8px 0 2px;
-    font-size: 1.25rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2.3rem;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+  }
+  .eyebrow {
+    margin-top: 24px;
+    color: $color-accent;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
   .week {
     color: $color-text-muted;
     font-size: 0.85rem;
-    margin: 0 0 20px;
+    margin: 4px 0 24px;
   }
   .empty {
     color: $color-text-muted;
@@ -77,7 +88,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 4px;
+    min-height: 48px;
+    padding: 12px 4px;
     font-size: 0.9rem;
     cursor: pointer;
     &:has(input:checked) span {
@@ -89,5 +101,15 @@
     color: $color-text-muted;
     font-size: 0.8rem;
     margin-left: auto;
+  }
+  input[type='checkbox'] {
+    width: 19px;
+    height: 19px;
+    accent-color: $color-accent;
+  }
+  @media (max-width: 540px) {
+    .shopping {
+      padding: 24px 20px;
+    }
   }
 </style>

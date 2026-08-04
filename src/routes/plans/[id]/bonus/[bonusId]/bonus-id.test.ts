@@ -3,8 +3,11 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockDeleteBonusItem = vi.hoisted(() => vi.fn())
 
-vi.mock('$lib/server/plans', () => ({
+vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
+}))
+vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   deleteBonusItem: mockDeleteBonusItem,
 }))
 

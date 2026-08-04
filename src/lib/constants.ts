@@ -6,8 +6,6 @@ export const MEAL_TYPES = [
   'dinner',
 ] as const
 
-export const DAYS = [0, 1, 2, 3, 4, 5, 6] as const
-
 export const UNIT_OPTIONS = [
   'g',
   'kg',
@@ -24,13 +22,6 @@ export const UNIT_OPTIONS = [
   'oz',
   'lb',
 ] as const
-
-export function mealFitsSlot(
-  allowedSlots: string[],
-  mealType: string,
-): boolean {
-  return !allowedSlots.length || allowedSlots.includes(mealType)
-}
 
 export const DIFF_LABEL: Record<string, string> = {
   easy: 'Easy',
@@ -62,28 +53,3 @@ export const DIET_OPTIONS = [
   'low_fat',
   'high_protein',
 ]
-
-export const NUTRITION_TARGETS = {
-  calories: 2000,
-  proteinG: 50,
-  carbsG: 250,
-  fatG: 65,
-}
-
-// Per-user targets fall back to the global defaults for any column left NULL.
-type UserTargets = {
-  calorieTarget: number | null
-  proteinTarget: number | null
-  carbsTarget: number | null
-  fatTarget: number | null
-}
-export function resolveTargets(u?: UserTargets | null): NutritionTargets {
-  return {
-    calories: u?.calorieTarget ?? NUTRITION_TARGETS.calories,
-    proteinG: u?.proteinTarget ?? NUTRITION_TARGETS.proteinG,
-    carbsG: u?.carbsTarget ?? NUTRITION_TARGETS.carbsG,
-    fatG: u?.fatTarget ?? NUTRITION_TARGETS.fatG,
-  }
-}
-
-type NutritionTargets = typeof NUTRITION_TARGETS

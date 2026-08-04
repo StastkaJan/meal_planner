@@ -3,14 +3,12 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockAddBonusItem = vi.hoisted(() => vi.fn())
 
-vi.mock('$lib/server/plans', () => ({
+vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
+}))
+vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   addBonusItem: mockAddBonusItem,
-  validDateStr: (d: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d))
-      throw Object.assign(new Error('Invalid date'), { status: 400 })
-    return d
-  },
 }))
 
 import { POST } from './+server'

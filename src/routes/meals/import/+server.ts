@@ -1,5 +1,8 @@
 import { json, error } from '@sveltejs/kit'
-import { findRecipeNode, parseRecipeJsonLd } from '$lib/server/meals'
+import {
+  findRecipeNode,
+  parseRecipeJsonLd,
+} from '$lib/server/services/recipe-import'
 import type { RequestHandler } from './$types'
 
 const FETCH_TIMEOUT_MS = 8000

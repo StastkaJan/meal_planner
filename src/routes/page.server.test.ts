@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
@@ -8,19 +8,15 @@ const mockDb = vi.hoisted(() => ({
   limit: vi.fn(),
 }))
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
-vi.mock('$lib/server/plans', () => ({
+vi.mock('$lib/database', () => ({ db: mockDb }))
+vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   getPlanDetail: vi.fn(async (plan: any, week: string) => ({
     ...plan,
     slots: [],
     bonus: [],
     week,
   })),
-  validDateStr: (w: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) throw new Error('Invalid date')
-    return w
-  },
-  getUserSettings: vi.fn(async () => null),
 }))
 
 import { load as loadImpl } from './+page.server'
@@ -41,7 +37,11 @@ describe('load /', () => {
     mockDb.limit.mockResolvedValue([])
   })
 
-  it('defaults to the last plan and its weekStart when no params given', async () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('defaults to the last plan and current week when no params given', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-30T12:00:00Z'))
     mockDb.orderBy
       .mockResolvedValueOnce([
         { id: 1, weekStart: '2026-06-22' },
@@ -50,7 +50,7 @@ describe('load /', () => {
       .mockResolvedValueOnce([])
     const result = await load(makeEvent())
     expect(result.activePlanId).toBe(2)
-    expect(result.viewWeek).toBe('2026-06-29')
+    expect(result.viewWeek).toBe('2026-07-27')
   })
 
   it('uses ?plan= and ?week= when both are provided', async () => {

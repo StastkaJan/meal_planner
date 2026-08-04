@@ -1,47 +1,47 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
-  import { DIFF_LABEL } from '$lib/constants'
+  import {
+    createMeal,
+    deleteMeal as removeMeal,
+    importRecipe as fetchRecipe,
+    setFavorite,
+  } from '$lib/api/meals'
+  import Button from '$lib/components/ui/Button.svelte'
+  import Input from '$lib/components/ui/Input.svelte'
+  import MealsTable from './_components/MealsTable.svelte'
 
   let { data }: { data: PageData } = $props()
-
-  // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let meals = $derived(data.meals)
-
   let creating = $state(false)
-
   let importing = $state(false)
   let importUrl = $state('')
   let importError = $state('')
   let importBusy = $state(false)
 
-  async function handleCreate(e: SubmitEvent) {
-    e.preventDefault()
-    const fd = new FormData(e.target as HTMLFormElement)
-    const res = await fetch('/meals', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: fd.get('name'), scope: fd.get('scope') }),
-    })
-    if (res.ok) {
-      creating = false
-      await goto('/meals')
-    }
+  async function handleCreate(
+    name: FormDataEntryValue | null,
+    scope: FormDataEntryValue | null,
+  ) {
+    const created = await createMeal({ name, scope })
+    if (!data.favoritesOnly)
+      meals = [...meals, { ...created, isFavorite: false }].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      )
+    creating = false
   }
 
   async function deleteMeal(id: number) {
     if (!confirm('Delete this meal?')) return
-    await fetch(`/meals/${id}`, { method: 'DELETE' })
-    await goto('/meals')
+    await removeMeal(id)
+    meals = meals.filter((meal) => meal.id !== id)
   }
 
   async function toggleFavorite(id: number, next: boolean) {
-    await fetch(`/meals/${id}/favorite`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ favorite: next }),
-    })
-    meals = meals.map((m) => (m.id === id ? { ...m, isFavorite: next } : m))
+    await setFavorite(id, next)
+    meals = meals.map((meal) =>
+      meal.id === id ? { ...meal, isFavorite: next } : meal,
+    )
   }
 
   function toggleFavoritesFilter() {
@@ -51,44 +51,23 @@
     })
   }
 
-  // Import parses schema.org data, then creates a personal draft you review/edit on its page.
   async function importRecipe() {
     if (!importUrl.trim() || importBusy) return
     importError = ''
     importBusy = true
     try {
-      const res = await fetch('/meals/import', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url: importUrl.trim() }),
+      const fields = await fetchRecipe(importUrl.trim())
+      const ingredients = (
+        (fields.ingredients as string[] | undefined) ?? []
+      ).map((name) => ({ name, qty: null, unit: null }))
+      const created = await createMeal({
+        ...fields,
+        ingredients,
+        scope: 'personal',
       })
-      if (!res.ok) {
-        importError =
-          (await res.json().catch(() => ({}))).message ?? 'Import failed'
-        return
-      }
-      const fields = await res.json()
-      // Import gives free-text lines; drop each straight into its own name field (qty/unit
-      // blank) rather than guessing a split — the edit form has separate inputs for that.
-      const ingredients = (fields.ingredients ?? []).map((name: string) => ({
-        name,
-        qty: null,
-        unit: null,
-      }))
-      const createRes = await fetch('/meals', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...fields, ingredients, scope: 'personal' }),
-      })
-      if (!createRes.ok) {
-        importError =
-          "Imported the recipe but couldn't save it (missing a name?)"
-        return
-      }
-      const created = await createRes.json()
       await goto(`/meals/${created.id}`)
-    } catch {
-      importError = 'Something went wrong'
+    } catch (error) {
+      importError = error instanceof Error ? error.message : 'Import failed'
     } finally {
       importBusy = false
     }
@@ -97,313 +76,148 @@
 
 <div class="page">
   <div class="top-bar">
-    <h2>Meals</h2>
+    <div>
+      <p class="eyebrow">Recipe library</p>
+      <h1>Meals</h1>
+      <p class="subtitle">Keep your favourites ready for the week ahead.</p>
+    </div>
     <div class="top-actions">
-      <button
-        class="btn ghost"
-        class:active={data.favoritesOnly}
+      <Button
+        variant="secondary"
+        class={data.favoritesOnly ? 'active' : ''}
         onclick={toggleFavoritesFilter}
-        >{data.favoritesOnly ? 'Show all' : 'Favourites only'}</button
       >
-      <button
-        class="btn ghost"
+        {data.favoritesOnly ? 'Show all' : 'Favourites only'}
+      </Button>
+      <Button
+        variant="secondary"
         onclick={() => {
           importing = !importing
           importError = ''
-        }}>Import from URL</button
+        }}>Import from URL</Button
       >
-      <button
-        class="btn"
-        onclick={() => {
-          creating = true
-        }}>+ Add meal</button
-      >
+      <Button onclick={() => (creating = true)}>+ Add meal</Button>
     </div>
   </div>
 
   {#if importing}
     <div class="import-bar">
-      <input
+      <Input
         type="url"
         placeholder="https://…recipe page URL"
         bind:value={importUrl}
-        onkeydown={(e) => {
-          if (e.key === 'Enter') importRecipe()
+        onkeydown={(event) => {
+          if (event.key === 'Enter') importRecipe()
         }}
       />
-      <button class="btn sm" onclick={importRecipe} disabled={importBusy}
-        >{importBusy ? 'Importing…' : 'Import'}</button
-      >
-      <button
-        class="btn sm ghost"
+      <Button size="sm" onclick={importRecipe} disabled={importBusy}>
+        {importBusy ? 'Importing…' : 'Import'}
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
         onclick={() => {
           importing = false
           importError = ''
-        }}>Cancel</button
+        }}>Cancel</Button
       >
       {#if importError}<span class="import-error">{importError}</span>{/if}
     </div>
   {/if}
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Difficulty</th>
-          <th>Time</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#if creating}
-          <tr class="edit-row">
-            <td colspan="4">
-              <form method="POST" onsubmit={handleCreate}>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Meal name"
-                  autofocus
-                />
-                <select name="scope" title="Who can see this recipe">
-                  <option value="global">Everyone</option>
-                  <option value="personal">Just me</option>
-                </select>
-                <button class="btn sm" type="submit">Save</button>
-                <button
-                  class="btn sm ghost"
-                  type="button"
-                  onclick={() => {
-                    creating = false
-                  }}>Cancel</button
-                >
-              </form>
-            </td>
-          </tr>
-        {/if}
-
-        {#each meals as meal (meal.id)}
-          <tr>
-            <td class="meal-name">
-              <a href="/meals/{meal.id}">{meal.name}</a>
-              {#if meal.userId}<span class="own-tag">Personal</span>{/if}
-            </td>
-            <td
-              >{meal.difficulty
-                ? (DIFF_LABEL[meal.difficulty] ?? meal.difficulty)
-                : '—'}</td
-            >
-            <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
-            <td class="actions">
-              <button
-                class="btn sm favorite"
-                class:active={meal.isFavorite}
-                type="button"
-                aria-label={meal.isFavorite
-                  ? 'Unfavourite'
-                  : 'Mark as favourite'}
-                onclick={() => toggleFavorite(meal.id, !meal.isFavorite)}
-                >{meal.isFavorite ? '★' : '☆'}</button
-              >
-              <button
-                class="btn sm danger"
-                type="button"
-                onclick={() => deleteMeal(meal.id)}>Delete</button
-              >
-            </td>
-          </tr>
-        {:else}
-          <tr>
-            <td colspan="4" class="empty"
-              >{data.favoritesOnly ? 'No favourites yet.' : 'No meals yet.'}</td
-            >
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+  <MealsTable
+    {meals}
+    bind:creating
+    emptyMessage={data.favoritesOnly ? 'No favourites yet.' : 'No meals yet.'}
+    onCreate={handleCreate}
+    onDelete={deleteMeal}
+    onFavorite={toggleFavorite}
+  />
 </div>
 
 <style lang="scss">
   .page {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: grid;
+    gap: 1.4rem;
   }
 
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .top-actions {
-    display: flex;
-    gap: 6px;
-  }
-  h2 {
-    font-size: 1.2rem;
-    font-weight: 600;
-  }
-
+  .top-bar,
+  .top-actions,
   .import-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius;
-
-    input {
-      flex: 1;
-      background: $color-surface-2;
-      border: 1px solid $color-border;
-      border-radius: $radius-sm;
-      padding: 6px 10px;
-      color: $color-text;
-      font-size: 0.875rem;
-      &:focus {
-        outline: 2px solid $color-accent;
-        border-color: transparent;
-      }
-    }
-    .import-error {
-      color: $color-danger;
-      font-size: 0.8rem;
-    }
+    gap: 0.4rem;
   }
 
-  .table-wrap {
-    border: 1px solid $color-border;
-    border-radius: $radius;
-    overflow: hidden;
+  .top-bar {
+    justify-content: space-between;
+    align-items: flex-end;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-  }
-  thead {
-    background: $color-surface;
-  }
-  th {
-    text-align: left;
-    padding: 10px 12px;
-    color: $color-text-muted;
+
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 750;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    border-bottom: 2px solid $color-border;
-  }
-  td {
-    padding: 10px 12px;
-    border-top: 1px solid $color-border;
-    color: $color-text;
-  }
-  tr:first-child td {
-    border-top: none;
-  }
-  tbody tr:hover td {
-    background: $color-surface-2;
   }
 
-  .meal-name {
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: 500;
-    a {
-      color: $color-text;
-      text-decoration: none;
-      &:hover {
-        color: $color-accent;
-      }
-    }
-    .own-tag {
-      margin-left: 8px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: $color-accent;
-      border: 1px solid $color-accent-dim;
-      border-radius: 999px;
-      padding: 1px 7px;
-    }
+    letter-spacing: -0.04em;
+    line-height: 1.05;
   }
 
-  .edit-row td {
-    padding: 4px 6px;
+  .subtitle {
+    margin-top: 8px;
+    color: $color-text-muted;
+    font-size: 0.95rem;
+  }
+
+  .top-actions :global(.active) {
+    border-color: $color-accent;
+    color: $color-accent;
+  }
+
+  .import-bar {
+    padding: 0.8rem;
+    border: 1px solid $color-border;
+    border-radius: $radius;
     background: $color-surface;
+    box-shadow: 0 8px 24px rgb(41 39 33 / 4%);
   }
-  .edit-row form {
-    display: flex;
-    gap: 4px;
-  }
-  .edit-row input {
+
+  .import-bar :global(.ui-input) {
     flex: 1;
   }
-  .edit-row input,
-  .edit-row select {
-    background: $color-surface-2;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    padding: 5px 8px;
-    color: $color-text;
-    &:focus {
-      outline: 2px solid $color-accent;
-      border-color: transparent;
-    }
+
+  .import-error {
+    color: $color-danger;
+    font-size: 0.8rem;
   }
 
-  .actions {
-    display: flex;
-    gap: 4px;
-    justify-content: flex-end;
-  }
-
-  .btn {
-    padding: 5px 14px;
-    background: $color-accent;
-    border: none;
-    border-radius: $radius-sm;
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: opacity 0.15s;
-    &:hover {
-      opacity: 0.85;
+  @media (max-width: 720px) {
+    .top-bar {
+      align-items: flex-start;
+      flex-direction: column;
     }
-    &.sm {
-      padding: 3px 10px;
-      font-size: 0.8rem;
+    .top-actions {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 2px;
     }
-    &.ghost {
-      background: $color-surface;
-      color: $color-text-muted;
-      border: 1px solid $color-border;
-      &.active {
-        color: $color-accent;
-        border-color: $color-accent-dim;
-      }
+    .top-actions :global(.ui-button) {
+      flex: 0 0 auto;
     }
-    &.danger {
-      background: $color-danger;
+    .import-bar {
+      align-items: stretch;
+      flex-wrap: wrap;
     }
-    &.favorite {
-      background: $color-surface;
-      color: $color-text-muted;
-      border: 1px solid $color-border;
-      &.active {
-        color: $color-accent;
-        border-color: $color-accent-dim;
-      }
+    .import-bar :global(.ui-input) {
+      flex-basis: 100%;
     }
-  }
-
-  .empty {
-    text-align: center;
-    color: $color-text-muted;
-    padding: 32px;
   }
 </style>

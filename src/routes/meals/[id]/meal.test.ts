@@ -11,10 +11,10 @@ const mockDb = vi.hoisted(() => ({
   delete: vi.fn().mockReturnThis(),
 }))
 
-vi.mock('$lib/db', () => ({ db: mockDb }))
+vi.mock('$lib/database', () => ({ db: mockDb }))
 
 const updateMeal = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/meals', async (importOriginal) => ({
+vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   updateMeal,
 }))
@@ -35,10 +35,10 @@ describe('REST /meals/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
   describe('PATCH', () => {
-    it('rejects non-owner with 403', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
+    it('hides non-owner meals with 404', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
       await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
-        status: 403,
+        status: 404,
       })
     })
 
@@ -64,28 +64,30 @@ describe('REST /meals/:id', () => {
       expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' })
     })
 
-    it('delegates to updateMeal for a global meal', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: null, archivedAt: null }])
+    it('does not allow editing a global meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
       updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
-      await PATCH(makeEvent({ name: 'updated' }))
-      expect(updateMeal).toHaveBeenCalled()
+      await expect(PATCH(makeEvent({ name: 'updated' }))).rejects.toMatchObject(
+        {
+          status: 404,
+        },
+      )
+      expect(updateMeal).not.toHaveBeenCalled()
     })
 
-    it('rejects archived meal with 403', async () => {
-      mockDb.limit.mockResolvedValueOnce([
-        { userId: 1, archivedAt: new Date() },
-      ])
+    it('hides archived meals with 404', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
       await expect(PATCH(makeEvent({ name: 'x' }))).rejects.toMatchObject({
-        status: 403,
+        status: 404,
       })
     })
   })
 
   describe('DELETE', () => {
-    it('rejects non-owner with 403', async () => {
-      mockDb.limit.mockResolvedValueOnce([{ userId: 2, archivedAt: null }])
+    it('hides non-owner meals with 404', async () => {
+      mockDb.limit.mockResolvedValueOnce([])
       await expect(DELETE(makeEvent())).rejects.toMatchObject({
-        status: 403,
+        status: 404,
       })
     })
 

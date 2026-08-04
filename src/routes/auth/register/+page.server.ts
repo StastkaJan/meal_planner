@@ -1,13 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { users } from '$lib/schema'
 import {
-  hashPassword,
-  createSession,
   checkRateLimit,
+  createSession,
   MAX_PASSWORD,
-} from '$lib/auth'
+  register,
+} from '$lib/server/services/auth'
 import type { Actions } from './$types'
 
 export const actions: Actions = {
@@ -26,17 +23,8 @@ export const actions: Actions = {
     if (password.length > MAX_PASSWORD)
       return fail(400, { error: 'Password must be at most 128 characters' })
 
-    const [existing] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1)
-    if (existing) return fail(400, { error: 'Email already in use' })
-
-    const [user] = await db
-      .insert(users)
-      .values({ email, passwordHash: await hashPassword(password) })
-      .returning()
+    const user = await register(email, password)
+    if (!user) return fail(400, { error: 'Email already in use' })
 
     await createSession(user.id, cookies)
     redirect(303, '/')

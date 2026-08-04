@@ -1,8 +1,6 @@
 import { error } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { slotRepeats } from '$lib/schema'
-import { requireOwnedPlan } from '$lib/server/plans'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { setSlotRepeat } from '$lib/server/repositories/plans'
 import { MEAL_TYPES } from '$lib/constants'
 import type { RequestHandler } from './$types'
 
@@ -20,23 +18,6 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   )
     error(400, 'Invalid groupBreaks')
 
-  if (groupBreaks === null) {
-    await db
-      .delete(slotRepeats)
-      .where(
-        and(
-          eq(slotRepeats.planId, plan.id),
-          eq(slotRepeats.mealType, mealType),
-        ),
-      )
-  } else {
-    await db
-      .insert(slotRepeats)
-      .values({ planId: plan.id, mealType, groupBreaks })
-      .onConflictDoUpdate({
-        target: [slotRepeats.planId, slotRepeats.mealType],
-        set: { groupBreaks },
-      })
-  }
+  await setSlotRepeat(plan.id, mealType, groupBreaks)
   return new Response(null, { status: 204 })
 }

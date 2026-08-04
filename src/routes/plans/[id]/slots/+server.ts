@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { meals } from '$lib/schema'
-import { requireOwnedPlan, validDateStr, upsertSlot } from '$lib/server/plans'
-import { visibleToUser } from '$lib/server/meals'
-import { MEAL_TYPES, mealFitsSlot } from '$lib/constants'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { validDateStr } from '$lib/server/services/date'
+import { findAllowedMeal } from '$lib/server/repositories/meals'
+import { upsertSlot } from '$lib/server/repositories/plans'
+import { MEAL_TYPES } from '$lib/constants'
+import { mealFitsSlot } from '$lib/domain/meals'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
@@ -16,11 +16,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
     error(400, 'Invalid mealType')
 
   if (mealId != null) {
-    const [m] = await db
-      .select({ id: meals.id, allowedSlots: meals.allowedSlots })
-      .from(meals)
-      .where(and(eq(meals.id, mealId), visibleToUser(plan.userId)))
-      .limit(1)
+    const m = await findAllowedMeal(mealId, plan.userId)
     if (!m) error(404, 'Meal not found')
     if (!mealFitsSlot(m.allowedSlots, mealType))
       error(400, 'Meal not allowed for this slot type')

@@ -1,29 +1,21 @@
 import { json, error } from '@sveltejs/kit'
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { meals } from '$lib/schema'
-import { pickMealFields, assertCanEdit, updateMeal } from '$lib/server/meals'
+import { requireEditableMeal } from '$lib/server/guards'
+import { archiveMeal } from '$lib/server/repositories/meals'
+import { updateUserMeal } from '$lib/server/services/meals'
 import type { RequestHandler } from './$types'
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-  if (!locals.user) error(401, 'Not authenticated')
   const id = Number(params.id)
-  await assertCanEdit(id, locals.user.id)
-  const values = pickMealFields(await request.json())
-  const updated = await updateMeal(id, values)
+  await requireEditableMeal(locals, id)
+  const updated = await updateUserMeal(id, await request.json())
   if (!updated) error(404, 'Meal not found')
   return json(updated)
 }
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) error(401, 'Not authenticated')
   const id = Number(params.id)
-  await assertCanEdit(id, locals.user.id)
-  const [deleted] = await db
-    .update(meals)
-    .set({ archivedAt: new Date() })
-    .where(eq(meals.id, id))
-    .returning()
+  await requireEditableMeal(locals, id)
+  const deleted = await archiveMeal(id)
   if (!deleted) error(404, 'Meal not found')
   return new Response(null, { status: 204 })
 }

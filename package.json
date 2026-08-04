@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "npx tsx src/lib/seed.ts",
+    "db:seed": "npx tsx src/lib/database/seed.ts",
     "test": "playwright test",
     "test:unit": "vitest run",
     "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",

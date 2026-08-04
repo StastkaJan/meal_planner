@@ -1,22 +1,19 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
-  import { addDays } from '$lib/date'
-  import WeekTable from '$lib/components/WeekTable.svelte'
-  import PlanSettings from '$lib/components/PlanSettings.svelte'
+  import { addDays } from '$lib/utils/date-time'
+  import * as planApi from '$lib/api/plans'
+  import WeekTable from './_components/WeekTable.svelte'
+  import PlanSettings from './_components/PlanSettings.svelte'
 
   let { data }: { data: PageData } = $props()
 
-  let creating = $state(false)
-  let newPlanName = $state('')
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
 
   async function refreshPlan() {
     if (!plan) return
-    plan = await fetch(`/plans/${plan.id}?week=${data.viewWeek}`).then((r) =>
-      r.json(),
-    )
+    plan = await planApi.getPlan(plan.id, data.viewWeek)
   }
 
   function planUrl(planId: number, week: string) {
@@ -32,26 +29,14 @@
     })
   }
 
-  function switchPlan(id: number) {
-    const week = data.plans.find((p) => p.id === id)?.weekStart ?? data.viewWeek
-    goto(planUrl(id, week), { noScroll: true, keepFocus: true })
-  }
-
   async function createPlan() {
-    if (!newPlanName.trim()) return
-    const created = await fetch('/plans', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: newPlanName.trim() }),
-    }).then((r) => r.json())
-    newPlanName = ''
-    creating = false
+    const created = await planApi.createPlan()
     await goto(planUrl(created.id, created.weekStart))
   }
 
   async function deletePlan(id: number) {
     if (!confirm('Delete this plan?')) return
-    await fetch(`/plans/${id}`, { method: 'DELETE' })
+    await planApi.deletePlan(id)
     await goto('/')
   }
 
@@ -61,21 +46,17 @@
     mealId: number | null,
   ) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/slots`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date, mealType, mealId }),
-    })
+    await planApi.setSlot(plan.id, date, mealType, mealId)
     await refreshPlan()
   }
 
   async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
-    const { filled } = await fetch(`/plans/${plan.id}/autocompose`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ week: data.viewWeek, favoritesOnly }),
-    }).then((r) => r.json())
+    const { filled } = await planApi.populatePlan(
+      plan.id,
+      data.viewWeek,
+      favoritesOnly,
+    )
     if (filled === 0) {
       alert(
         favoritesOnly
@@ -95,11 +76,7 @@
       )
     )
       return
-    await fetch(`/plans/${plan.id}/copy-week`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ from, to: data.viewWeek }),
-    })
+    await planApi.copyWeek(plan.id, from, data.viewWeek)
     await refreshPlan()
   }
 
@@ -123,31 +100,21 @@
     },
   ) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/bonus`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date, ...fields }),
-    })
+    const res = await planApi.addBonus(plan.id, { date, ...fields })
     if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleDeleteBonus(id: number) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/bonus/${id}`, {
-      method: 'DELETE',
-    })
+    const res = await planApi.deleteBonus(plan.id, id)
     if (await alertIfFailed(res)) return
     await refreshPlan()
   }
 
   async function handleRecalcDay(date: string) {
     if (!plan) return
-    const res = await fetch(`/plans/${plan.id}/recalc-day`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ date }),
-    })
+    const res = await planApi.recalculateDay(plan.id, date)
     if (await alertIfFailed(res)) return
     const { filled } = await res.json()
     if (filled === 0)
@@ -155,80 +122,40 @@
     await refreshPlan()
   }
 
-  async function handleSettingsChange(patch: object) {
-    if (!plan) return
-    const updated = await fetch(`/plans/${plan.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(patch),
-    }).then((r) => r.json())
-    plan = { ...plan, ...updated }
-  }
-
   async function handleRepeatChange(mealType: string, groupBreaks: boolean[]) {
     if (!plan) return
-    await fetch(`/plans/${plan.id}/slot-repeats`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mealType, groupBreaks }),
-    })
+    await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
     await refreshPlan()
   }
 </script>
 
 <div class="page">
-  <div class="plan-bar">
-    <div class="plan-tabs">
-      {#each data.plans as p (p.id)}
-        <button
-          class="tab"
-          class:active={p.id === data.activePlanId}
-          onclick={() => switchPlan(p.id)}>{p.name}</button
-        >
-      {/each}
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Weekly planner</p>
+      <h1>Meal plan</h1>
+      <p class="subtitle">Plan the week, balance nutrition, shop once.</p>
     </div>
-
+  </div>
+  <div class="plan-bar">
     <div class="plan-actions">
-      {#if creating}
-        <input
-          class="new-name"
-          type="text"
-          placeholder="Plan name…"
-          bind:value={newPlanName}
-          onkeydown={(e) => {
-            if (e.key === 'Enter') createPlan()
-            if (e.key === 'Escape') creating = false
-          }}
-          autofocus
-        />
-        <button class="btn" onclick={createPlan}>Add</button>
-        <button class="btn ghost" onclick={() => (creating = false)}
-          >Cancel</button
-        >
+      {#if !plan}
+        <button class="btn" onclick={createPlan}>Create plan</button>
       {:else}
-        <button class="btn" onclick={() => (creating = true)}>+ New plan</button
+        <a
+          class="btn"
+          href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
+          >Shopping list</a
         >
-        {#if data.activePlanId}
-          <a
-            class="btn"
-            href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
-            >Shopping list</a
-          >
-          <button
-            class="btn danger"
-            onclick={() => deletePlan(data.activePlanId)}>Delete</button
-          >
-        {/if}
+        <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
+          >Delete</button
+        >
       {/if}
     </div>
   </div>
 
   {#if plan}
-    <PlanSettings
-      {plan}
-      onChange={handleSettingsChange}
-      onRepeatChange={handleRepeatChange}
-    />
+    <PlanSettings {plan} onRepeatChange={handleRepeatChange} />
     <WeekTable
       {plan}
       meals={data.meals}
@@ -244,7 +171,7 @@
       onNextWeek={() => shiftWeek(1)}
     />
   {:else if data.plans.length === 0}
-    <p class="empty-state">No plans yet. Create one to get started.</p>
+    <p class="empty-state">Create your meal plan to get started.</p>
   {:else}
     <p class="empty-state">Loading…</p>
   {/if}
@@ -254,87 +181,98 @@
   .page {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 18px;
+  }
+  .page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+  .subtitle {
+    margin-top: 8px;
+    color: $color-text-muted;
+    font-size: 0.95rem;
   }
   .plan-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .plan-tabs {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-  .tab {
-    padding: 5px 14px;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: $color-text-muted;
-    transition: all 0.15s;
-
-    &:hover {
-      color: $color-text;
-      border-color: $color-accent-dim;
-    }
-    &.active {
-      background: $color-accent-dim;
-      border-color: $color-accent;
-      color: $color-text;
-    }
+    gap: 12px;
+    padding-bottom: 2px;
   }
   .plan-actions {
     display: flex;
     gap: 6px;
     align-items: center;
-  }
-  .new-name {
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    padding: 5px 10px;
-    color: $color-text;
-    width: 160px;
-    &:focus {
-      outline: 2px solid $color-accent;
-      border-color: transparent;
-    }
+    flex-wrap: wrap;
   }
   .btn {
     display: inline-flex;
     align-items: center;
     text-decoration: none;
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
     color: #fff;
     cursor: pointer;
     font-size: 0.85rem;
-    font-weight: 500;
-    transition: opacity 0.15s;
+    font-weight: 650;
+    transition:
+      transform 0.15s,
+      box-shadow 0.15s;
     &:hover {
-      opacity: 0.85;
-    }
-    &.ghost {
-      background: $color-surface;
-      color: $color-text-muted;
-      border: 1px solid $color-border;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgb(41 39 33 / 12%);
     }
     &.danger {
-      background: $color-danger;
+      border: 1px solid rgb(184 59 50 / 18%);
+      background: #f9e4e1;
+      color: $color-danger;
     }
   }
   .empty-state {
     color: $color-text-muted;
     font-size: 0.9rem;
-    padding: 40px 0;
+    padding: 72px 24px;
+    border: 1px dashed $color-border;
+    border-radius: $radius;
+    background: rgb(255 253 249 / 55%);
     text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    .page {
+      gap: 14px;
+    }
+    .plan-bar {
+      align-items: flex-start;
+    }
+    .plan-actions {
+      width: 100%;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 2px;
+    }
+    .btn {
+      flex: 0 0 auto;
+    }
   }
 </style>

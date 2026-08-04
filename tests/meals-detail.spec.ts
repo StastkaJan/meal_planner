@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { register, uniqueEmail } from './helpers'
 
 test.beforeEach(async ({ page }) => {
+  await register(page, uniqueEmail())
   await page.goto('/meals')
   await page.waitForLoadState('networkidle')
 })
@@ -10,10 +12,13 @@ test('meal name links to detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
-  await page.getByText(name).click()
+  await Promise.all([
+    page.waitForURL(/\/meals\/\d+$/),
+    page.getByRole('link', { name, exact: true }).click(),
+  ])
   await expect(page.locator('h1')).toHaveText(name)
   await expect(page).not.toHaveURL('/meals')
 })
@@ -23,10 +28,13 @@ test('edit meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
-  await page.getByText(name).click()
+  await Promise.all([
+    page.waitForURL(/\/meals\/\d+$/),
+    page.getByRole('link', { name, exact: true }).click(),
+  ])
 
   await page.getByRole('button', { name: 'Edit' }).click()
   const updated = `Updated-${Date.now()}`
@@ -40,10 +48,13 @@ test('delete meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
   await page
-    .locator('tbody tr:first-child')
+    .locator('.create-form')
     .getByRole('button', { name: 'Save' })
     .click()
-  await page.getByText(name).click()
+  await Promise.all([
+    page.waitForURL(/\/meals\/\d+$/),
+    page.getByRole('link', { name, exact: true }).click(),
+  ])
 
   page.once('dialog', (d) => d.accept())
   await page.getByRole('button', { name: 'Delete' }).click()

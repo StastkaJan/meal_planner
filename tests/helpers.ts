@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test'
 
+let ipOctet = 1
+
 export function uniqueEmail() {
   return `test-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@test.com`
 }
@@ -9,6 +11,9 @@ export async function register(
   email: string,
   password = 'password1',
 ) {
+  await page.setExtraHTTPHeaders({
+    'x-forwarded-for': `192.0.2.${ipOctet++}`,
+  })
   await page.goto('/auth/register')
   await page.fill('input[name="email"]', email)
   await page.fill('input[name="password"]', password)

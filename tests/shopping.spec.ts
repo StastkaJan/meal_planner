@@ -9,10 +9,7 @@ test.beforeEach(async ({ page }) => {
 test('shopping list sums ingredient quantities across repeated meals', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '+ New plan' }).click()
-  await page.getByPlaceholder('Plan name…').fill('Shopping Test')
-  await page.getByRole('button', { name: 'Add' }).click()
-  await expect(page.locator('.tab', { hasText: 'Shopping Test' })).toBeVisible()
+  await page.getByRole('button', { name: 'Create plan' }).click()
 
   // Assign the seeded "Oatmeal with Berries" meal (1 tbsp honey) to two breakfast slots.
   const breakfastCells = page.locator('button.cell.breakfast')

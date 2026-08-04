@@ -1,25 +1,17 @@
-import { eq } from 'drizzle-orm'
-import { db } from '$lib/db'
-import { plans as plansTable, meals as mealsTable } from '$lib/schema'
-import { getPlanDetail, validDateStr, getUserSettings } from '$lib/server/plans'
-import { visibleToUser } from '$lib/server/meals'
-import { resolveTargets } from '$lib/constants'
+import { validDateStr } from '$lib/server/services/date'
+import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
+import { listMeals } from '$lib/server/repositories/meals'
+import { getSettings } from '$lib/server/repositories/accounts'
+import { resolveTargets } from '$lib/domain/nutrition'
+import { mondayOf } from '$lib/utils/date-time'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
   const [plans, meals, u] = await Promise.all([
-    db
-      .select()
-      .from(plansTable)
-      .where(eq(plansTable.userId, userId))
-      .orderBy(plansTable.id),
-    db
-      .select()
-      .from(mealsTable)
-      .where(visibleToUser(userId))
-      .orderBy(mealsTable.name),
-    getUserSettings(userId),
+    listPlans(userId),
+    listMeals(userId),
+    getSettings(userId),
   ])
   const targets = resolveTargets(u)
 
@@ -31,7 +23,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   }
 
   const viewWeek = validDateStr(
-    url.searchParams.get('week') || activePlan.weekStart,
+    url.searchParams.get('week') ??
+      mondayOf(new Date().toISOString().slice(0, 10)),
   )
   const plan = await getPlanDetail(activePlan, viewWeek)
 

@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD CONSTRAINT "plans_user_id_unique" UNIQUE("user_id");

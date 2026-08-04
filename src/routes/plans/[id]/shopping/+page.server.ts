@@ -1,8 +1,6 @@
-import {
-  requireOwnedPlan,
-  validDateStr,
-  getShoppingList,
-} from '$lib/server/plans'
+import { requireOwnedPlan } from '$lib/server/guards'
+import { validDateStr } from '$lib/server/services/date'
+import { getShoppingList } from '$lib/server/repositories/plans'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
@@ -11,7 +9,6 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
   return {
     planId: plan.id,
-    planName: plan.name,
     week,
     items: await getShoppingList(plan.id, week),
   }

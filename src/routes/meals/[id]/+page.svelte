@@ -1,24 +1,21 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import MealEditForm from './MealEditForm.svelte'
+  import { deleteMeal as removeMeal } from '$lib/api/meals'
+  import MealEditForm from './_components/MealEditForm.svelte'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
 
   let { data }: { data: PageData } = $props()
+  let meal = $derived(data.meal)
   let editing = $state(false)
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
   // rescales the displayed numbers only (ingredient text is free-form, left untouched).
-  const base = $derived(data.meal.servings || 1)
-  let servings = $state(data.meal.servings || 1)
+  const base = $derived(meal.servings || 1)
+  let servings = $derived(meal.servings || 1)
   const factor = $derived(servings / base)
   const hasNutrition = $derived(
-    !!(
-      data.meal.calories ||
-      data.meal.proteinG ||
-      data.meal.carbsG ||
-      data.meal.fatG
-    ),
+    !!(meal.calories || meal.proteinG || meal.carbsG || meal.fatG),
   )
   const scale = (v: number | null) =>
     v == null ? null : Math.round(Number(v) * factor)
@@ -27,7 +24,7 @@
 
   async function deleteMeal() {
     if (!confirm('Delete this meal?')) return
-    await fetch(`/meals/${data.meal.id}`, { method: 'DELETE' })
+    await removeMeal(meal.id)
     await goto('/meals')
   }
 </script>
@@ -35,45 +32,51 @@
 <div class="page">
   {#if editing}
     <MealEditForm
-      meal={data.meal}
+      {meal}
       ingredients={data.ingredients}
       onCancel={() => (editing = false)}
-      onSaved={() => (editing = false)}
+      onSaved={(updated) => {
+        meal = updated
+        editing = false
+      }}
     />
   {:else}
     <div class="top-bar">
       <a class="back" href="/meals">← Meals</a>
-      <div class="actions">
-        <button class="btn ghost sm" onclick={() => (editing = true)}
-          >Edit</button
-        >
-        <button class="btn danger sm" type="button" onclick={deleteMeal}
-          >Delete</button
-        >
-      </div>
+      {#if meal.userId}
+        <div class="actions">
+          <button class="btn ghost sm" onclick={() => (editing = true)}
+            >Edit</button
+          >
+          <button class="btn danger sm" type="button" onclick={deleteMeal}
+            >Delete</button
+          >
+        </div>
+      {/if}
     </div>
 
     <div class="detail">
-      {#if data.meal.imageUrl}
-        <img class="hero" src={data.meal.imageUrl} alt={data.meal.name} />
+      {#if meal.imageUrl}
+        <img class="hero" src={meal.imageUrl} alt={meal.name} />
       {/if}
 
       <div class="header">
-        <h1>{data.meal.name}</h1>
+        <div class="title">
+          <p class="eyebrow">Recipe</p>
+          <h1>{meal.name}</h1>
+        </div>
         <div class="meta">
-          {#if data.meal.timeMinutes}<span class="badge"
-              >{data.meal.timeMinutes} min</span
+          {#if meal.timeMinutes}<span class="badge">{meal.timeMinutes} min</span
             >{/if}
-          {#if data.meal.difficulty}<span
-              class="badge diff-{data.meal.difficulty}"
-              >{DIFF_LABEL[data.meal.difficulty] ?? data.meal.difficulty}</span
+          {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
+              >{DIFF_LABEL[meal.difficulty] ?? meal.difficulty}</span
             >{/if}
         </div>
       </div>
 
-      {#if data.meal.tags?.length}
+      {#if meal.tags?.length}
         <div class="chips">
-          {#each data.meal.tags as tag}
+          {#each meal.tags as tag}
             <span class="chip">{tag.replace('_', ' ')}</span>
           {/each}
         </div>
@@ -95,20 +98,17 @@
             >
           </div>
           <div class="nutrition">
-            {#if data.meal.calories}<span>{scale(data.meal.calories)} kcal</span
+            {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
+            {#if meal.proteinG}<span>{scaleG(meal.proteinG)}g protein</span
               >{/if}
-            {#if data.meal.proteinG}<span
-                >{scaleG(data.meal.proteinG)}g protein</span
-              >{/if}
-            {#if data.meal.carbsG}<span>{scaleG(data.meal.carbsG)}g carbs</span
-              >{/if}
-            {#if data.meal.fatG}<span>{scaleG(data.meal.fatG)}g fat</span>{/if}
+            {#if meal.carbsG}<span>{scaleG(meal.carbsG)}g carbs</span>{/if}
+            {#if meal.fatG}<span>{scaleG(meal.fatG)}g fat</span>{/if}
           </div>
         </div>
       {/if}
 
-      {#if data.meal.description}
-        <p class="description">{data.meal.description}</p>
+      {#if meal.description}
+        <p class="description">{meal.description}</p>
       {/if}
 
       {#if data.ingredients.length}
@@ -126,10 +126,10 @@
         </section>
       {/if}
 
-      {#if data.meal.instructions}
+      {#if meal.instructions}
         <section>
           <h2>Instructions</h2>
-          <p class="instructions">{data.meal.instructions}</p>
+          <p class="instructions">{meal.instructions}</p>
         </section>
       {/if}
     </div>
@@ -141,7 +141,8 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 720px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .top-bar {
@@ -166,14 +167,15 @@
   .detail {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
   }
 
   .hero {
     width: 100%;
-    max-height: 360px;
+    max-height: 480px;
     object-fit: cover;
-    border-radius: $radius-sm;
+    border-radius: $radius;
+    box-shadow: 0 18px 48px rgb(41 39 33 / 10%);
   }
 
   .header {
@@ -182,15 +184,29 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
+  .title {
     flex: 1;
   }
+  .eyebrow {
+    margin-bottom: 4px;
+    color: $color-accent;
+    font-size: 0.7rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
   h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 8px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    margin-bottom: 12px;
   }
 
   .meta {
@@ -225,7 +241,11 @@
   .nutrition-block {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    background: $color-surface;
   }
 
   .servings-step {
@@ -238,7 +258,7 @@
     button {
       width: 24px;
       height: 24px;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
       background: $color-surface-2;
       color: $color-text;
       border-radius: $radius-sm;
@@ -254,7 +274,7 @@
     display: flex;
     gap: 16px;
     font-size: 0.85rem;
-    color: $color-text-muted;
+    color: $color-text;
     flex-wrap: wrap;
   }
 
@@ -269,7 +289,7 @@
     gap: 4px;
     padding: 4px 10px;
     background: $color-surface-2;
-    border: 1px solid $color-border;
+    border: 1px solid $color-border-strong;
     border-radius: 999px;
     font-size: 0.78rem;
     color: $color-text-muted;
@@ -277,12 +297,19 @@
 
   .description {
     color: $color-text-muted;
-    line-height: 1.6;
+    max-width: 700px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem;
+    line-height: 1.7;
   }
 
   section {
     display: flex;
     flex-direction: column;
+    padding: 22px;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    background: $color-surface;
   }
 
   ul {
@@ -301,7 +328,8 @@
   }
 
   .btn {
-    padding: 5px 14px;
+    min-height: 38px;
+    padding: 7px 14px;
     background: $color-accent;
     border: none;
     border-radius: $radius-sm;
@@ -320,10 +348,24 @@
     &.ghost {
       background: $color-surface;
       color: $color-text-muted;
-      border: 1px solid $color-border;
+      border: 1px solid $color-border-strong;
     }
     &.danger {
-      background: $color-danger;
+      border: 1px solid rgb(184 59 50 / 18%);
+      background: #f9e4e1;
+      color: $color-danger;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .header {
+      flex-direction: column;
+    }
+    .meta {
+      padding-top: 0;
+    }
+    section {
+      padding: 18px;
     }
   }
 </style>
