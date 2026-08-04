@@ -79,7 +79,3 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 - **Cuisine and diet share one tag field** — the UI separates the choices, but
   the database does not prevent a cuisine tag from being used as a diet tag or
   vice versa. `allowedSlots` is separate and acts as a hard restriction.
-
-## Future opportunities
-
-- **Ingredient-quantity scaling** alongside the nutrition serving stepper.
