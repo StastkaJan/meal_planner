@@ -21,6 +21,7 @@
     v == null ? null : Math.round(Number(v) * factor)
   const scaleG = (v: string | null) =>
     v == null ? null : (Number(v) * factor).toFixed(1)
+  const scaleQty = (v: number) => Number((v * factor).toFixed(2))
 
   async function deleteMeal() {
     if (!confirm('Delete this meal?')) return
@@ -82,7 +83,7 @@
         </div>
       {/if}
 
-      {#if hasNutrition}
+      {#if hasNutrition || data.ingredients.length}
         <div class="nutrition-block">
           <div class="servings-step">
             <button
@@ -97,13 +98,15 @@
               onclick={() => (servings += 1)}>+</button
             >
           </div>
-          <div class="nutrition">
-            {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
-            {#if meal.proteinG}<span>{scaleG(meal.proteinG)}g protein</span
-              >{/if}
-            {#if meal.carbsG}<span>{scaleG(meal.carbsG)}g carbs</span>{/if}
-            {#if meal.fatG}<span>{scaleG(meal.fatG)}g fat</span>{/if}
-          </div>
+          {#if hasNutrition}
+            <div class="nutrition">
+              {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
+              {#if meal.proteinG}<span>{scaleG(meal.proteinG)}g protein</span
+                >{/if}
+              {#if meal.carbsG}<span>{scaleG(meal.carbsG)}g carbs</span>{/if}
+              {#if meal.fatG}<span>{scaleG(meal.fatG)}g fat</span>{/if}
+            </div>
+          {/if}
         </div>
       {/if}
 
@@ -118,7 +121,7 @@
             {#each data.ingredients as ing}
               <li>
                 {ing.qty !== null
-                  ? `${ing.qty}${ing.unit ? ' ' + ing.unit : ''} `
+                  ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + ing.unit : ''} `
                   : ''}{ing.name}
               </li>
             {/each}
