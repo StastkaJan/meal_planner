@@ -4,51 +4,56 @@ _One structured place for every meal — the building blocks the calendar plans 
 
 ## Problem
 
-Meal planning is only as good as the meals you can choose from. Recipes
-scattered across bookmarks, screenshots, and memory can't be searched, can't be
-compared on nutrition, and can't be reused by a planner. Without a structured
-library, every plan starts from nothing.
+Meal planning is only as useful as the meals available to choose from. Recipes
+scattered across bookmarks, screenshots, and memory cannot be compared,
+filtered, or reused reliably. Without a structured library, every plan starts
+from scratch.
 
 ## Solution
 
-A shared library of meals, each stored as a full recipe: name, image, cook time,
-difficulty, calories and macros, cuisine/diet tags, description, ingredients,
-and instructions. Browse them in a list, open one for the full detail view, and
-edit every field inline. In this app a **meal _is_ a recipe** — the same record
-powers both.
+A library where a meal can start with only a name and grow into a complete
+recipe with an image, cooking time, difficulty, nutrition, tags, serving count,
+ingredients, and instructions. The same record powers both the recipe detail
+and the meal calendar: in this app, a **meal is a recipe**.
 
 ## Who it's for
 
-Whoever curates the meals: the cook building their private repertoire, or an
-admin seeding the shared library everyone plans from. Each meal is either
-**global** (shared with everyone) or **personal** (visible only to its owner) —
-chosen when the meal is created.
+Home cooks building a private repertoire and maintainers seeding a shared
+library. Each meal is created as either **global** (shared with everyone) or
+**personal** (visible only to its owner).
 
 ## Value
 
 - **Structured, reusable meals** — captured once, usable in any plan, any week.
-- **Rich recipe detail** — hero image, ingredients, step instructions, cook time
-  and difficulty make each entry actually cookable, not just a name.
-- **Nutrition on every meal** — calories and macros are first-class, which is
-  what lets the calendar budget a day and hit targets.
-- **Tags drive automation** — cuisine and dietary tags are how auto-compose
-  knows an entry is Italian, vegan, or gluten-free.
-- **Fast editing** — inline create and full-field edit, no separate admin tool.
+- **Optional recipe detail** — images, ingredients, instructions, cooking time,
+  and difficulty turn a simple meal into a cookable recipe.
+- **First-class nutrition fields** give the calendar the data it needs to plan
+  against calorie and macro targets.
+- **Tags and allowed meal types** help auto-compose choose suitable recipes for
+  each plan and slot.
+- **Personal and shared scopes** support private collections and a common
+  library without a separate administration tool.
+- **Favourites and URL import** make useful meals faster to find and capture.
 
 ## How it works
 
-`/meals` lists the library (name, difficulty, time) with inline add, delete, and
-**Import from URL** (parses a recipe page's schema.org JSON-LD into a personal
-draft you then review on its detail page).
-`/meals/[id]` renders the full recipe, showing only the fields that are filled,
-and swaps to an edit form covering every field — numeric macros, tag chips,
-structured ingredient rows (name/qty/unit), and multi-line instructions. These
-meal records are exactly what the
-[meal calendar](./meal-calendar.md) assigns to slots and filters during
-auto-compose. Meal writes require login. On create you choose the meal's scope:
-**global** (shared, and — like the seeded library — communally editable by any
-logged-in user) or **personal** (only you can see or edit it). The calendar and
-auto-compose only ever offer a user their visible set (global + own).
+- **Browse and organise.** `/meals` lists each visible meal with its name,
+  difficulty, and cooking time. Users can add a meal, delete one they can edit,
+  filter to favourites, or toggle a per-user favourite without copying the
+  recipe.
+- **View and edit.** `/meals/[id]` shows only populated fields and can switch to
+  a full edit form. The form covers nutrition, serving count, cuisine and
+  dietary tags, allowed meal types, structured ingredient rows
+  (`name`/`qty`/`unit`), instructions, and presentation details. The serving
+  stepper rescales displayed nutrition for the chosen number of servings.
+- **Import from a URL.** The importer reads schema.org Recipe JSON-LD and saves
+  the recognised fields as a personal meal for review. Imported ingredient
+  lines still need manual review when their quantity and unit should be stored
+  separately.
+- **Apply visibility rules.** Global meals are visible and communally editable
+  by every logged-in user. Personal meals are visible and editable only by
+  their owner. The [meal calendar](./meal-calendar.md) and auto-compose use the
+  same visible set: global meals plus the user's own personal meals.
 
 See [../schema.md](../schema.md) (`meals`, `ingredients`, `mealIngredients`)
 and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
@@ -67,26 +72,17 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 ## Known limitations
 
-- **Global meals are communally editable** — any logged-in user can edit or delete a global
-  meal (personal meals are owner-only). No admin/owner distinction on the shared library.
-- **Shared tag space** — cuisine and diet still share one tag column. `Vegetarian`/`Vegan`
-  now live in the diet list (AND-match) rather than cuisines (OR-match), but nothing stops
-  a meal from carrying a cuisine tag in the diet slot or vice versa. `allowedSlots` (which
-  slot types a meal is suitable for) is a separate column, not part of this shared space —
-  it's a hard restriction, not an OR/AND preference match.
-
-## How favouriting works
-
-Any meal (global or personal) can be favourited per-user via a star toggle on `/meals` — a
-bookmark, not a copy. Auto-compose (see [meal calendar](./meal-calendar.md)) has a "favourites
-only" option that restricts slot candidates to the caller's favourited meals.
+- **Global meals are communally editable** — any logged-in user can edit or
+  delete a global meal. There is no admin or owner distinction for the shared
+  library.
+- **Cuisine and diet share one tag field** — the UI separates the choices, but
+  the database does not prevent a cuisine tag from being used as a diet tag or
+  vice versa. `allowedSlots` is separate and acts as a hard restriction.
 
 ## Future opportunities
 
-- **Duplicate global → personal**, so a user can fork a shared recipe to tweak (distinct from
-  favouriting/bookmarking, which is now implemented).
-- **Richer import** — the current importer reads schema.org JSON-LD only; sites without it
-  (or with just microdata/plain HTML) fall back to a manual entry.
-- **Ingredient-quantity scaling** — the detail view already rescales nutrition by a
-  servings stepper; scaling structured ingredient qty (see `mealIngredients` in
-  [../schema.md](../schema.md)) by the same factor is the natural next step.
+- **Duplicate global → personal** so a user can adapt a shared recipe without
+  changing it for everyone.
+- **Richer import** for sites that expose microdata or plain HTML instead of
+  schema.org JSON-LD, including parsing ingredient quantities and units.
+- **Ingredient-quantity scaling** alongside the nutrition serving stepper.
