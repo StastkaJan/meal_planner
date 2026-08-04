@@ -3,6 +3,7 @@ import {
   filterByPrefs,
   rankByNutrition,
   fillDaySlots,
+  optimizeWeekSlots,
   sumNutrition,
 } from './plan-generation'
 
@@ -231,5 +232,78 @@ describe('sumNutrition', () => {
       carbsG: 0,
       fatG: 0,
     })
+  })
+})
+
+describe('optimizeWeekSlots', () => {
+  it('jointly fixes a choice that greedy slot order gets wrong', () => {
+    const candidates = [
+      { id: 1, calories: 500, tags: [], allowedSlots: ['breakfast'] },
+      { id: 2, calories: 300, tags: [], allowedSlots: ['breakfast'] },
+      { id: 3, calories: 700, tags: [], allowedSlots: ['dinner'] },
+    ]
+    const optimized = optimizeWeekSlots(
+      [
+        {
+          planId: 1,
+          date: '2026-07-16',
+          mealType: 'breakfast',
+          mealId: 1,
+          group: 'breakfast',
+        },
+        {
+          planId: 1,
+          date: '2026-07-16',
+          mealType: 'dinner',
+          mealId: 3,
+          group: 'dinner',
+        },
+      ],
+      candidates,
+      candidates,
+      { calories: 1000, proteinG: 0, carbsG: 0, fatG: 0 },
+      [],
+    )
+    expect(optimized.map((slot) => slot.mealId)).toEqual([2, 3])
+  })
+
+  it('changes repeat groups together and preserves locked groups', () => {
+    const candidates = [
+      { id: 1, calories: 500, tags: [], allowedSlots: ['lunch'] },
+      { id: 2, calories: 300, tags: [], allowedSlots: ['lunch'] },
+    ]
+    const slots = [
+      {
+        planId: 1,
+        date: '2026-07-13',
+        mealType: 'lunch',
+        mealId: 1,
+        group: 'weekday-lunch',
+      },
+      {
+        planId: 1,
+        date: '2026-07-14',
+        mealType: 'lunch',
+        mealId: 1,
+        group: 'weekday-lunch',
+      },
+    ]
+    const optimized = optimizeWeekSlots(
+      slots,
+      candidates,
+      candidates,
+      { calories: 300, proteinG: 0, carbsG: 0, fatG: 0 },
+      [],
+    )
+    expect(optimized.map((slot) => slot.mealId)).toEqual([2, 2])
+    expect(
+      optimizeWeekSlots(
+        slots.map((slot) => ({ ...slot, locked: true })),
+        candidates,
+        candidates,
+        { calories: 300, proteinG: 0, carbsG: 0, fatG: 0 },
+        [],
+      ).map((slot) => slot.mealId),
+    ).toEqual([1, 1])
   })
 })

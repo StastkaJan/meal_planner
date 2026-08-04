@@ -45,8 +45,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
   auto-compose falls back to the visible library, but visibility, slot
   restrictions, and **Favourites only** remain hard filters. It ranks calorie
   fit first, macro fit second, and favours meals not already used that week.
-  Filled slots are never replaced, and a slot stays empty when no permitted
-  meal exists.
+  It then jointly refines the week's new assignments to reduce daily nutrition
+  misses while preserving repeat groups. Filled slots are never replaced, and
+  a slot stays empty when no permitted meal exists.
 - **Repeat and reuse.** A weekly repeat pattern partitions Monday through
   Sunday into groups that share a meal for one meal type. Manual changes update
   the whole group, while auto-compose chooses once per group. **Copy from last
@@ -84,8 +85,3 @@ endpoints.
 
 - **Heuristic nutrition fit** — calorie and macro targets guide ranking rather
   than act as guarantees. A limited library can still miss nutrition targets.
-
-## Future opportunities
-
-- **Whole-week optimization** — auto-compose fills greedily slot by slot;
-  solving the week jointly could hit nutrition targets more tightly.
