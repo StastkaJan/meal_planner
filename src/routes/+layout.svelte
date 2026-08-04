@@ -62,7 +62,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 0;
+    padding: 0 12px 0 0;
     color: $color-text;
     font-size: 1rem;
     font-weight: 750;
