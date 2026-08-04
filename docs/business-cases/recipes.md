@@ -46,10 +46,10 @@ library. Each meal is created as either **global** (shared with everyone) or
   dietary tags, allowed meal types, structured ingredient rows
   (`name`/`qty`/`unit`), instructions, and presentation details. The serving
   stepper rescales displayed nutrition for the chosen number of servings.
-- **Import from a URL.** The importer reads schema.org Recipe JSON-LD and saves
-  the recognised fields as a personal meal for review. Imported ingredient
-  lines still need manual review when their quantity and unit should be stored
-  separately.
+- **Import from a URL.** The importer reads schema.org Recipe JSON-LD,
+  microdata, or common recipe HTML markup and saves the recognised fields as a
+  personal meal for review. Common leading quantities and units are split into
+  structured ingredient fields; unusual prose still needs manual review.
 - **Apply visibility rules.** Global meals are visible and communally editable
   by every logged-in user. Personal meals are visible and editable only by
   their owner. The [meal calendar](./meal-calendar.md) and auto-compose use the
@@ -83,6 +83,4 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 - **Duplicate global → personal** so a user can adapt a shared recipe without
   changing it for everyone.
-- **Richer import** for sites that expose microdata or plain HTML instead of
-  schema.org JSON-LD, including parsing ingredient quantities and units.
 - **Ingredient-quantity scaling** alongside the nutrition serving stepper.
