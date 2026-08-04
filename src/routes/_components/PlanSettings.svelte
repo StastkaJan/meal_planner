@@ -4,11 +4,14 @@
 
   let {
     plan,
+    onPortionsChange,
     onRepeatChange,
   }: {
     plan: {
+      portions: number
       slotRepeats?: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
     }
+    onPortionsChange?: (portions: number) => void
     onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
   } = $props()
 
@@ -33,6 +36,19 @@
 <details class="settings">
   <summary>Plan settings</summary>
   <div class="body">
+    <section>
+      <h4>People served</h4>
+      <input
+        class="portions"
+        type="number"
+        min="1"
+        max="100"
+        value={plan.portions}
+        aria-label="People served"
+        onchange={(event) =>
+          onPortionsChange?.(Number(event.currentTarget.value))}
+      />
+    </section>
     {#if onRepeatChange}
       <section>
         <h4>Repeat pattern</h4>
@@ -93,6 +109,14 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 0 0 6px;
+  }
+  .portions {
+    width: 90px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-sm;
+    background: $color-surface;
   }
   .repeat-row {
     display: flex;

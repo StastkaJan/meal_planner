@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD COLUMN "portions" integer DEFAULT 1 NOT NULL;
