@@ -1,35 +1,62 @@
 <script lang="ts">
   let { data } = $props()
+  let shareStatus = $state('')
 
-  const csvCell = (value: unknown) =>
-    `"${String(value ?? '').replaceAll('"', '""')}"`
-  const csv = $derived(
+  const shoppingText = $derived(
     [
-      ['Quantity', 'Unit', 'Ingredient'],
-      ...data.items.map((item) => [
-        item.qty ?? item.count,
-        item.unit,
-        item.name,
-      ]),
-    ]
-      .map((row) => row.map(csvCell).join(','))
-      .join('\r\n'),
+      `Shopping list — week of ${data.week}`,
+      '',
+      ...data.items.map((item) => {
+        const amount =
+          item.qty !== null
+            ? `${item.qty}${item.unit ? ` ${item.unit}` : ''} `
+            : item.count > 1
+              ? `${item.count}× `
+              : ''
+        return `☐ ${amount}${item.name}`
+      }),
+    ].join('\n'),
   )
-  const exportHref = $derived(
-    `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`,
-  )
+
+  async function shareList() {
+    shareStatus = ''
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Shopping list', text: shoppingText })
+        return
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+      }
+    }
+    if (!navigator.clipboard) {
+      shareStatus = 'Sharing is not supported by this browser.'
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(shoppingText)
+      shareStatus = 'Copied. Paste it into Google Keep or another app.'
+    } catch {
+      shareStatus = 'Could not share or copy this list.'
+    }
+  }
 </script>
 
 <div class="shopping">
   <div class="toolbar">
     <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
-    <a class="export" href={exportHref} download="shopping-list-{data.week}.csv"
-      >Export CSV</a
+    <button
+      class="share"
+      type="button"
+      title="Choose Google Keep or another app from the share menu"
+      onclick={shareList}>Share list</button
     >
   </div>
   <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
   <p class="week">Week of {data.week}</p>
+  {#if shareStatus}<p class="share-status" aria-live="polite">
+      {shareStatus}
+    </p>{/if}
 
   {#if data.items.length === 0}
     <p class="empty">No meals assigned this week — nothing to shop for yet.</p>
@@ -79,17 +106,24 @@
     justify-content: space-between;
     gap: 16px;
   }
-  .export {
+  .share {
     padding: 6px 10px;
     border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     color: $color-text-muted;
+    background: transparent;
+    cursor: pointer;
     font-size: 0.8rem;
     text-decoration: none;
     &:hover {
       border-color: $color-accent;
       color: $color-text;
     }
+  }
+  .share-status {
+    margin: -14px 0 18px;
+    color: $color-text-muted;
+    font-size: 0.8rem;
   }
   h1 {
     font-family: Georgia, 'Times New Roman', serif;

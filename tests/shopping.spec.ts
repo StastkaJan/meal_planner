@@ -23,10 +23,17 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
 
   await page.getByRole('link', { name: 'Shopping list' }).click()
   await expect(page.getByText('2 tbsp Honey')).toBeVisible()
-  const exportLink = page.getByRole('link', { name: 'Export CSV' })
-  await expect(exportLink).toHaveAttribute(
-    'download',
-    /shopping-list-\d{4}-\d{2}-\d{2}\.csv/,
-  )
-  await expect(exportLink).toHaveAttribute('href', /^data:text\/csv/)
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: ({ text }: ShareData) => {
+        sessionStorage.setItem('shared-shopping-list', String(text))
+        return Promise.resolve()
+      },
+    })
+  })
+  await page.getByRole('button', { name: 'Share list' }).click()
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('shared-shopping-list')),
+  ).toContain('☐ 2 tbsp Honey')
 })
