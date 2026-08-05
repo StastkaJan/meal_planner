@@ -321,6 +321,7 @@
   }
 
   .slot-cell {
+    height: 1px;
     border-top: 1px solid $color-border;
     border-left: 1px solid $color-border;
     padding: 0;

@@ -91,6 +91,7 @@
     align-items: flex-start;
     gap: 2px;
     width: 100%;
+    height: 100%;
     min-height: 72px;
     padding: 10px;
     background: transparent;
