@@ -36,4 +36,21 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   expect(
     await page.evaluate(() => sessionStorage.getItem('shared-shopping-list')),
   ).toContain('☐ 2 tbsp Honey')
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: (text: string) => {
+          sessionStorage.setItem('copied-shopping-list', text)
+          return Promise.resolve()
+        },
+      },
+    })
+  })
+  await page.getByRole('button', { name: 'Copy list' }).click()
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
+  ).toContain('☐ 2 tbsp Honey')
+  await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
 })

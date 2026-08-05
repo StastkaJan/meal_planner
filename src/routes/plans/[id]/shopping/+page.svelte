@@ -28,8 +28,12 @@
         if (error instanceof DOMException && error.name === 'AbortError') return
       }
     }
+    await copyList()
+  }
+
+  async function copyList() {
     if (!navigator.clipboard) {
-      shareStatus = 'Sharing is not supported by this browser.'
+      shareStatus = 'Sharing and copying are not supported by this browser.'
       return
     }
     try {
@@ -44,12 +48,15 @@
 <div class="shopping">
   <div class="toolbar">
     <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
-    <button
-      class="share"
-      type="button"
-      title="Choose Google Keep or another app from the share menu"
-      onclick={shareList}>Share list</button
-    >
+    <div class="actions">
+      <button class="share" type="button" onclick={copyList}>Copy list</button>
+      <button
+        class="share"
+        type="button"
+        title="Choose Google Keep or another app from the share menu"
+        onclick={shareList}>Share list</button
+      >
+    </div>
   </div>
   <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
@@ -105,6 +112,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+  }
+  .actions {
+    display: flex;
+    gap: 6px;
   }
   .share {
     padding: 6px 10px;
