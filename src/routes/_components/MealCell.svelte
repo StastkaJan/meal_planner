@@ -31,20 +31,43 @@
   }
 </script>
 
-<button
-  class="cell {mealType}"
-  onclick={openPicker}
-  title="Click to assign meal"
->
-  {#if slot?.mealName}
-    <span class="name">{slot.mealName}</span>
-    {#if slot.calories}
-      <span class="kcal">{slot.calories} kcal</span>
-    {/if}
-  {:else}
+{#if slot?.mealName}
+  <div class="cell {mealType}">
+    <div class="meal-info">
+      <span class="name">{slot.mealName}</span>
+      {#if slot.calories}
+        <span class="kcal">{slot.calories} kcal</span>
+      {/if}
+    </div>
+    <div class="actions">
+      <button
+        type="button"
+        onclick={openPicker}
+        title="Edit meal assignment"
+        aria-label="Edit meal assignment">✎</button
+      >
+      <a
+        href="/meals/{slot.mealId}"
+        title="Show recipe"
+        aria-label="Show recipe">↗</a
+      >
+      <button
+        type="button"
+        onclick={() => onPick(null)}
+        title="Remove meal"
+        aria-label="Remove meal">×</button
+      >
+    </div>
+  </div>
+{:else}
+  <button
+    class="cell {mealType}"
+    onclick={openPicker}
+    title="Click to assign meal"
+  >
     <span class="empty">—</span>
-  {/if}
-</button>
+  </button>
+{/if}
 
 <Dialog
   bind:element={dialogEl}
@@ -68,6 +91,7 @@
     align-items: flex-start;
     gap: 2px;
     width: 100%;
+    height: 100%;
     min-height: 72px;
     padding: 10px;
     background: transparent;
@@ -95,6 +119,38 @@
     }
     &.dinner {
       border-left-color: $color-dinner;
+    }
+  }
+  .meal-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .actions {
+    display: flex;
+    gap: 2px;
+
+    button,
+    a {
+      display: grid;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      place-items: center;
+      border: 0;
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $color-text-muted;
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      text-decoration: none;
+
+      &:hover {
+        background: $color-surface-2;
+        color: $color-text;
+      }
     }
   }
   .name {
