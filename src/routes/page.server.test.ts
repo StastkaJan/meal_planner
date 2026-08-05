@@ -79,4 +79,19 @@ describe('load /', () => {
     expect(result.activePlanId).toBe(0)
     expect(result.plan).toBeNull()
   })
+
+  it('loads auto-compose preferences with the planner', async () => {
+    mockDb.orderBy.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+    mockDb.limit.mockResolvedValueOnce([
+      {
+        cuisinePrefs: ['Italian'],
+        dietaryRestrictions: ['Vegan'],
+      },
+    ])
+    const result = await load(makeEvent())
+    expect(result.preferences).toEqual({
+      cuisinePrefs: ['Italian'],
+      dietaryRestrictions: ['Vegan'],
+    })
+  })
 })
