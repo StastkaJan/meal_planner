@@ -78,7 +78,7 @@
   <div class="top-bar">
     <div>
       <p class="eyebrow">Recipe library</p>
-      <h1>Meals</h1>
+      <h1>Recipes</h1>
       <p class="subtitle">Keep your favourites ready for the week ahead.</p>
     </div>
     <div class="top-actions">
