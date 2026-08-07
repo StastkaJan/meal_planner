@@ -9,6 +9,7 @@
   } from '$lib/api/meals'
   import Button from '$lib/components/ui/Button.svelte'
   import Input from '$lib/components/ui/Input.svelte'
+  import Select from '$lib/components/ui/Select.svelte'
   import MealsTable from './_components/MealsTable.svelte'
 
   let { data }: { data: PageData } = $props()
@@ -45,10 +46,24 @@
   }
 
   function toggleFavoritesFilter() {
-    goto(data.favoritesOnly ? '/meals' : '/meals?favorites=1', {
+    goto(recipeUrl({ favorites: data.favoritesOnly ? false : true, page: 1 }), {
       noScroll: true,
       keepFocus: true,
     })
+  }
+
+  function recipeUrl(
+    patch: { favorites?: boolean; page?: number; clear?: boolean } = {},
+  ) {
+    const params = new URLSearchParams()
+    if (!patch.clear && data.query) params.set('q', data.query)
+    if (!patch.clear && data.difficulty)
+      params.set('difficulty', data.difficulty)
+    if (patch.favorites ?? data.favoritesOnly) params.set('favorites', '1')
+    const page = patch.page ?? data.page
+    if (page > 1) params.set('page', String(page))
+    const query = params.toString()
+    return query ? `/meals?${query}` : '/meals'
   }
 
   async function importRecipe() {
@@ -125,14 +140,59 @@
     </div>
   {/if}
 
+  <form class="filters" method="GET">
+    <Input
+      type="search"
+      name="q"
+      value={data.query}
+      placeholder="Search recipes…"
+    />
+    <Select
+      name="difficulty"
+      value={data.difficulty}
+      title="Filter by difficulty"
+      options={[
+        { value: '', label: 'Any difficulty' },
+        { value: 'easy', label: 'Easy' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'hard', label: 'Hard' },
+      ]}
+    />
+    {#if data.favoritesOnly}<input
+        type="hidden"
+        name="favorites"
+        value="1"
+      />{/if}
+    <Button type="submit" size="sm">Apply</Button>
+    {#if data.query || data.difficulty}
+      <a class="clear" href={recipeUrl({ clear: true, page: 1 })}>Clear</a>
+    {/if}
+    <span class="result-count">{data.totalResults} recipes</span>
+  </form>
+
   <MealsTable
     {meals}
     bind:creating
-    emptyMessage={data.favoritesOnly ? 'No favourites yet.' : 'No meals yet.'}
+    emptyMessage={data.query || data.difficulty
+      ? 'No matching recipes.'
+      : data.favoritesOnly
+        ? 'No favourites yet.'
+        : 'No meals yet.'}
     onCreate={handleCreate}
     onDelete={deleteMeal}
     onFavorite={toggleFavorite}
   />
+  {#if data.totalPages > 1}
+    <nav class="pagination" aria-label="Recipe pages">
+      {#if data.page > 1}<a href={recipeUrl({ page: data.page - 1 })}
+          >Previous</a
+        >{/if}
+      <span>Page {data.page} of {data.totalPages}</span>
+      {#if data.page < data.totalPages}<a
+          href={recipeUrl({ page: data.page + 1 })}>Next</a
+        >{/if}
+    </nav>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -147,6 +207,34 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) 11rem auto auto 1fr;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .clear {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+  .result-count {
+    justify-self: end;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    color: $color-text-muted;
+    font-size: 0.85rem;
+
+    a {
+      color: $color-accent;
+    }
   }
 
   .top-bar {
@@ -218,6 +306,15 @@
     }
     .import-bar :global(.ui-input) {
       flex-basis: 100%;
+    }
+    .filters {
+      grid-template-columns: 1fr 1fr;
+    }
+    .filters :global(.ui-input) {
+      grid-column: 1 / -1;
+    }
+    .result-count {
+      justify-self: end;
     }
   }
 </style>
