@@ -6,6 +6,7 @@ import type { NutritionTargets } from '$lib/types'
 import {
   fillDaySlots,
   filterByPrefs,
+  optimizeWeekSlots,
   sumNutrition,
 } from '$lib/domain/plan-generation'
 import type { CandidateMeal } from '$lib/domain/plan-generation'
@@ -58,7 +59,8 @@ async function autocomposeSlots(
     ])
   if (!mealRows.length) return 0
 
-  let candidateMeals = mealRows.map(toCandidate)
+  const visibleMeals = mealRows.map(toCandidate)
+  let candidateMeals = visibleMeals
   const visibleMealsById = new Map(
     candidateMeals.map((meal) => [meal.id, meal]),
   )
@@ -91,6 +93,7 @@ async function autocomposeSlots(
     const key = groupKey(slot.date, slot.mealType)
     if (key && !groupMealId.has(key)) groupMealId.set(key, slot.mealId)
   }
+  const lockedGroupKeys = new Set(groupMealId.keys())
 
   const rows: {
     planId: number
@@ -146,8 +149,23 @@ async function autocomposeSlots(
     rows.push(...generated)
   }
 
-  await insertSlots(rows)
-  return rows.length
+  const optimized = optimizeWeekSlots(
+    rows.map((row) => {
+      const key = groupKey(row.date, row.mealType)
+      return {
+        ...row,
+        group: key ?? `${row.date}|${row.mealType}`,
+        locked: key ? lockedGroupKeys.has(key) : false,
+      }
+    }),
+    filteredMeals,
+    visibleMeals,
+    targets,
+    [...existingSlots, ...weekBonus],
+  ).map(({ group: _group, locked: _locked, ...row }) => row)
+
+  await insertSlots(optimized)
+  return optimized.length
 }
 
 async function recalcDaySlots(
