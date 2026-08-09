@@ -57,7 +57,7 @@ export function parseIngredientLine(line: string) {
   // ponytail: common leading quantities only; use a recipe NLP parser if imports
   // need ranges, spelled-out numbers, or package-size inference.
   const match = value.match(
-    /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])\s*(.*)$/,
+    /^(\d+\s+\d+\/\d+|\d+\s*[¼½¾⅓⅔⅛⅜⅝⅞]|\d+\/\d+|\d+(?:\.\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞])\s*(.*)$/,
   )
   if (!match) return { name: value, qty: null, unit: null }
 
@@ -72,7 +72,10 @@ export function parseIngredientLine(line: string) {
 }
 
 function fraction(value: string) {
-  if (UNICODE_FRACTIONS[value]) return UNICODE_FRACTIONS[value]
+  const unicode = Object.entries(UNICODE_FRACTIONS).find(([symbol]) =>
+    value.endsWith(symbol),
+  )
+  if (unicode) return (parseInt(value, 10) || 0) + unicode[1]
   const [numerator, denominator] = value.split('/').map(Number)
   return denominator ? numerator / denominator : numerator
 }
@@ -209,7 +212,7 @@ function markedValues(html: string, attributeName: string, value: string) {
 function extractJsonLd(html: string): unknown[] {
   const documents: unknown[] = []
   for (const match of html.matchAll(
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    /<script[^>]+type\s*=\s*(?:"application\/ld\+json"|'application\/ld\+json'|application\/ld\+json)(?=\s|>)[^>]*>([\s\S]*?)<\/script>/gi,
   )) {
     try {
       documents.push(JSON.parse(match[1].trim()))
