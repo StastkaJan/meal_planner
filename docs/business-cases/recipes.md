@@ -49,7 +49,8 @@ library. Each meal is created as either **global** (shared with everyone) or
 - **Import from a URL.** The importer reads schema.org Recipe JSON-LD,
   microdata, or common recipe HTML markup and saves the recognised fields as a
   personal meal for review. Common leading quantities and units are split into
-  structured ingredient fields; unusual prose still needs manual review.
+  structured ingredient fields; ambiguous lines are preserved unchanged and
+  marked as unable to scale until manually edited.
 - **Apply visibility rules.** Global meals are visible and communally editable
   by every logged-in user. Personal meals are visible and editable only by
   their owner. The [meal calendar](./meal-calendar.md) and auto-compose use the

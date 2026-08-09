@@ -61,13 +61,17 @@ export function parseIngredientLine(line: string) {
   )
   if (!match) return { name: value, qty: null, unit: null }
 
+  const remainder = match[2].trim()
+  if (/^(?:[-–—]|to\s|or\s)/i.test(remainder))
+    return { name: value, qty: null, unit: null }
+
   const quantity = match[1]
   const qty = quantity.includes(' ')
     ? quantity.split(' ').reduce((sum, part) => sum + fraction(part), 0)
     : fraction(quantity)
-  const [first = '', ...rest] = match[2].trim().split(/\s+/)
+  const [first = '', ...rest] = remainder.split(/\s+/)
   const unit = UNIT_ALIASES[first.toLowerCase().replace(/\.$/, '')] ?? null
-  const name = (unit ? rest.join(' ') : match[2]).replace(/^of\s+/i, '').trim()
+  const name = (unit ? rest.join(' ') : remainder).replace(/^of\s+/i, '').trim()
   return { name: name || value, qty, unit }
 }
 

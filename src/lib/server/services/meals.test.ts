@@ -246,6 +246,32 @@ describe('parseRecipeJsonLd', () => {
     })
   })
 
+  it('parses the pattypan recipe and preserves ambiguous ranges', () => {
+    expect(
+      [
+        '5 cups halved small pattypan squash (about 1-1/4 pounds)',
+        '1 tablespoon olive oil',
+        '2 garlic cloves, minced',
+        '1/2 teaspoon salt',
+        '1/4 teaspoon dried oregano',
+        'Salt to taste',
+        '1–2 cups flour',
+      ].map(parseIngredientLine),
+    ).toEqual([
+      {
+        name: 'halved small pattypan squash (about 1-1/4 pounds)',
+        qty: 5,
+        unit: 'cup',
+      },
+      { name: 'olive oil', qty: 1, unit: 'tbsp' },
+      { name: 'garlic cloves, minced', qty: 2, unit: null },
+      { name: 'salt', qty: 0.5, unit: 'tsp' },
+      { name: 'dried oregano', qty: 0.25, unit: 'tsp' },
+      { name: 'Salt to taste', qty: null, unit: null },
+      { name: '1–2 cups flour', qty: null, unit: null },
+    ])
+  })
+
   it('falls back to schema.org microdata', () => {
     const out = parseRecipeHtml(`
       <article itemscope itemtype="https://schema.org/Recipe">

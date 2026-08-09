@@ -60,3 +60,20 @@ test('delete meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete' }).click()
   await expect(page).toHaveURL('/meals')
 })
+
+test('warns when an ingredient cannot be scaled', async ({ page }) => {
+  const name = `Unscaled-${Date.now()}`
+  await page.getByRole('button', { name: '+ Add meal' }).click()
+  await page.getByPlaceholder('Meal name').fill(name)
+  await page
+    .locator('.create-form')
+    .getByRole('button', { name: 'Save' })
+    .click()
+  await page.getByRole('link', { name, exact: true }).click()
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByPlaceholder('Ingredient').fill('Salt to taste')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await page.reload()
+
+  await expect(page.getByRole('note')).toContainText('cannot be scaled')
+})
