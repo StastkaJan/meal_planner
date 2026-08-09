@@ -17,6 +17,9 @@
   const hasNutrition = $derived(
     !!(meal.calories || meal.proteinG || meal.carbsG || meal.fatG),
   )
+  const hasUnscalableIngredients = $derived(
+    data.ingredients.some((ingredient) => ingredient.qty === null),
+  )
   const scale = (v: number | null) =>
     v == null ? null : Math.round(Number(v) * factor)
   const scaleG = (v: string | null) =>
@@ -123,6 +126,12 @@
       {#if data.ingredients.length}
         <section>
           <h2>Ingredients</h2>
+          {#if hasUnscalableIngredients}
+            <p class="scale-notice" role="note">
+              Ingredients without a numeric quantity cannot be scaled. Edit the
+              recipe to add one.
+            </p>
+          {/if}
           <ul>
             {#each data.ingredients as ing}
               <li>
@@ -328,6 +337,12 @@
     gap: 4px;
     font-size: 0.9rem;
     line-height: 1.5;
+  }
+
+  .scale-notice {
+    margin: -4px 0 12px;
+    color: $color-text-muted;
+    font-size: 0.8rem;
   }
 
   .instructions {
