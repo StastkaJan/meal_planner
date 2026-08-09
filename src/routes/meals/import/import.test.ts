@@ -74,7 +74,7 @@ describe('POST /meals/import', () => {
     expect(out.status).toBe(200)
     expect(await out.json()).toEqual({
       name: 'Soup',
-      ingredients: ['water'],
+      ingredients: [{ name: 'water', qty: null, unit: null }],
     })
   })
 

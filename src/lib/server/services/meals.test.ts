@@ -29,7 +29,12 @@ vi.mock('$lib/database', () => ({ db: mockDb }))
 
 const { createMeal, updateMeal } = await import('../repositories/meals')
 const { pickMealFields } = await import('./meals')
-const { findRecipeNode, parseRecipeJsonLd } = await import('./recipe-import')
+const {
+  findRecipeNode,
+  parseIngredientLine,
+  parseRecipeHtml,
+  parseRecipeJsonLd,
+} = await import('./recipe-import')
 
 describe('pickMealFields', () => {
   it('keeps only writable columns', () => {
@@ -198,7 +203,10 @@ describe('parseRecipeJsonLd', () => {
       name: 'Pancakes',
       description: 'Fluffy',
       imageUrl: 'http://img/1.jpg',
-      ingredients: ['2 eggs', '1 cup flour'],
+      ingredients: [
+        { name: 'eggs', qty: 2, unit: null },
+        { name: 'flour', qty: 1, unit: 'cup' },
+      ],
       instructions: 'Mix\nFry',
       calories: 320,
       timeMinutes: 25,
@@ -218,5 +226,164 @@ describe('parseRecipeJsonLd', () => {
     expect(out.instructions).toBe('Step A\nStep B')
     expect(out.calories).toBeUndefined()
     expect(out.ingredients).toBeUndefined()
+  })
+
+  it('parses common ingredient quantities and known units', () => {
+    expect(parseIngredientLine('1 1/2 tablespoons olive oil')).toEqual({
+      name: 'olive oil',
+      qty: 1.5,
+      unit: 'tbsp',
+    })
+    expect(parseIngredientLine('½ cup flour')).toEqual({
+      name: 'flour',
+      qty: 0.5,
+      unit: 'cup',
+    })
+    expect(parseIngredientLine('Salt to taste')).toEqual({
+      name: 'Salt to taste',
+      qty: null,
+      unit: null,
+    })
+  })
+
+  it('falls back to schema.org microdata', () => {
+    const out = parseRecipeHtml(`
+      <article itemscope itemtype="https://schema.org/Recipe">
+        <meta itemprop="name" content="Soup">
+        <div itemprop="recipeIngredient">2 cups water</div>
+        <div itemprop="recipeInstructions">Stir &amp; serve.</div>
+      </article>
+    `)
+    expect(out).toMatchObject({
+      name: 'Soup',
+      ingredients: [{ name: 'water', qty: 2, unit: 'cup' }],
+      instructions: 'Stir & serve.',
+    })
+  })
+
+  it('falls back to common plain HTML recipe markup', () => {
+    const out = parseRecipeHtml(`
+      <meta property="og:title" content="Toast">
+      <li class="recipe-ingredient">2 slices bread</li>
+      <div class="recipe-instructions">Toast the bread.</div>
+    `)
+    expect(out).toMatchObject({
+      name: 'Toast',
+      ingredients: [{ name: 'bread', qty: 2, unit: 'slice' }],
+      instructions: 'Toast the bread.',
+    })
+  })
+
+  it.each([
+    {
+      source:
+        'https://www.kingarthurbaking.com/recipes/quick-and-easy-pancakes-made-with-all-purpose-baking-mix-recipe',
+      html: `<script type="application/ld+json">${JSON.stringify({
+        '@graph': [
+          {
+            '@type': 'Recipe',
+            name: 'Quick-and-Easy Pancakes made with All-Purpose Baking Mix',
+            image: {
+              '@type': 'ImageObject',
+              url: 'https://www.kingarthurbaking.com/pancakes.jpg',
+            },
+            recipeIngredient: [
+              '1 cup (120g) King Arthur All-Purpose Baking Mix',
+              '3/4 cup (170g) milk or almond milk',
+            ],
+            recipeInstructions: ['Preheat the griddle.', 'Whisk together.'],
+            totalTime: 'PT15M',
+            nutrition: { calories: '110 calories' },
+          },
+        ],
+      })}</script>`,
+      expected: {
+        name: 'Quick-and-Easy Pancakes made with All-Purpose Baking Mix',
+        imageUrl: 'https://www.kingarthurbaking.com/pancakes.jpg',
+        ingredients: [
+          {
+            name: '(120g) King Arthur All-Purpose Baking Mix',
+            qty: 1,
+            unit: 'cup',
+          },
+          { name: '(170g) milk or almond milk', qty: 0.75, unit: 'cup' },
+        ],
+        instructions: 'Preheat the griddle.\nWhisk together.',
+        calories: 110,
+        timeMinutes: 15,
+      },
+    },
+    {
+      source: 'https://www.bbcgoodfood.com/recipes/spiced-carrot-lentil-soup',
+      html: `<script data-testid="schema" type="application/ld+json">${JSON.stringify(
+        {
+          '@type': 'Recipe',
+          name: 'Spiced carrot & lentil soup',
+          image: [
+            {
+              '@type': 'ImageObject',
+              url: 'https://images.immediate.co.uk/carrot-soup.jpg',
+            },
+          ],
+          recipeIngredient: [
+            '2 tsp cumin seeds',
+            '600g carrots washed and coarsely grated',
+            '140g split red lentils',
+          ],
+          recipeInstructions: [
+            { '@type': 'HowToStep', text: 'Toast the spices.' },
+            { '@type': 'HowToStep', text: 'Add the remaining ingredients.' },
+          ],
+          totalTime: 'PT25M',
+          nutrition: { calories: '263 calories' },
+        },
+      )}</script>`,
+      expected: {
+        name: 'Spiced carrot & lentil soup',
+        ingredients: [
+          { name: 'cumin seeds', qty: 2, unit: 'tsp' },
+          { name: 'carrots washed and coarsely grated', qty: 600, unit: 'g' },
+          { name: 'split red lentils', qty: 140, unit: 'g' },
+        ],
+        instructions: 'Toast the spices.\nAdd the remaining ingredients.',
+        calories: 263,
+        timeMinutes: 25,
+      },
+    },
+    {
+      source: 'https://www.loveandlemons.com/pancakes-recipe/',
+      html: `<script type=application/ld+json class=yoast-schema-graph>${JSON.stringify(
+        {
+          '@graph': [
+            { '@type': 'Article' },
+            {
+              '@type': ['Recipe'],
+              name: 'Fluffy Homemade Pancakes',
+              recipeIngredient: [
+                '1½ cups all-purpose flour',
+                '½ teaspoon sea salt',
+                '1¼ cups milk',
+              ],
+              recipeInstructions: [
+                { '@type': 'HowToStep', text: 'Whisk the dry ingredients.' },
+              ],
+              totalTime: 'PT20M',
+            },
+          ],
+        },
+      )}</script>`,
+      expected: {
+        name: 'Fluffy Homemade Pancakes',
+        ingredients: [
+          { name: 'all-purpose flour', qty: 1.5, unit: 'cup' },
+          { name: 'sea salt', qty: 0.5, unit: 'tsp' },
+          { name: 'milk', qty: 1.25, unit: 'cup' },
+        ],
+        instructions: 'Whisk the dry ingredients.',
+        timeMinutes: 20,
+      },
+    },
+  ])('parses representative markup from $source', ({ html, expected }) => {
+    expect(parseRecipeHtml(html)).toMatchObject(expected)
   })
 })
