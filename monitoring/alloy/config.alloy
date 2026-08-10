@@ -29,6 +29,7 @@ loki.process "container_logs" {
     expressions = {
       level  = "level",
       event  = "event",
+      kind   = "kind",
       method = "method",
       operation = "operation",
       route  = "route",
@@ -41,6 +42,7 @@ loki.process "container_logs" {
     values = {
       level  = "level",
       event  = "event",
+      kind   = "kind",
       method = "method",
       operation = "operation",
       route  = "route",

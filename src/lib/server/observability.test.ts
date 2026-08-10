@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   monitorService,
   observeRequests,
+  recordClientError,
   renderMetrics,
   resetMetrics,
 } from './observability'
@@ -98,6 +99,25 @@ describe('request observability', () => {
     )
     expect(renderMetrics()).toContain(
       'service_operations_total{service="meals",operation="update",outcome="error"} 1',
+    )
+  })
+
+  it('logs and counts browser errors by kind', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    recordClientError('unhandledrejection', {
+      message: 'failed to save',
+      path: '/meals',
+    })
+
+    expect(JSON.parse(String(error.mock.calls[0][0]))).toMatchObject({
+      level: 'error',
+      event: 'client_error',
+      kind: 'unhandledrejection',
+      message: 'failed to save',
+    })
+    expect(renderMetrics()).toContain(
+      'client_errors_total{kind="unhandledrejection"} 1',
     )
   })
 })
