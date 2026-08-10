@@ -3,6 +3,7 @@ import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
 import type { Cookies } from '@sveltejs/kit'
 import { createUser, findUserByEmail } from '../repositories/accounts'
 import { saveSession } from '../repositories/sessions'
+import { monitorService } from '../observability'
 
 const scryptAsync = promisify(scrypt)
 const DUMMY_HASH = `${'0'.repeat(32)}:${'0'.repeat(128)}`
@@ -56,26 +57,32 @@ export function checkRateLimit(ip: string): boolean {
 }
 
 export async function authenticate(email: string, password: string) {
-  const user = await findUserByEmail(email)
-  return (await verifyLogin(password, user?.passwordHash)) ? user : null
+  return monitorService('auth', 'authenticate', async () => {
+    const user = await findUserByEmail(email)
+    return (await verifyLogin(password, user?.passwordHash)) ? user : null
+  })
 }
 
 export async function register(email: string, password: string) {
-  if (await findUserByEmail(email)) return null
-  return createUser(email, await hashPassword(password))
+  return monitorService('auth', 'register', async () => {
+    if (await findUserByEmail(email)) return null
+    return createUser(email, await hashPassword(password))
+  })
 }
 
 export async function createSession(userId: number, cookies: Cookies) {
-  const token = generateToken()
-  await saveSession(
-    token,
-    userId,
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-  )
-  cookies.set('session', token, {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60,
+  return monitorService('auth', 'create_session', async () => {
+    const token = generateToken()
+    await saveSession(
+      token,
+      userId,
+      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    )
+    cookies.set('session', token, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60,
+    })
   })
 }

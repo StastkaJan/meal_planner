@@ -22,6 +22,7 @@ import {
   insertSlots,
   ownedPlan,
 } from '../repositories/plans'
+import { monitorService } from '../observability'
 
 type PlanPrefs = Pick<Plan, 'id' | 'cuisinePrefs' | 'dietaryRestrictions'>
 
@@ -213,20 +214,22 @@ export async function executePlanPopulation(
   command: PlanPopulationCommand,
   loadedPlan?: Plan & { userId: number },
 ) {
-  const plan = loadedPlan ?? (await ownedPlan(command.planId, command.userId))
-  if (!plan) throw new Error('Plan not found')
-  const settings = await getSettings(command.userId)
-  return autocomposeSlots(
-    {
-      ...plan,
-      cuisinePrefs: settings?.cuisinePrefs ?? [],
-      dietaryRestrictions: settings?.dietaryRestrictions ?? [],
-    },
-    command.week,
-    resolveTargets(settings),
-    command.userId,
-    command.favoritesOnly,
-  )
+  return monitorService('plan_generation', 'populate', async () => {
+    const plan = loadedPlan ?? (await ownedPlan(command.planId, command.userId))
+    if (!plan) throw new Error('Plan not found')
+    const settings = await getSettings(command.userId)
+    return autocomposeSlots(
+      {
+        ...plan,
+        cuisinePrefs: settings?.cuisinePrefs ?? [],
+        dietaryRestrictions: settings?.dietaryRestrictions ?? [],
+      },
+      command.week,
+      resolveTargets(settings),
+      command.userId,
+      command.favoritesOnly,
+    )
+  })
 }
 
 export async function recalculatePlanDay(
@@ -234,15 +237,17 @@ export async function recalculatePlanDay(
   userId: number,
   date: string,
 ) {
-  const settings = await getSettings(userId)
-  return recalcDaySlots(
-    {
-      ...plan,
-      cuisinePrefs: settings?.cuisinePrefs ?? [],
-      dietaryRestrictions: settings?.dietaryRestrictions ?? [],
-    },
-    date,
-    resolveTargets(settings),
-    userId,
-  )
+  return monitorService('plan_generation', 'recalculate_day', async () => {
+    const settings = await getSettings(userId)
+    return recalcDaySlots(
+      {
+        ...plan,
+        cuisinePrefs: settings?.cuisinePrefs ?? [],
+        dietaryRestrictions: settings?.dietaryRestrictions ?? [],
+      },
+      date,
+      resolveTargets(settings),
+      userId,
+    )
+  })
 }

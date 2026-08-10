@@ -30,7 +30,9 @@ loki.process "container_logs" {
       level  = "level",
       event  = "event",
       method = "method",
+      operation = "operation",
       route  = "route",
+      service = "service",
       status = "status",
     }
   }
@@ -40,7 +42,9 @@ loki.process "container_logs" {
       level  = "level",
       event  = "event",
       method = "method",
+      operation = "operation",
       route  = "route",
+      service = "service",
       status = "status",
     }
   }

@@ -4,6 +4,7 @@ import {
   saveSettings,
   updatePassword,
 } from '../repositories/accounts'
+import { monitorService } from '../observability'
 
 const TARGET_FIELDS = [
   'calorieTarget',
@@ -21,14 +22,16 @@ export async function updateProfileSettings(
   userId: number,
   body: Record<string, unknown>,
 ) {
-  const patch: Record<string, unknown> = {}
-  if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
-  if (body.dietaryRestrictions !== undefined)
-    patch.dietaryRestrictions = body.dietaryRestrictions
-  for (const field of TARGET_FIELDS) {
-    if (body[field] !== undefined) patch[field] = toTarget(body[field])
-  }
-  return Object.keys(patch).length ? saveSettings(userId, patch) : {}
+  return monitorService('profile', 'update_settings', async () => {
+    const patch: Record<string, unknown> = {}
+    if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
+    if (body.dietaryRestrictions !== undefined)
+      patch.dietaryRestrictions = body.dietaryRestrictions
+    for (const field of TARGET_FIELDS) {
+      if (body[field] !== undefined) patch[field] = toTarget(body[field])
+    }
+    return Object.keys(patch).length ? saveSettings(userId, patch) : {}
+  })
 }
 
 export async function changePassword(
@@ -36,9 +39,11 @@ export async function changePassword(
   current: unknown,
   next: string,
 ) {
-  const user = await findUserById(userId)
-  if (!user || !(await verifyPassword(String(current), user.passwordHash)))
-    return false
-  await updatePassword(userId, await hashPassword(next))
-  return true
+  return monitorService('profile', 'change_password', async () => {
+    const user = await findUserById(userId)
+    if (!user || !(await verifyPassword(String(current), user.passwordHash)))
+      return false
+    await updatePassword(userId, await hashPassword(next))
+    return true
+  })
 }

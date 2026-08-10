@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { observeRequests, renderMetrics, resetMetrics } from './observability'
+import {
+  monitorService,
+  observeRequests,
+  renderMetrics,
+  resetMetrics,
+} from './observability'
 
 describe('request observability', () => {
   beforeEach(() => {
@@ -48,6 +53,51 @@ describe('request observability', () => {
 
     expect(renderMetrics()).toContain(
       'http_requests_total{method="GET",route="/meals",status="500"} 1',
+    )
+  })
+
+  it('correlates service logs and records service outcomes', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await observeRequests({
+      event: {
+        request: new Request('http://localhost/meals', {
+          headers: { 'x-request-id': 'req-service' },
+        }),
+        route: { id: '/meals' },
+      } as any,
+      resolve: async () => {
+        await monitorService('meals', 'create', async () => 1)
+        await expect(
+          monitorService('meals', 'update', async () => {
+            throw new Error('database unavailable')
+          }),
+        ).rejects.toThrow('database unavailable')
+        return new Response()
+      },
+    })
+
+    const serviceLog = info.mock.calls
+      .map(([entry]) => JSON.parse(String(entry)))
+      .find((entry) => entry.event === 'service_operation')
+    expect(serviceLog).toMatchObject({
+      requestId: 'req-service',
+      service: 'meals',
+      operation: 'create',
+      outcome: 'success',
+    })
+    expect(JSON.parse(String(error.mock.calls[0][0]))).toMatchObject({
+      requestId: 'req-service',
+      service: 'meals',
+      operation: 'update',
+      outcome: 'error',
+    })
+    expect(renderMetrics()).toContain(
+      'service_operations_total{service="meals",operation="create",outcome="success"} 1',
+    )
+    expect(renderMetrics()).toContain(
+      'service_operations_total{service="meals",operation="update",outcome="error"} 1',
     )
   })
 })

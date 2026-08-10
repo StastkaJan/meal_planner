@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Handle } from '@sveltejs/kit'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -11,6 +12,8 @@ const levels: Record<LogLevel, number> = {
   error: 40,
 }
 const metrics = new Map<string, RequestMetric>()
+const serviceMetrics = new Map<string, RequestMetric>()
+const requestContext = new AsyncLocalStorage<{ requestId: string }>()
 let requestsInFlight = 0
 
 export function log(
@@ -26,9 +29,50 @@ export function log(
       timestamp: new Date().toISOString(),
       level,
       event,
+      ...requestContext.getStore(),
       ...fields,
     }),
   )
+}
+
+export async function monitorService<T>(
+  service: string,
+  operation: string,
+  task: () => Promise<T>,
+) {
+  const startedAt = performance.now()
+  let outcome = 'success'
+  let failure: unknown
+
+  try {
+    return await task()
+  } catch (error) {
+    outcome = 'error'
+    failure = error
+    throw error
+  } finally {
+    const durationSeconds = (performance.now() - startedAt) / 1000
+    const key = JSON.stringify([service, operation, outcome])
+    const metric = serviceMetrics.get(key) ?? {
+      count: 0,
+      durationSeconds: 0,
+    }
+    metric.count++
+    metric.durationSeconds += durationSeconds
+    serviceMetrics.set(key, metric)
+
+    log(outcome === 'error' ? 'error' : 'info', 'service_operation', {
+      service,
+      operation,
+      outcome,
+      durationMs: Math.round(durationSeconds * 1000),
+      ...(failure === undefined
+        ? {}
+        : {
+            error: failure instanceof Error ? failure.message : String(failure),
+          }),
+    })
+  }
 }
 
 function requestId(header: string | null) {
@@ -43,41 +87,42 @@ export const observeRequests: Handle = async ({ event, resolve }) => {
   let status = 500
   requestsInFlight++
 
-  try {
-    const response = await resolve(event)
-    status = response.status
-    response.headers.set('x-request-id', id)
-    return response
-  } catch (error) {
-    log('error', 'http_request_failed', {
-      requestId: id,
-      method: event.request.method,
-      route: event.route.id ?? 'unmatched',
-      error: error instanceof Error ? error.message : String(error),
-    })
-    throw error
-  } finally {
-    requestsInFlight--
-    const durationSeconds = (performance.now() - startedAt) / 1000
-    const route = event.route.id ?? 'unmatched'
-    const key = JSON.stringify([event.request.method, route, status])
-    const metric = metrics.get(key) ?? { count: 0, durationSeconds: 0 }
-    metric.count++
-    metric.durationSeconds += durationSeconds
-    metrics.set(key, metric)
-
-    log(
-      status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info',
-      'http_request',
-      {
+  return requestContext.run({ requestId: id }, async () => {
+    try {
+      const response = await resolve(event)
+      status = response.status
+      response.headers.set('x-request-id', id)
+      return response
+    } catch (error) {
+      log('error', 'http_request_failed', {
         requestId: id,
         method: event.request.method,
-        route,
-        status,
-        durationMs: Math.round(durationSeconds * 1000),
-      },
-    )
-  }
+        route: event.route.id ?? 'unmatched',
+        error: error instanceof Error ? error.message : String(error),
+      })
+      throw error
+    } finally {
+      requestsInFlight--
+      const durationSeconds = (performance.now() - startedAt) / 1000
+      const route = event.route.id ?? 'unmatched'
+      const key = JSON.stringify([event.request.method, route, status])
+      const metric = metrics.get(key) ?? { count: 0, durationSeconds: 0 }
+      metric.count++
+      metric.durationSeconds += durationSeconds
+      metrics.set(key, metric)
+
+      log(
+        status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info',
+        'http_request',
+        {
+          method: event.request.method,
+          route,
+          status,
+          durationMs: Math.round(durationSeconds * 1000),
+        },
+      )
+    }
+  })
 }
 
 function label(value: string) {
@@ -97,6 +142,36 @@ export function renderMetrics() {
     const [method, route, status] = JSON.parse(key) as [string, string, number]
     const labels = `method="${label(method)}",route="${label(route)}",status="${status}"`
     lines.push(`http_requests_total{${labels}} ${metric.count}`)
+  }
+
+  lines.push(
+    '# HELP service_operations_total Total backend service operations.',
+    '# TYPE service_operations_total counter',
+  )
+  for (const [key, metric] of serviceMetrics) {
+    const [service, operation, outcome] = JSON.parse(key) as [
+      string,
+      string,
+      string,
+    ]
+    const labels = `service="${label(service)}",operation="${label(operation)}",outcome="${label(outcome)}"`
+    lines.push(`service_operations_total{${labels}} ${metric.count}`)
+  }
+
+  lines.push(
+    '# HELP service_operation_duration_seconds_sum Total time spent in backend service operations.',
+    '# TYPE service_operation_duration_seconds_sum counter',
+  )
+  for (const [key, metric] of serviceMetrics) {
+    const [service, operation, outcome] = JSON.parse(key) as [
+      string,
+      string,
+      string,
+    ]
+    const labels = `service="${label(service)}",operation="${label(operation)}",outcome="${label(outcome)}"`
+    lines.push(
+      `service_operation_duration_seconds_sum{${labels}} ${metric.durationSeconds}`,
+    )
   }
 
   lines.push(
@@ -128,5 +203,6 @@ export function renderMetrics() {
 
 export function resetMetrics() {
   metrics.clear()
+  serviceMetrics.clear()
   requestsInFlight = 0
 }
