@@ -6,6 +6,7 @@ import {
 } from '$lib/server/services/recipe-import'
 import type { ImportedRecipe } from '$lib/types'
 import type { RequestHandler } from './$types'
+import { monitorService } from '$lib/server/observability'
 
 const FETCH_TIMEOUT_MS = 8000
 const MAX_BODY_BYTES = 2_000_000
@@ -73,25 +74,26 @@ async function fetchRecipeHtml(startUrl: string): Promise<string> {
   error(502, 'Too many redirects')
 }
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-  if (!locals.user) error(401, 'Not authenticated')
-  const { url, text } = await request.json()
+export const POST: RequestHandler = ({ request, locals }) =>
+  monitorService('recipes', 'import', async () => {
+    if (!locals.user) error(401, 'Not authenticated')
+    const { url, text } = await request.json()
 
-  let recipe: ImportedRecipe | null = null
-  if (typeof text === 'string' && text.trim()) {
-    // pasted JSON-LD, or raw HTML source
-    try {
-      const node = findRecipeNode([JSON.parse(text)])
-      recipe = node ? parseRecipeJsonLd(node) : null
-    } catch {
-      recipe = parseRecipeHtml(text)
+    let recipe: ImportedRecipe | null = null
+    if (typeof text === 'string' && text.trim()) {
+      // pasted JSON-LD, or raw HTML source
+      try {
+        const node = findRecipeNode([JSON.parse(text)])
+        recipe = node ? parseRecipeJsonLd(node) : null
+      } catch {
+        recipe = parseRecipeHtml(text)
+      }
+    } else if (typeof url === 'string' && url) {
+      recipe = parseRecipeHtml(await fetchRecipeHtml(url))
+    } else {
+      error(400, 'Provide a url or text')
     }
-  } else if (typeof url === 'string' && url) {
-    recipe = parseRecipeHtml(await fetchRecipeHtml(url))
-  } else {
-    error(400, 'Provide a url or text')
-  }
 
-  if (!recipe) error(422, "Couldn't find recipe data on that page")
-  return json(recipe)
-}
+    if (!recipe) error(422, "Couldn't find recipe data on that page")
+    return json(recipe)
+  })
