@@ -325,7 +325,7 @@
   "templating": {
     "list": [
       {
-        "allValue": ".*",
+        "allValue": ".+",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "loki", "uid": "loki" },
         "definition": "label_values(service_name)",
