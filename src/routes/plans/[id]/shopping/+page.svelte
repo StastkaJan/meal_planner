@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { setPlanPortions } from '$lib/api/plans'
+
   let { data } = $props()
   let shareStatus = $state('')
+
+  async function handlePortionsChange(portions: number) {
+    await setPlanPortions(data.planId, portions)
+    location.reload()
+  }
 
   const shoppingText = $derived(
     [
@@ -61,6 +68,17 @@
   <p class="eyebrow">Everything for the week</p>
   <h1>Shopping list</h1>
   <p class="week">Week of {data.week}</p>
+  <label class="portions">
+    People served
+    <input
+      type="number"
+      min="1"
+      max="100"
+      value={data.portions}
+      onchange={(event) =>
+        handlePortionsChange(Number(event.currentTarget.value))}
+    />
+  </label>
   {#if shareStatus}<p class="share-status" aria-live="polite">
       {shareStatus}
     </p>{/if}
@@ -153,7 +171,24 @@
   .week {
     color: $color-text-muted;
     font-size: 0.85rem;
-    margin: 4px 0 24px;
+    margin: 4px 0 18px;
+  }
+  .portions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    color: $color-text-muted;
+    font-size: 0.85rem;
+    cursor: pointer;
+    input {
+      width: 76px;
+      min-height: 38px;
+      padding: 7px 9px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-sm;
+      background: $color-surface;
+    }
   }
   .empty {
     color: $color-text-muted;

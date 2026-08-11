@@ -22,7 +22,9 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   }
 
   await page.getByRole('link', { name: 'Shopping list' }).click()
-  await expect(page.getByText('2 tbsp Honey')).toBeVisible()
+  await page.getByLabel('People served').fill('2')
+  await page.getByLabel('People served').blur()
+  await expect(page.getByText('4 tbsp Honey')).toBeVisible()
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', {
       configurable: true,
@@ -35,7 +37,7 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   await page.getByRole('button', { name: 'Share list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('shared-shopping-list')),
-  ).toContain('☐ 2 tbsp Honey')
+  ).toContain('☐ 4 tbsp Honey')
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -51,6 +53,6 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   await page.getByRole('button', { name: 'Copy list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
-  ).toContain('☐ 2 tbsp Honey')
+  ).toContain('☐ 4 tbsp Honey')
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
 })

@@ -42,6 +42,15 @@ export async function deletePlan(id: number) {
   await db.delete(plans).where(eq(plans.id, id))
 }
 
+export async function updatePlanPortions(id: number, portions: number) {
+  const [plan] = await db
+    .update(plans)
+    .set({ portions })
+    .where(eq(plans.id, id))
+    .returning()
+  return plan
+}
+
 export async function setSlotRepeat(
   planId: number,
   mealType: string,
@@ -231,10 +240,11 @@ export async function getShoppingList(planId: number, week: string) {
       unit: mealIngredients.unit,
       qty: sql<
         string | null
-      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty}) end`,
-      count: sql<number>`count(*)::int`,
+      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty} * ${plans.portions} / greatest(${meals.servings}, 1)) end`,
+      count: sql<number>`sum(${plans.portions}::numeric / greatest(${meals.servings}, 1))::float`,
     })
     .from(weekSlots)
+    .innerJoin(plans, eq(weekSlots.planId, plans.id))
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
     .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
