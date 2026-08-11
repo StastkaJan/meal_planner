@@ -77,3 +77,24 @@ test('warns when an ingredient cannot be scaled', async ({ page }) => {
 
   await expect(page.getByRole('note')).toContainText('cannot be scaled')
 })
+
+test('scales ingredient quantities with servings', async ({ page }) => {
+  const name = `Scale-${Date.now()}`
+  await page.getByRole('button', { name: '+ Add meal' }).click()
+  await page.getByPlaceholder('Meal name').fill(name)
+  await page
+    .locator('.create-form')
+    .getByRole('button', { name: 'Save' })
+    .click()
+  await page.getByRole('link', { name, exact: true }).click()
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByLabel('Servings').fill('2')
+  await page.getByPlaceholder('Ingredient').fill('Flour')
+  await page.getByPlaceholder('Qty').fill('1')
+  await page.locator('.ingredient-row select').selectOption('cup')
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await expect(page.getByRole('listitem')).toHaveText('1 cup Flour')
+  await page.getByRole('button', { name: 'More servings' }).click()
+  await expect(page.getByRole('listitem')).toHaveText('1.5 cup Flour')
+})
