@@ -16,6 +16,7 @@
     "prepare": "husky || true"
   },
   "dependencies": {
+    "@sentry/sveltekit": "^10.70.0",
     "drizzle-orm": "^0.44.2",
     "pg": "^8.13.3"
   },

@@ -13,13 +13,21 @@ services:
       retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     ports:
       - '3000:3000'
     environment:
       DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
       ORIGIN: http://localhost:3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      METRICS_TOKEN: ${METRICS_TOKEN:-development-metrics-token}
+      PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN:-}
+      PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT:-development}
     depends_on:
       db:
         condition: service_healthy
@@ -37,10 +45,13 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
+    environment:
+      METRICS_TOKEN: ${METRICS_TOKEN:-development-metrics-token}
+    entrypoint: ['/bin/sh', '-c']
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=7d
+      - |
+        sed "s/__METRICS_TOKEN__/$${METRICS_TOKEN}/" /etc/prometheus/prometheus.yml > /tmp/prometheus.yml
+        exec /bin/prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=7d
     depends_on:
       app:
         condition: service_healthy

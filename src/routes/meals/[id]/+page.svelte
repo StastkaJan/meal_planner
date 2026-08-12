@@ -18,7 +18,9 @@
     !!(meal.calories || meal.proteinG || meal.carbsG || meal.fatG),
   )
   const hasUnscalableIngredients = $derived(
-    data.ingredients.some((ingredient) => ingredient.qty === null),
+    data.ingredients.some(
+      (ingredient: { qty: number | null }) => ingredient.qty === null,
+    ),
   )
   const scale = (v: number | null) =>
     v == null ? null : Math.round(Number(v) * factor)

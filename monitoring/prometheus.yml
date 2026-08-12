@@ -4,5 +4,7 @@ global:
 scrape_configs:
   - job_name: meal-plan
     metrics_path: /metrics
+    authorization:
+      credentials: __METRICS_TOKEN__
     static_configs:
       - targets: ['app:3000']

@@ -26,9 +26,11 @@ describe('recipe library load', () => {
   })
 
   it('searches visible recipe text and applies filters', async () => {
+    const url = new URL('http://localhost/meals?q=tomato&favorites=1')
     const result = await load({
       locals: { user: { id: 1 } },
-      url: new URL('http://localhost/meals?q=tomato&favorites=1'),
+      request: new Request(url),
+      url,
     } as any)
     expect(result).toMatchObject({
       totalResults: 1,
@@ -39,9 +41,11 @@ describe('recipe library load', () => {
   })
 
   it('returns a bounded page of recipes', async () => {
+    const url = new URL('http://localhost/meals?page=3')
     const result = await load({
       locals: { user: { id: 1 } },
-      url: new URL('http://localhost/meals?page=3'),
+      request: new Request(url),
+      url,
     } as any)
     expect(result).toMatchObject({ page: 3, totalPages: 3, totalResults: 25 })
     expect((result as any).meals.map((item: any) => item.id)).toEqual([
