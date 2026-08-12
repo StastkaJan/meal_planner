@@ -17,6 +17,9 @@
         <a href="/meals" class:active={$page.url.pathname.startsWith('/meals')}
           >Recipes</a
         >
+        <a href="/pricing" class:active={$page.url.pathname === '/pricing'}
+          >Pricing</a
+        >
       </div>
       <div class="account-links">
         <a
