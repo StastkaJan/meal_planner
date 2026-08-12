@@ -19,6 +19,8 @@
 
 <!-- NOTE: Dockerfile bundles database/seed.ts and normalizes entrypoint.sh line endings for Windows checkouts. -->
 
+<!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
+
 ## Project layout
 
 ```
@@ -66,6 +68,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
 3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.
 4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)
+5. Admins come from `users.isAdmin`; only admins create/edit global meals and review `/admin/recipes` imports.
 
 ## Common commands
 

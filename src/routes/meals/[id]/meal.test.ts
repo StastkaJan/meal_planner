@@ -28,13 +28,13 @@ vi.mock('$lib/server/services/meals', async (importOriginal) => ({
 import { PATCH, DELETE } from './+server'
 import { POST as DUPLICATE } from './duplicate/+server'
 
-function makeEvent(body?: object, id = '1', userId = 1) {
+function makeEvent(body?: object, id = '1', userId = 1, isAdmin = false) {
   return {
     params: { id },
     request: body
       ? { json: () => Promise.resolve(body) }
       : { json: () => Promise.resolve({}) },
-    locals: { user: { id: userId } },
+    locals: { user: { id: userId, isAdmin } },
   } as any
 }
 
@@ -80,6 +80,14 @@ describe('REST /meals/:id', () => {
         },
       )
       expect(updateMeal).not.toHaveBeenCalled()
+    })
+
+    it('allows an admin to edit a global meal', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ id: 1 }])
+      updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
+      const response = await PATCH(makeEvent({ name: 'updated' }, '1', 1, true))
+      expect(response.status).toBe(200)
+      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' })
     })
 
     it('hides archived meals with 404', async () => {

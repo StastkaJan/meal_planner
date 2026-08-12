@@ -7,6 +7,12 @@ export function requireUser(locals: App.Locals) {
   return locals.user
 }
 
+export function requireAdmin(locals: App.Locals) {
+  const user = requireUser(locals)
+  if (!user.isAdmin) error(403, 'Admin access required')
+  return user
+}
+
 export async function requireOwnedPlan(
   locals: App.Locals,
   id: number | string,
@@ -22,7 +28,7 @@ export async function requireEditableMeal(
   id: number | string,
 ) {
   const user = requireUser(locals)
-  if (!(await findEditableMeal(Number(id), user.id)))
+  if (!(await findEditableMeal(Number(id), user.id, user.isAdmin)))
     error(404, 'Meal not found')
   return { user }
 }

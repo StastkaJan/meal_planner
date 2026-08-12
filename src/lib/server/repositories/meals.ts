@@ -77,12 +77,22 @@ export async function findAllowedMeal(
   return meal ?? null
 }
 
-export async function findEditableMeal(id: number, userId: number) {
+export async function findEditableMeal(
+  id: number,
+  userId: number,
+  isAdmin = false,
+) {
   const [meal] = await db
     .select({ id: meals.id })
     .from(meals)
     .where(
-      and(eq(meals.id, id), eq(meals.userId, userId), isNull(meals.archivedAt)),
+      and(
+        eq(meals.id, id),
+        isAdmin
+          ? or(isNull(meals.userId), eq(meals.userId, userId))
+          : eq(meals.userId, userId),
+        isNull(meals.archivedAt),
+      ),
     )
     .limit(1)
   return meal ?? null

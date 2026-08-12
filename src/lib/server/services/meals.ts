@@ -48,7 +48,7 @@ export async function createUserMeal(
 ) {
   return monitorService('meals', 'create', async () => {
     const values = pickMealFields(body)
-    values.userId = body.scope === 'personal' ? userId : null
+    values.userId = body.scope === 'global' ? null : userId
     return createMeal(values as { name: string })
   })
 }

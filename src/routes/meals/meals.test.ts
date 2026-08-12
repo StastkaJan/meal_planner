@@ -8,10 +8,10 @@ vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({
 
 import { POST } from './+server'
 
-function makeEvent(body: object, userId = 1) {
+function makeEvent(body: object, userId = 1, isAdmin = false) {
   return {
     request: { json: () => Promise.resolve(body) },
-    locals: { user: { id: userId } },
+    locals: { user: { id: userId, isAdmin } },
   } as any
 }
 
@@ -51,9 +51,19 @@ describe('POST /meals', () => {
     })
   })
 
-  it('creates a global meal when scope is not personal', async () => {
+  it('defaults new meals to personal ownership', async () => {
     createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew' })
     await POST(makeEvent({ name: 'Stew' }))
+    expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: 1 })
+  })
+
+  it('allows only admins to create a global meal', async () => {
+    await expect(
+      POST(makeEvent({ name: 'Stew', scope: 'global' })),
+    ).rejects.toMatchObject({ status: 403 })
+
+    createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew' })
+    await POST(makeEvent({ name: 'Stew', scope: 'global' }, 1, true))
     expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: null })
   })
 })
