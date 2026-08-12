@@ -13,7 +13,6 @@ const levels: Record<LogLevel, number> = {
 }
 const metrics = new Map<string, RequestMetric>()
 const serviceMetrics = new Map<string, RequestMetric>()
-const clientErrorMetrics = new Map<string, number>()
 const requestContext = new AsyncLocalStorage<{ requestId: string }>()
 let requestsInFlight = 0
 
@@ -74,14 +73,6 @@ export async function monitorService<T>(
           }),
     })
   }
-}
-
-export function recordClientError(
-  kind: string,
-  fields: Record<string, unknown>,
-) {
-  clientErrorMetrics.set(kind, (clientErrorMetrics.get(kind) ?? 0) + 1)
-  log('error', 'client_error', { kind, ...fields })
 }
 
 function requestId(header: string | null) {
@@ -168,14 +159,6 @@ export function renderMetrics() {
   }
 
   lines.push(
-    '# HELP client_errors_total Total errors reported by browsers.',
-    '# TYPE client_errors_total counter',
-  )
-  for (const [kind, count] of clientErrorMetrics) {
-    lines.push(`client_errors_total{kind="${label(kind)}"} ${count}`)
-  }
-
-  lines.push(
     '# HELP service_operation_duration_seconds_sum Total time spent in backend service operations.',
     '# TYPE service_operation_duration_seconds_sum counter',
   )
@@ -221,6 +204,5 @@ export function renderMetrics() {
 export function resetMetrics() {
   metrics.clear()
   serviceMetrics.clear()
-  clientErrorMetrics.clear()
   requestsInFlight = 0
 }

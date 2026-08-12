@@ -1,8 +1,13 @@
 <script lang="ts">
   import '../app.scss'
+  import * as Sentry from '@sentry/sveltekit'
   import { page } from '$app/stores'
 
   let { children, data } = $props()
+
+  $effect(() => {
+    Sentry.setUser(data.user ? { id: String(data.user.id) } : null)
+  })
 </script>
 
 <header class="shell-header">

@@ -23,9 +23,14 @@ import { load as loadImpl } from './+page.server'
 const load = loadImpl as (event: unknown) => Promise<any>
 
 function makeEvent(params: Record<string, string> = {}, userId = 1) {
+  const url = new URL('http://localhost')
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value)
+  }
   return {
     locals: { user: { id: userId } },
-    url: { searchParams: new URLSearchParams(params) },
+    request: new Request(url),
+    url,
     depends: () => {},
   } as any
 }

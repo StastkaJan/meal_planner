@@ -15,7 +15,7 @@
 
 <!-- NOTE: HTTP and service operations emit correlated JSON logs; `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
-<!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
+<!-- NOTE: Sentry captures browser/server failures and production traces/replays; Grafana remains the source for correlated logs and Prometheus metrics. -->
 
 <!-- NOTE: Dockerfile bundles database/seed.ts and normalizes entrypoint.sh line endings for Windows checkouts. -->
 

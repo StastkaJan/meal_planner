@@ -1,15 +1,19 @@
-import type { ClientInit, HandleClientError } from '@sveltejs/kit'
-import { reportClientError } from '$lib/client/observability'
+import * as Sentry from '@sentry/sveltekit'
+import { env } from '$env/dynamic/public'
 
-export const init: ClientInit = () => {
-  addEventListener('error', (event) =>
-    reportClientError('error', event.error ?? event.message),
-  )
-  addEventListener('unhandledrejection', (event) =>
-    reportClientError('unhandledrejection', event.reason),
-  )
-}
+const environment = env.PUBLIC_SENTRY_ENVIRONMENT || 'development'
 
-export const handleError: HandleClientError = ({ error, event, status }) => {
-  reportClientError('sveltekit', error, event.url.pathname, status)
-}
+Sentry.init({
+  dsn: env.PUBLIC_SENTRY_DSN,
+  enabled: Boolean(env.PUBLIC_SENTRY_DSN),
+  environment,
+  sendDefaultPii: false,
+  tracesSampleRate: environment === 'production' ? 0.1 : 0,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: environment === 'production' ? 1 : 0,
+  integrations: [
+    Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
+  ],
+})
+
+export const handleError = Sentry.handleErrorWithSentry()
