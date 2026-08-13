@@ -42,7 +42,7 @@
       <label class="legal-choice">
         <input type="checkbox" name="termsAccepted" required />
         <span
-          >I accept the <a href="/legal/terms" target="_blank" rel="noopener"
+          >I accept the <a href="/legal/terms.md" target="_blank" rel="noopener"
             >Terms and Conditions</a
           >.</span
         >
@@ -51,7 +51,7 @@
         <input type="checkbox" name="privacyAcknowledged" required />
         <span
           >I acknowledge the <a
-            href="/legal/privacy"
+            href="/legal/privacy.md"
             target="_blank"
             rel="noopener">Privacy Policy</a
           >.</span

@@ -4,7 +4,7 @@
 
 Verze 0.1, účinná od [DATUM ÚČINNOSTI]
 
-Tento dokument vysvětluje, jak jsou při používání služby Meal Plan na [URL SLUŽBY] zpracovávány osobní údaje. Je samostatný od [Podmínek používání](./terms-and-conditions.cs.md).
+Tento dokument vysvětluje, jak jsou při používání služby Meal Plan na [URL SLUŽBY] zpracovávány osobní údaje. Je samostatný od [Podmínek používání](./terms.md).
 
 ## 1. Správce a kontakt
 

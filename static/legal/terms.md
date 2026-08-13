@@ -10,7 +10,7 @@ Službu Meal Plan (dále jen „služba“) provozuje [JMÉNO / OBCHODNÍ FIRMA]
 
 Kontakt: [KONTAKTNÍ E-MAIL], [PŘÍPADNĚ TELEFON]
 
-Tyto podmínky upravují používání služby dostupné na [URL SLUŽBY]. Zásady zpracování osobních údajů jsou uvedeny v samostatném dokumentu [Informace o zpracování osobních údajů](./privacy-policy.cs.md).
+Tyto podmínky upravují používání služby dostupné na [URL SLUŽBY]. Zásady zpracování osobních údajů jsou uvedeny v samostatném dokumentu [Informace o zpracování osobních údajů](./privacy.md).
 
 ## 2. Co služba nabízí
 
