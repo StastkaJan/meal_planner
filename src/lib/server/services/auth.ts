@@ -4,7 +4,6 @@ import type { Cookies } from '@sveltejs/kit'
 import { createUser, findUserByEmail } from '../repositories/accounts'
 import { saveSession } from '../repositories/sessions'
 import { monitorService } from '../observability'
-import { LEGAL_VERSION } from '$lib/legal'
 
 const scryptAsync = promisify(scrypt)
 const DUMMY_HASH = `${'0'.repeat(32)}:${'0'.repeat(128)}`
@@ -67,10 +66,7 @@ export async function authenticate(email: string, password: string) {
 export async function register(email: string, password: string) {
   return monitorService('auth', 'register', async () => {
     if (await findUserByEmail(email)) return null
-    return createUser(email, await hashPassword(password), {
-      acceptedAt: new Date(),
-      version: LEGAL_VERSION,
-    })
+    return createUser(email, await hashPassword(password))
   })
 }
 

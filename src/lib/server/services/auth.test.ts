@@ -53,21 +53,3 @@ describe('checkRateLimit', () => {
     expect(checkRateLimit(ip)).toBe(false)
   })
 })
-
-describe('register', () => {
-  it('records the accepted legal document versions', async () => {
-    findUserByEmail.mockResolvedValue(null)
-    createUser.mockResolvedValue({ id: 1 })
-
-    await register('new@example.com', 'password1')
-
-    expect(createUser).toHaveBeenCalledWith(
-      'new@example.com',
-      expect.any(String),
-      {
-        acceptedAt: expect.any(Date),
-        version: '0.1',
-      },
-    )
-  })
-})
