@@ -16,10 +16,25 @@ export async function findUserById(id: number) {
   return user ?? null
 }
 
-export async function createUser(email: string, passwordHash: string) {
+export async function createUser(
+  email: string,
+  passwordHash: string,
+  legalAcceptance: {
+    acceptedAt: Date
+    termsVersion: string
+    privacyVersion: string
+  },
+) {
   const [user] = await db
     .insert(users)
-    .values({ email, passwordHash })
+    .values({
+      email,
+      passwordHash,
+      termsAcceptedAt: legalAcceptance.acceptedAt,
+      termsVersion: legalAcceptance.termsVersion,
+      privacyAcknowledgedAt: legalAcceptance.acceptedAt,
+      privacyVersion: legalAcceptance.privacyVersion,
+    })
     .returning()
   return user
 }

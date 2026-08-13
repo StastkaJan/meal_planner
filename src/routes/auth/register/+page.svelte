@@ -10,4 +10,5 @@
   alternateHref="/auth/login"
   alternateLabel="Sign in instead"
   error={form?.error}
+  legalAcceptance
 />

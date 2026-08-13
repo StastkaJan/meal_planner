@@ -1,10 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
+
+const createUser = vi.hoisted(() => vi.fn())
+const findUserByEmail = vi.hoisted(() => vi.fn())
+
+vi.mock('../repositories/accounts', () => ({ createUser, findUserByEmail }))
+
 import {
   hashPassword,
   verifyPassword,
   generateToken,
   checkRateLimit,
+  register,
 } from './auth'
+
+beforeEach(() => vi.clearAllMocks())
 
 describe('hashPassword', () => {
   it('produces salt:hash format', async () => {
@@ -42,5 +51,24 @@ describe('checkRateLimit', () => {
     const ip = `test-${Date.now()}`
     for (let i = 0; i < 10; i++) expect(checkRateLimit(ip)).toBe(true)
     expect(checkRateLimit(ip)).toBe(false)
+  })
+})
+
+describe('register', () => {
+  it('records the accepted legal document versions', async () => {
+    findUserByEmail.mockResolvedValue(null)
+    createUser.mockResolvedValue({ id: 1 })
+
+    await register('new@example.com', 'password1')
+
+    expect(createUser).toHaveBeenCalledWith(
+      'new@example.com',
+      expect.any(String),
+      {
+        acceptedAt: expect.any(Date),
+        termsVersion: '0.1',
+        privacyVersion: '0.1',
+      },
+    )
   })
 })
