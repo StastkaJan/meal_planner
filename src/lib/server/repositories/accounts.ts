@@ -21,8 +21,7 @@ export async function createUser(
   passwordHash: string,
   legalAcceptance: {
     acceptedAt: Date
-    termsVersion: string
-    privacyVersion: string
+    version: string
   },
 ) {
   const [user] = await db
@@ -30,10 +29,8 @@ export async function createUser(
     .values({
       email,
       passwordHash,
-      termsAcceptedAt: legalAcceptance.acceptedAt,
-      termsVersion: legalAcceptance.termsVersion,
-      privacyAcknowledgedAt: legalAcceptance.acceptedAt,
-      privacyVersion: legalAcceptance.privacyVersion,
+      legalAcceptedAt: legalAcceptance.acceptedAt,
+      legalVersion: legalAcceptance.version,
     })
     .returning()
   return user

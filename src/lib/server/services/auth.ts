@@ -4,7 +4,7 @@ import type { Cookies } from '@sveltejs/kit'
 import { createUser, findUserByEmail } from '../repositories/accounts'
 import { saveSession } from '../repositories/sessions'
 import { monitorService } from '../observability'
-import { PRIVACY_VERSION, TERMS_VERSION } from '$lib/legal'
+import { LEGAL_VERSION } from '$lib/legal'
 
 const scryptAsync = promisify(scrypt)
 const DUMMY_HASH = `${'0'.repeat(32)}:${'0'.repeat(128)}`
@@ -69,8 +69,7 @@ export async function register(email: string, password: string) {
     if (await findUserByEmail(email)) return null
     return createUser(email, await hashPassword(password), {
       acceptedAt: new Date(),
-      termsVersion: TERMS_VERSION,
-      privacyVersion: PRIVACY_VERSION,
+      version: LEGAL_VERSION,
     })
   })
 }

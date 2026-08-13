@@ -66,8 +66,7 @@ describe('register', () => {
       expect.any(String),
       {
         acceptedAt: expect.any(Date),
-        termsVersion: '0.1',
-        privacyVersion: '0.1',
+        version: '0.1',
       },
     )
   })

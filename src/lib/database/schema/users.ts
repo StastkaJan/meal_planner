@@ -4,10 +4,8 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
-  termsAcceptedAt: timestamp('terms_accepted_at'),
-  termsVersion: text('terms_version'),
-  privacyAcknowledgedAt: timestamp('privacy_acknowledged_at'),
-  privacyVersion: text('privacy_version'),
+  legalAcceptedAt: timestamp('legal_accepted_at').notNull(),
+  legalVersion: text('legal_version').notNull(),
 })
 
 export type User = typeof users.$inferSelect

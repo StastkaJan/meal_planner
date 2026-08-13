@@ -1,5 +1,5 @@
 {
-  "id": "be9c41ff-7b8f-434b-a678-ebe8df8c31cd",
+  "id": "c2a33483-2a07-4d7a-8fea-1e7f979892c7",
   "prevId": "d05ef802-e6ce-491c-9e95-f5c19d4e1b5d",
   "version": "7",
   "dialect": "postgresql",
@@ -597,29 +597,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "terms_accepted_at": {
-          "name": "terms_accepted_at",
+        "legal_accepted_at": {
+          "name": "legal_accepted_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "terms_version": {
-          "name": "terms_version",
+        "legal_version": {
+          "name": "legal_version",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
-        },
-        "privacy_acknowledged_at": {
-          "name": "privacy_acknowledged_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "privacy_version": {
-          "name": "privacy_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
