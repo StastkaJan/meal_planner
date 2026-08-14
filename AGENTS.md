@@ -46,6 +46,8 @@ docker-compose.yml
 
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
 
+Monetization validation: authenticated `/pricing` records one current monthly/annual Pro interest choice per user; there is no billing integration.
+
 Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md).
 
 ## Svelte conventions
