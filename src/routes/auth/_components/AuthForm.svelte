@@ -9,12 +9,14 @@
     alternateHref,
     alternateLabel,
     error,
+    legalAcceptance = false,
   }: {
     title: string
     submitLabel: string
     alternateHref: string
     alternateLabel: string
     error?: string
+    legalAcceptance?: boolean
   } = $props()
 </script>
 
@@ -36,6 +38,26 @@
         minlength={8}
       />
     </Field>
+    {#if legalAcceptance}
+      <label class="legal-choice">
+        <input type="checkbox" name="termsAccepted" required />
+        <span
+          >I accept the <a href="/legal/terms.md" target="_blank" rel="noopener"
+            >Terms and Conditions</a
+          >.</span
+        >
+      </label>
+      <label class="legal-choice">
+        <input type="checkbox" name="privacyAcknowledged" required />
+        <span
+          >I acknowledge the <a
+            href="/legal/privacy.md"
+            target="_blank"
+            rel="noopener">Privacy Policy</a
+          >.</span
+        >
+      </label>
+    {/if}
     <Button type="submit">{submitLabel}</Button>
   </form>
   <p><a href={alternateHref}>{alternateLabel}</a></p>
@@ -101,6 +123,19 @@
   a {
     color: $color-accent;
     font-weight: 600;
+  }
+
+  .legal-choice {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+    line-height: 1.4;
+
+    input {
+      margin-top: 2px;
+    }
   }
 
   @media (max-width: 480px) {

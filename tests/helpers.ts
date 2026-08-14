@@ -17,6 +17,8 @@ export async function register(
   await page.goto('/auth/register')
   await page.fill('input[name="email"]', email)
   await page.fill('input[name="password"]', password)
+  await page.check('input[name="termsAccepted"]')
+  await page.check('input[name="privacyAcknowledged"]')
   await page.click('button[type="submit"]')
   await page.waitForURL('/')
 }

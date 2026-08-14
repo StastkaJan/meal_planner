@@ -17,6 +17,13 @@ export const actions: Actions = {
     const d = await request.formData()
     const email = String(d.get('email')).toLowerCase().trim()
     const password = String(d.get('password'))
+    const termsAccepted = d.get('termsAccepted') === 'on'
+    const privacyAcknowledged = d.get('privacyAcknowledged') === 'on'
+
+    if (!termsAccepted || !privacyAcknowledged)
+      return fail(400, {
+        error: 'You must accept both legal documents to create an account',
+      })
 
     if (password.length < 8)
       return fail(400, { error: 'Password must be at least 8 characters' })

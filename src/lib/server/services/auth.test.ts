@@ -1,10 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
+
+const createUser = vi.hoisted(() => vi.fn())
+const findUserByEmail = vi.hoisted(() => vi.fn())
+
+vi.mock('../repositories/accounts', () => ({ createUser, findUserByEmail }))
+
 import {
   hashPassword,
   verifyPassword,
   generateToken,
   checkRateLimit,
+  register,
 } from './auth'
+
+beforeEach(() => vi.clearAllMocks())
 
 describe('hashPassword', () => {
   it('produces salt:hash format', async () => {
