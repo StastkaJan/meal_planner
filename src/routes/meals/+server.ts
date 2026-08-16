@@ -11,7 +11,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) error(401, 'Not authenticated')
   const body = await request.json()
   if (!body.name) error(400, 'Name is required')
-  // ownership is server-set (never from the whitelist): scope=personal → mine, else global
+  if (body.scope === 'global' && !locals.user.isAdmin)
+    error(403, 'Only admins can create global recipes')
+  if (body.scope && !['personal', 'global'].includes(body.scope))
+    error(400, 'Invalid scope')
   const meal = await createUserMeal(locals.user.id, body)
   return json(meal, { status: 201 })
 }

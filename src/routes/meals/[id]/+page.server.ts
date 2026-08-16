@@ -8,8 +8,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   // hide another user's personal meal — indistinguishable from "not found"
   if (!meal) error(404, 'Meal not found')
 
+  const ingredients = await getMealIngredients(mealId)
   return {
     meal,
-    ingredients: await getMealIngredients(mealId),
+    ingredients,
+    editable:
+      meal.userId === locals.user?.id || (!meal.userId && locals.user?.isAdmin),
   }
 }

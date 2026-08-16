@@ -35,5 +35,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     page,
     totalPages,
     totalResults: filtered.length,
+    isAdmin: locals.user?.isAdmin ?? false,
   }
 }

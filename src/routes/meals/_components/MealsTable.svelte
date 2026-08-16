@@ -13,6 +13,7 @@
     onCreate,
     onDelete,
     onFavorite,
+    isAdmin,
   }: {
     meals: (Meal & { isFavorite: boolean })[]
     emptyMessage: string
@@ -23,6 +24,7 @@
     ) => void
     onDelete: (id: number) => void
     onFavorite: (id: number, favorite: boolean) => void
+    isAdmin: boolean
   } = $props()
 
   function submit(event: SubmitEvent) {
@@ -65,14 +67,18 @@
   {#if creating}
     <form class="create-form" method="POST" onsubmit={submit}>
       <Input type="text" name="name" placeholder="Meal name" required />
-      <Select
-        name="scope"
-        title="Who can see this recipe"
-        options={[
-          { value: 'personal', label: 'Just me' },
-          { value: 'global', label: 'Everyone (read-only)' },
-        ]}
-      />
+      {#if isAdmin}
+        <Select
+          name="scope"
+          title="Who can see this recipe"
+          options={[
+            { value: 'personal', label: 'Just me' },
+            { value: 'global', label: 'Everyone' },
+          ]}
+        />
+      {:else}
+        <input type="hidden" name="scope" value="personal" />
+      {/if}
       <Button size="sm" type="submit">Save</Button>
       <Button size="sm" variant="secondary" onclick={() => (creating = false)}
         >Cancel</Button

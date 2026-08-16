@@ -17,6 +17,12 @@
         <a href="/meals" class:active={$page.url.pathname.startsWith('/meals')}
           >Recipes</a
         >
+        {#if data.user.isAdmin}
+          <a
+            href="/admin/recipes"
+            class:active={$page.url.pathname.startsWith('/admin')}>Review</a
+          >
+        {/if}
       </div>
       <div class="account-links">
         <a

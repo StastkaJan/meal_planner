@@ -1,90 +1,63 @@
-import { vi, describe, it, expect, afterEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
+
+const fetchPublicHtml = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/services/safe-fetch', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  fetchPublicHtml,
+}))
+
+import { SafeFetchError } from '$lib/server/services/safe-fetch'
 import { POST } from './+server'
 
 function makeEvent(body: object) {
   return {
     request: { json: () => Promise.resolve(body) },
-    locals: { user: { id: 1 } },
+    locals: { user: { id: 1, isAdmin: false } },
   } as any
-}
-
-function res(status: number, opts: { location?: string; body?: string } = {}) {
-  return {
-    status,
-    ok: status >= 200 && status < 300,
-    headers: {
-      get: (k: string) => (k === 'location' ? (opts.location ?? null) : null),
-    },
-    text: () => Promise.resolve(opts.body ?? ''),
-  }
 }
 
 const recipeHtml = (node: object) =>
   `<html><head><script type="application/ld+json">${JSON.stringify(node)}</script></head></html>`
 
 describe('POST /meals/import', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  beforeEach(() => vi.clearAllMocks())
 
-  it('rejects a non-public URL without fetching', async () => {
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+  it('passes safe-fetch failures through', async () => {
+    fetchPublicHtml.mockRejectedValueOnce(
+      new SafeFetchError(400, 'URL must resolve only to public addresses'),
+    )
     await expect(
       POST(makeEvent({ url: 'http://localhost/recipe' })),
-    ).rejects.toMatchObject({ status: 400 })
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it('rejects a redirect that points at an internal host (SSRF guard)', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        res(302, { location: 'http://169.254.169.254/latest/meta-data' }),
-      )
-    vi.stubGlobal('fetch', fetchMock)
-    await expect(
-      POST(makeEvent({ url: 'https://recipes.example.com/r' })),
     ).rejects.toMatchObject({ status: 400 })
   })
 
   it('returns 422 when the page has no Recipe data', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockResolvedValueOnce(
-          res(200, { body: recipeHtml({ '@type': 'Article' }) }),
-        ),
-    )
+    fetchPublicHtml.mockResolvedValueOnce(recipeHtml({ '@type': 'Article' }))
     await expect(
       POST(makeEvent({ url: 'https://recipes.example.com/r' })),
     ).rejects.toMatchObject({ status: 422 })
   })
 
   it('parses a Recipe fetched from a public URL', async () => {
-    const html = recipeHtml({
-      '@type': 'Recipe',
-      name: 'Soup',
-      recipeIngredient: ['water'],
-    })
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValueOnce(res(200, { body: html })),
+    fetchPublicHtml.mockResolvedValueOnce(
+      recipeHtml({
+        '@type': 'Recipe',
+        name: 'Soup',
+        recipeIngredient: ['water'],
+      }),
     )
     const out = await POST(makeEvent({ url: 'https://recipes.example.com/r' }))
-    expect(out.status).toBe(200)
     expect(await out.json()).toEqual({
       name: 'Soup',
       ingredients: [{ name: 'water', qty: null, unit: null }],
     })
   })
 
-  it('parses pasted JSON-LD text without any fetch', async () => {
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+  it('parses pasted JSON-LD without fetching', async () => {
     const out = await POST(
       makeEvent({ text: JSON.stringify({ '@type': 'Recipe', name: 'Paste' }) }),
     )
     expect(await out.json()).toMatchObject({ name: 'Paste' })
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(fetchPublicHtml).not.toHaveBeenCalled()
   })
 })

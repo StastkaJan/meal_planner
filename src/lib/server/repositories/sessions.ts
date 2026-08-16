@@ -4,7 +4,7 @@ import { sessions, users } from '$lib/database/schema'
 
 export async function findSessionUser(token: string) {
   const [user] = await db
-    .select({ id: users.id, email: users.email })
+    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
     .where(and(eq(sessions.id, token), gt(sessions.expiresAt, new Date())))

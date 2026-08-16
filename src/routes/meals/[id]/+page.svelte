@@ -52,7 +52,7 @@
   {:else}
     <div class="top-bar">
       <a class="back" href="/meals">← Meals</a>
-      {#if meal.userId}
+      {#if data.editable}
         <div class="actions">
           <button class="btn ghost sm" onclick={() => (editing = true)}
             >Edit</button
@@ -323,7 +323,6 @@
     font-size: 1.1rem;
     line-height: 1.7;
   }
-
   section {
     display: flex;
     flex-direction: column;

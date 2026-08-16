@@ -169,6 +169,7 @@
 
   <MealsTable
     {meals}
+    isAdmin={data.isAdmin}
     bind:creating
     emptyMessage={data.query || data.difficulty
       ? 'No matching recipes.'
