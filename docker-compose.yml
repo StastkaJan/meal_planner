@@ -30,6 +30,22 @@ services:
       retries: 3
       start_period: 60s
 
+  backup:
+    profiles: ['production']
+    build: ./monitoring/backup
+    environment:
+      DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
+      BACKUP_FAILURE_WEBHOOK_URL: ${BACKUP_FAILURE_WEBHOOK_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v3.13.1
     ports:
