@@ -38,7 +38,7 @@ Set `GRAFANA_ADMIN_PASSWORD` in `.env` before using the stack outside local deve
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup
-and every 24 hours, then keeps 7 daily, 4 weekly, and 6 monthly snapshots in an
+and at 02:00 UTC daily, then keeps 7 daily, 4 weekly, and 6 monthly snapshots in an
 off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
 Set the backup variables from `.env.example`, including an operator-monitored
 webhook, then start it with:

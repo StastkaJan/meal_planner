@@ -51,6 +51,6 @@ fi
 
 run_backup
 
-while sleep 86400; do
-	run_backup
-done
+if [ "${1:-}" = 'schedule' ]; then
+	exec crond -f -l 2
+fi
