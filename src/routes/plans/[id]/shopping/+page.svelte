@@ -84,7 +84,7 @@
     </p>{/if}
 
   {#if data.items.length === 0}
-    <p class="empty">No meals assigned this week — nothing to shop for yet.</p>
+    <p class="empty">No ingredients to shop for this week.</p>
   {:else}
     <ul>
       {#each data.items as item (item.name)}
