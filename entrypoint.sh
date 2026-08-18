@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 echo "Running migrations..."
-npx drizzle-kit migrate
+node scripts-dist/migrate.js
 echo "Seeding..."
 node scripts-dist/seed.js
 echo "Starting app..."

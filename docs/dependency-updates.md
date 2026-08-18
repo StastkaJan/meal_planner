@@ -3,8 +3,10 @@
 Dependabot checks npm packages, the Docker base image, and GitHub Actions every
 Monday at 06:00 Europe/Prague. Minor and patch npm and Actions updates are
 grouped; major updates stay separate. Review and merge passing update PRs each
-week instead of enabling automatic merges. The Node image is digest-pinned so
-base-image rebuilds arrive as explicit, reviewable changes.
+week instead of enabling automatic merges. The Node 24 image is digest-pinned
+so base-image rebuilds arrive as explicit, reviewable changes. The runtime
+image contains only production dependencies; migrations use a bundled
+`drizzle-orm` script rather than shipping `drizzle-kit` and its build tools.
 
 The `Dependency security` workflow runs for relevant pull requests and pushes,
 every Tuesday, and on demand. It:
