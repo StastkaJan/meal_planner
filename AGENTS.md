@@ -11,7 +11,7 @@
 - **DB**: PostgreSQL + Drizzle ORM
 - **Auth**: Session-based, scrypt hashed passwords, 30-day expiry cookie
 - **Tests**: Vitest (unit), Playwright (E2E)
-- **Infra**: Docker Compose (app + postgres + Prometheus/Loki/Alloy/Grafana)
+- **Infra**: Docker Compose (app + postgres + Prometheus/Alertmanager/Loki/Alloy/Grafana)
 
 <!-- NOTE: HTTP and service operations emit correlated JSON logs; `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
@@ -19,7 +19,9 @@
 
 <!-- NOTE: Dockerfile bundles database/seed.ts and normalizes entrypoint.sh line endings for Windows checkouts. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository; failures post to Alertmanager. -->
+
+<!-- NOTE: Prometheus alerts on sustained 5xx, `/health` failures, latency, and host disk; backup failures post to the same Alertmanager Slack route. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 

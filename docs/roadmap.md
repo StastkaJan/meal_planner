@@ -38,9 +38,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P1 - detect and diagnose failures
 
-4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
-   backup failures, high latency, and low disk space. Route alerts to one place
-   an operator will actually monitor.
 5. **Better error evidence** - retain sanitized server stack traces, deployment
    version, route, user ID where appropriate, and the existing request ID. Never
    log passwords, session tokens, recipe import bodies, or other private data.
@@ -81,7 +78,10 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
-- Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Daily encrypted off-host PostgreSQL backups with retention and failure alerts.
+- Sustained 5xx, health, backup, latency, and disk alerts routed through
+  Alertmanager to one operator Slack channel; see the
+  [alert runbook](operations-alerts.md).
 
 ## Explicitly defer
 
