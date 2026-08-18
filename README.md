@@ -50,3 +50,10 @@ docker compose --profile production up -d backup
 Check the latest snapshot with `docker compose exec backup restic snapshots`.
 The Restic password is required to restore data; store a separate copy outside
 the server.
+
+## Production migrations
+
+Use `npm run db:migrate:production` for production schema changes. It creates
+an encrypted off-host backup and only runs Drizzle after that backup succeeds.
+See [docs/migrations.md](docs/migrations.md) for the compatibility and recovery
+policy. `npm run db:migrate` is for local development only.

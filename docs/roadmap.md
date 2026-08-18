@@ -53,9 +53,9 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 8. **CI quality gate** - require formatting, Svelte/type checks, unit tests, a
    production build, and focused E2E smoke tests before deployment.
-9. **Migration safety** - back up before schema changes, use backward-compatible
+9. ~~**Migration safety** - back up before schema changes, use backward-compatible
    expand/migrate/contract changes, and write a rollback or roll-forward note
-   for every destructive migration.
+   for every destructive migration.~~ See [migration policy](migrations.md).
 10. **Deployment rollback** - keep the previous immutable application image and
     document the command that restores it. Exercise the rollback occasionally.
 11. **Dependency and image updates** - automate update PRs and review them on a

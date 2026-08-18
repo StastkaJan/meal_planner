@@ -8,10 +8,12 @@
     "preview": "vite preview",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:production": "tsx scripts/migrate-production.ts",
+    "check:migrations": "tsx scripts/check-migration-notes.ts",
     "db:seed": "npx tsx src/lib/database/seed.ts",
     "test": "playwright test",
     "test:unit": "vitest run",
-    "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",
+    "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run && npm run check:migrations",
     "format": "prettier --write .",
     "prepare": "husky || true"
   },
