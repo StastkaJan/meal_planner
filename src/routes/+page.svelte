@@ -52,6 +52,16 @@
     await refreshPlan()
   }
 
+  async function handleSlotLeftover(
+    date: string,
+    mealType: string,
+    source: { date: string; mealType: string } | null,
+  ) {
+    if (!plan) return
+    await planApi.setSlotLeftover(plan.id, date, mealType, source)
+    await refreshPlan()
+  }
+
   async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
     const { filled } = await planApi.populatePlan(
@@ -174,6 +184,7 @@
       weekStart={data.viewWeek}
       targets={data.targets}
       onSlotChange={handleSlotChange}
+      onSlotLeftover={handleSlotLeftover}
       onAutoCompose={handleAutoCompose}
       onCopyWeek={handleCopyWeek}
       onAddBonus={handleAddBonus}

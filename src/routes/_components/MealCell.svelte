@@ -8,12 +8,16 @@
     slot,
     meals,
     mealType,
+    leftoverSource,
     onPick,
+    onLeftover,
   }: {
     slot: SlotWithMeal | null
     meals: Meal[]
     mealType: string
+    leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void
+    onLeftover: (source: { date: string; mealType: string } | null) => void
   } = $props()
 
   let dialogEl = $state<HTMLDialogElement>()
@@ -25,10 +29,17 @@
   }
 
   function handlePick(mealId: number | null) {
-    onPick(mealId)
+    if (mealId !== slot?.mealId) onPick(mealId)
     dialogEl?.close()
     open = false
   }
+
+  const usesLeftovers = $derived(slot?.leftoverSourceDate != null)
+  const sourceLabel = $derived(
+    leftoverSource
+      ? `${leftoverSource.date} ${leftoverSource.mealType.replaceAll('_', ' ')}`
+      : '',
+  )
 </script>
 
 {#if slot?.mealName}
@@ -37,6 +48,9 @@
       <span class="name">{slot.mealName}</span>
       {#if slot.calories}
         <span class="kcal">{slot.calories} kcal</span>
+      {/if}
+      {#if usesLeftovers}
+        <span class="leftover-label">leftovers</span>
       {/if}
     </div>
     <div class="actions">
@@ -51,6 +65,27 @@
         title="Show recipe"
         aria-label="Show recipe">↗</a
       >
+      {#if leftoverSource || usesLeftovers}
+        <button
+          type="button"
+          class:active={usesLeftovers}
+          onclick={() =>
+            onLeftover(
+              usesLeftovers || !leftoverSource
+                ? null
+                : {
+                    date: leftoverSource.date,
+                    mealType: leftoverSource.mealType,
+                  },
+            )}
+          title={usesLeftovers
+            ? 'Prepare separately'
+            : `Use leftovers from ${sourceLabel}`}
+          aria-label={usesLeftovers
+            ? 'Prepare separately'
+            : `Use leftovers from ${sourceLabel}`}>↶</button
+        >
+      {/if}
       <button
         type="button"
         onclick={() => onPick(null)}
@@ -162,6 +197,15 @@
   .kcal {
     font-size: 0.7rem;
     color: $color-text-muted;
+  }
+  .leftover-label {
+    color: $color-accent;
+    font-size: 0.66rem;
+    font-weight: 650;
+  }
+  .actions button.active {
+    background: $color-accent-dim;
+    color: $color-accent;
   }
   .empty {
     font-size: 0.8rem;

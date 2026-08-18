@@ -27,6 +27,17 @@ export const setSlot = (
     body: jsonBody({ date, mealType, mealId }),
   })
 
+export const setSlotLeftover = (
+  planId: number,
+  date: string,
+  mealType: string,
+  source: { date: string; mealType: string } | null,
+) =>
+  request(`/plans/${planId}/slots`, {
+    method: 'PATCH',
+    body: jsonBody({ date, mealType, source }),
+  })
+
 export const populatePlan = (
   planId: number,
   week: string,

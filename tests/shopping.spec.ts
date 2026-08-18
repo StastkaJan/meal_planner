@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('shopping list sums ingredient quantities across repeated meals', async ({
+test('shopping list counts a batch once when a later slot uses leftovers', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
@@ -21,10 +21,13 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
       .click()
   }
 
+  await page.getByRole('button', { name: /Use leftovers from/ }).click()
+  await expect(page.getByText('leftovers')).toBeVisible()
+
   await page.getByRole('link', { name: 'Shopping list' }).click()
   await page.getByLabel('People served').fill('2')
   await page.getByLabel('People served').blur()
-  await expect(page.getByText('4 tbsp Honey')).toBeVisible()
+  await expect(page.getByText('2 tbsp Honey')).toBeVisible()
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', {
       configurable: true,
@@ -37,7 +40,7 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   await page.getByRole('button', { name: 'Share list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('shared-shopping-list')),
-  ).toContain('☐ 4 tbsp Honey')
+  ).toContain('☐ 2 tbsp Honey')
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -53,6 +56,6 @@ test('shopping list sums ingredient quantities across repeated meals', async ({
   await page.getByRole('button', { name: 'Copy list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
-  ).toContain('☐ 4 tbsp Honey')
+  ).toContain('☐ 2 tbsp Honey')
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
 })

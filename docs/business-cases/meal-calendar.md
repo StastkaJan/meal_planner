@@ -53,6 +53,10 @@ different dietary needs. Plans belong to a logged-in user and are private.
   the whole group, while auto-compose chooses once per group. **Copy from last
   week** applies the previous week's filled slots to the corresponding days,
   replacing assignments in those positions.
+- **Reuse a prepared batch.** When the same meal appears on a later day, it can
+  be marked as leftovers from the earlier slot. The later serving remains in
+  nutrition totals, but its ingredients are not added to the shopping list a
+  second time.
 - **Track changes to the day.** Bonus items record off-plan food with optional
   calories and macros. They immediately contribute to the day's nutrition
   totals. **Recalculate** fills only the remaining empty slots using the budget
@@ -64,8 +68,8 @@ different dietary needs. Plans belong to a logged-in user and are private.
   recipe's serving count, keeps different units separate, and uses a plain
   count when quantities are missing.
 
-See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotRepeats`,
-`bonusItems`) and [../api.md](../api.md) (`/plans/*`) for the data and
+See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotLeftovers`,
+`slotRepeats`, `bonusItems`) and [../api.md](../api.md) (`/plans/*`) for the data and
 endpoints.
 
 ## Success signals
