@@ -21,6 +21,8 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
 
+<!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 ## Project layout
