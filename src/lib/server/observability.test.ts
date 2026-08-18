@@ -120,4 +120,17 @@ describe('request observability', () => {
       'client_errors_total{kind="unhandledrejection"} 1',
     )
   })
+
+  it('counts slow service operations with bounded labels', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    vi.spyOn(performance, 'now')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(1500)
+
+    await monitorService('plans', 'compose', async () => undefined)
+
+    expect(renderMetrics()).toContain(
+      'slow_service_operations_total{service="plans",operation="compose"} 1',
+    )
+  })
 })

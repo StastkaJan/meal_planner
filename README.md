@@ -33,6 +33,10 @@ npm run db:seed       # seed meals
 - Prometheus: http://localhost:9090
 - Alloy collector diagnostics: http://localhost:12345
 
+The provisioned **Capacity Overview** dashboard covers database size and
+connections, container memory, database disk, and slow service operations. See
+[the capacity runbook](docs/capacity.md) for thresholds and response steps.
+
 Set `GRAFANA_ADMIN_PASSWORD` in `.env` before using the stack outside local development. Metrics and logs are retained for seven days.
 
 ## Backups
