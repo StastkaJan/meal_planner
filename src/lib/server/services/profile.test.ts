@@ -18,9 +18,18 @@ vi.mock('../observability', () => ({
     task(),
 }))
 
-import { deleteAccount, exportAccountData } from './profile'
+import { deleteAccount, exportAccountData, toPantryStaples } from './profile'
 
 beforeEach(() => vi.clearAllMocks())
+
+describe('toPantryStaples', () => {
+  it('parses, trims, and deduplicates pantry ingredient names', () => {
+    expect(toPantryStaples(' Salt\nolive oil, salt \n')).toEqual([
+      'Salt',
+      'olive oil',
+    ])
+  })
+})
 
 describe('exportAccountData', () => {
   it('returns only the repository export for the authenticated user', async () => {

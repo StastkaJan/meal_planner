@@ -419,7 +419,11 @@ export async function copyWeek(planId: number, from: string, to: string) {
       })
 }
 
-export async function getShoppingList(planId: number, week: string) {
+export async function getShoppingList(
+  planId: number,
+  week: string,
+  pantryStaples: string[] = [],
+) {
   const rows = await db
     .select({
       name: ingredients.name,
@@ -442,7 +446,18 @@ export async function getShoppingList(planId: number, week: string) {
         eq(slotLeftovers.mealType, weekSlots.mealType),
       ),
     )
-    .where(and(inWeek(planId, week), isNull(slotLeftovers.planId)))
+    .where(
+      and(
+        inWeek(planId, week),
+        isNull(slotLeftovers.planId),
+        pantryStaples.length
+          ? notInArray(
+              sql`lower(${ingredients.name})`,
+              pantryStaples.map((name) => name.toLocaleLowerCase()),
+            )
+          : undefined,
+      ),
+    )
     .groupBy(ingredients.name, mealIngredients.unit)
     .orderBy(ingredients.name)
 

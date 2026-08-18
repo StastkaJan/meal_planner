@@ -9,9 +9,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 1. **Household sharing** - shared plans, recipes, and synchronized shopping
    lists with explicit member permissions.
-2. **Pantry staples** - mark ingredients such as salt or oil as always on hand
-   and omit them from shopping lists. Do not build detailed stock accounting
-   until users demonstrate a need for it.
 
 ## Reliability and operations
 
@@ -71,6 +68,7 @@ No remaining P1 items.
 - Recipe cooking mode with large steps, scaled quantities, screen wake lock, and
   lightweight timers.
 - Private JSON account export and password-plus-email-confirmed account deletion.
+- Per-user pantry staples omitted from derived shopping lists.
 
 ## Explicitly defer
 
