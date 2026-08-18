@@ -12,6 +12,7 @@
     weekStart,
     targets,
     onSlotChange,
+    onSlotFeedback,
     onAutoCompose,
     onCopyWeek,
     onAddBonus,
@@ -28,6 +29,12 @@
       date: string,
       mealType: string,
       mealId: number | null,
+    ) => void
+    onSlotFeedback: (
+      date: string,
+      mealType: string,
+      outcome: 'cooked' | 'skipped' | null,
+      rating: number | null,
     ) => void
     onAutoCompose?: (favoritesOnly: boolean) => void
     onCopyWeek?: () => void
@@ -136,6 +143,8 @@
                   {meals}
                   mealType={mt}
                   onPick={(mealId) => onSlotChange(isoDate(dt), mt, mealId)}
+                  onFeedback={(outcome, rating) =>
+                    onSlotFeedback(isoDate(dt), mt, outcome, rating)}
                 />
               </td>
             {/each}

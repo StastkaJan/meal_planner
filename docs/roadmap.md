@@ -21,9 +21,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 5. **Pantry staples** - mark ingredients such as salt or oil as always on hand
    and omit them from shopping lists. Do not build detailed stock accounting
    until users demonstrate a need for it.
-6. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
-   history to improve suggestions and reduce repetition.
-7. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
+6. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
    and lightweight timers.
 
 ## Reliability and operations
@@ -76,6 +74,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ## Already present
 
+- Cooked/skipped plan feedback and simple ratings that inform auto-compose.
 - Correlated JSON server logs and response `x-request-id` headers.
 - Browser runtime error reporting.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.

@@ -89,6 +89,30 @@ describe('rankByNutrition', () => {
       )[0].id,
     ).toBe(2)
   })
+
+  it('uses meal feedback to break an equal nutrition tie', () => {
+    const liked = { ...m(1, 500, 25, 30, 12), feedbackPenalty: -0.4 }
+    const skipped = { ...m(2, 500, 25, 30, 12), feedbackPenalty: 1 }
+    expect(
+      rankByNutrition([skipped, liked], 500, {
+        proteinG: 25,
+        carbsG: 30,
+        fatG: 12,
+      })[0].id,
+    ).toBe(1)
+  })
+
+  it('prefers a less recently cooked meal when nutrition is equal', () => {
+    const repeated = { ...m(1, 500, 25, 30, 12), recentUses: 4 }
+    const fresh = m(2, 500, 25, 30, 12)
+    expect(
+      rankByNutrition([repeated, fresh], 500, {
+        proteinG: 25,
+        carbsG: 30,
+        fatG: 12,
+      })[0].id,
+    ).toBe(2)
+  })
 })
 
 describe('fillDaySlots', () => {

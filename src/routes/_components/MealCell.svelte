@@ -9,11 +9,16 @@
     meals,
     mealType,
     onPick,
+    onFeedback,
   }: {
     slot: SlotWithMeal | null
     meals: Meal[]
     mealType: string
     onPick: (mealId: number | null) => void
+    onFeedback: (
+      outcome: 'cooked' | 'skipped' | null,
+      rating: number | null,
+    ) => void
   } = $props()
 
   let dialogEl = $state<HTMLDialogElement>()
@@ -57,6 +62,44 @@
         title="Remove meal"
         aria-label="Remove meal">×</button
       >
+    </div>
+    <div class="feedback" aria-label="Meal feedback">
+      <button
+        type="button"
+        class:active={slot.outcome === 'cooked'}
+        aria-pressed={slot.outcome === 'cooked'}
+        onclick={() =>
+          onFeedback(slot.outcome === 'cooked' ? null : 'cooked', null)}
+        >Cooked</button
+      >
+      <button
+        type="button"
+        class:active={slot.outcome === 'skipped'}
+        aria-pressed={slot.outcome === 'skipped'}
+        onclick={() =>
+          onFeedback(slot.outcome === 'skipped' ? null : 'skipped', null)}
+        >Skipped</button
+      >
+      {#if slot.outcome === 'cooked'}
+        <label>
+          <span class="sr-only">Rating</span>
+          <select
+            aria-label="Rating"
+            value={slot.rating ?? ''}
+            onchange={(event) =>
+              onFeedback(
+                'cooked',
+                Number((event.currentTarget as HTMLSelectElement).value) ||
+                  null,
+              )}
+          >
+            <option value="">Rate</option>
+            {#each [1, 2, 3, 4, 5] as rating}
+              <option value={rating}>{rating}/5</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
     </div>
   </div>
 {:else}
@@ -152,6 +195,39 @@
         color: $color-text;
       }
     }
+  }
+  .feedback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+
+    button,
+    select {
+      min-height: 24px;
+      padding: 2px 5px;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $color-text-muted;
+      cursor: pointer;
+      font-size: 0.62rem;
+    }
+
+    button.active {
+      border-color: $color-accent-dim;
+      background: $color-surface-2;
+      color: $color-text;
+    }
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
   .name {
     font-size: 0.82rem;

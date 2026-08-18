@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, sql, inArray } from 'drizzle-orm'
+import { and, eq, gte, lt, sql, inArray, isNotNull } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   plans,
@@ -112,6 +112,8 @@ export async function getPlanDetail(
         date: weekSlots.date,
         mealType: weekSlots.mealType,
         mealId: weekSlots.mealId,
+        outcome: weekSlots.outcome,
+        rating: weekSlots.rating,
         mealName: meals.name,
         calories: meals.calories,
         proteinG: meals.proteinG,
@@ -201,8 +203,51 @@ export async function upsertSlot(
     .values(dates.map((date) => ({ planId, date, mealType, mealId })))
     .onConflictDoUpdate({
       target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
-      set: { mealId },
+      set: { mealId, outcome: null, rating: null },
     })
+}
+
+export async function updateSlotFeedback(
+  planId: number,
+  date: string,
+  mealType: string,
+  outcome: 'cooked' | 'skipped' | null,
+  rating: number | null,
+) {
+  const [slot] = await db
+    .update(weekSlots)
+    .set({ outcome, rating })
+    .where(
+      and(
+        eq(weekSlots.planId, planId),
+        eq(weekSlots.date, date),
+        eq(weekSlots.mealType, mealType),
+        isNotNull(weekSlots.mealId),
+      ),
+    )
+    .returning()
+  return slot ?? null
+}
+
+export async function getRecentMealFeedback(userId: number, before: string) {
+  return db
+    .select({
+      mealId: weekSlots.mealId,
+      cookedCount: sql<number>`count(*) filter (where ${weekSlots.outcome} = 'cooked')::int`,
+      skippedCount: sql<number>`count(*) filter (where ${weekSlots.outcome} = 'skipped')::int`,
+      averageRating: sql<number | null>`avg(${weekSlots.rating})::float`,
+    })
+    .from(weekSlots)
+    .innerJoin(plans, eq(weekSlots.planId, plans.id))
+    .where(
+      and(
+        eq(plans.userId, userId),
+        gte(weekSlots.date, addDays(before, -56)),
+        lt(weekSlots.date, before),
+        isNotNull(weekSlots.outcome),
+      ),
+    )
+    .groupBy(weekSlots.mealId)
 }
 
 export async function copyWeek(planId: number, from: string, to: string) {
@@ -229,7 +274,7 @@ export async function copyWeek(planId: number, from: string, to: string) {
     )
     .onConflictDoUpdate({
       target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
-      set: { mealId: sql`excluded.meal_id` },
+      set: { mealId: sql`excluded.meal_id`, outcome: null, rating: null },
     })
 }
 
