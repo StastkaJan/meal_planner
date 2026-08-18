@@ -56,9 +56,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 9. **Migration safety** - back up before schema changes, use backward-compatible
    expand/migrate/contract changes, and write a rollback or roll-forward note
    for every destructive migration.
-10. **Deployment rollback** - keep the previous immutable application image and
-    document the command that restores it. Exercise the rollback occasionally.
-11. **Dependency and image updates** - automate update PRs and review them on a
+10. **Dependency and image updates** - automate update PRs and review them on a
     regular cadence; scan the shipped image and dependencies for known
     vulnerabilities.
 
@@ -82,6 +80,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Digest-pinned application deployment with retained previous-image rollback
+  and an exercisable procedure in [deployment.md](deployment.md).
 
 ## Explicitly defer
 

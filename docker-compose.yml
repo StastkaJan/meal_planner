@@ -13,6 +13,7 @@ services:
       retries: 10
 
   app:
+    image: ${APP_IMAGE:-meal-plan-app:local}
     build: .
     ports:
       - '3000:3000'
