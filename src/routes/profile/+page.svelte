@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import {
     changePassword as updatePassword,
+    deleteAccount,
     updateProfile,
   } from '$lib/api/profile'
 
@@ -10,6 +12,7 @@
   let targetsSaved = $state(false)
   let passwordError = $state('')
   let passwordSuccess = $state('')
+  let deletionError = $state('')
 
   async function saveTargets(e: SubmitEvent) {
     e.preventDefault()
@@ -27,6 +30,18 @@
     const data = await updatePassword(fd.get('current'), fd.get('next'))
     if (data.error) passwordError = data.error
     else if (data.success) passwordSuccess = 'Password updated.'
+  }
+
+  async function removeAccount(e: SubmitEvent) {
+    e.preventDefault()
+    deletionError = ''
+    const fd = new FormData(e.target as HTMLFormElement)
+    const result = await deleteAccount(
+      fd.get('password'),
+      fd.get('confirmation'),
+    )
+    if (result.error) deletionError = result.error
+    else if (result.success) await goto('/auth/login')
   }
 </script>
 
@@ -111,6 +126,42 @@
         <button type="submit">Update password</button>
       </form>
     </section>
+
+    <section class="card data-card">
+      <h2>Your data</h2>
+      <p class="hint">
+        Download a JSON copy of your profile settings, personal recipes, plans,
+        favourites, and recipe submissions.
+      </p>
+      <a class="download" href="/profile/export" download>Download my data</a>
+    </section>
+
+    <section class="card danger-card">
+      <h2>Delete account</h2>
+      <p class="hint">
+        Permanently deletes your sessions, settings, recipes, plans, and other
+        personal data. Shared recipes stay in the catalogue. This cannot be
+        undone.
+      </p>
+      <form method="POST" onsubmit={removeAccount}>
+        {#if deletionError}<p class="error">{deletionError}</p>{/if}
+        <label
+          >Password <input type="password" name="password" required /></label
+        >
+        <label
+          >Type {data.email} to confirm
+          <input
+            type="email"
+            name="confirmation"
+            required
+            autocomplete="off"
+          /></label
+        >
+        <button class="danger" type="submit"
+          >Delete my account permanently</button
+        >
+      </form>
+    </section>
   </div>
 </div>
 
@@ -159,6 +210,10 @@
     background: $color-surface;
     box-shadow: 0 14px 36px rgb(41 39 33 / 5%);
   }
+  .danger-card {
+    grid-column: 1 / -1;
+    border-color: color-mix(in srgb, $color-danger 35%, $color-border);
+  }
   .hint {
     color: $color-text-muted;
     font-size: 0.83rem;
@@ -201,6 +256,20 @@
     font-size: 0.875rem;
     font-weight: 650;
     cursor: pointer;
+  }
+  .download {
+    display: inline-block;
+    min-height: 40px;
+    padding: 9px 18px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-sm;
+    color: $color-text;
+    font-size: 0.875rem;
+    font-weight: 650;
+    text-decoration: none;
+  }
+  button.danger {
+    background: $color-danger;
   }
   .error {
     color: $color-danger;
