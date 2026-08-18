@@ -21,6 +21,8 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
 
+<!-- NOTE: Production migrations run through `npm run db:migrate:production`; destructive SQL requires a recovery note under `drizzle/notes/`. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 ## Project layout
@@ -78,6 +80,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 npm run dev           # start dev server
 npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
+npm run db:migrate:production # back up, then migrate production
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
 npm run test:unit     # vitest unit tests
