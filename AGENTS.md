@@ -21,7 +21,7 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
 
-<!-- NOTE: `.github/workflows/quality.yml` is the release quality gate; require its `quality` job before merging or deployment. -->
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 

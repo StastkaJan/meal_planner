@@ -79,8 +79,9 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
-- GitHub Actions quality gate for formatting, Svelte/type checks, unit tests,
-  production builds, and focused E2E smoke tests.
+- GitHub Actions `quality` check for formatting, Svelte/type checks, unit tests,
+  production builds, and focused E2E smoke tests. A repository admin must make
+  it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 
 ## Explicitly defer
