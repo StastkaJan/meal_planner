@@ -30,3 +30,7 @@
 | POST   | /auth/register              | no    | create account after terms acceptance and privacy acknowledgement (form action)                                                                                                                                       |
 | POST   | /auth/login                 | no    | start session (form action)                                                                                                                                                                                           |
 | POST   | /auth/logout                | yes   | end session                                                                                                                                                                                                           |
+
+Shopping-list state uses `POST` and `PATCH /plans/[id]/shopping/items` to add
+custom items and save weekly checked/excluded/aisle state. `DELETE
+/plans/[id]/shopping/items/[key]?week=` removes a custom item.

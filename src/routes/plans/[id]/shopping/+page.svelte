@@ -1,29 +1,77 @@
 <script lang="ts">
-  import { setPlanPortions } from '$lib/api/plans'
+  import {
+    addShoppingItem,
+    deleteShoppingItem,
+    saveShoppingItem,
+    setPlanPortions,
+  } from '$lib/api/plans'
+  import { AISLES, type ShoppingListItem } from '$lib/domain/shopping'
 
   let { data } = $props()
+  let items = $derived(data.items as ShoppingListItem[])
   let shareStatus = $state('')
+  let customName = $state('')
+  let customAisle = $state<(typeof AISLES)[number]>('Other')
 
   async function handlePortionsChange(portions: number) {
     await setPlanPortions(data.planId, portions)
     location.reload()
   }
 
+  const groups = $derived.by(() =>
+    AISLES.map((aisle) => ({
+      aisle,
+      items: items.filter((item) => !item.excluded && item.aisle === aisle),
+    })).filter((group) => group.items.length),
+  )
+  const excludedItems = $derived(items.filter((item) => item.excluded))
+
   const shoppingText = $derived(
     [
       `Shopping list — week of ${data.week}`,
       '',
-      ...data.items.map((item) => {
-        const amount =
-          item.qty !== null
-            ? `${item.qty}${item.unit ? ` ${item.unit}` : ''} `
-            : item.count > 1
-              ? `${item.count}× `
-              : ''
-        return `☐ ${amount}${item.name}`
-      }),
+      ...groups.flatMap((group) => [
+        group.aisle,
+        ...group.items.map((item) => `☐ ${itemAmount(item)}${item.name}`),
+        '',
+      ]),
     ].join('\n'),
   )
+
+  function itemAmount(item: ShoppingListItem) {
+    if (item.qty !== null)
+      return `${item.qty}${item.unit ? ` ${item.unit}` : ''} `
+    return item.count > 1 ? `${item.count}× ` : ''
+  }
+
+  async function updateItem(
+    item: ShoppingListItem,
+    changes: Partial<ShoppingListItem>,
+  ) {
+    const updated = { ...item, ...changes }
+    await saveShoppingItem(data.planId, data.week, updated)
+    items = items.map((candidate) =>
+      candidate.key === item.key ? updated : candidate,
+    )
+  }
+
+  async function addCustomItem(event: SubmitEvent) {
+    event.preventDefault()
+    if (!customName.trim()) return
+    const item = await addShoppingItem(
+      data.planId,
+      data.week,
+      customName,
+      customAisle,
+    )
+    items = [...items, item]
+    customName = ''
+  }
+
+  async function removeCustomItem(item: ShoppingListItem) {
+    await deleteShoppingItem(data.planId, data.week, item.key)
+    items = items.filter((candidate) => candidate.key !== item.key)
+  }
 
   async function shareList() {
     shareStatus = ''
@@ -79,31 +127,91 @@
         handlePortionsChange(Number(event.currentTarget.value))}
     />
   </label>
+  <form class="custom-item" onsubmit={addCustomItem}>
+    <label>
+      Custom item
+      <input
+        bind:value={customName}
+        maxlength="100"
+        placeholder="e.g. Bin bags"
+      />
+    </label>
+    <label>
+      Aisle
+      <select bind:value={customAisle}>
+        {#each AISLES as aisle}<option>{aisle}</option>{/each}
+      </select>
+    </label>
+    <button type="submit">Add</button>
+  </form>
   {#if shareStatus}<p class="share-status" aria-live="polite">
       {shareStatus}
     </p>{/if}
 
-  {#if data.items.length === 0}
-    <p class="empty">No meals assigned this week — nothing to shop for yet.</p>
+  {#if groups.length === 0}
+    <p class="empty">Nothing left on this week's list.</p>
   {:else}
-    <ul>
-      {#each data.items as item (item.name)}
-        <li>
-          <label>
-            <input type="checkbox" />
-            {#if item.qty !== null}
-              <span
-                >{item.qty}{item.unit ? ` ${item.unit}` : ''}
-                {item.name}</span
-              >
-            {:else}
-              <span>{item.name}</span>
-              {#if item.count > 1}<span class="count">×{item.count}</span>{/if}
-            {/if}
-          </label>
-        </li>
-      {/each}
-    </ul>
+    {#each groups as group (group.aisle)}
+      <section class="aisle">
+        <h2>{group.aisle}</h2>
+        <ul>
+          {#each group.items as item (item.key)}
+            <li>
+              <div class="item-row">
+                <label class="check-item">
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onchange={(event) =>
+                      updateItem(item, {
+                        checked: event.currentTarget.checked,
+                      })}
+                  />
+                  <span>{itemAmount(item)}{item.name}</span>
+                </label>
+                <select
+                  aria-label="Aisle for {item.name}"
+                  value={item.aisle}
+                  onchange={(event) =>
+                    updateItem(item, { aisle: event.currentTarget.value })}
+                >
+                  {#each AISLES as aisle}<option>{aisle}</option>{/each}
+                </select>
+                {#if item.custom}
+                  <button type="button" onclick={() => removeCustomItem(item)}
+                    >Remove</button
+                  >
+                {:else}
+                  <button
+                    type="button"
+                    onclick={() => updateItem(item, { excluded: true })}
+                    >Exclude</button
+                  >
+                {/if}
+              </div>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/each}
+  {/if}
+
+  {#if excludedItems.length}
+    <details class="excluded">
+      <summary>Excluded items ({excludedItems.length})</summary>
+      <ul>
+        {#each excludedItems as item (item.key)}
+          <li>
+            <span>{item.name}</span>
+            <button
+              type="button"
+              onclick={() => updateItem(item, { excluded: false })}
+              >Restore</button
+            >
+          </li>
+        {/each}
+      </ul>
+    </details>
   {/if}
 </div>
 
@@ -194,6 +302,37 @@
     color: $color-text-muted;
     font-size: 0.9rem;
   }
+  .custom-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 24px;
+    label {
+      display: grid;
+      gap: 4px;
+      color: $color-text-muted;
+      font-size: 0.75rem;
+    }
+    input,
+    select,
+    button {
+      min-height: 38px;
+      padding: 7px 9px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-sm;
+      background: $color-surface;
+    }
+  }
+  .aisle {
+    margin-top: 24px;
+    h2 {
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+  }
   ul {
     list-style: none;
     margin: 0;
@@ -205,8 +344,9 @@
       border-bottom: 1px solid $color-border;
     }
   }
-  label {
+  .check-item {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 10px;
     min-height: 48px;
@@ -218,10 +358,32 @@
       text-decoration: line-through;
     }
   }
-  .count {
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    select,
+    button {
+      padding: 5px 7px;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      color: $color-text-muted;
+      background: transparent;
+      font-size: 0.75rem;
+    }
+  }
+  .excluded {
+    margin-top: 24px;
     color: $color-text-muted;
-    font-size: 0.8rem;
-    margin-left: auto;
+    summary {
+      cursor: pointer;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px;
+    }
   }
   input[type='checkbox'] {
     width: 19px;
@@ -231,6 +393,15 @@
   @media (max-width: 540px) {
     .shopping {
       padding: 24px 20px;
+    }
+    .custom-item {
+      grid-template-columns: 1fr auto;
+      label:first-child {
+        grid-column: 1 / -1;
+      }
+    }
+    .item-row {
+      flex-wrap: wrap;
     }
   }
 </style>
