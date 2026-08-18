@@ -35,8 +35,6 @@ No remaining P1 items.
     in process. Revisit before adding a second instance, or when authentication
     rate-limit rejections occur in three consecutive 15-minute windows. The
     Grafana backend dashboard shows these rejections without recording IPs.
-14. **Data export and account deletion** - allow users to download their recipes
-    and plans and permanently delete their account, sessions, and personal data.
 
 ## Already present
 
@@ -74,6 +72,7 @@ No remaining P1 items.
   database disk, and slow operations; load testing remains evidence-gated.
 - Recipe cooking mode with large steps, scaled quantities, screen wake lock, and
   lightweight timers.
+- Private JSON account export and password-plus-email-confirmed account deletion.
 
 ## Explicitly defer
 

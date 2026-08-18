@@ -10,3 +10,11 @@ export async function changePassword(current: unknown, next: unknown) {
   })
   return response.json() as Promise<{ error?: string; success?: boolean }>
 }
+
+export async function deleteAccount(password: unknown, confirmation: unknown) {
+  const response = await request('/profile', {
+    method: 'DELETE',
+    body: jsonBody({ password, confirmation }),
+  })
+  return response.json() as Promise<{ error?: string; success?: boolean }>
+}

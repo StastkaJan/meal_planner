@@ -49,6 +49,8 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
+<!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email and preserves global meals. -->
+
 ## Project layout
 
 ```
@@ -76,7 +78,7 @@ docker-compose.yml
 
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
 
-Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md).
+Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md), [docs/business-cases/account-data.md](docs/business-cases/account-data.md).
 
 ## Svelte conventions
 
@@ -97,6 +99,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.
 4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)
 5. Admins come from `users.isAdmin`; only admins create/edit global meals and review `/admin/recipes` imports.
+6. Account deletion verifies the current password and exact email, deletes the user in one transaction (FK cascades remove personal data and sessions), then clears the cookie.
 
 ## Common commands
 
