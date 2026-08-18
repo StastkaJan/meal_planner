@@ -40,10 +40,12 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
-      BACKUP_FAILURE_WEBHOOK_URL: ${BACKUP_FAILURE_WEBHOOK_URL:-}
+      ALERTMANAGER_URL: http://alertmanager:9093
     depends_on:
       db:
         condition: service_healthy
+      alertmanager:
+        condition: service_started
     restart: unless-stopped
 
   prometheus:
@@ -52,6 +54,7 @@ services:
       - '9090:9090'
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus-data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -60,6 +63,42 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      alertmanager:
+        condition: service_started
+      blackbox-exporter:
+        condition: service_started
+      node-exporter:
+        condition: service_started
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.0
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    secrets:
+      - alert_webhook_url
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    restart: unless-stopped
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.28.0
+    volumes:
+      - ./monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - --path.rootfs=/host
+      - --collector.disable-defaults
+      - --collector.filesystem
+    restart: unless-stopped
 
   loki:
     image: grafana/loki:3.7.0
@@ -102,6 +141,11 @@ services:
 volumes:
   pgdata:
   prometheus-data:
+  alertmanager-data:
   loki-data:
   alloy-data:
   grafana-data:
+
+secrets:
+  alert_webhook_url:
+    file: ${ALERT_WEBHOOK_URL_FILE:-./monitoring/alert-webhook-url.example}

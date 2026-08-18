@@ -1,0 +1,14 @@
+route:
+  receiver: operator-slack
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: operator-slack
+    slack_configs:
+      - api_url_file: /run/secrets/alert_webhook_url
+        send_resolved: false
+        title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}: {{ .Annotations.description }}{{ end }}'
