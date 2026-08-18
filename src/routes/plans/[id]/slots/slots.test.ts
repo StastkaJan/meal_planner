@@ -11,6 +11,9 @@ const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockUpsertSlot = vi.hoisted(() => vi.fn())
 
 vi.mock('$lib/database', () => ({ db: mockDb }))
+vi.mock('$lib/server/repositories/households', () => ({
+  getHouseholdAccess: vi.fn().mockResolvedValue(null),
+}))
 vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
 }))

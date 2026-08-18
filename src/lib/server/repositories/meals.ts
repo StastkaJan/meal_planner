@@ -7,11 +7,14 @@ import {
   mealIngredients,
 } from '$lib/database/schema'
 import type { IngredientInput } from '$lib/types'
+import { getHouseholdAccess } from './households'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 export async function listMeals(userId?: number) {
-  return db
+  const access = userId == null ? null : await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? (userId == null ? [] : [userId])
+  const rows = await db
     .select()
     .from(meals)
     .where(
@@ -19,13 +22,21 @@ export async function listMeals(userId?: number) {
         isNull(meals.archivedAt),
         userId == null
           ? isNull(meals.userId)
-          : or(isNull(meals.userId), eq(meals.userId, userId)),
+          : or(isNull(meals.userId), inArray(meals.userId, visibleUserIds)),
       ),
     )
     .orderBy(meals.name)
+  return rows.map((meal) => ({
+    ...meal,
+    canEdit:
+      meal.userId === userId ||
+      (meal.userId !== null && Boolean(access?.canEdit)),
+  }))
 }
 
 export async function findMeal(id: number, userId?: number) {
+  const access = userId == null ? null : await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? (userId == null ? [] : [userId])
   const [meal] = await db
     .select()
     .from(meals)
@@ -35,11 +46,18 @@ export async function findMeal(id: number, userId?: number) {
         isNull(meals.archivedAt),
         userId == null
           ? isNull(meals.userId)
-          : or(isNull(meals.userId), eq(meals.userId, userId)),
+          : or(isNull(meals.userId), inArray(meals.userId, visibleUserIds)),
       ),
     )
     .limit(1)
-  return meal ?? null
+  return meal
+    ? {
+        ...meal,
+        canEdit:
+          meal.userId === userId ||
+          (meal.userId !== null && Boolean(access?.canEdit)),
+      }
+    : null
 }
 
 export async function getMealIngredients(mealId: number) {
@@ -63,6 +81,8 @@ export async function findAllowedMeal(
   id: number,
   userId: number,
 ): Promise<{ id: number; allowedSlots: string[] } | null> {
+  const access = await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? [userId]
   const [meal] = await db
     .select({ id: meals.id, allowedSlots: meals.allowedSlots })
     .from(meals)
@@ -70,7 +90,7 @@ export async function findAllowedMeal(
       and(
         eq(meals.id, id),
         isNull(meals.archivedAt),
-        or(isNull(meals.userId), eq(meals.userId, userId)),
+        or(isNull(meals.userId), inArray(meals.userId, visibleUserIds)),
       ),
     )
     .limit(1)
@@ -82,6 +102,8 @@ export async function findEditableMeal(
   userId: number,
   isAdmin = false,
 ) {
+  const access = await getHouseholdAccess(userId)
+  const editableUserIds = access?.canEdit ? access.userIds : [userId]
   const [meal] = await db
     .select({ id: meals.id })
     .from(meals)
@@ -89,8 +111,8 @@ export async function findEditableMeal(
       and(
         eq(meals.id, id),
         isAdmin
-          ? or(isNull(meals.userId), eq(meals.userId, userId))
-          : eq(meals.userId, userId),
+          ? or(isNull(meals.userId), inArray(meals.userId, editableUserIds))
+          : inArray(meals.userId, editableUserIds),
         isNull(meals.archivedAt),
       ),
     )
@@ -99,6 +121,8 @@ export async function findEditableMeal(
 }
 
 export async function listCandidateMeals(userId: number) {
+  const access = await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? [userId]
   return db
     .select({
       id: meals.id,
@@ -113,7 +137,7 @@ export async function listCandidateMeals(userId: number) {
     .where(
       and(
         isNull(meals.archivedAt),
-        or(isNull(meals.userId), eq(meals.userId, userId)),
+        or(isNull(meals.userId), inArray(meals.userId, visibleUserIds)),
       ),
     )
 }

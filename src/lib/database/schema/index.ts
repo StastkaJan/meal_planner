@@ -1,4 +1,6 @@
 export * from './bonus-items'
+export * from './household-members'
+export * from './households'
 export * from './ingredients'
 export * from './meal-favorites'
 export * from './meal-ingredients'

@@ -23,6 +23,8 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
+<!-- NOTE: Household membership shares every member's plans, personal recipes, and derived shopping lists; `household_members.can_edit` grants edit access without transferring ownership. -->
+
 ## Project layout
 
 ```

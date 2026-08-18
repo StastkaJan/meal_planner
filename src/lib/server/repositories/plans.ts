@@ -12,15 +12,22 @@ import {
 import type { Plan } from '$lib/database/schema'
 import type { SlotWithMeal, PlanDetail } from '$lib/types'
 import { addDays, groupWindow } from '$lib/utils/date-time'
+import { getHouseholdAccess } from './households'
 
 type OwnedPlan = Plan & { userId: number }
 
 export async function listPlans(userId: number) {
-  return db
+  const access = await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? [userId]
+  const rows = await db
     .select()
     .from(plans)
-    .where(eq(plans.userId, userId))
+    .where(inArray(plans.userId, visibleUserIds))
     .orderBy(plans.id)
+  return rows.map((plan) => ({
+    ...plan,
+    canEdit: plan.userId === userId || Boolean(access?.canEdit),
+  }))
 }
 
 export async function createPlan(
@@ -85,6 +92,23 @@ export async function ownedPlan(
   return (plan as OwnedPlan | undefined) ?? null
 }
 
+export async function accessiblePlan(
+  id: number,
+  userId: number,
+  edit = false,
+): Promise<(OwnedPlan & { canEdit: boolean }) | null> {
+  const access = await getHouseholdAccess(userId)
+  const visibleUserIds = access?.userIds ?? [userId]
+  const [plan] = await db
+    .select()
+    .from(plans)
+    .where(and(eq(plans.id, id), inArray(plans.userId, visibleUserIds)))
+    .limit(1)
+  if (!plan?.userId) return null
+  const canEdit = plan.userId === userId || Boolean(access?.canEdit)
+  return edit && !canEdit ? null : { ...(plan as OwnedPlan), canEdit }
+}
+
 export function inWeek(planId: number, week: string) {
   return and(
     eq(weekSlots.planId, planId),
@@ -102,7 +126,7 @@ function bonusInWeek(planId: number, week: string) {
 }
 
 export async function getPlanDetail(
-  plan: Plan,
+  plan: Plan & { canEdit: boolean },
   week: string,
 ): Promise<PlanDetail> {
   const [rows, bonus, repeats] = await Promise.all([

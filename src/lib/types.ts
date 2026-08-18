@@ -16,12 +16,13 @@ export type SlotWithMeal = WeekSlot & {
 }
 
 export type PlanDetail = Plan & {
+  canEdit: boolean
   slots: SlotWithMeal[]
   bonus: BonusItem[]
   slotRepeats: Pick<SlotRepeat, 'mealType' | 'groupBreaks'>[]
 }
 
-export type MealWithFavorite = Meal & { isFavorite: boolean }
+export type MealWithFavorite = Meal & { isFavorite: boolean; canEdit: boolean }
 
 export type IngredientInput = {
   name: string
