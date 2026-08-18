@@ -23,6 +23,7 @@
     onRecalcDay,
     onPrevWeek,
     onNextWeek,
+    editable = true,
   }: {
     plan: PlanDetail
     meals: Meal[]
@@ -54,6 +55,7 @@
     onRecalcDay: (date: string) => void
     onPrevWeek: () => void
     onNextWeek: () => void
+    editable?: boolean
   } = $props()
 
   let favoritesOnly = $state(false)
@@ -160,6 +162,7 @@
                   {meals}
                   mealType={mt}
                   leftoverSource={previousMatchingSlot(slot)}
+                  {editable}
                   onPick={(mealId) => onSlotChange(date, mt, mealId)}
                   onLeftover={(source) => onSlotLeftover(date, mt, source)}
                 />
@@ -177,9 +180,11 @@
                   items={plan.bonus.filter((b) => b.date === isoDate(dt))}
                   onAdd={onAddBonus}
                   onDelete={onDeleteBonus}
+                  {editable}
                 />
                 <button
                   class="btn-recalc"
+                  disabled={!editable}
                   onclick={() => onRecalcDay(isoDate(dt))}
                   title={t(
                     "Re-fill this day's empty slots to fit the remaining budget",
@@ -387,6 +392,9 @@
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
+    }
+    &:disabled {
+      display: none;
     }
   }
 

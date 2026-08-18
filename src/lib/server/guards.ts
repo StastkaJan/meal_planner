@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 import { findAllowedMeal, findEditableMeal } from './repositories/meals'
-import { ownedPlan } from './repositories/plans'
+import { accessiblePlan } from './repositories/plans'
 
 export function requireUser(locals: App.Locals) {
   if (!locals.user) error(401, 'Not authenticated')
@@ -13,15 +13,28 @@ export function requireAdmin(locals: App.Locals) {
   return user
 }
 
-export async function requireOwnedPlan(
+export async function requireVisiblePlan(
   locals: App.Locals,
   id: number | string,
 ) {
   const user = requireUser(locals)
-  const plan = await ownedPlan(Number(id), user.id)
+  const plan = await accessiblePlan(Number(id), user.id)
   if (!plan) error(404, 'Plan not found')
   return plan
 }
+
+export async function requireEditablePlan(
+  locals: App.Locals,
+  id: number | string,
+) {
+  const user = requireUser(locals)
+  const plan = await accessiblePlan(Number(id), user.id, true)
+  if (!plan) error(404, 'Plan not found')
+  return plan
+}
+
+// Kept as the mutation guard name used by existing plan routes.
+export const requireOwnedPlan = requireEditablePlan
 
 export async function requireEditableMeal(
   locals: App.Locals,

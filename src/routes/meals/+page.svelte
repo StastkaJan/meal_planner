@@ -30,8 +30,8 @@
   ) {
     const created = await createMeal({ name, scope, sourceLocale: data.locale })
     if (!data.favoritesOnly)
-      meals = [...meals, { ...created, isFavorite: false }].sort((a, b) =>
-        a.name.localeCompare(b.name),
+      meals = [...meals, { ...created, isFavorite: false, canEdit: true }].sort(
+        (a, b) => a.name.localeCompare(b.name),
       )
     creating = false
   }

@@ -18,7 +18,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   if (!plan.mealSlots.includes(mealType)) error(400, 'Invalid mealType')
 
   if (mealId != null) {
-    const m = await findAllowedMeal(mealId, plan.userId)
+    const m = await findAllowedMeal(mealId, locals.user!.id)
     if (!m) error(404, 'Meal not found')
     if (!mealFitsSlot(m.allowedSlots, mealType))
       error(400, 'Meal not allowed for this slot type')

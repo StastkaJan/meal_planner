@@ -3,13 +3,6 @@
 This is a candidate backlog, not a commitment. Prefer improvements that close
 the plan -> shop -> cook loop or prevent user data loss.
 
-## Product
-
-### Later
-
-1. **Household sharing** - shared plans, recipes, and synchronized shopping
-   lists with explicit member permissions.
-
 ## Reliability and operations
 
 ### P1 - detect and diagnose failures
@@ -69,6 +62,8 @@ No remaining P1 items.
   lightweight timers.
 - Private JSON account export and password-plus-email-confirmed account deletion.
 - Per-user pantry staples omitted from derived shopping lists.
+- Household plan, recipe, and derived shopping-list sharing with per-member
+  view/edit permission.
 
 ## Explicitly defer
 
