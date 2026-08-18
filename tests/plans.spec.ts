@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('create a plan', async ({ page }) => {
+test('@smoke create a plan', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
   await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
   await expect(

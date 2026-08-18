@@ -21,6 +21,8 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
 
+<!-- NOTE: `.github/workflows/quality.yml` is the release quality gate; require its `quality` job before merging or deployment. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 ## Project layout
@@ -80,7 +82,10 @@ npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
+npm run test:smoke    # focused Chromium E2E release smoke tests
 npm run test:unit     # vitest unit tests
+npm run check:types   # Svelte and TypeScript checks
+npm run format:check  # verify formatting without writing
 docker compose up -d  # start postgres + app
 ```
 
