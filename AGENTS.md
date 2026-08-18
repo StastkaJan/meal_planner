@@ -21,6 +21,8 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
 
+<!-- NOTE: Production app releases use immutable image digests; `scripts/deploy-image.sh rollback` restores the previous recorded digest. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 ## Project layout
