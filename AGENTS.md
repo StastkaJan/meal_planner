@@ -23,6 +23,8 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
+<!-- NOTE: Shopping quantities stay derived; `shopping_items` stores weekly checked/excluded/aisle overrides and custom rows. -->
+
 ## Project layout
 
 ```

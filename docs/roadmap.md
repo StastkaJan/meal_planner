@@ -9,8 +9,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 1. **Leftovers and batch cooking** - let a slot consume servings prepared by an
    earlier meal without adding the same ingredients to the shopping list again.
-2. **Persistent shopping lists** - save checked items, support custom items and
-   exclusions, and group ingredients by aisle.
 3. **Configurable meal slots** - let users disable snacks, plan only selected
    meal types, or add a custom slot; auto-compose fills enabled slots only.
 
@@ -82,6 +80,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Persistent weekly shopping state, custom items, exclusions, and aisle groups.
 
 ## Explicitly defer
 

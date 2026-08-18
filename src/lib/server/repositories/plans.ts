@@ -7,11 +7,13 @@ import {
   bonusItems,
   mealIngredients,
   ingredients,
+  shoppingItems,
   slotRepeats,
 } from '$lib/database/schema'
 import type { Plan } from '$lib/database/schema'
 import type { SlotWithMeal, PlanDetail } from '$lib/types'
 import { addDays, groupWindow } from '$lib/utils/date-time'
+import { mergeShoppingItems } from '$lib/domain/shopping'
 
 type OwnedPlan = Plan & { userId: number }
 
@@ -234,28 +236,86 @@ export async function copyWeek(planId: number, from: string, to: string) {
 }
 
 export async function getShoppingList(planId: number, week: string) {
-  const rows = await db
-    .select({
-      name: ingredients.name,
-      unit: mealIngredients.unit,
-      qty: sql<
-        string | null
-      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty} * ${plans.portions} / greatest(${meals.servings}, 1)) end`,
-      count: sql<number>`sum(${plans.portions}::numeric / greatest(${meals.servings}, 1))::float`,
-    })
-    .from(weekSlots)
-    .innerJoin(plans, eq(weekSlots.planId, plans.id))
-    .innerJoin(meals, eq(weekSlots.mealId, meals.id))
-    .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
-    .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
-    .where(inWeek(planId, week))
-    .groupBy(ingredients.name, mealIngredients.unit)
-    .orderBy(ingredients.name)
+  const [rows, saved] = await Promise.all([
+    db
+      .select({
+        name: ingredients.name,
+        unit: mealIngredients.unit,
+        qty: sql<
+          string | null
+        >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty} * ${plans.portions} / greatest(${meals.servings}, 1)) end`,
+        count: sql<number>`sum(${plans.portions}::numeric / greatest(${meals.servings}, 1))::float`,
+      })
+      .from(weekSlots)
+      .innerJoin(plans, eq(weekSlots.planId, plans.id))
+      .innerJoin(meals, eq(weekSlots.mealId, meals.id))
+      .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
+      .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
+      .where(inWeek(planId, week))
+      .groupBy(ingredients.name, mealIngredients.unit)
+      .orderBy(ingredients.name),
+    db
+      .select()
+      .from(shoppingItems)
+      .where(
+        and(eq(shoppingItems.planId, planId), eq(shoppingItems.week, week)),
+      ),
+  ])
 
-  return rows.map((row) => ({
-    ...row,
-    qty: row.qty !== null ? Number(row.qty) : null,
-  }))
+  return mergeShoppingItems(
+    rows.map((row) => ({
+      ...row,
+      qty: row.qty !== null ? Number(row.qty) : null,
+    })),
+    saved,
+  )
+}
+
+export async function saveShoppingItem(
+  planId: number,
+  week: string,
+  item: {
+    key: string
+    name: string
+    unit: string | null
+    aisle: string
+    checked: boolean
+    excluded: boolean
+    custom: boolean
+  },
+) {
+  const [saved] = await db
+    .insert(shoppingItems)
+    .values({ planId, week, ...item })
+    .onConflictDoUpdate({
+      target: [shoppingItems.planId, shoppingItems.week, shoppingItems.key],
+      set: {
+        name: item.name,
+        unit: item.unit,
+        aisle: item.aisle,
+        checked: item.checked,
+        excluded: item.excluded,
+      },
+    })
+    .returning()
+  return saved
+}
+
+export async function deleteCustomShoppingItem(
+  planId: number,
+  week: string,
+  key: string,
+) {
+  await db
+    .delete(shoppingItems)
+    .where(
+      and(
+        eq(shoppingItems.planId, planId),
+        eq(shoppingItems.week, week),
+        eq(shoppingItems.key, key),
+        eq(shoppingItems.custom, true),
+      ),
+    )
 }
 
 export async function getWeekSlotsWithNutrition(planId: number, week: string) {

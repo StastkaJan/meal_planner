@@ -1,6 +1,7 @@
 import type { Plan } from '$lib/database/schema'
 import type { PlanDetail } from '$lib/types'
 import { jsonBody, request, requestJson } from './http'
+import type { ShoppingListItem } from '$lib/domain/shopping'
 
 export const getPlan = (id: number, week: string) =>
   requestJson<PlanDetail>(`/plans/${id}?week=${week}`)
@@ -67,3 +68,30 @@ export const setSlotRepeat = (
     method: 'PUT',
     body: jsonBody({ mealType, groupBreaks }),
   })
+
+export const saveShoppingItem = (
+  planId: number,
+  week: string,
+  item: ShoppingListItem,
+) =>
+  request(`/plans/${planId}/shopping/items`, {
+    method: 'PATCH',
+    body: jsonBody({ week, ...item }),
+  })
+
+export const addShoppingItem = (
+  planId: number,
+  week: string,
+  name: string,
+  aisle: string,
+) =>
+  requestJson<ShoppingListItem>(`/plans/${planId}/shopping/items`, {
+    method: 'POST',
+    body: jsonBody({ week, name, aisle }),
+  })
+
+export const deleteShoppingItem = (planId: number, week: string, key: string) =>
+  request(
+    `/plans/${planId}/shopping/items/${encodeURIComponent(key)}?week=${week}`,
+    { method: 'DELETE' },
+  )
