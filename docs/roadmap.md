@@ -82,6 +82,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Weekly grouped dependency/image update PRs and high/critical vulnerability
+  gates for the npm lockfile and built application image.
 
 ## Explicitly defer
 
