@@ -35,6 +35,16 @@ npm run db:seed       # seed meals
 
 Set `GRAFANA_ADMIN_PASSWORD` in `.env` before using the stack outside local development. Metrics and logs are retained for seven days.
 
+Set an immutable release identifier before building a deployable image. It is
+baked into the image and exposed by `/health`, `app_release_info`, and every
+structured application log; omitted or invalid values appear as `unknown`.
+
+```bash
+export RELEASE_ID=$(git rev-parse HEAD)
+docker compose build app
+docker compose up -d app
+```
+
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup
