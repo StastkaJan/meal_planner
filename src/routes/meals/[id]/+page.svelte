@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
   import { deleteMeal as removeMeal, duplicateMeal } from '$lib/api/meals'
+  import CookingMode from './_components/CookingMode.svelte'
   import MealEditForm from './_components/MealEditForm.svelte'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
@@ -8,6 +10,7 @@
   let { data }: { data: PageData } = $props()
   let meal = $derived(data.meal)
   let editing = $state(false)
+  const cooking = $derived($page.url.searchParams.get('cook') === '1')
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
   // rescales the displayed numbers only (ingredient text is free-form, left untouched).
@@ -39,6 +42,16 @@
 </script>
 
 <div class="page">
+  {#if cooking && meal.instructions}
+    <CookingMode
+      name={meal.name}
+      instructions={meal.instructions}
+      ingredients={data.ingredients}
+      baseServings={base}
+      bind:servings
+      closeHref={`/meals/${meal.id}`}
+    />
+  {/if}
   {#if editing}
     <MealEditForm
       {meal}
@@ -52,6 +65,9 @@
   {:else}
     <div class="top-bar">
       <a class="back" href="/meals">← Meals</a>
+      {#if meal.instructions}
+        <a class="btn cook sm" href={`?cook=1`}>Start cooking</a>
+      {/if}
       {#if data.editable}
         <div class="actions">
           <button class="btn ghost sm" onclick={() => (editing = true)}

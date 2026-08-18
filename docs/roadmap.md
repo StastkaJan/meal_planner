@@ -23,8 +23,6 @@ the plan -> shop -> cook loop or prevent user data loss.
    until users demonstrate a need for it.
 6. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
    history to improve suggestions and reduce repetition.
-7. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
-   and lightweight timers.
 
 ## Reliability and operations
 
@@ -82,6 +80,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Recipe cooking mode with large steps, scaled quantities, screen wake lock, and
+  lightweight timers.
 
 ## Explicitly defer
 
