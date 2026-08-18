@@ -5,11 +5,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ## Product
 
-### Next
-
-1. **Persistent shopping lists** - save checked items, support custom items and
-   exclusions, and group ingredients by aisle.
-
 ### Later
 
 2. **Household sharing** - shared plans, recipes, and synchronized shopping
@@ -79,6 +74,7 @@ No remaining P1 items.
   image; see [deployment.md](deployment.md).
 - Capacity dashboard and alerts for database size/connections, container memory,
   database disk, and slow operations; load testing remains evidence-gated.
+- Persistent weekly shopping state, custom items, exclusions, and aisle groups.
 
 ## Explicitly defer
 

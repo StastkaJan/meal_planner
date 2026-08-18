@@ -49,6 +49,8 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
+<!-- NOTE: Shopping quantities stay derived; `shopping_items` stores weekly checked/excluded/aisle overrides and custom rows. -->
+
 ## Project layout
 
 ```

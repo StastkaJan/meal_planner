@@ -58,4 +58,33 @@ test('shopping list counts a batch once when a later slot uses leftovers', async
     await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
   ).toContain('☐ 2 tbsp Honey')
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
+
+  const honey = page.getByRole('checkbox', { name: '4 tbsp Honey' })
+  await honey.check()
+  await page.reload()
+  await expect(
+    page.getByRole('checkbox', { name: '4 tbsp Honey' }),
+  ).toBeChecked()
+
+  await page.getByLabel('Aisle for Honey').selectOption('Pantry')
+  await expect(page.getByRole('heading', { name: 'Pantry' })).toBeVisible()
+  const honeyRow = page.locator('li', { hasText: '4 tbsp Honey' })
+  await honeyRow.getByRole('button', { name: 'Exclude' }).click()
+  await expect(page.getByText('Excluded items (1)')).toBeVisible()
+  await page.getByText('Excluded items (1)').click()
+  await page.getByRole('button', { name: 'Restore' }).click()
+  await expect(
+    page.getByRole('checkbox', { name: '4 tbsp Honey' }),
+  ).toBeVisible()
+
+  await page.getByLabel('Custom item').fill('Bin bags')
+  await page.getByRole('button', { name: 'Add' }).click()
+  await expect(page.getByText('Bin bags')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('Bin bags')).toBeVisible()
+  await page
+    .locator('li', { hasText: 'Bin bags' })
+    .getByRole('button', { name: 'Remove' })
+    .click()
+  await expect(page.getByText('Bin bags')).not.toBeVisible()
 })
