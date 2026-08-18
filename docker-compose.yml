@@ -20,6 +20,7 @@ services:
       DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
       ORIGIN: http://localhost:3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-dev}
     depends_on:
       db:
         condition: service_healthy

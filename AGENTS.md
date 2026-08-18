@@ -13,7 +13,7 @@
 - **Tests**: Vitest (unit), Playwright (E2E)
 - **Infra**: Docker Compose (app + postgres + Prometheus/Loki/Alloy/Grafana)
 
-<!-- NOTE: HTTP and service operations emit correlated JSON logs; `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
+<!-- NOTE: HTTP and service operations emit allowlisted JSON logs with request ID, route, and `DEPLOYMENT_VERSION`; server failures retain message-free stack frames and authenticated user ID. `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
 <!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
 
