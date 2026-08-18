@@ -46,8 +46,6 @@ the plan -> shop -> cook loop or prevent user data loss.
    log passwords, session tokens, recipe import bodies, or other private data.
 6. **Release identification** - expose a commit/version label in logs, metrics,
    and the health response so a regression can be tied to a deployment.
-7. **Debug runbook** - document how to go from an alert or user-provided request
-   ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
 
@@ -80,6 +78,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Browser runtime error reporting.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
+- [Debug runbook](runbooks/debugging.md) from alerts or request IDs to metrics,
+  correlated logs, and failing operations.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 

@@ -35,6 +35,10 @@ npm run db:seed       # seed meals
 
 Set `GRAFANA_ADMIN_PASSWORD` in `.env` before using the stack outside local development. Metrics and logs are retained for seven days.
 
+For incident triage, follow the [debugging runbook](docs/runbooks/debugging.md)
+from an alert or response `x-request-id` to metrics, correlated logs, and the
+failing backend operation.
+
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup
