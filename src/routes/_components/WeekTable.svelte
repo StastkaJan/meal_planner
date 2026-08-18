@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
-  import { MEAL_TYPES } from '$lib/constants'
   import type { Meal } from '$lib/database/schema'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
@@ -145,7 +144,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each MEAL_TYPES as mt}
+        {#each plan.mealSlots as mt}
           <tr>
             <td class="row-label">{mt.replaceAll('_', ' ')}</td>
             {#each weekDates as dt}

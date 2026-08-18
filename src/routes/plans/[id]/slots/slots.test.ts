@@ -34,7 +34,14 @@ function makeEvent(body: object, planId = '1', userId = 1) {
 }
 
 describe('PUT /plans/:id/slots', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRequireOwnedPlan.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      mealSlots: ['breakfast', 'lunch', 'second_breakfast'],
+    })
+  })
 
   it('throws 404 when plan is not owned by the user', async () => {
     mockRequireOwnedPlan.mockRejectedValueOnce(
@@ -52,7 +59,6 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('rejects an invalid date with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(
       PUT(
         makeEvent({
@@ -65,7 +71,6 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('deletes the slot and returns 204 when mealId is null', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     const res = await PUT(
       makeEvent({
         date: '2026-06-30',
@@ -78,7 +83,6 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('upserts the slot and returns 204 when mealId is provided', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     mockDb.limit.mockResolvedValueOnce([{ id: 5, allowedSlots: [] }])
     const res = await PUT(
       makeEvent({
@@ -92,7 +96,6 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('rejects a meal not allowed for the slot type with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     mockDb.limit.mockResolvedValueOnce([{ id: 5, allowedSlots: ['breakfast'] }])
     await expect(
       PUT(
@@ -107,7 +110,6 @@ describe('PUT /plans/:id/slots', () => {
   })
 
   it('rejects invalid mealType with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(
       PUT(
         makeEvent({
@@ -117,6 +119,17 @@ describe('PUT /plans/:id/slots', () => {
         }),
       ),
     ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('accepts a configured custom meal type', async () => {
+    const res = await PUT(
+      makeEvent({
+        date: '2026-06-30',
+        mealType: 'second_breakfast',
+        mealId: null,
+      }),
+    )
+    expect(res.status).toBe(204)
   })
 
   it('returns 401 when unauthenticated', async () => {
@@ -143,7 +156,17 @@ describe('PUT /plans/:id/slots', () => {
 describe('PATCH /plans/:id/slots', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockRequireOwnedPlan.mockResolvedValue({ id: 1, userId: 1 })
+    mockRequireOwnedPlan.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      mealSlots: [
+        'breakfast',
+        'morning_snack',
+        'lunch',
+        'afternoon_snack',
+        'dinner',
+      ],
+    })
   })
 
   it('marks a slot as leftovers from an earlier matching meal', async () => {

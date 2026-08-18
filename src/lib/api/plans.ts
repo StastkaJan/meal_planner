@@ -16,6 +16,12 @@ export const setPlanPortions = (id: number, portions: number) =>
     body: jsonBody({ portions }),
   })
 
+export const setPlanMealSlots = (id: number, mealSlots: string[]) =>
+  requestJson<Plan>(`/plans/${id}`, {
+    method: 'PATCH',
+    body: jsonBody({ mealSlots }),
+  })
+
 export const setSlot = (
   planId: number,
   date: string,

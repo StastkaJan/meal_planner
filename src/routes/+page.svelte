@@ -140,6 +140,19 @@
     await refreshPlan()
   }
 
+  async function handleMealSlotsChange(mealSlots: string[]) {
+    if (!plan) return
+    const updated = await planApi.setPlanMealSlots(plan.id, mealSlots)
+    plan = {
+      ...plan,
+      mealSlots: updated.mealSlots,
+      slots: plan.slots.filter((slot) => mealSlots.includes(slot.mealType)),
+      slotRepeats: plan.slotRepeats.filter((repeat) =>
+        mealSlots.includes(repeat.mealType),
+      ),
+    }
+  }
+
   async function handlePreferenceChange(patch: Partial<typeof preferences>) {
     await updateProfile(patch)
     preferences = { ...preferences, ...patch }
@@ -176,6 +189,7 @@
       {plan}
       {preferences}
       onPreferenceChange={handlePreferenceChange}
+      onMealSlotsChange={handleMealSlotsChange}
       onRepeatChange={handleRepeatChange}
     />
     <WeekTable

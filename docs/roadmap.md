@@ -9,19 +9,16 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 1. **Persistent shopping lists** - save checked items, support custom items and
    exclusions, and group ingredients by aisle.
-2. **Configurable meal slots** - let users disable snacks, plan only selected
-   meal types, or add a custom slot; auto-compose fills enabled slots only.
-
 ### Later
 
-3. **Household sharing** - shared plans, recipes, and synchronized shopping
+2. **Household sharing** - shared plans, recipes, and synchronized shopping
    lists with explicit member permissions.
-4. **Pantry staples** - mark ingredients such as salt or oil as always on hand
+3. **Pantry staples** - mark ingredients such as salt or oil as always on hand
    and omit them from shopping lists. Do not build detailed stock accounting
    until users demonstrate a need for it.
-5. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
+4. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
    history to improve suggestions and reduce repetition.
-6. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
+5. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
    and lightweight timers.
 
 ## Reliability and operations
@@ -69,6 +66,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 ## Already present
 
 - Leftover links between meal slots, with batch ingredients counted once.
+- Per-plan enabled and custom meal slots respected by manual planning and auto-compose.
 - Correlated JSON server logs and response `x-request-id` headers.
 - Sanitized server error evidence with stack frames, deployment version, route,
   authenticated user ID, and strict private-field exclusion.

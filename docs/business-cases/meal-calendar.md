@@ -48,6 +48,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
   It then jointly refines the week's new assignments to reduce daily nutrition
   misses while preserving repeat groups. Filled slots are never replaced, and
   a slot stays empty when no permitted meal exists.
+- **Configure meal slots.** A plan can disable built-in slots or add a custom
+  slot. Disabling a slot clears its assignments; auto-compose and day
+  recalculation fill only enabled slots in their configured order.
 - **Repeat and reuse.** A weekly repeat pattern partitions Monday through
   Sunday into groups that share a meal for one meal type. Manual changes update
   the whole group, while auto-compose chooses once per group. **Copy from last

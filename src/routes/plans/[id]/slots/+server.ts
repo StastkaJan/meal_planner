@@ -7,7 +7,6 @@ import {
   setSlotLeftover,
   upsertSlot,
 } from '$lib/server/repositories/plans'
-import { MEAL_TYPES } from '$lib/constants'
 import { mealFitsSlot } from '$lib/domain/meals'
 import type { RequestHandler } from './$types'
 
@@ -16,8 +15,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
   const { date, mealType, mealId } = await request.json()
   validDateStr(date)
-  if (!(MEAL_TYPES as readonly string[]).includes(mealType))
-    error(400, 'Invalid mealType')
+  if (!plan.mealSlots.includes(mealType)) error(400, 'Invalid mealType')
 
   if (mealId != null) {
     const m = await findAllowedMeal(mealId, plan.userId)
@@ -34,8 +32,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   const plan = await requireOwnedPlan(locals, params.id)
   const { date, mealType, source } = await request.json()
   validDateStr(date)
-  if (!(MEAL_TYPES as readonly string[]).includes(mealType))
-    error(400, 'Invalid mealType')
+  if (!plan.mealSlots.includes(mealType)) error(400, 'Invalid mealType')
 
   const slot = await getSlotMeal(plan.id, date, mealType)
   if (!slot?.mealId) error(404, 'Slot not found')
@@ -43,7 +40,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
   if (source !== null) {
     if (!source || typeof source !== 'object') error(400, 'Invalid source')
     validDateStr(source.date)
-    if (!(MEAL_TYPES as readonly string[]).includes(source.mealType))
+    if (!plan.mealSlots.includes(source.mealType))
       error(400, 'Invalid source mealType')
     if (source.date >= date)
       error(400, 'Leftovers must come from an earlier meal')

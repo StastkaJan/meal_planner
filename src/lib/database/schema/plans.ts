@@ -22,6 +22,12 @@ export const plans = pgTable('plans', {
     .array()
     .notNull()
     .default(sql`'{}'`),
+  mealSlots: text('meal_slots')
+    .array()
+    .notNull()
+    .default(
+      sql`ARRAY['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner']::text[]`,
+    ),
 })
 
 export type Plan = typeof plans.$inferSelect

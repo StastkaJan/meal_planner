@@ -35,6 +35,8 @@
 
 <!-- NOTE: `slot_leftovers` links a later slot to an earlier same-meal slot; linked consumers still count toward nutrition but not shopping ingredients. -->
 
+<!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
+
 ## Project layout
 
 ```
