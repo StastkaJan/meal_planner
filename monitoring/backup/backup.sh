@@ -14,7 +14,7 @@ notify_failure() {
 }
 
 run_backup() {
-	if ! dump_file="$(mktemp /tmp/mealplan-XXXXXX.dump)"; then
+	if ! dump_file="$(mktemp /tmp/mealplan-dump-XXXXXX)"; then
 		notify_failure 'temporary dump creation failed'
 		exit 1
 	fi
@@ -25,7 +25,7 @@ run_backup() {
 		exit 1
 	fi
 
-	if ! restic backup --tag meal-plan --stdin-filename mealplan.dump < "$dump_file"; then
+	if ! restic backup --tag meal-plan --stdin --stdin-filename mealplan.dump < "$dump_file"; then
 		notify_failure 'upload failed'
 		exit 1
 	fi
@@ -52,5 +52,6 @@ fi
 run_backup
 
 if [ "${1:-}" = 'schedule' ]; then
+	/usr/local/bin/restore
 	exec crond -f -l 2
 fi

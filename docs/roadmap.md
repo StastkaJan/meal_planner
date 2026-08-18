@@ -30,10 +30,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P0 - protect user data
 
-1. **Tested restore procedure** - document one restore command and run a
-   scheduled restore into a disposable database. A backup is not complete until
-   its restore has been verified. Initial target: RPO 24 hours, RTO 2 hours.
-2. **Production-safe startup** - run migrations as a deliberate release step
+1. **Production-safe startup** - run migrations as a deliberate release step
    and do not run development seed data on every application start.
 
 ### P1 - detect and diagnose failures
@@ -82,6 +79,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Daily restore verification in a guarded disposable database (RPO 24h, RTO 2h).
 
 ## Explicitly defer
 

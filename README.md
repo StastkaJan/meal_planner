@@ -50,3 +50,18 @@ docker compose --profile production up -d backup
 Check the latest snapshot with `docker compose exec backup restic snapshots`.
 The Restic password is required to restore data; store a separate copy outside
 the server.
+
+The latest snapshot is restored at 03:00 UTC each day into a separate,
+tmpfs-backed PostgreSQL service, checked by querying the restored `users` table,
+and wiped immediately. Run the same restore check on demand with the single
+operator command:
+
+```bash
+docker compose --profile production exec backup restore
+```
+
+A successful run logs `database_restore_verification_succeeded`; failures log
+`database_restore_verification_failed` and use the backup failure webhook. The
+daily schedule targets an RPO of 24 hours. During an incident, start timing
+before running the command and escalate if verification and recovery cannot be
+completed within the 2-hour RTO.
