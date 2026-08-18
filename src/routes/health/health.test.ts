@@ -4,6 +4,7 @@ const checkDatabase = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/repositories/health', () => ({ checkDatabase }))
 
 import { GET } from './+server'
+import { release } from '$lib/server/release'
 
 describe('GET /health', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -12,13 +13,16 @@ describe('GET /health', () => {
     checkDatabase.mockResolvedValueOnce(undefined)
     const response = await GET({} as any)
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ status: 'ok' })
+    await expect(response.json()).resolves.toEqual({ status: 'ok', release })
   })
 
   it('reports an unavailable database', async () => {
     checkDatabase.mockRejectedValueOnce(new Error('offline'))
     const response = await GET({} as any)
     expect(response.status).toBe(503)
-    await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
+    await expect(response.json()).resolves.toEqual({
+      status: 'unhealthy',
+      release,
+    })
   })
 })

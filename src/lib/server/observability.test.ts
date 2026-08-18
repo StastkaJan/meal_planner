@@ -6,6 +6,7 @@ import {
   renderMetrics,
   resetMetrics,
 } from './observability'
+import { release } from './release'
 
 describe('request observability', () => {
   beforeEach(() => {
@@ -32,7 +33,11 @@ describe('request observability', () => {
       requestId: 'req-1',
       route: '/meals',
       status: 201,
+      release,
     })
+    expect(renderMetrics()).toContain(
+      `app_release_info{release="${release}"} 1`,
+    )
     expect(renderMetrics()).toContain(
       'http_requests_total{method="GET",route="/meals",status="201"} 1',
     )

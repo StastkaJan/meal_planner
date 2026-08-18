@@ -8,6 +8,9 @@ RUN npx esbuild src/lib/database/seed.ts --bundle --platform=node --format=esm -
 
 FROM node:22-alpine
 WORKDIR /app
+ARG RELEASE_ID=unknown
+ENV RELEASE_ID=$RELEASE_ID
+LABEL org.opencontainers.image.revision=$RELEASE_ID
 COPY --from=build /app/build .
 COPY --from=build /app/package*.json .
 COPY --from=build /app/drizzle ./drizzle

@@ -44,9 +44,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 5. **Better error evidence** - retain sanitized server stack traces, deployment
    version, route, user ID where appropriate, and the existing request ID. Never
    log passwords, session tokens, recipe import bodies, or other private data.
-6. **Release identification** - expose a commit/version label in logs, metrics,
-   and the health response so a regression can be tied to a deployment.
-7. **Debug runbook** - document how to go from an alert or user-provided request
+6. **Debug runbook** - document how to go from an alert or user-provided request
    ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
@@ -82,6 +80,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- A bounded release identifier in health responses, metrics, structured logs,
+  and application image metadata.
 
 ## Explicitly defer
 

@@ -13,7 +13,10 @@ services:
       retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        RELEASE_ID: ${RELEASE_ID:-unknown}
     ports:
       - '3000:3000'
     environment:

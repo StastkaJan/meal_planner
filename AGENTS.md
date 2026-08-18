@@ -15,6 +15,8 @@
 
 <!-- NOTE: HTTP and service operations emit correlated JSON logs; `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
+<!-- NOTE: Set `RELEASE_ID` before building; the bounded value is baked into the image and exposed in health, metrics, and structured logs (`unknown` fallback). -->
+
 <!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
 
 <!-- NOTE: Dockerfile bundles database/seed.ts and normalizes entrypoint.sh line endings for Windows checkouts. -->

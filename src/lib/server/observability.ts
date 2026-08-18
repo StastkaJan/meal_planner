@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Handle } from '@sveltejs/kit'
+import { release } from './release'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 type RequestMetric = { count: number; durationSeconds: number }
@@ -32,6 +33,7 @@ export function log(
       event,
       ...requestContext.getStore(),
       ...fields,
+      release,
     }),
   )
 }
@@ -143,6 +145,9 @@ function label(value: string) {
 
 export function renderMetrics() {
   const lines = [
+    '# HELP app_release_info Application release identity.',
+    '# TYPE app_release_info gauge',
+    `app_release_info{release="${release}"} 1`,
     '# HELP http_requests_total Total HTTP requests.',
     '# TYPE http_requests_total counter',
   ]
