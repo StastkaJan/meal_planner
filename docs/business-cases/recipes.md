@@ -34,6 +34,8 @@ library. Each meal is created as either **global** (shared with everyone) or
 - **Personal and shared scopes** support private collections and a common
   library without a separate administration tool.
 - **Favourites and URL import** make useful meals faster to find and capture.
+- **Cooking mode** keeps one large step in view, scales ingredient quantities,
+  keeps supported screens awake, and runs multiple in-page timers.
 
 ## How it works
 
@@ -46,6 +48,10 @@ library. Each meal is created as either **global** (shared with everyone) or
   dietary tags, allowed meal types, structured ingredient rows
   (`name`/`qty`/`unit`), instructions, and presentation details. The serving
   stepper rescales displayed nutrition for the chosen number of servings.
+- **Cook.** Recipes with instructions can open a focused cooking view. It turns
+  instruction sentences or lines into readable steps, keeps scaled ingredients
+  alongside them, requests the browser screen wake lock, and provides simple
+  independent countdown timers. Cooking state stays local to the browser.
 - **Import from a URL.** The importer reads schema.org Recipe JSON-LD,
   microdata, or common recipe HTML markup and saves the recognised fields as a
   personal meal for review. Common leading quantities and units are split into
