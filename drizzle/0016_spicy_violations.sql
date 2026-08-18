@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "pantry_staples" text[] DEFAULT '{}' NOT NULL;

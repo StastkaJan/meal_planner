@@ -33,6 +33,7 @@ export async function getSettings(userId: number) {
     .select({
       cuisinePrefs: userSettings.cuisinePrefs,
       dietaryRestrictions: userSettings.dietaryRestrictions,
+      pantryStaples: userSettings.pantryStaples,
       calorieTarget: userSettings.calorieTarget,
       proteinTarget: userSettings.proteinTarget,
       carbsTarget: userSettings.carbsTarget,

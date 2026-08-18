@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, sql, inArray } from 'drizzle-orm'
+import { and, eq, gte, lt, sql, inArray, notInArray } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   plans,
@@ -233,7 +233,11 @@ export async function copyWeek(planId: number, from: string, to: string) {
     })
 }
 
-export async function getShoppingList(planId: number, week: string) {
+export async function getShoppingList(
+  planId: number,
+  week: string,
+  pantryStaples: string[] = [],
+) {
   const rows = await db
     .select({
       name: ingredients.name,
@@ -248,7 +252,17 @@ export async function getShoppingList(planId: number, week: string) {
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
     .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
-    .where(inWeek(planId, week))
+    .where(
+      and(
+        inWeek(planId, week),
+        pantryStaples.length
+          ? notInArray(
+              sql`lower(${ingredients.name})`,
+              pantryStaples.map((name) => name.toLocaleLowerCase()),
+            )
+          : undefined,
+      ),
+    )
     .groupBy(ingredients.name, mealIngredients.unit)
     .orderBy(ingredients.name)
 

@@ -8,6 +8,7 @@
   let { data } = $props()
 
   let targetsSaved = $state(false)
+  let pantrySaved = $state(false)
   let passwordError = $state('')
   let passwordSuccess = $state('')
 
@@ -17,6 +18,13 @@
     const body = Object.fromEntries(fd)
     await updateProfile(body)
     targetsSaved = true
+  }
+
+  async function savePantry(e: SubmitEvent) {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    await updateProfile({ pantryStaples: fd.get('pantryStaples') })
+    pantrySaved = true
   }
 
   async function changePassword(e: SubmitEvent) {
@@ -38,6 +46,23 @@
   </header>
 
   <div class="settings-grid">
+    <section class="card">
+      <h2>Pantry staples</h2>
+      <p class="hint">
+        Ingredients you always have, such as salt or oil. One per line; they are
+        omitted from shopping lists.
+      </p>
+      <form method="POST" onsubmit={savePantry}>
+        {#if pantrySaved}<p class="success">Pantry staples saved.</p>{/if}
+        <label
+          >Always on hand <textarea name="pantryStaples" rows="5"
+            >{data.pantryStaples.join('\n')}</textarea
+          ></label
+        >
+        <button type="submit">Save pantry staples</button>
+      </form>
+    </section>
+
     <section class="card">
       <h2>Nutrition targets</h2>
       <p class="hint">
@@ -181,7 +206,8 @@
     font-weight: 600;
     color: $color-text-muted;
   }
-  input {
+  input,
+  textarea {
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;
@@ -189,6 +215,9 @@
     border-radius: $radius-sm;
     color: $color-text;
     font-size: 0.875rem;
+  }
+  textarea {
+    resize: vertical;
   }
   button {
     justify-self: start;

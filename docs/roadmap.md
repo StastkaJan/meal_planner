@@ -18,12 +18,9 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 4. **Household sharing** - shared plans, recipes, and synchronized shopping
    lists with explicit member permissions.
-5. **Pantry staples** - mark ingredients such as salt or oil as always on hand
-   and omit them from shopping lists. Do not build detailed stock accounting
-   until users demonstrate a need for it.
-6. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
+5. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
    history to improve suggestions and reduce repetition.
-7. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
+6. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
    and lightweight timers.
 
 ## Reliability and operations
@@ -82,6 +79,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Per-user pantry staples omitted from derived shopping lists.
 
 ## Explicitly defer
 
