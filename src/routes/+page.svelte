@@ -52,6 +52,17 @@
     await refreshPlan()
   }
 
+  async function handleSlotFeedback(
+    date: string,
+    mealType: string,
+    outcome: 'cooked' | 'skipped' | null,
+    rating: number | null,
+  ) {
+    if (!plan) return
+    await planApi.setSlotFeedback(plan.id, date, mealType, outcome, rating)
+    await refreshPlan()
+  }
+
   async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
     const { filled } = await planApi.populatePlan(
@@ -174,6 +185,7 @@
       weekStart={data.viewWeek}
       targets={data.targets}
       onSlotChange={handleSlotChange}
+      onSlotFeedback={handleSlotFeedback}
       onAutoCompose={handleAutoCompose}
       onCopyWeek={handleCopyWeek}
       onAddBonus={handleAddBonus}

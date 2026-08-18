@@ -23,6 +23,8 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
+<!-- NOTE: Filled plan slots can record cooked/skipped outcomes and 1-5 cooked ratings; auto-compose uses the previous eight weeks to reduce repetition and prefer better feedback. -->
+
 ## Project layout
 
 ```

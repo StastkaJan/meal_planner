@@ -9,6 +9,7 @@ const mockDb = vi.hoisted(() => ({
 
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
 const mockUpsertSlot = vi.hoisted(() => vi.fn())
+const mockUpdateSlotFeedback = vi.hoisted(() => vi.fn())
 
 vi.mock('$lib/database', () => ({ db: mockDb }))
 vi.mock('$lib/server/guards', () => ({
@@ -17,9 +18,10 @@ vi.mock('$lib/server/guards', () => ({
 vi.mock('$lib/server/repositories/plans', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   upsertSlot: mockUpsertSlot,
+  updateSlotFeedback: mockUpdateSlotFeedback,
 }))
 
-import { PUT } from './+server'
+import { PATCH, PUT } from './+server'
 
 function makeEvent(body: object, planId = '1', userId = 1) {
   return {
@@ -133,5 +135,59 @@ describe('PUT /plans/:id/slots', () => {
         locals: {},
       } as any),
     ).rejects.toMatchObject({ status: 401 })
+  })
+})
+
+describe('PATCH /plans/:id/slots', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('records a cooked meal and rating', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockUpdateSlotFeedback.mockResolvedValueOnce({ mealId: 5 })
+    const res = await PATCH(
+      makeEvent({
+        date: '2026-06-30',
+        mealType: 'lunch',
+        outcome: 'cooked',
+        rating: 5,
+      }),
+    )
+    expect(res.status).toBe(204)
+    expect(mockUpdateSlotFeedback).toHaveBeenCalledWith(
+      1,
+      '2026-06-30',
+      'lunch',
+      'cooked',
+      5,
+    )
+  })
+
+  it('rejects a rating for a skipped meal', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    await expect(
+      PATCH(
+        makeEvent({
+          date: '2026-06-30',
+          mealType: 'lunch',
+          outcome: 'skipped',
+          rating: 2,
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 400 })
+    expect(mockUpdateSlotFeedback).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when the filled slot does not exist', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockUpdateSlotFeedback.mockResolvedValueOnce(null)
+    await expect(
+      PATCH(
+        makeEvent({
+          date: '2026-06-30',
+          mealType: 'lunch',
+          outcome: 'cooked',
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 404 })
   })
 })

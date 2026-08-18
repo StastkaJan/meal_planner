@@ -9,6 +9,8 @@ export type CandidateMeal = {
   proteinG?: number
   carbsG?: number
   fatG?: number
+  feedbackPenalty?: number
+  recentUses?: number
 }
 
 export type MacroBudget = {
@@ -69,7 +71,9 @@ export function rankByNutrition(
     return (
       calorieDistance * 5 +
       macroDistance(meal, budget) / 3 +
-      Math.log2((usageCounts.get(meal.id) ?? 0) + 1) * 0.4
+      Math.log2((usageCounts.get(meal.id) ?? 0) + (meal.recentUses ?? 0) + 1) *
+        0.4 +
+      (meal.feedbackPenalty ?? 0)
     )
   }
   return [...candidates].sort((left, right) => score(left) - score(right))
@@ -196,6 +200,10 @@ export function optimizeWeekSlots(
     }
     for (const count of usage.values())
       totalScore += Math.max(0, count - 1) * 0.15
+    for (const row of rows)
+      totalScore +=
+        (mealsById.get(row.mealId)?.feedbackPenalty ?? 0) +
+        Math.log2((mealsById.get(row.mealId)?.recentUses ?? 0) + 1) * 0.4
     return totalScore
   }
 

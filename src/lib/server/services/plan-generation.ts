@@ -15,6 +15,7 @@ import { favoriteMealIds, listCandidateMeals } from '../repositories/meals'
 import {
   getDayBonusNutrition,
   getDaySlotsWithNutrition,
+  getRecentMealFeedback,
   getSlotRepeats,
   getWeekBonusNutrition,
   getWeekMealIds,
@@ -36,11 +37,17 @@ export type PlanPopulationCommand = {
 
 const toCandidate = (
   meal: Awaited<ReturnType<typeof listCandidateMeals>>[number],
+  feedback?: Awaited<ReturnType<typeof getRecentMealFeedback>>[number],
 ): CandidateMeal => ({
   ...meal,
   proteinG: Number(meal.proteinG ?? 0) || 0,
   carbsG: Number(meal.carbsG ?? 0) || 0,
   fatG: Number(meal.fatG ?? 0) || 0,
+  feedbackPenalty: feedback
+    ? feedback.skippedCount / (feedback.cookedCount + feedback.skippedCount) +
+      (feedback.averageRating == null ? 0 : (3 - feedback.averageRating) * 0.2)
+    : 0,
+  recentUses: feedback?.cookedCount ?? 0,
 })
 
 async function autocomposeSlots(
@@ -50,17 +57,27 @@ async function autocomposeSlots(
   ownerId: number,
   favoritesOnly: boolean,
 ) {
-  const [mealRows, existingSlots, favoriteIds, weekBonus, repeatRows] =
-    await Promise.all([
-      listCandidateMeals(ownerId),
-      getWeekSlotsWithNutrition(plan.id, week),
-      favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
-      getWeekBonusNutrition(plan.id, week),
-      getSlotRepeats(plan.id),
-    ])
+  const [
+    mealRows,
+    existingSlots,
+    favoriteIds,
+    weekBonus,
+    repeatRows,
+    feedback,
+  ] = await Promise.all([
+    listCandidateMeals(ownerId),
+    getWeekSlotsWithNutrition(plan.id, week),
+    favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
+    getWeekBonusNutrition(plan.id, week),
+    getSlotRepeats(plan.id),
+    getRecentMealFeedback(ownerId, week),
+  ])
   if (!mealRows.length) return 0
 
-  const visibleMeals = mealRows.map(toCandidate)
+  const feedbackByMeal = new Map(feedback.map((row) => [row.mealId, row]))
+  const visibleMeals = mealRows.map((meal) =>
+    toCandidate(meal, feedbackByMeal.get(meal.id)),
+  )
   let candidateMeals = visibleMeals
   const visibleMealsById = new Map(
     candidateMeals.map((meal) => [meal.id, meal]),
@@ -180,15 +197,17 @@ async function recalcDaySlots(
   const emptySlots = MEAL_TYPES.filter((mealType) => !filled.has(mealType))
   if (!emptySlots.length) return 0
 
-  const [mealRows, dayBonus, weekMealIds] = await Promise.all([
+  const [mealRows, dayBonus, weekMealIds, feedback] = await Promise.all([
     listCandidateMeals(ownerId),
     getDayBonusNutrition(plan.id, date),
     getWeekMealIds(plan.id, mondayOf(date)),
+    getRecentMealFeedback(ownerId, date),
   ])
   if (!mealRows.length) return 0
 
+  const feedbackByMeal = new Map(feedback.map((row) => [row.mealId, row]))
   const candidateMeals = filterByPrefs(
-    mealRows.map(toCandidate),
+    mealRows.map((meal) => toCandidate(meal, feedbackByMeal.get(meal.id))),
     plan.cuisinePrefs,
     plan.dietaryRestrictions,
   )
