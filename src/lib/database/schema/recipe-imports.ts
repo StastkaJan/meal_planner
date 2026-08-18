@@ -23,7 +23,7 @@ export const recipeImports = pgTable(
     id: serial('id').primaryKey(),
     submittedBy: integer('submitted_by')
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: 'cascade' }),
     contentHash: text('content_hash').notNull(),
     recipe: jsonb('recipe').$type<CatalogueRecipe>().notNull(),
     status: text('status').notNull().default('pending'),

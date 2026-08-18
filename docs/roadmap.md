@@ -69,9 +69,7 @@ the plan -> shop -> cook loop or prevent user data loss.
     restrict Grafana access.
 13. **Abuse controls that survive restarts** - move authentication rate limits
     out of process only if the app runs multiple instances or sees real abuse.
-14. **Data export and account deletion** - allow users to download their recipes
-    and plans and permanently delete their account, sessions, and personal data.
-15. **Capacity checks** - monitor database size, connection use, memory, disk,
+14. **Capacity checks** - monitor database size, connection use, memory, disk,
     and slow operations; add load testing only when usage justifies it.
 
 ## Already present
@@ -82,6 +80,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Private JSON account export and password-plus-email-confirmed account deletion.
 
 ## Explicitly defer
 

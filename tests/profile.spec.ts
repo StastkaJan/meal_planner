@@ -38,3 +38,61 @@ test('profile controls stay visible and save settings', async ({ page }) => {
     'Pasta Bolognese',
   )
 })
+
+test('exports private account data and permanently deletes the account', async ({
+  page,
+}) => {
+  const email = (await page.locator('.profile-page .email').textContent())!
+  const password = 'password1'
+  await page.request.post('/meals', {
+    data: {
+      name: 'My export recipe',
+      ingredients: [{ name: 'Rice', qty: 1, unit: 'cup' }],
+    },
+  })
+  await page.request.post('/plans', { data: {} })
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('link', { name: 'Download my data' }).click()
+  const stream = await (await downloadPromise).createReadStream()
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk))
+  const exported = JSON.parse(Buffer.concat(chunks).toString())
+
+  expect(exported.account.email).toBe(email)
+  expect(exported.recipes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ name: 'My export recipe' }),
+    ]),
+  )
+  expect(
+    exported.recipes.some(
+      (recipe: { name: string }) => recipe.name === 'Pasta Bolognese',
+    ),
+  ).toBe(false)
+  expect(exported.plans).toHaveLength(1)
+  expect(JSON.stringify(exported)).not.toContain('passwordHash')
+  expect(JSON.stringify(exported)).not.toContain('session')
+
+  await page.getByLabel('Password', { exact: true }).fill('wrong-password')
+  await page.getByLabel(`Type ${email} to confirm`).fill(email)
+  await page
+    .getByRole('button', { name: 'Delete my account permanently' })
+    .click()
+  await expect(
+    page.getByText('Password or confirmation is incorrect'),
+  ).toBeVisible()
+
+  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page
+    .getByRole('button', { name: 'Delete my account permanently' })
+    .click()
+  await page.waitForURL('/auth/login')
+
+  const login = await page.request.post('/auth/login', {
+    form: { email, password },
+    headers: { origin: 'http://localhost:3000' },
+    maxRedirects: 0,
+  })
+  expect(await login.text()).toContain('Invalid email or password')
+})

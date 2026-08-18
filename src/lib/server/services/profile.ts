@@ -1,6 +1,8 @@
 import { hashPassword, verifyPassword } from './auth'
 import {
+  deleteAccount as deleteAccountRecord,
   findUserById,
+  getAccountExport,
   saveSettings,
   updatePassword,
 } from '../repositories/accounts'
@@ -44,6 +46,27 @@ export async function changePassword(
     if (!user || !(await verifyPassword(String(current), user.passwordHash)))
       return false
     await updatePassword(userId, await hashPassword(next))
+    return true
+  })
+}
+
+export async function exportAccountData(userId: number) {
+  return monitorService('profile', 'export_account', () =>
+    getAccountExport(userId),
+  )
+}
+
+export async function deleteAccount(
+  userId: number,
+  password: unknown,
+  confirmation: unknown,
+) {
+  return monitorService('profile', 'delete_account', async () => {
+    const user = await findUserById(userId)
+    if (!user || confirmation !== user.email) return false
+    if (!(await verifyPassword(String(password), user.passwordHash)))
+      return false
+    await deleteAccountRecord(userId)
     return true
   })
 }
