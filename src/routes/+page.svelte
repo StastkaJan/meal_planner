@@ -145,6 +145,20 @@
     </div>
   </div>
   <div class="plan-bar">
+    {#if data.plans.length > 1}
+      <label class="plan-picker"
+        >Plan
+        <select
+          value={data.activePlanId}
+          onchange={(event) =>
+            goto(planUrl(Number(event.currentTarget.value), data.viewWeek))}
+        >
+          {#each data.plans as item}
+            <option value={item.id}>Plan #{item.id}</option>
+          {/each}
+        </select>
+      </label>
+    {/if}
     <div class="plan-actions">
       {#if !plan}
         <button class="btn" onclick={createPlan}>Create plan</button>
@@ -154,33 +168,41 @@
           href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
           >Shopping list</a
         >
-        <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
-          >Delete</button
-        >
+        {#if plan.canEdit}
+          <button
+            class="btn danger"
+            onclick={() => deletePlan(data.activePlanId)}>Delete</button
+          >
+        {/if}
       {/if}
     </div>
   </div>
 
   {#if plan}
-    <PlanSettings
-      {plan}
-      {preferences}
-      onPreferenceChange={handlePreferenceChange}
-      onRepeatChange={handleRepeatChange}
-    />
+    {#if plan.canEdit}
+      <PlanSettings
+        {plan}
+        {preferences}
+        onPreferenceChange={handlePreferenceChange}
+        onRepeatChange={handleRepeatChange}
+      />
+    {:else}
+      <p class="shared-note">Shared household plan · view only</p>
+    {/if}
     <WeekTable
       {plan}
       meals={data.meals}
       weekStart={data.viewWeek}
       targets={data.targets}
       onSlotChange={handleSlotChange}
-      onAutoCompose={handleAutoCompose}
-      onCopyWeek={handleCopyWeek}
+      onAutoCompose={plan.canEdit ? handleAutoCompose : undefined}
+      onCopyWeek={plan.canEdit ? handleCopyWeek : undefined}
       onAddBonus={handleAddBonus}
       onDeleteBonus={handleDeleteBonus}
       onRecalcDay={handleRecalcDay}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
+      editable={plan.canEdit}
     />
   {:else if data.plans.length === 0}
     <p class="empty-state">Create your meal plan to get started.</p>
@@ -233,6 +255,27 @@
     gap: 6px;
     align-items: center;
     flex-wrap: wrap;
+  }
+  .plan-picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: auto;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+
+    select {
+      min-height: 38px;
+      padding: 6px 10px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-sm;
+      background: $color-surface;
+      color: $color-text;
+    }
+  }
+  .shared-note {
+    color: $color-text-muted;
+    font-size: 0.85rem;
   }
   .btn {
     display: inline-flex;

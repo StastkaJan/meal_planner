@@ -16,8 +16,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### Later
 
-4. **Household sharing** - shared plans, recipes, and synchronized shopping
-   lists with explicit member permissions.
 5. **Pantry staples** - mark ingredients such as salt or oil as always on hand
    and omit them from shopping lists. Do not build detailed stock accounting
    until users demonstrate a need for it.
@@ -82,6 +80,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Household plan, recipe, and derived shopping-list sharing with per-member
+  view/edit permission.
 
 ## Explicitly defer
 

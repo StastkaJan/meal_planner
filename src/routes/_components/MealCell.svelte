@@ -9,11 +9,13 @@
     meals,
     mealType,
     onPick,
+    editable = true,
   }: {
     slot: SlotWithMeal | null
     meals: Meal[]
     mealType: string
     onPick: (mealId: number | null) => void
+    editable?: boolean
   } = $props()
 
   let dialogEl = $state<HTMLDialogElement>()
@@ -42,6 +44,7 @@
     <div class="actions">
       <button
         type="button"
+        disabled={!editable}
         onclick={openPicker}
         title="Edit meal assignment"
         aria-label="Edit meal assignment">✎</button
@@ -53,6 +56,7 @@
       >
       <button
         type="button"
+        disabled={!editable}
         onclick={() => onPick(null)}
         title="Remove meal"
         aria-label="Remove meal">×</button
@@ -62,6 +66,7 @@
 {:else}
   <button
     class="cell {mealType}"
+    disabled={!editable}
     onclick={openPicker}
     title="Click to assign meal"
   >
@@ -150,6 +155,9 @@
       &:hover {
         background: $color-surface-2;
         color: $color-text;
+      }
+      &:disabled {
+        display: none;
       }
     }
   }
