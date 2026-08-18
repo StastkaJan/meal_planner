@@ -14,8 +14,6 @@ the plan -> shop -> cook loop or prevent user data loss.
    until users demonstrate a need for it.
 3. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
    history to improve suggestions and reduce repetition.
-4. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
-   and lightweight timers.
 
 ## Reliability and operations
 
@@ -74,6 +72,8 @@ No remaining P1 items.
   image; see [deployment.md](deployment.md).
 - Capacity dashboard and alerts for database size/connections, container memory,
   database disk, and slow operations; load testing remains evidence-gated.
+- Recipe cooking mode with large steps, scaled quantities, screen wake lock, and
+  lightweight timers.
 
 ## Explicitly defer
 
