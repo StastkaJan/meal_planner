@@ -11,9 +11,10 @@ Weekly meal planner. Assign meals to a breakfast/lunch/dinner grid across 7 days
 ## Dev
 
 ```bash
-docker-compose up -d   # start DB
+docker compose up -d db
 npm install
 npm run db:migrate
+npm run db:seed        # optional development data
 npm run dev
 ```
 
@@ -24,6 +25,20 @@ npm run db:generate   # generate migrations after schema changes
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed meals
 ```
+
+## Release
+
+The application container only starts the server. Apply migrations once as a
+deliberate release step before starting the new application version:
+
+```bash
+docker compose run --rm app npm run db:migrate
+docker compose up -d app
+```
+
+Development seed data is not included in the application image and is never
+loaded during container startup. Run `npm run db:seed` explicitly from a
+development checkout when needed.
 
 ## Monitoring
 
