@@ -64,11 +64,12 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P3 - security and resilience
 
-12. **Production secrets and network boundaries** - remove default credentials,
-    rotate secrets, keep PostgreSQL and metrics private, terminate TLS, and
-    restrict Grafana access.
 13. **Abuse controls that survive restarts** - move authentication rate limits
     out of process only if the app runs multiple instances or sees real abuse.
+    The current Compose deployment runs one app instance, so keep the limiter
+    in process. Revisit before adding a second instance, or when authentication
+    rate-limit rejections occur in three consecutive 15-minute windows. The
+    Grafana backend dashboard shows these rejections without recording IPs.
 14. **Data export and account deletion** - allow users to download their recipes
     and plans and permanently delete their account, sessions, and personal data.
 15. **Capacity checks** - monitor database size, connection use, memory, disk,
@@ -84,6 +85,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability
   gates for the npm lockfile and built application image.
+- Production Compose overlay with required secrets, private data/monitoring
+  networks, automatic TLS termination, and loopback-only Grafana access.
 
 ## Explicitly defer
 

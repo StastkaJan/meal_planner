@@ -19,11 +19,15 @@
 
 <!-- NOTE: Dockerfile bundles production migration/seed scripts and normalizes entrypoint.sh line endings for Windows checkouts; drizzle-kit stays build-only. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook; production deployment also requires `docker-compose.production.yml`. -->
+
+<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, and loopback-only Grafana. See `docs/production.md`. -->
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
+
+<!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
 
 ## Project layout
 

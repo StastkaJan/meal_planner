@@ -7,6 +7,8 @@ services:
       POSTGRES_PASSWORD: mealplan
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - database
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U mealplan']
       interval: 5s
@@ -23,6 +25,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - edge
+      - database
+      - monitoring
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/health >/dev/null']
       interval: 10s
@@ -44,6 +50,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - edge
+      - database
     restart: unless-stopped
 
   prometheus:
@@ -60,6 +69,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    networks:
+      - monitoring
 
   loki:
     image: grafana/loki:3.7.0
@@ -67,6 +78,8 @@ services:
       - ./monitoring/loki.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
 
   alloy:
     image: grafana/alloy:v1.18.0
@@ -83,6 +96,8 @@ services:
       - /etc/alloy/config.alloy
     depends_on:
       - loki
+    networks:
+      - monitoring
 
   grafana:
     image: grafana/grafana:12.4.0
@@ -98,6 +113,15 @@ services:
     depends_on:
       - prometheus
       - loki
+    networks:
+      - monitoring
+
+networks:
+  edge:
+  database:
+    internal: true
+  monitoring:
+    internal: true
 
 volumes:
   pgdata:
