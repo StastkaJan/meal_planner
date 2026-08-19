@@ -64,9 +64,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P3 - security and resilience
 
-12. **Production secrets and network boundaries** - remove default credentials,
-    rotate secrets, keep PostgreSQL and metrics private, terminate TLS, and
-    restrict Grafana access.
 13. **Abuse controls that survive restarts** - move authentication rate limits
     out of process only if the app runs multiple instances or sees real abuse.
     The current Compose deployment runs one app instance, so keep the limiter
@@ -86,6 +83,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Production Compose overlay with required secrets, private data/monitoring
+  networks, automatic TLS termination, and loopback-only Grafana access.
 
 ## Explicitly defer
 
