@@ -69,6 +69,10 @@ the plan -> shop -> cook loop or prevent user data loss.
     restrict Grafana access.
 13. **Abuse controls that survive restarts** - move authentication rate limits
     out of process only if the app runs multiple instances or sees real abuse.
+    The current Compose deployment runs one app instance, so keep the limiter
+    in process. Revisit before adding a second instance, or when authentication
+    rate-limit rejections occur in three consecutive 15-minute windows. The
+    Grafana backend dashboard shows these rejections without recording IPs.
 14. **Data export and account deletion** - allow users to download their recipes
     and plans and permanently delete their account, sessions, and personal data.
 15. **Capacity checks** - monitor database size, connection use, memory, disk,
