@@ -1,0 +1,52 @@
+name: Dependency security
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - Dockerfile
+      - .github/workflows/dependency-security.yml
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - Dockerfile
+      - .github/workflows/dependency-security.yml
+  schedule:
+    - cron: '17 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Audit locked dependencies
+        run: npm audit --package-lock-only --audit-level=high
+
+  image-scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build application image
+        run: docker build --tag meal-plan:scan .
+      - name: Scan application image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: meal-plan:scan
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
