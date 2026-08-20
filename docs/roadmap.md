@@ -51,8 +51,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P2 - make releases recoverable
 
-8. **CI quality gate** - require formatting, Svelte/type checks, unit tests, a
-   production build, and focused E2E smoke tests before deployment.
 9. **Migration safety** - back up before schema changes, use backward-compatible
    expand/migrate/contract changes, and write a rollback or roll-forward note
    for every destructive migration.
@@ -82,6 +80,9 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
+- GitHub Actions `quality` check for formatting, Svelte/type checks, unit tests,
+  production builds, and focused E2E smoke tests. A repository admin must make
+  it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability
   gates for the npm lockfile and built application image.

@@ -12,7 +12,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'docker compose up --build -d',
+    command: 'docker compose up --build db app',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 180_000,

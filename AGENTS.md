@@ -25,6 +25,8 @@
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 <!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
@@ -86,7 +88,10 @@ npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
+npm run test:smoke    # focused Chromium E2E release smoke tests
 npm run test:unit     # vitest unit tests
+npm run check:types   # Svelte and TypeScript checks
+npm run format:check  # verify formatting without writing
 docker compose up -d  # start postgres + app
 ```
 

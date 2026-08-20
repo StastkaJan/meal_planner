@@ -10,9 +10,12 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "npx tsx src/lib/database/seed.ts",
     "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
     "test:unit": "vitest run",
-    "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",
+    "check": "npm run format:check && npm run check:types && npm run test:unit",
+    "check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky || true"
   },
   "dependencies": {

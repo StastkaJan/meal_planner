@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { uniqueEmail, register, login } from './helpers'
 
-test('register creates account and shows user in nav', async ({ page }) => {
+test('@smoke register creates account and shows user in nav', async ({
+  page,
+}) => {
   await register(page, uniqueEmail())
   await expect(page.locator('nav button[type="submit"]')).toHaveText('Sign out')
 })
