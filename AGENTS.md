@@ -13,15 +13,23 @@
 - **Tests**: Vitest (unit), Playwright (E2E)
 - **Infra**: Docker Compose (app + postgres + Prometheus/Loki/Alloy/Grafana)
 
-<!-- NOTE: HTTP and service operations emit correlated JSON logs; `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
+<!-- NOTE: HTTP and service operations emit allowlisted JSON logs with request ID, route, and `DEPLOYMENT_VERSION`; server failures retain message-free stack frames and authenticated user ID. `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
 <!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
 
-<!-- NOTE: Production containers start only the app. Run migrations as an explicit release step; development seeds are never bundled or run on startup. -->
+<!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook; production deployment also requires `docker-compose.production.yml`. -->
+
+<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, and loopback-only Grafana. See `docs/production.md`. -->
+
+<!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
+
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
+
+<!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
 
 ## Project layout
 
@@ -80,7 +88,10 @@ npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
+npm run test:smoke    # focused Chromium E2E release smoke tests
 npm run test:unit     # vitest unit tests
+npm run check:types   # Svelte and TypeScript checks
+npm run format:check  # verify formatting without writing
 docker compose up -d  # start postgres + app
 ```
 

@@ -32,7 +32,7 @@ The application container only starts the server. Apply migrations once as a
 deliberate release step before starting the new application version:
 
 ```bash
-docker compose run --rm app npm run db:migrate
+docker compose run --rm app node scripts-dist/migrate.js
 docker compose up -d app
 ```
 
@@ -42,24 +42,28 @@ development checkout when needed.
 
 ## Monitoring
 
-`docker compose up -d` starts the provisioned monitoring stack:
+`docker compose up -d` starts the provisioned local-development monitoring stack:
 
 - Grafana dashboard: http://localhost:3001 (default `admin` / `admin`)
 - Prometheus: http://localhost:9090
 - Alloy collector diagnostics: http://localhost:12345
 
-Set `GRAFANA_ADMIN_PASSWORD` in `.env` before using the stack outside local development. Metrics and logs are retained for seven days.
+The default credentials and direct monitoring ports are for local development only.
+Production uses required secrets, TLS, and private monitoring networks; see
+[the production deployment guide](docs/production.md). Metrics and logs are
+retained for seven days.
 
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup
 and at 02:00 UTC daily, then keeps 7 daily, 4 weekly, and 6 monthly snapshots in an
 off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
-Set the backup variables from `.env.example`, including an operator-monitored
-webhook, then start it with:
+Set the backup variables in `.env.production` from `.env.production.example`,
+including an operator-monitored webhook, then start it with the secure
+production overlay:
 
 ```bash
-docker compose --profile production up -d backup
+docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production up -d backup
 ```
 
 Check the latest snapshot with `docker compose exec backup restic snapshots`.

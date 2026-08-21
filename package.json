@@ -10,14 +10,16 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "npx tsx src/lib/database/seed.ts",
     "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
     "test:unit": "vitest run",
-    "check": "prettier --check . && svelte-check --tsconfig ./tsconfig.json && vitest run",
+    "check": "npm run format:check && npm run check:types && npm run test:unit",
+    "check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky || true"
   },
   "dependencies": {
-    "drizzle-kit": "^0.31.0",
-    "drizzle-orm": "^0.44.2",
+    "drizzle-orm": "^0.45.2",
     "pg": "^8.13.3"
   },
   "devDependencies": {
@@ -26,6 +28,7 @@
     "@sveltejs/kit": "^2.21.4",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.31.0",
     "husky": "^9.1.7",
     "prettier": "^3.9.4",
     "prettier-plugin-svelte": "^4.1.1",
@@ -33,7 +36,7 @@
     "svelte": "^5.34.6",
     "svelte-check": "^4.1.6",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
+    "typescript": "^7.0.2",
     "vite": "^6.3.5",
     "vitest": "^4.1.9"
   },

@@ -351,8 +351,52 @@
       "type": "logs"
     },
     {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Rejected login and registration attempts in the last 15 minutes. Move rate limiting to shared storage before adding another app instance, or if this remains non-zero for three consecutive windows.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 28 },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(http_requests_total{route=~\"/auth/(login|register)\",status=\"429\"}[15m])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Authentication rate-limit rejections",
+      "type": "stat"
+    },
+    {
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 13, "w": 24, "x": 0, "y": 28 },
+      "gridPos": { "h": 13, "w": 24, "x": 0, "y": 32 },
       "id": 7,
       "options": {
         "dedupStrategy": "none",

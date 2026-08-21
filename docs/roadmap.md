@@ -39,18 +39,13 @@ the plan -> shop -> cook loop or prevent user data loss.
 4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
    backup failures, high latency, and low disk space. Route alerts to one place
    an operator will actually monitor.
-5. **Better error evidence** - retain sanitized server stack traces, deployment
-   version, route, user ID where appropriate, and the existing request ID. Never
-   log passwords, session tokens, recipe import bodies, or other private data.
-6. **Release identification** - expose a commit/version label in logs, metrics,
+5. **Release identification** - expose a commit/version label in logs, metrics,
    and the health response so a regression can be tied to a deployment.
-7. **Debug runbook** - document how to go from an alert or user-provided request
+6. **Debug runbook** - document how to go from an alert or user-provided request
    ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
 
-8. **CI quality gate** - require formatting, Svelte/type checks, unit tests, a
-   production build, and focused E2E smoke tests before deployment.
 9. **Migration safety** - back up before schema changes, use backward-compatible
    expand/migrate/contract changes, and write a rollback or roll-forward note
    for every destructive migration.
@@ -62,11 +57,12 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P3 - security and resilience
 
-12. **Production secrets and network boundaries** - remove default credentials,
-    rotate secrets, keep PostgreSQL and metrics private, terminate TLS, and
-    restrict Grafana access.
 13. **Abuse controls that survive restarts** - move authentication rate limits
     out of process only if the app runs multiple instances or sees real abuse.
+    The current Compose deployment runs one app instance, so keep the limiter
+    in process. Revisit before adding a second instance, or when authentication
+    rate-limit rejections occur in three consecutive 15-minute windows. The
+    Grafana backend dashboard shows these rejections without recording IPs.
 14. **Data export and account deletion** - allow users to download their recipes
     and plans and permanently delete their account, sessions, and personal data.
 15. **Capacity checks** - monitor database size, connection use, memory, disk,
@@ -75,13 +71,22 @@ the plan -> shop -> cook loop or prevent user data loss.
 ## Already present
 
 - Correlated JSON server logs and response `x-request-id` headers.
+- Sanitized server error evidence with stack frames, deployment version, route,
+  authenticated user ID, and strict private-field exclusion.
 - Browser runtime error reporting.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
 - Unit, E2E, formatting, type-check, and production build commands.
+- GitHub Actions `quality` check for formatting, Svelte/type checks, unit tests,
+  production builds, and focused E2E smoke tests. A repository admin must make
+  it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 - Production containers start only the application; migrations are an explicit
   release step and development seed data stays outside the image.
+- Weekly grouped dependency/image update PRs and high/critical vulnerability
+  gates for the npm lockfile and built application image.
+- Production Compose overlay with required secrets, private data/monitoring
+  networks, automatic TLS termination, and loopback-only Grafana access.
 
 ## Explicitly defer
 

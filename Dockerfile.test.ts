@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import packageJson from './package.json'
 
 const dockerfile = readFileSync(
   new URL('./Dockerfile', import.meta.url),
@@ -13,7 +12,12 @@ describe('production image startup', () => {
     expect(dockerfile).not.toMatch(/seed|entrypoint/)
   })
 
-  it('keeps migration tooling available for the explicit release step', () => {
-    expect(packageJson.dependencies['drizzle-kit']).toBeDefined()
+  it('bundles the migration runner for the explicit release step', () => {
+    expect(dockerfile).toContain(
+      'npx esbuild src/lib/database/migrate.ts --bundle',
+    )
+    expect(dockerfile).toContain(
+      'COPY --from=build /app/scripts-dist ./scripts-dist',
+    )
   })
 })
