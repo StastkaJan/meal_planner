@@ -41,12 +41,9 @@ the plan -> shop -> cook loop or prevent user data loss.
 4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
    backup failures, high latency, and low disk space. Route alerts to one place
    an operator will actually monitor.
-5. **Better error evidence** - retain sanitized server stack traces, deployment
-   version, route, user ID where appropriate, and the existing request ID. Never
-   log passwords, session tokens, recipe import bodies, or other private data.
-6. **Release identification** - expose a commit/version label in logs, metrics,
+5. **Release identification** - expose a commit/version label in logs, metrics,
    and the health response so a regression can be tied to a deployment.
-7. **Debug runbook** - document how to go from an alert or user-provided request
+6. **Debug runbook** - document how to go from an alert or user-provided request
    ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
@@ -76,6 +73,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 ## Already present
 
 - Correlated JSON server logs and response `x-request-id` headers.
+- Sanitized server error evidence with stack frames, deployment version, route,
+  authenticated user ID, and strict private-field exclusion.
 - Browser runtime error reporting.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.

@@ -4,6 +4,7 @@ import type { Handle } from '@sveltejs/kit'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 type RequestMetric = { count: number; durationSeconds: number }
+type RequestContext = { requestId: string; route: string }
 
 const levels: Record<LogLevel, number> = {
   debug: 10,
@@ -14,8 +15,64 @@ const levels: Record<LogLevel, number> = {
 const metrics = new Map<string, RequestMetric>()
 const serviceMetrics = new Map<string, RequestMetric>()
 const clientErrorMetrics = new Map<string, number>()
-const requestContext = new AsyncLocalStorage<{ requestId: string }>()
+const requestContext = new AsyncLocalStorage<RequestContext>()
 let requestsInFlight = 0
+
+const stringFields: Record<string, number> = {
+  requestId: 128,
+  method: 16,
+  route: 500,
+  service: 100,
+  operation: 100,
+  outcome: 20,
+  kind: 50,
+  errorType: 100,
+}
+const numberFields = new Set(['status', 'durationMs', 'userId'])
+
+function safeLabel(value: string, fallback: string) {
+  return /^[a-zA-Z0-9_.:-]{1,128}$/.test(value) ? value : fallback
+}
+
+function sanitizeStack(stack: string) {
+  const frames = stack
+    .split('\n')
+    .filter((line) => line.trimStart().startsWith('at '))
+    .slice(0, 20)
+    .map((line) =>
+      line.replace(/\/\/[^/@\s]+@/g, '//').replace(/([?#])[^)\s]+/g, ''),
+    )
+    .join('\n')
+    .slice(0, 8000)
+  return frames || undefined
+}
+
+function sanitizeFields(fields: Record<string, unknown>) {
+  const sanitized: Record<string, string | number> = {}
+  for (const [key, value] of Object.entries(fields)) {
+    if (key === 'stack' && typeof value === 'string') {
+      const stack = sanitizeStack(value)
+      if (stack) sanitized.stack = stack
+    } else if (key in stringFields && typeof value === 'string') {
+      sanitized[key] = value.replace(/[\r\n]/g, ' ').slice(0, stringFields[key])
+    } else if (
+      numberFields.has(key) &&
+      typeof value === 'number' &&
+      Number.isFinite(value)
+    ) {
+      sanitized[key] = value
+    }
+  }
+  return sanitized
+}
+
+function errorEvidence(error: unknown) {
+  if (!(error instanceof Error)) return { errorType: 'NonError' }
+  return {
+    errorType: safeLabel(error.name, 'Error'),
+    stack: error.stack,
+  }
+}
 
 export function log(
   level: LogLevel,
@@ -29,9 +86,13 @@ export function log(
     JSON.stringify({
       timestamp: new Date().toISOString(),
       level,
-      event,
+      event: safeLabel(event, 'invalid_event'),
+      ...sanitizeFields(fields),
       ...requestContext.getStore(),
-      ...fields,
+      deploymentVersion: safeLabel(
+        process.env.DEPLOYMENT_VERSION ?? 'unknown',
+        'unknown',
+      ),
     }),
   )
 }
@@ -67,11 +128,7 @@ export async function monitorService<T>(
       operation,
       outcome,
       durationMs: Math.round(durationSeconds * 1000),
-      ...(failure === undefined
-        ? {}
-        : {
-            error: failure instanceof Error ? failure.message : String(failure),
-          }),
+      ...(failure === undefined ? {} : errorEvidence(failure)),
     })
   }
 }
@@ -96,7 +153,8 @@ export const observeRequests: Handle = async ({ event, resolve }) => {
   let status = 500
   requestsInFlight++
 
-  return requestContext.run({ requestId: id }, async () => {
+  const route = event.route.id ?? 'unmatched'
+  return requestContext.run({ requestId: id, route }, async () => {
     try {
       const response = await resolve(event)
       status = response.status
@@ -106,14 +164,14 @@ export const observeRequests: Handle = async ({ event, resolve }) => {
       log('error', 'http_request_failed', {
         requestId: id,
         method: event.request.method,
-        route: event.route.id ?? 'unmatched',
-        error: error instanceof Error ? error.message : String(error),
+        route,
+        userId: event.locals.user?.id,
+        ...errorEvidence(error),
       })
       throw error
     } finally {
       requestsInFlight--
       const durationSeconds = (performance.now() - startedAt) / 1000
-      const route = event.route.id ?? 'unmatched'
       const key = JSON.stringify([event.request.method, route, status])
       const metric = metrics.get(key) ?? { count: 0, durationSeconds: 0 }
       metric.count++

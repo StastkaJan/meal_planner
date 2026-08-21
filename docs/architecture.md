@@ -28,3 +28,11 @@ services -> pure domain logic
 It is serializable, executes inline today, and slot inserts ignore conflicts so a
 future worker can retry it safely. Add queue infrastructure only when generation
 latency requires background execution.
+
+## Error evidence
+
+Set `DEPLOYMENT_VERSION` to the immutable release or commit identifier. JSON
+logs include it with the request ID and route. Unhandled server failures also
+include the authenticated user ID and stack frames, but omit error messages and
+all fields outside the logging allowlist. Do not add request bodies, credentials,
+tokens, email addresses, or other user data to that allowlist.
