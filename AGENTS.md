@@ -25,7 +25,7 @@
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
-<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check and explicitly migrates its test database before smoke tests. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
