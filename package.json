@@ -13,7 +13,7 @@
     "test:smoke": "playwright test --grep @smoke",
     "test:unit": "vitest run",
     "check": "npm run format:check && npm run check:types && npm run test:unit",
-    "check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --tsgo",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky || true"
@@ -27,6 +27,7 @@
     "@sveltejs/adapter-node": "^5.2.12",
     "@sveltejs/kit": "^2.21.4",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@typescript/native-preview": "npm:typescript@^7.0.2",
     "@types/pg": "^8.11.11",
     "drizzle-kit": "^0.31.0",
     "husky": "^9.1.7",
@@ -36,7 +37,7 @@
     "svelte": "^5.34.6",
     "svelte-check": "^4.1.6",
     "tsx": "^4.19.4",
-    "typescript": "^6.0.3",
+    "typescript": "~6.0.3",
     "vite": "^6.3.5",
     "vitest": "^4.1.9"
   },
