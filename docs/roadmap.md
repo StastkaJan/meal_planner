@@ -33,8 +33,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 1. **Tested restore procedure** - document one restore command and run a
    scheduled restore into a disposable database. A backup is not complete until
    its restore has been verified. Initial target: RPO 24 hours, RTO 2 hours.
-2. **Production-safe startup** - run migrations as a deliberate release step
-   and do not run development seed data on every application start.
 
 ### P1 - detect and diagnose failures
 
@@ -83,6 +81,8 @@ the plan -> shop -> cook loop or prevent user data loss.
   production builds, and focused E2E smoke tests. A repository admin must make
   it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Production containers start only the application; migrations are an explicit
+  release step and development seed data stays outside the image.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability
   gates for the npm lockfile and built application image.
 - Production Compose overlay with required secrets, private data/monitoring

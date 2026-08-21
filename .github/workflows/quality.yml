@@ -40,6 +40,8 @@ jobs:
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Apply test database migrations
+        run: docker compose run --build --rm app node scripts-dist/migrate.js
       - name: Run E2E smoke tests
         run: npm run test:smoke
 

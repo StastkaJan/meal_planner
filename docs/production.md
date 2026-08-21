@@ -12,10 +12,11 @@ and is intended to be reached through an SSH tunnel.
    placeholder, and restrict the file to the deployment user (`chmod 600` on
    Linux). Generate URL-safe secrets with `openssl rand -hex 32`; the password
    embedded in `DATABASE_URL` must match `POSTGRES_PASSWORD`.
-3. Validate and start the stack:
+3. Validate the stack, apply migrations once, then start it:
 
    ```bash
    docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production config --quiet
+   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production run --rm app node scripts-dist/migrate.js
    docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production up -d
    curl --fail --proto '=https' https://meals.example.com/health
    ```
