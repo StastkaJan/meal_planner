@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD COLUMN "meal_slots" text[] DEFAULT ARRAY['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner']::text[] NOT NULL;

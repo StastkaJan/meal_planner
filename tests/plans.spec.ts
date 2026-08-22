@@ -18,6 +18,45 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(page.getByText('Repeat pattern')).toBeVisible()
 })
 
+test('configure enabled and custom meal slots for auto-compose', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  await page.getByText('Plan settings').click()
+
+  for (const name of ['morning snack', 'afternoon snack']) {
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          /\/plans\/\d+$/.test(new URL(response.url()).pathname) &&
+          response.request().method() === 'PATCH',
+      ),
+      page.getByRole('checkbox', { name }).uncheck(),
+    ])
+  }
+
+  await page.getByLabel('Custom slot name').fill('Second breakfast')
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        /\/plans\/\d+$/.test(new URL(response.url()).pathname) &&
+        response.request().method() === 'PATCH',
+    ),
+    page.getByRole('button', { name: 'Add slot' }).click(),
+  ])
+
+  const labels = page.locator('tbody .row-label')
+  await expect(labels.filter({ hasText: 'morning snack' })).toHaveCount(0)
+  await expect(labels.filter({ hasText: 'afternoon snack' })).toHaveCount(0)
+  await expect(labels.filter({ hasText: 'second breakfast' })).toHaveCount(1)
+
+  await page.getByRole('button', { name: 'Auto-compose' }).click()
+  const customRow = page.locator('tbody tr').filter({
+    has: page.locator('.row-label', { hasText: 'second breakfast' }),
+  })
+  await expect(customRow.locator('.name').first()).toBeVisible()
+})
+
 test('delete a plan', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
 

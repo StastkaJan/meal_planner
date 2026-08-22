@@ -1,4 +1,14 @@
-import { and, eq, gte, isNull, lt, or, sql, inArray } from 'drizzle-orm'
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   plans,
@@ -50,6 +60,27 @@ export async function updatePlanPortions(id: number, portions: number) {
     .where(eq(plans.id, id))
     .returning()
   return plan
+}
+
+export async function updatePlanMealSlots(id: number, mealSlots: string[]) {
+  return db.transaction(async (tx) => {
+    const [plan] = await tx
+      .update(plans)
+      .set({ mealSlots })
+      .where(eq(plans.id, id))
+      .returning()
+    const disabled = notInArray(weekSlots.mealType, mealSlots)
+    await tx.delete(weekSlots).where(and(eq(weekSlots.planId, id), disabled))
+    await tx
+      .delete(slotRepeats)
+      .where(
+        and(
+          eq(slotRepeats.planId, id),
+          notInArray(slotRepeats.mealType, mealSlots),
+        ),
+      )
+    return plan
+  })
 }
 
 export async function setSlotRepeat(

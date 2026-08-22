@@ -1,4 +1,3 @@
-import { MEAL_TYPES } from '$lib/constants'
 import { resolveTargets } from '$lib/domain/nutrition'
 import { addDays, groupWindow, mondayOf } from '$lib/utils/date-time'
 import type { Plan } from '$lib/database/schema'
@@ -24,7 +23,10 @@ import {
 } from '../repositories/plans'
 import { monitorService } from '../observability'
 
-type PlanPrefs = Pick<Plan, 'id' | 'cuisinePrefs' | 'dietaryRestrictions'>
+type PlanPrefs = Pick<
+  Plan,
+  'id' | 'cuisinePrefs' | 'dietaryRestrictions' | 'mealSlots'
+>
 
 export type PlanPopulationCommand = {
   type: 'populate-plan'
@@ -109,7 +111,7 @@ async function autocomposeSlots(
       ...existingSlots.filter((slot) => slot.date === date),
       ...weekBonus.filter((item) => item.date === date),
     ])
-    const emptySlots = MEAL_TYPES.filter(
+    const emptySlots = plan.mealSlots.filter(
       (mealType) => !filled.has(`${date}-${mealType}`),
     )
     const freshSlots: string[] = []
@@ -177,7 +179,7 @@ async function recalcDaySlots(
 ) {
   const daySlots = await getDaySlotsWithNutrition(plan.id, date)
   const filled = new Set(daySlots.map((slot) => slot.mealType))
-  const emptySlots = MEAL_TYPES.filter((mealType) => !filled.has(mealType))
+  const emptySlots = plan.mealSlots.filter((mealType) => !filled.has(mealType))
   if (!emptySlots.length) return 0
 
   const [mealRows, dayBonus, weekMealIds] = await Promise.all([

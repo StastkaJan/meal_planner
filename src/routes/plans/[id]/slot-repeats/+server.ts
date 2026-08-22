@@ -1,15 +1,13 @@
 import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
 import { setSlotRepeat } from '$lib/server/repositories/plans'
-import { MEAL_TYPES } from '$lib/constants'
 import type { RequestHandler } from './$types'
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
   const plan = await requireOwnedPlan(locals, params.id)
 
   const { mealType, groupBreaks } = await request.json()
-  if (!(MEAL_TYPES as readonly string[]).includes(mealType))
-    error(400, 'Invalid mealType')
+  if (!plan.mealSlots.includes(mealType)) error(400, 'Invalid mealType')
   if (
     groupBreaks !== null &&
     (!Array.isArray(groupBreaks) ||

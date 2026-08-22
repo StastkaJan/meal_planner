@@ -26,7 +26,14 @@ function makeEvent(body: object, planId = '1', userId = 1) {
 }
 
 describe('PUT /plans/:id/slot-repeats', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRequireOwnedPlan.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      mealSlots: ['breakfast', 'lunch', 'second_breakfast'],
+    })
+  })
 
   it('throws 404 when plan is not owned by the user', async () => {
     mockRequireOwnedPlan.mockRejectedValueOnce(
@@ -38,19 +45,16 @@ describe('PUT /plans/:id/slot-repeats', () => {
   })
 
   it('rejects an invalid mealType with 400', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(
       PUT(makeEvent({ mealType: 'brunch', groupBreaks: null })),
     ).rejects.toMatchObject({ status: 400 })
   })
 
   it('rejects groupBreaks that is not 6 booleans', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(
       PUT(makeEvent({ mealType: 'lunch', groupBreaks: [true, false] })),
     ).rejects.toMatchObject({ status: 400 })
 
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(
       PUT(
         makeEvent({
@@ -62,7 +66,6 @@ describe('PUT /plans/:id/slot-repeats', () => {
   })
 
   it('deletes the row and returns 204 when groupBreaks is null', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     const res = await PUT(makeEvent({ mealType: 'lunch', groupBreaks: null }))
     expect(res.status).toBe(204)
     expect(mockDb.delete).toHaveBeenCalled()
@@ -70,7 +73,6 @@ describe('PUT /plans/:id/slot-repeats', () => {
   })
 
   it('upserts the row and returns 204 when groupBreaks is provided', async () => {
-    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     const groupBreaks = [false, true, false, true, false, false]
     const res = await PUT(makeEvent({ mealType: 'lunch', groupBreaks }))
     expect(res.status).toBe(204)
