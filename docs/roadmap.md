@@ -9,6 +9,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 1. **Persistent shopping lists** - save checked items, support custom items and
    exclusions, and group ingredients by aisle.
+
 ### Later
 
 2. **Household sharing** - shared plans, recipes, and synchronized shopping

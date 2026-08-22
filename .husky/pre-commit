@@ -1,2 +1,7 @@
-npx prettier --write .
-git add -u
+git diff --cached --name-only --diff-filter=ACMR |
+  while IFS= read -r file; do
+    npx prettier --write --ignore-unknown "$file" || exit 1
+    git add -- "$file"
+  done
+
+npm run check:types
