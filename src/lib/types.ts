@@ -13,6 +13,8 @@ export type SlotWithMeal = WeekSlot & {
   proteinG: string | null
   carbsG: string | null
   fatG: string | null
+  leftoverSourceDate: string | null
+  leftoverSourceMealType: string | null
 }
 
 export type PlanDetail = Plan & {

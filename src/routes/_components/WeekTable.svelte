@@ -12,6 +12,7 @@
     weekStart,
     targets,
     onSlotChange,
+    onSlotLeftover,
     onAutoCompose,
     onCopyWeek,
     onAddBonus,
@@ -28,6 +29,11 @@
       date: string,
       mealType: string,
       mealId: number | null,
+    ) => void
+    onSlotLeftover: (
+      date: string,
+      mealType: string,
+      source: { date: string; mealType: string } | null,
     ) => void
     onAutoCompose?: (favoritesOnly: boolean) => void
     onCopyWeek?: () => void
@@ -78,6 +84,19 @@
   const slotMap = $derived(
     new Map(plan.slots.map((s) => [`${s.date}-${s.mealType}`, s])),
   )
+
+  function previousMatchingSlot(slot: SlotWithMeal | null) {
+    if (!slot?.mealId) return null
+    return (
+      plan.slots
+        .filter(
+          (candidate) =>
+            candidate.mealId === slot.mealId && candidate.date < slot.date,
+        )
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .at(-1) ?? null
+    )
+  }
 
   const dailyNutrition = $derived(
     weekDates.map((dt) => {
@@ -130,12 +149,16 @@
           <tr>
             <td class="row-label">{mt.replaceAll('_', ' ')}</td>
             {#each weekDates as dt}
+              {@const date = isoDate(dt)}
+              {@const slot = slotMap.get(`${date}-${mt}`) ?? null}
               <td class="slot-cell">
                 <MealCell
-                  slot={slotMap.get(`${isoDate(dt)}-${mt}`) ?? null}
+                  {slot}
                   {meals}
                   mealType={mt}
-                  onPick={(mealId) => onSlotChange(isoDate(dt), mt, mealId)}
+                  leftoverSource={previousMatchingSlot(slot)}
+                  onPick={(mealId) => onSlotChange(date, mt, mealId)}
+                  onLeftover={(source) => onSlotLeftover(date, mt, source)}
                 />
               </td>
             {/each}
