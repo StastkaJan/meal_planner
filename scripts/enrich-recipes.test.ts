@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildFoodIndex, enrichRecipe } from './enrich-recipes'
+import {
+  buildFoodIndex,
+  enrichRecipe,
+  preparationMinutes,
+} from './enrich-recipes'
 
 describe('enrichRecipe', () => {
   it('adds USDA macros and conservative dietary tags', () => {
@@ -29,6 +33,8 @@ describe('enrichRecipe', () => {
       proteinG: 29.2,
       carbsG: 89.9,
       fatG: 8.5,
+      difficulty: 'easy',
+      timeMinutes: 15,
       servings: 1,
     })
     expect(recipe.tags).toEqual(
@@ -76,5 +82,48 @@ describe('enrichRecipe', () => {
     )
 
     expect(recipe.calories).toBe(538)
+  })
+
+  it('normalizes nutrition and ingredient quantities to one serving', () => {
+    const index = buildFoodIndex([
+      {
+        description: 'Chickpeas, cooked',
+        foodNutrients: [
+          { nutrient: { id: 1008 }, amount: 164 },
+          { nutrient: { id: 1003 }, amount: 8.9 },
+          { nutrient: { id: 1005 }, amount: 27.4 },
+          { nutrient: { id: 1004 }, amount: 2.6 },
+        ],
+        foodPortions: [{ amount: 1, gramWeight: 164, modifier: 'cup' }],
+      },
+    ])
+
+    const recipe = enrichRecipe(
+      {
+        name: 'Chickpeas',
+        ingredients: [{ name: 'Chickpeas', qty: 4, unit: 'cup' }],
+      },
+      index,
+    )
+
+    expect(recipe).toMatchObject({
+      calories: 538,
+      ingredients: [{ name: 'Chickpeas', qty: 2, unit: 'cup' }],
+      servings: 1,
+    })
+  })
+
+  it('infers preparation metadata', () => {
+    const recipe = {
+      name: 'Soup',
+      ingredients: Array.from({ length: 10 }, () => ({
+        name: 'Ingredient',
+        qty: 1,
+        unit: null,
+      })),
+      instructions: 'Simmer for 20 to 30 minutes, then rest for 5 mins.',
+    }
+
+    expect(preparationMinutes(recipe)).toBe(35)
   })
 })

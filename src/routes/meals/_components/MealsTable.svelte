@@ -87,7 +87,7 @@
   {/if}
   <Table
     data={meals}
-    columns={['Name', 'Difficulty', 'Time', 'Actions']}
+    columns={['Name', 'Difficulty', 'Preparation', 'Actions']}
     row={mealRow}
     {emptyMessage}
   />

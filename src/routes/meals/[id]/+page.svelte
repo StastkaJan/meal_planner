@@ -79,7 +79,8 @@
           <h1>{meal.name}</h1>
         </div>
         <div class="meta">
-          {#if meal.timeMinutes}<span class="badge">{meal.timeMinutes} min</span
+          {#if meal.timeMinutes}<span class="badge"
+              >{meal.timeMinutes} min preparation</span
             >{/if}
           {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
               >{DIFF_LABEL[meal.difficulty] ?? meal.difficulty}</span

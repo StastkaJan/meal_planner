@@ -6,6 +6,10 @@ type Recipe = {
   description?: string
   tags?: string[]
   ingredients: Ingredient[]
+  instructions?: string
+  servings?: number
+  timeMinutes?: number
+  difficulty?: string
   [key: string]: unknown
 }
 type Nutrient = { nutrient: { id: number }; amount: number }
@@ -70,6 +74,55 @@ const UNIT_GRAMS: Record<string, number> = {
   slice: 30,
   can: 400,
   piece: 100,
+}
+
+export function preparationMinutes(recipe: Recipe) {
+  const durations = [
+    ...(recipe.instructions ?? '').matchAll(
+      /(\d+(?:\.\d+)?)\s*(?:(?:-|–|to)\s*(\d+(?:\.\d+)?)\s*)?(hours?|hrs?|minutes?|mins?)\b/gi,
+    ),
+  ]
+  const explicit = durations.reduce((total, match) => {
+    const value = Number(match[2] ?? match[1])
+    return total + value * (/^(?:hours?|hrs?)$/i.test(match[3]) ? 60 : 1)
+  }, 0)
+  return Math.min(
+    360,
+    explicit || Math.ceil((10 + recipe.ingredients.length * 2) / 5) * 5,
+  )
+}
+
+export function recipeDifficulty(recipe: Recipe, timeMinutes: number) {
+  if (timeMinutes > 90 || recipe.ingredients.length > 15) return 'hard'
+  if (timeMinutes > 30 || recipe.ingredients.length > 8) return 'medium'
+  return 'easy'
+}
+
+export function normalizeRecipe(
+  recipe: Recipe,
+  servings = recipe.servings ?? 1,
+) {
+  const timeMinutes = recipe.timeMinutes ?? preparationMinutes(recipe)
+  const oldNote =
+    'Nutrition estimated from USDA SR Legacy ingredient data; serving count inferred.'
+  const note =
+    'Nutrition estimated from USDA SR Legacy ingredient data; quantities normalized to one serving.'
+  return {
+    ...recipe,
+    description: recipe.description?.includes(note)
+      ? recipe.description
+      : `${recipe.description?.replace(oldNote, '').trim() ?? ''} ${note}`.trim(),
+    ingredients: recipe.ingredients.map((ingredient) => ({
+      ...ingredient,
+      qty:
+        ingredient.qty == null
+          ? null
+          : Number((ingredient.qty / servings).toFixed(3)),
+    })),
+    timeMinutes,
+    difficulty: recipe.difficulty ?? recipeDifficulty(recipe, timeMinutes),
+    servings: 1,
+  }
 }
 
 function singular(word: string) {
@@ -244,9 +297,11 @@ export function enrichRecipe(recipe: Recipe, index: FoodIndex) {
   const target =
     category === 'Dessert' ? 300 : category === 'Breakfast' ? 450 : 600
   const servings =
-    totals.calories > 0
-      ? Math.max(1, Math.min(24, Math.round(totals.calories / target)))
-      : 1
+    recipe.servings && recipe.servings > 0
+      ? recipe.servings
+      : totals.calories > 0
+        ? Math.max(1, Math.min(24, Math.round(totals.calories / target)))
+        : 1
   const perServing = Object.fromEntries(
     Object.entries(totals).map(([field, value]) => [field, value / servings]),
   ) as typeof totals
@@ -260,32 +315,40 @@ export function enrichRecipe(recipe: Recipe, index: FoodIndex) {
     if (perServing.carbsG <= 20) macroTags.push('low_carb')
     if (perServing.fatG <= 10) macroTags.push('low_fat')
   }
-  const note =
-    'Nutrition estimated from USDA SR Legacy ingredient data; serving count inferred.'
-  return {
-    ...recipe,
-    description: recipe.description?.includes(note)
-      ? recipe.description
-      : `${recipe.description ?? ''} ${note}`.trim(),
-    tags: [
-      ...new Set([
-        ...cuisineTag(recipe),
-        ...dietaryTags(recipe.ingredients),
-        ...macroTags,
-      ]),
-    ],
-    calories: Math.round(perServing.calories),
-    proteinG: Number(perServing.proteinG.toFixed(1)),
-    carbsG: Number(perServing.carbsG.toFixed(1)),
-    fatG: Number(perServing.fatG.toFixed(1)),
+  return normalizeRecipe(
+    {
+      ...recipe,
+      tags: [
+        ...new Set([
+          ...cuisineTag(recipe),
+          ...dietaryTags(recipe.ingredients),
+          ...macroTags,
+        ]),
+      ],
+      calories: Math.round(perServing.calories),
+      proteinG: Number(perServing.proteinG.toFixed(1)),
+      carbsG: Number(perServing.carbsG.toFixed(1)),
+      fatG: Number(perServing.fatG.toFixed(1)),
+    },
     servings,
-  }
+  )
 }
 
 async function main() {
   const [usdaPath, ...recipePaths] = process.argv.slice(2)
+  if (usdaPath === '--normalize') {
+    for (const path of recipePaths) {
+      const recipes = JSON.parse(await readFile(path, 'utf8')) as Recipe[]
+      const normalized = recipes.map((recipe) => normalizeRecipe(recipe))
+      await writeFile(path, `${JSON.stringify(normalized, null, 2)}\n`)
+      console.log(`Normalized ${normalized.length} recipes in ${path}`)
+    }
+    return
+  }
   if (!usdaPath || !recipePaths.length)
-    throw new Error('Usage: recipes:enrich <USDA JSON> <recipe JSON...>')
+    throw new Error(
+      'Usage: recipes:enrich <USDA JSON> <recipe JSON...> | --normalize <recipe JSON...>',
+    )
   const usda = JSON.parse(await readFile(usdaPath, 'utf8')) as {
     SRLegacyFoods: UsdaFood[]
   }

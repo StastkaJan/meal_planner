@@ -84,7 +84,7 @@
       /></label
     >
     <label
-      >Time (min)<input
+      >Preparation (min)<input
         type="number"
         name="timeMinutes"
         value={meal.timeMinutes ?? ''}
