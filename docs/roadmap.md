@@ -24,12 +24,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ## Reliability and operations
 
-### P0 - protect user data
-
-1. **Tested restore procedure** - document one restore command and run a
-   scheduled restore into a disposable database. A backup is not complete until
-   its restore has been verified. Initial target: RPO 24 hours, RTO 2 hours.
-
 ### P1 - detect and diagnose failures
 
 4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
@@ -79,6 +73,7 @@ the plan -> shop -> cook loop or prevent user data loss.
   production builds, and focused E2E smoke tests. A repository admin must make
   it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Daily restore verification in a guarded disposable database (RPO 24h, RTO 2h).
 - Production containers start only the application; migrations are an explicit
   release step and development seed data stays outside the image.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability

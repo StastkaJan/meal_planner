@@ -48,13 +48,34 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
       BACKUP_FAILURE_WEBHOOK_URL: ${BACKUP_FAILURE_WEBHOOK_URL:-}
+      RESTORE_DATABASE_URL: postgresql://restorecheck:restorecheck@restore-db:5432/restorecheck
     depends_on:
       db:
+        condition: service_healthy
+      restore-db:
         condition: service_healthy
     networks:
       - edge
       - database
     restart: unless-stopped
+
+  restore-db:
+    profiles: ['production']
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: restorecheck
+      POSTGRES_USER: restorecheck
+      POSTGRES_PASSWORD: restorecheck
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./monitoring/backup/init-restore-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - database
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U restorecheck']
+      interval: 5s
+      retries: 10
 
   prometheus:
     image: prom/prometheus:v3.13.1
