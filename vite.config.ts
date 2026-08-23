@@ -13,6 +13,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    exclude: ['tests/**', '**/node_modules/**'],
+    exclude: ['tests/**', '.worktrees/**', '**/node_modules/**'],
   },
 })

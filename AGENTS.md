@@ -118,7 +118,7 @@ docker compose up -d  # start postgres + app
 
 - E2E: single Chrome worker, no retries, app at `http://localhost:3000`
 - DB resets between test runs via seed script
-- Unit tests colocated with their subject (`*.test.ts` next to the file under test); vitest picks them up via `vite.config.ts`
+- Unit tests colocated with their subject (`*.test.ts` next to the file under test); Vitest picks them up via `vite.config.ts` and excludes nested `.worktrees/`
 
 ## Testing rules
 
