@@ -26,8 +26,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P1 - detect and diagnose failures
 
-6. **Debug runbook** - document how to go from an alert or user-provided request
-   ID to Grafana metrics, correlated Loki logs, and the failing operation.
+No remaining P1 items.
 
 ### P2 - make releases recoverable
 
@@ -63,6 +62,8 @@ the plan -> shop -> cook loop or prevent user data loss.
 - Browser runtime error reporting.
 - Database-aware `/health` and Prometheus `/metrics` endpoints.
 - Grafana, Prometheus, Loki, and Alloy in Docker Compose.
+- [Debug runbook](runbooks/debugging.md) from alerts or request IDs to metrics,
+  correlated logs, and failing operations.
 - Unit, E2E, formatting, type-check, and production build commands.
 - GitHub Actions `quality` check for formatting, Svelte/type checks, unit tests,
   production builds, and focused E2E smoke tests. A repository admin must make

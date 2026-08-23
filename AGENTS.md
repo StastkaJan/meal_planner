@@ -19,6 +19,8 @@
 
 <!-- NOTE: HTTP and service operations emit allowlisted JSON logs with request ID, route, and `DEPLOYMENT_VERSION`; the bounded version is also exposed by `/health` and `app_release_info`. Server failures retain message-free stack frames and authenticated user ID. `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
+<!-- NOTE: Use `docs/runbooks/debugging.md` to trace alerts or `x-request-id` values through Grafana metrics and Loki logs. -->
+
 <!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
 
 <!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
