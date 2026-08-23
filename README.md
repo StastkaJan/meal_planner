@@ -63,7 +63,7 @@ The production Compose profile takes an encrypted PostgreSQL backup on startup
 and at 02:00 UTC daily, then keeps 7 daily, 4 weekly, and 6 monthly snapshots in an
 off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
 Set the backup variables in `.env.production` from `.env.production.example`,
-including an operator-monitored webhook, then start it with the secure
+including the operator-monitored Alertmanager webhook file, then start it with the secure
 production overlay:
 
 ```bash
@@ -85,7 +85,7 @@ docker compose --env-file .env.production -f docker-compose.yml \
 ```
 
 A successful run logs `database_restore_verification_succeeded`; failures log
-`database_restore_verification_failed` and use the backup failure webhook. The
+`database_restore_verification_failed` and post to Alertmanager. The
 daily schedule targets an RPO of 24 hours. During an incident, start timing
 before running the command and escalate if verification and recovery cannot be
 completed within the 2-hour RTO.

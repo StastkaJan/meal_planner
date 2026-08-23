@@ -11,7 +11,7 @@
 - **DB**: PostgreSQL + Drizzle ORM
 - **Auth**: Session-based, scrypt hashed passwords, 30-day expiry cookie
 - **Tests**: Vitest (unit), Playwright (E2E)
-- **Infra**: Docker Compose (app + postgres + Prometheus/Loki/Alloy/Grafana)
+- **Infra**: Docker Compose (app + postgres + Prometheus/Alertmanager/Loki/Alloy/Grafana)
 
 <!-- NOTE: Type checks use TypeScript 7 through the `@typescript/native-preview` npm alias and `svelte-check --tsgo`; TypeScript 6 remains installed for tools that still require its legacy compiler API. -->
 
@@ -23,13 +23,15 @@
 
 <!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures use the configured webhook; production deployment also requires `docker-compose.production.yml`. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
 
 <!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, loopback-only Grafana, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md`. -->
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
 <!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, explicitly migrates its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
+
+<!-- NOTE: Prometheus alerts on sustained 5xx, `/health` failures, latency, and host disk; backup failures post to the same Alertmanager Slack route. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
