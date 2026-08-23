@@ -37,6 +37,8 @@
 
 <!-- NOTE: `scripts/deploy-production.sh` takes an off-host backup before migrations; destructive SQL requires a recovery note under `drizzle/notes/`, enforced by CI. -->
 
+<!-- NOTE: `bash scripts/deploy-production.sh rollback` switches to the inactive slot's retained image; it rolls back app code only, so check migration compatibility first. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 <!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
