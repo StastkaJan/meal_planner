@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -51,3 +51,47 @@ jobs:
       - name: Stop test services
         if: always()
         run: docker compose down --volumes
+
+  deploy:
+    name: production deployment
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://papuplan.cz
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
+      VPS_USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS || secrets.VPS_KNOWN_HOSTS }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure SSH
+        run: |
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$VPS_SSH_KEY"
+          test -n "$VPS_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Package source
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/meal-plan.tar.gz" HEAD
+
+      - name: Upload source
+        run: |
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -P 22 \
+            "$RUNNER_TEMP/meal-plan.tar.gz" \
+            "$VPS_USER@$VPS_HOST:meal-plan-release.tar.gz"
+
+      - name: Deploy on VPS
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
+            "$VPS_USER@$VPS_HOST" \
+            "mkdir -p meal-plan && tar -xzf meal-plan-release.tar.gz -C meal-plan && rm meal-plan-release.tar.gz && cd meal-plan && bash scripts/deploy-production.sh $GITHUB_SHA"

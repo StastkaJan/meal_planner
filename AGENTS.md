@@ -25,11 +25,11 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook; production deployment also requires `docker-compose.production.yml`. -->
 
-<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, and loopback-only Grafana. See `docs/production.md`. -->
+<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, loopback-only Grafana, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md`. -->
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
-<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check and explicitly migrates its test database before smoke tests. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, explicitly migrates its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 

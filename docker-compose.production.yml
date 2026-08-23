@@ -1,13 +1,45 @@
+x-production-app: &production-app
+  build: .
+  environment:
+    DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the production env file}
+    ORIGIN: https://${DOMAIN:?Set DOMAIN in the production env file}
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+    DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-dev}
+  depends_on:
+    db:
+      condition: service_healthy
+  networks:
+    edge:
+    database:
+    monitoring:
+      aliases: [app]
+  healthcheck:
+    test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/health >/dev/null']
+    interval: 10s
+    timeout: 3s
+    retries: 3
+    start_period: 60s
+  restart: unless-stopped
+
 services:
   db:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the production env file}
 
   app:
+    profiles: ['development']
     ports: !reset []
     environment:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the production env file}
       ORIGIN: https://${DOMAIN:?Set DOMAIN in the production env file}
+
+  app-blue:
+    <<: *production-app
+    profiles: ['blue']
+
+  app-green:
+    <<: *production-app
+    profiles: ['green']
 
   backup:
     environment:
@@ -17,6 +49,7 @@ services:
 
   prometheus:
     ports: !reset []
+    depends_on: !override []
 
   alloy:
     ports: !reset []
@@ -40,13 +73,11 @@ services:
       ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in the production env file}
     volumes:
       - ./monitoring/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./.deploy:/etc/caddy/deploy:ro
       - caddy-data:/data
       - caddy-config:/config
     networks:
       - edge
-    depends_on:
-      app:
-        condition: service_healthy
     restart: unless-stopped
 
 volumes:
