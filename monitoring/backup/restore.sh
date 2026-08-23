@@ -5,11 +5,11 @@ notify_failure() {
 	message="Database restore verification failed: $1"
 	printf '{"level":"error","event":"database_restore_verification_failed","message":"%s"}\n' "$message" >&2
 
-	if [ -n "${BACKUP_FAILURE_WEBHOOK_URL:-}" ]; then
-		curl --fail --silent --show-error \
+	if [ -n "${ALERTMANAGER_URL:-}" ]; then
+		curl --fail --silent --show-error --retry 3 --retry-all-errors \
 			-H 'Content-Type: application/json' \
-			-d "{\"text\":\"$message\"}" \
-			"$BACKUP_FAILURE_WEBHOOK_URL" || true
+			-d "[{\"labels\":{\"alertname\":\"RestoreVerificationFailed\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"Database restore verification failed\",\"description\":\"$1\"}}]" \
+			"$ALERTMANAGER_URL/api/v2/alerts" || true
 	fi
 }
 

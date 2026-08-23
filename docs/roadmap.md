@@ -26,10 +26,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ### P1 - detect and diagnose failures
 
-4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
-   backup failures, high latency, and low disk space. Route alerts to one place
-   an operator will actually monitor.
-5. **Debug runbook** - document how to go from an alert or user-provided request
+6. **Debug runbook** - document how to go from an alert or user-provided request
    ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
@@ -71,6 +68,9 @@ the plan -> shop -> cook loop or prevent user data loss.
   production builds, and focused E2E smoke tests. A repository admin must make
   it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Sustained 5xx, health, backup/restore, latency, and disk alerts routed through
+  Alertmanager to one operator Slack channel; see the
+  [alert runbook](operations-alerts.md).
 - Daily restore verification in a guarded disposable database (RPO 24h, RTO 2h).
 - A bounded deployment version in health responses, metrics, and structured logs.
 - Production containers start only the application; migrations are an explicit

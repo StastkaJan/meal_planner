@@ -1,0 +1,38 @@
+groups:
+  - name: meal-plan
+    rules:
+      - alert: SustainedHttp5xxErrors
+        expr: sum(increase(http_requests_total{status=~"5.."}[5m])) >= 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Meal Plan is returning sustained server errors
+          description: At least three HTTP 5xx responses occurred in a rolling five-minute window for five minutes.
+
+      - alert: HealthCheckFailed
+        expr: probe_success{job="meal-plan-health"} == 0 or up{job="meal-plan-health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Meal Plan health check is failing
+          description: The database-aware /health probe has failed continuously for two minutes.
+
+      - alert: HighHttpLatency
+        expr: sum(rate(http_request_duration_seconds_sum{route!~"/(health|metrics)"}[5m])) / sum(rate(http_requests_total{route!~"/(health|metrics)"}[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Meal Plan HTTP latency is high
+          description: Mean request latency has exceeded one second for ten minutes.
+
+      - alert: HostDiskSpaceLow
+        expr: node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"} < 0.1
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: Meal Plan host disk space is low
+          description: Less than ten percent of the host root filesystem has been available for fifteen minutes.
