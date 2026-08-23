@@ -70,7 +70,10 @@ services:
 
   grafana:
     ports: !override
-      - '127.0.0.1:3001:3000'
+      - '${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3001:3000'
+    networks:
+      - monitoring
+      - admin
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER in the production env file}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in the production env file}
@@ -95,6 +98,7 @@ networks:
   public-web:
     name: public-web
     external: true
+  admin:
 
 volumes:
   caddy-data:

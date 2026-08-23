@@ -13,6 +13,10 @@ const caddy = readFileSync(
   new URL('./caddy/Caddyfile', import.meta.url),
   'utf8',
 )
+const environment = readFileSync(
+  new URL('../.env.production.example', import.meta.url),
+  'utf8',
+)
 
 describe('production network boundaries', () => {
   it('fails closed when production credentials are absent', () => {
@@ -29,9 +33,15 @@ describe('production network boundaries', () => {
     }
   })
 
-  it('removes direct app and metrics ports and limits Grafana to loopback', () => {
+  it('removes direct app and metrics ports and limits Grafana to a private host address', () => {
     expect(compose.match(/ports: !reset \[\]/g)).toHaveLength(3)
-    expect(compose).toContain("- '127.0.0.1:3001:3000'")
+    expect(compose).toContain(
+      "- '${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3001:3000'",
+    )
+    expect(compose).toMatch(
+      /grafana:[\s\S]*?networks:\n      - monitoring\n      - admin/,
+    )
+    expect(environment).toContain('GRAFANA_BIND_ADDRESS=10.77.0.1')
     expect(compose).toContain("GF_AUTH_ANONYMOUS_ENABLED: 'false'")
     expect(baseCompose.match(/internal: true/g)).toHaveLength(2)
   })

@@ -3,9 +3,9 @@
 The production Compose overlay exposes its internal Caddy only on the external
 Docker network `public-web`. The VPS's portfolio Caddy owns ports 80/443,
 terminates TLS, and forwards the Meal Plan domain to `meal-plan-proxy:80` on
-that network. PostgreSQL, Prometheus, Loki, and Alloy have no host ports.
-Grafana binds to host loopback and is intended to be reached through an SSH
-tunnel.
+that network. PostgreSQL, Prometheus, Loki, and Alloy have no host ports;
+Grafana binds only to the private address configured by
+`GRAFANA_BIND_ADDRESS`.
 
 ## First deployment
 
@@ -27,7 +27,9 @@ tunnel.
    `.env.production`, replace every placeholder, and restrict the file to the
    deployment user (`chmod 600` on Linux). Generate URL-safe secrets with
    `openssl rand -hex 32`; the password embedded in `DATABASE_URL` must match
-   `POSTGRES_PASSWORD`.
+   `POSTGRES_PASSWORD`. Complete the [WireGuard runbook](wireguard.md) before
+   deploying with its address as `GRAFANA_BIND_ADDRESS`; use `127.0.0.1` to
+   retain SSH-tunnel access instead.
 3. Apply migrations, start the first application slot, and start the shared
    services:
 
@@ -72,10 +74,16 @@ does not revert the database.
 
 ## Grafana access
 
-Forward the loopback-only port, then open `http://localhost:3001`:
+Use the [WireGuard access runbook](wireguard.md), then open
+`http://10.77.0.1:3001`. Grafana uses a dedicated non-internal network so
+Docker can publish the port to the VPN interface; metrics and logs remain on
+the internal monitoring network.
+
+For rollback or temporary access, set `GRAFANA_BIND_ADDRESS=127.0.0.1`,
+recreate Grafana, and forward the loopback-only port:
 
 ```bash
-ssh -L 3001:127.0.0.1:3001 operator@production-host
+ssh -N -L 3001:127.0.0.1:3001 SSH_USER@PRODUCTION_HOST
 ```
 
 Do not proxy Grafana publicly. Anonymous access and sign-up are disabled.
