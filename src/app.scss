@@ -4,6 +4,13 @@
   padding: 0;
 }
 
+// the `* { margin: 0 }` reset above wipes out the UA stylesheet's
+// `dialog:modal { margin: auto }`, which is what centers <dialog> in
+// the viewport — restore it or every modal opens pinned to the top-left.
+dialog:modal {
+  margin: auto;
+}
+
 :root {
   font-family:
     Inter,

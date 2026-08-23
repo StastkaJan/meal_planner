@@ -27,13 +27,20 @@
   <form method="POST">
     {#if error}<p class="error">{error}</p>{/if}
     <Field label="Email" for="email">
-      <Input id="email" type="email" name="email" required />
+      <Input
+        id="email"
+        type="email"
+        name="email"
+        autocomplete="email"
+        required
+      />
     </Field>
     <Field label="Password" for="password">
       <Input
         id="password"
         type="password"
         name="password"
+        autocomplete={legalAcceptance ? 'new-password' : 'current-password'}
         required
         minlength={8}
       />
