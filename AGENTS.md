@@ -23,7 +23,7 @@
 
 <!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups to a configured Restic repository and can notify a failure webhook; production deployment also requires `docker-compose.production.yml`. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures use the configured webhook; production deployment also requires `docker-compose.production.yml`. -->
 
 <!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, loopback-only Grafana, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md`. -->
 
