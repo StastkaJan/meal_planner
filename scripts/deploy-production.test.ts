@@ -56,4 +56,11 @@ describe('production deployment', () => {
       'DOMAIN=$DOMAIN bash scripts/deploy-production.sh',
     )
   })
+
+  it('reconciles the proxy without recreating shared data services', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+
+    expect(script).toContain('backup prometheus loki alloy grafana\n')
+    expect(script).toContain('compose up -d --wait --wait-timeout 120 proxy')
+  })
 })

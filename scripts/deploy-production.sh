@@ -94,7 +94,8 @@ if ! compose ps --services --status running | grep -qx proxy; then
 fi
 
 compose up -d --no-recreate --wait --wait-timeout 120 \
-  backup prometheus loki alloy grafana proxy
+  backup prometheus loki alloy grafana
+compose up -d --wait --wait-timeout 120 proxy
 
 switch_attempted=true
 write_upstream "$target"
