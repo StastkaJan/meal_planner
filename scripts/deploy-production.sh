@@ -100,7 +100,10 @@ switch_attempted=true
 write_upstream "$target"
 compose exec -T proxy caddy reload --config /etc/caddy/Caddyfile
 
-domain="$(sed -n 's/^DOMAIN=//p' .env.production | tail -n 1)"
+domain="${DOMAIN:-}"
+if [[ -z "$domain" ]]; then
+  domain="$(sed -n 's/^DOMAIN=//p' .env.production | tail -n 1)"
+fi
 if [[ ! "$domain" =~ ^[A-Za-z0-9.-]+$ ]]; then
   echo "DOMAIN must be an unquoted hostname in .env.production" >&2
   false

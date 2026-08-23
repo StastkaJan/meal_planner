@@ -47,4 +47,13 @@ describe('production deployment', () => {
     expect(createNetwork).toBeGreaterThan(-1)
     expect(startDatabase).toBeGreaterThan(createNetwork)
   })
+
+  it('passes the public production domain into the remote deployment', () => {
+    const workflow = readProjectFile('.github/workflows/quality.yml')
+
+    expect(workflow).toContain('DOMAIN: meal.stastka.dev')
+    expect(workflow).toContain(
+      'DOMAIN=$DOMAIN bash scripts/deploy-production.sh',
+    )
+  })
 })

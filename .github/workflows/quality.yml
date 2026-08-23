@@ -60,8 +60,9 @@ jobs:
     timeout-minutes: 30
     environment:
       name: production
-      url: https://papuplan.cz
+      url: https://meal.stastka.dev
     env:
+      DOMAIN: meal.stastka.dev
       VPS_HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
       VPS_USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -94,4 +95,4 @@ jobs:
         run: |
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
             "$VPS_USER@$VPS_HOST" \
-            "mkdir -p meal-plan && tar -xzf meal-plan-release.tar.gz -C meal-plan && rm meal-plan-release.tar.gz && cd meal-plan && bash scripts/deploy-production.sh $GITHUB_SHA"
+            "mkdir -p meal-plan && tar -xzf meal-plan-release.tar.gz -C meal-plan && rm meal-plan-release.tar.gz && cd meal-plan && DOMAIN=$DOMAIN bash scripts/deploy-production.sh $GITHUB_SHA"
