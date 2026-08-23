@@ -53,6 +53,10 @@ Production uses required secrets, TLS, and private monitoring networks; see
 [the production deployment guide](docs/production.md). Metrics and logs are
 retained for seven days.
 
+Production deployments pass the commit as `DEPLOYMENT_VERSION`; it is exposed
+by `/health`, `app_release_info`, and every structured application log. Missing
+or invalid values appear as `unknown`.
+
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup

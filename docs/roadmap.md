@@ -29,9 +29,7 @@ the plan -> shop -> cook loop or prevent user data loss.
 4. **Actionable alerts** - alert on sustained 5xx errors, failed health checks,
    backup failures, high latency, and low disk space. Route alerts to one place
    an operator will actually monitor.
-5. **Release identification** - expose a commit/version label in logs, metrics,
-   and the health response so a regression can be tied to a deployment.
-6. **Debug runbook** - document how to go from an alert or user-provided request
+5. **Debug runbook** - document how to go from an alert or user-provided request
    ID to Grafana metrics, correlated Loki logs, and the failing operation.
 
 ### P2 - make releases recoverable
@@ -74,6 +72,7 @@ the plan -> shop -> cook loop or prevent user data loss.
   it a required status check before GitHub enforces the gate.
 - Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
 - Daily restore verification in a guarded disposable database (RPO 24h, RTO 2h).
+- A bounded deployment version in health responses, metrics, and structured logs.
 - Production containers start only the application; migrations are an explicit
   release step and development seed data stays outside the image.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability

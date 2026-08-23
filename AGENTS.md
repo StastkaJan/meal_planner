@@ -17,7 +17,7 @@
 
 <!-- NOTE: Husky's pre-commit hook formats staged files and runs Svelte/TypeScript checks. -->
 
-<!-- NOTE: HTTP and service operations emit allowlisted JSON logs with request ID, route, and `DEPLOYMENT_VERSION`; server failures retain message-free stack frames and authenticated user ID. `/health` checks PostgreSQL and `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
+<!-- NOTE: HTTP and service operations emit allowlisted JSON logs with request ID, route, and `DEPLOYMENT_VERSION`; the bounded version is also exposed by `/health` and `app_release_info`. Server failures retain message-free stack frames and authenticated user ID. `/metrics` feeds Grafana at :3001. Alloy ships all Docker logs to Loki. -->
 
 <!-- NOTE: Browser runtime failures post to `/client-errors`, increment `client_errors_total`, and log to Loki as `client_error`. -->
 
