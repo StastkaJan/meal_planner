@@ -1,20 +1,22 @@
 # Operational alerts
 
-All production alerts go through Alertmanager to one Slack channel monitored by
-the operator. Alert messages contain only alert names, aggregate measurements,
-and fixed descriptions; they do not include request bodies, credentials, user
-data, or route labels.
+All production alerts go through Alertmanager to one operator-monitored Slack or
+Discord channel. Alert messages contain only alert names, aggregate
+measurements, and fixed descriptions; they do not include request bodies,
+credentials, user data, or route labels.
 
 ## Configure
 
-1. Create a Slack incoming webhook for the monitored operations channel.
-2. Store only its URL in a file outside version control, for example
-   `./secrets/alert-webhook-url`.
-3. Set `ALERT_WEBHOOK_URL_FILE` in `.env.production` to that file. The automated
-   deployment starts the alerting services through the production overlay.
+1. Create a Slack incoming webhook or a Discord channel webhook. Append `/slack`
+   to a Discord webhook URL so it accepts Alertmanager's Slack payload.
+2. Set the complete URL as `ALERT_WEBHOOK_URL` in `.env.production`. Docker
+   Compose mounts its value only into Alertmanager as
+   `/run/secrets/alert_webhook_url`.
+3. Deploy; the automated deployment starts the alerting services through the
+   production overlay.
 
-The checked-in example URL is deliberately unreachable, so an operator must set
-the secret before relying on notifications.
+The example value is not a credential, so an operator must replace it before
+deploying.
 
 ## Alerts
 

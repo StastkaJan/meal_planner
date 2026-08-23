@@ -28,9 +28,8 @@ describe('alerting configuration', () => {
     expect(config.match(/^  - name:/gm)).toHaveLength(1)
     expect(config).toContain('receiver: operator-slack')
     expect(config).toContain('api_url_file: /run/secrets/alert_webhook_url')
-    expect(productionCompose).toContain(
-      'ALERT_WEBHOOK_URL_FILE:?Set ALERT_WEBHOOK_URL_FILE',
-    )
+    expect(productionCompose).toContain('environment: ALERT_WEBHOOK_URL')
+    expect(productionCompose).not.toContain('ALERT_WEBHOOK_URL_FILE')
   })
 
   it('keeps alerting services on the private monitoring network', () => {

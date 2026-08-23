@@ -101,5 +101,5 @@ volumes:
   caddy-config:
 
 secrets:
-  alert_webhook_url:
-    file: ${ALERT_WEBHOOK_URL_FILE:?Set ALERT_WEBHOOK_URL_FILE in the production env file}
+  alert_webhook_url: !override
+    environment: ALERT_WEBHOOK_URL
