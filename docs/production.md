@@ -8,17 +8,16 @@ and is intended to be reached through an SSH tunnel.
 
 1. Point the domain's A/AAAA records at the host and allow inbound TCP 80/443
    and UDP 443. Caddy obtains and renews the TLS certificate automatically.
-2. Copy `.env.production.example` to `.env.production`, replace every
-   placeholder, and restrict the file to the deployment user (`chmod 600` on
-   Linux). Generate URL-safe secrets with `openssl rand -hex 32`; the password
-   embedded in `DATABASE_URL` must match `POSTGRES_PASSWORD`.
-3. Validate the stack, apply migrations once, then start it:
+2. Put the checkout in `~/meal-plan`, copy `.env.production.example` to
+   `.env.production`, replace every placeholder, and restrict the file to the
+   deployment user (`chmod 600` on Linux). Generate URL-safe secrets with
+   `openssl rand -hex 32`; the password embedded in `DATABASE_URL` must match
+   `POSTGRES_PASSWORD`.
+3. Apply migrations, start the first application slot, and start the shared
+   services:
 
    ```bash
-   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production config --quiet
-   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production run --rm app node scripts-dist/migrate.js
-   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.production.yml --profile production up -d
-   curl --fail --proto '=https' https://meals.example.com/health
+   bash scripts/deploy-production.sh initial
    ```
 
 The command fails before deployment when a required database, backup, Grafana,
@@ -26,6 +25,24 @@ domain, or ACME value is absent. Keep `.env.production` out of source control
 and store an encrypted copy in the team's secret manager. Never deploy with
 `docker compose --profile production` alone: the base file intentionally keeps
 local-development credentials and ports.
+
+## Automated deployments
+
+After the quality job passes on `main`, GitHub Actions uploads the tracked
+source to `~/meal-plan` on the VPS and builds it there. Configure the GitHub
+`production` environment with `VPS_HOST` and `VPS_USER` variables,
+`VPS_SSH_KEY` secret, and `VPS_KNOWN_HOSTS` as either a variable or secret.
+Generate the pinned host entry with `ssh-keyscan -H HOST`, verify its
+fingerprint against the VPS console, and then save it; do not collect an
+unverified key during the workflow. `VPS_SSH_KEY` should be a dedicated,
+unencrypted private key for the deployment user.
+
+The deployment script starts and health-checks the inactive blue/green app
+slot, applies migrations, reloads Caddy without dropping connections, checks
+the public `/health` endpoint, and only then removes the old slot. Application
+deployments have no planned downtime. Migrations must remain compatible with
+the currently running application until traffic has switched. Changes to
+Caddy or shared infrastructure may still require a maintenance deployment.
 
 ## Grafana access
 

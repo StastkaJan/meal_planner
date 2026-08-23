@@ -2,7 +2,9 @@
 	email {$ACME_EMAIL}
 }
 
+import /etc/caddy/deploy/active-upstream.caddy
+
 {$DOMAIN} {
 	encode zstd gzip
-	reverse_proxy app:3000
+	import active_backend
 }

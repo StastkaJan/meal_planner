@@ -39,7 +39,9 @@ describe('production network boundaries', () => {
 
   it('routes public traffic only to the app through TLS termination', () => {
     expect(compose).toContain("- '443:443'")
-    expect(caddy).toContain('reverse_proxy app:3000')
+    expect(compose).toContain('app-blue:')
+    expect(compose).toContain('app-green:')
+    expect(caddy).toContain('import /etc/caddy/deploy/active-upstream.caddy')
     expect(caddy).not.toContain('grafana:')
   })
 })
