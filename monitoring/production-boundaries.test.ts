@@ -24,7 +24,6 @@ describe('production network boundaries', () => {
       'RESTIC_REPOSITORY',
       'RESTIC_PASSWORD',
       'DOMAIN',
-      'ACME_EMAIL',
     ]) {
       expect(compose).toContain(`\${${variable}:?`)
     }
@@ -37,10 +36,16 @@ describe('production network boundaries', () => {
     expect(baseCompose.match(/internal: true/g)).toHaveLength(2)
   })
 
-  it('routes public traffic only to the app through TLS termination', () => {
-    expect(compose).toContain("- '443:443'")
+  it('exposes the app only to the shared front-proxy network over HTTP', () => {
+    expect(compose).not.toContain("- '80:80'")
+    expect(compose).not.toContain("- '443:443'")
+    expect(compose).toContain('name: public-web')
+    expect(compose).toContain('aliases: [meal-plan-proxy]')
     expect(compose).toContain('app-blue:')
     expect(compose).toContain('app-green:')
+    expect(caddy).toContain('http://{$DOMAIN}')
+    expect(caddy).toContain('trusted_proxies static private_ranges')
+    expect(caddy).toContain('trusted_proxies_strict')
     expect(caddy).toContain('import /etc/caddy/deploy/active-upstream.caddy')
     expect(caddy).not.toContain('grafana:')
   })

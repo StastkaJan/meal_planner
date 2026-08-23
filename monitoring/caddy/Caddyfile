@@ -1,10 +1,13 @@
 {
-	email {$ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
 }
 
 import /etc/caddy/deploy/active-upstream.caddy
 
-{$DOMAIN} {
+http://{$DOMAIN} {
 	encode zstd gzip
 	import active_backend
 }

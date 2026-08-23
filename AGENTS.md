@@ -25,7 +25,7 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures use the configured webhook; production deployment also requires `docker-compose.production.yml`. -->
 
-<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, Caddy TLS, private database/monitoring networks, loopback-only Grafana, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md`. -->
+<!-- NOTE: Production deployments add `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, loopback-only Grafana, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md`. -->
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 

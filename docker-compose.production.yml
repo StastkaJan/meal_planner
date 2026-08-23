@@ -64,21 +64,23 @@ services:
 
   proxy:
     image: caddy:2.10.2-alpine
-    ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
     environment:
       DOMAIN: ${DOMAIN:?Set DOMAIN in the production env file}
-      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in the production env file}
     volumes:
       - ./monitoring/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./.deploy:/etc/caddy/deploy:ro
       - caddy-data:/data
       - caddy-config:/config
     networks:
-      - edge
+      edge:
+      public-web:
+        aliases: [meal-plan-proxy]
     restart: unless-stopped
+
+networks:
+  public-web:
+    name: public-web
+    external: true
 
 volumes:
   caddy-data:

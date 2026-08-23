@@ -38,4 +38,13 @@ describe('production deployment', () => {
     expect(compose).toContain('app-green:')
     expect(caddy).toContain('import /etc/caddy/deploy/active-upstream.caddy')
   })
+
+  it('creates the shared proxy network before starting production services', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+    const createNetwork = script.indexOf('docker network create public-web')
+    const startDatabase = script.indexOf('compose up -d --wait')
+
+    expect(createNetwork).toBeGreaterThan(-1)
+    expect(startDatabase).toBeGreaterThan(createNetwork)
+  })
 })

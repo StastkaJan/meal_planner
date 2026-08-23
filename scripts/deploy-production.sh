@@ -26,6 +26,8 @@ fi
 
 export DEPLOYMENT_VERSION="$1"
 
+docker network inspect public-web >/dev/null 2>&1 || docker network create public-web
+
 compose() {
   docker compose \
     --env-file .env.production \

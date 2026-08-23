@@ -1,13 +1,28 @@
 # Production deployment
 
-The production Compose overlay exposes only Caddy on ports 80/443. PostgreSQL,
-Prometheus, Loki, and Alloy have no host ports. Grafana binds to host loopback
-and is intended to be reached through an SSH tunnel.
+The production Compose overlay exposes its internal Caddy only on the external
+Docker network `public-web`. The VPS's portfolio Caddy owns ports 80/443,
+terminates TLS, and forwards the Meal Plan domain to `meal-plan-proxy:80` on
+that network. PostgreSQL, Prometheus, Loki, and Alloy have no host ports.
+Grafana binds to host loopback and is intended to be reached through an SSH
+tunnel.
 
 ## First deployment
 
-1. Point the domain's A/AAAA records at the host and allow inbound TCP 80/443
-   and UDP 443. Caddy obtains and renews the TLS certificate automatically.
+1. Point the domain's A/AAAA records at the host. Connect the existing VPS
+   reverse proxy to the `public-web` Docker network and add the Meal Plan
+   domain:
+
+   ```caddyfile
+   meals.example.com {
+     reverse_proxy meal-plan-proxy:80
+   }
+   ```
+
+   Preserve the incoming `Host`, `X-Forwarded-For`, and `X-Forwarded-Proto`
+   headers (the default in Caddy). The deployment script creates `public-web`
+   when it is absent.
+
 2. Put the checkout in `~/meal-plan`, copy `.env.production.example` to
    `.env.production`, replace every placeholder, and restrict the file to the
    deployment user (`chmod 600` on Linux). Generate URL-safe secrets with
@@ -21,7 +36,7 @@ and is intended to be reached through an SSH tunnel.
    ```
 
 The command fails before deployment when a required database, backup, Grafana,
-domain, or ACME value is absent. Keep `.env.production` out of source control
+or domain value is absent. Keep `.env.production` out of source control
 and store an encrypted copy in the team's secret manager. Never deploy with
 `docker compose --profile production` alone: the base file intentionally keeps
 local-development credentials and ports.
@@ -38,11 +53,13 @@ unverified key during the workflow. `VPS_SSH_KEY` should be a dedicated,
 unencrypted private key for the deployment user.
 
 The deployment script starts and health-checks the inactive blue/green app
-slot, applies migrations, reloads Caddy without dropping connections, checks
+slot, applies migrations, reloads the internal Caddy without dropping
+connections, checks
 the public `/health` endpoint, and only then removes the old slot. Application
 deployments have no planned downtime. Migrations must remain compatible with
 the currently running application until traffic has switched. Changes to
-Caddy or shared infrastructure may still require a maintenance deployment.
+the host reverse proxy or shared infrastructure may still require a
+maintenance deployment.
 
 ## Grafana access
 
