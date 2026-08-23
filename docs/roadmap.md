@@ -44,8 +44,6 @@ No remaining P1 items.
     Grafana backend dashboard shows these rejections without recording IPs.
 14. **Data export and account deletion** - allow users to download their recipes
     and plans and permanently delete their account, sessions, and personal data.
-15. **Capacity checks** - monitor database size, connection use, memory, disk,
-    and slow operations; add load testing only when usage justifies it.
 
 ## Already present
 
@@ -79,6 +77,8 @@ No remaining P1 items.
   networks, automatic TLS termination, and loopback-only Grafana access.
 - One-step application rollback to the inactive blue/green slot's retained
   image; see [deployment.md](deployment.md).
+- Capacity dashboard and alerts for database size/connections, container memory,
+  database disk, and slow operations; load testing remains evidence-gated.
 
 ## Explicitly defer
 

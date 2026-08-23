@@ -87,6 +87,7 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./monitoring/capacity-alerts.yml:/etc/prometheus/capacity-alerts.yml:ro
       - prometheus-data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -101,8 +102,37 @@ services:
         condition: service_started
       node-exporter:
         condition: service_started
+      postgres-exporter:
+        condition: service_started
+      cadvisor:
+        condition: service_started
     networks:
       - monitoring
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
+    environment:
+      DATA_SOURCE_NAME: postgresql://mealplan:mealplan@db:5432/mealplan?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - database
+      - monitoring
+    restart: unless-stopped
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - monitoring
+    restart: unless-stopped
 
   alertmanager:
     image: prom/alertmanager:v0.34.0

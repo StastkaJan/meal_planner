@@ -15,6 +15,7 @@ const levels: Record<LogLevel, number> = {
 }
 const metrics = new Map<string, RequestMetric>()
 const serviceMetrics = new Map<string, RequestMetric>()
+const slowServiceMetrics = new Map<string, number>()
 const clientErrorMetrics = new Map<string, number>()
 const requestContext = new AsyncLocalStorage<RequestContext>()
 let requestsInFlight = 0
@@ -123,6 +124,14 @@ export async function monitorService<T>(
     metric.count++
     metric.durationSeconds += durationSeconds
     serviceMetrics.set(key, metric)
+
+    if (durationSeconds >= 1) {
+      const slowKey = JSON.stringify([service, operation])
+      slowServiceMetrics.set(
+        slowKey,
+        (slowServiceMetrics.get(slowKey) ?? 0) + 1,
+      )
+    }
 
     log(outcome === 'error' ? 'error' : 'info', 'service_operation', {
       service,
@@ -238,6 +247,16 @@ export function renderMetrics() {
   }
 
   lines.push(
+    '# HELP slow_service_operations_total Backend service operations taking at least one second.',
+    '# TYPE slow_service_operations_total counter',
+  )
+  for (const [key, count] of slowServiceMetrics) {
+    const [service, operation] = JSON.parse(key) as [string, string]
+    const labels = `service="${label(service)}",operation="${label(operation)}"`
+    lines.push(`slow_service_operations_total{${labels}} ${count}`)
+  }
+
+  lines.push(
     '# HELP service_operation_duration_seconds_sum Total time spent in backend service operations.',
     '# TYPE service_operation_duration_seconds_sum counter',
   )
@@ -283,6 +302,7 @@ export function renderMetrics() {
 export function resetMetrics() {
   metrics.clear()
   serviceMetrics.clear()
+  slowServiceMetrics.clear()
   clientErrorMetrics.clear()
   requestsInFlight = 0
 }
