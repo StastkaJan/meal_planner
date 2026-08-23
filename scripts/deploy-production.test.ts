@@ -15,10 +15,7 @@ describe('production deployment', () => {
       'compose up -d --no-deps --wait --wait-timeout 120 "$target_service"',
     )
     const switchTraffic = script.indexOf('write_upstream "$target"', start)
-    const publicHealth = script.indexOf(
-      '"https://$domain/health"',
-      switchTraffic,
-    )
+    const publicHealth = script.indexOf('if ! public_health', switchTraffic)
     const removeOld = script.indexOf(
       'compose stop "$old_service"',
       publicHealth,
@@ -73,5 +70,35 @@ describe('production deployment', () => {
 
     expect(script).toContain('backup prometheus loki alloy grafana\n')
     expect(script).toContain('compose up -d --wait --wait-timeout 120 proxy')
+  })
+
+  it('health-gates rollback before replacing the active slot', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+    const rollback = script.indexOf('if [[ "$action" == rollback ]]')
+    const start = script.indexOf(
+      'compose up -d --no-deps --no-build --wait --wait-timeout 120 "$target_service"',
+      rollback,
+    )
+    const switchTraffic = script.indexOf('write_upstream "$target"', start)
+    const publicHealth = script.indexOf('if ! public_health', switchTraffic)
+    const recordActive = script.indexOf(
+      `printf '%s\\n' "$target" >.deploy/active-slot`,
+      publicHealth,
+    )
+    const stopOld = script.indexOf('compose stop "$old_service"', recordActive)
+
+    expect(start).toBeGreaterThan(rollback)
+    expect(switchTraffic).toBeGreaterThan(start)
+    expect(publicHealth).toBeGreaterThan(switchTraffic)
+    expect(recordActive).toBeGreaterThan(publicHealth)
+    expect(stopOld).toBeGreaterThan(recordActive)
+  })
+
+  it('fails closed without a retained rollback version', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+
+    expect(script).toContain('missing rollback version state')
+    expect(script).toContain('--no-build')
+    expect(script).toContain('invalid rollback version state')
   })
 })

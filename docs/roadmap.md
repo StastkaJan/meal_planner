@@ -30,8 +30,6 @@ No remaining P1 items.
 
 ### P2 - make releases recoverable
 
-10. **Deployment rollback** - keep the previous immutable application image and
-    document the command that restores it. Exercise the rollback occasionally.
 11. **Dependency and image updates** - automate update PRs and review them on a
     regular cadence; scan the shipped image and dependencies for known
     vulnerabilities.
@@ -79,6 +77,8 @@ No remaining P1 items.
   gates for the npm lockfile and built application image.
 - Production Compose overlay with required secrets, private data/monitoring
   networks, automatic TLS termination, and loopback-only Grafana access.
+- One-step application rollback to the inactive blue/green slot's retained
+  image; see [deployment.md](deployment.md).
 
 ## Explicitly defer
 

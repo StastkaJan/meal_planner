@@ -65,6 +65,11 @@ the currently running application until traffic has switched. Changes to
 the host reverse proxy or shared infrastructure may still require a
 maintenance deployment.
 
+After at least two blue/green releases, the inactive slot retains the previous
+application image. Follow [the rollback procedure](deployment.md) to switch back
+without rebuilding. Check migration compatibility first; application rollback
+does not revert the database.
+
 ## Grafana access
 
 Forward the loopback-only port, then open `http://localhost:3001`:
