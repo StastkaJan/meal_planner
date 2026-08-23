@@ -85,6 +85,7 @@ trap rollback ERR
 
 compose config --quiet
 compose up -d --wait --wait-timeout 120 db
+compose run --rm --build backup once
 compose build "$target_service"
 compose run --rm --no-deps "$target_service" node scripts-dist/migrate.js
 compose up -d --no-deps --wait --wait-timeout 120 "$target_service"

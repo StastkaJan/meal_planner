@@ -93,3 +93,10 @@ A successful run logs `database_restore_verification_succeeded`; failures log
 daily schedule targets an RPO of 24 hours. During an incident, start timing
 before running the command and escalate if verification and recovery cannot be
 completed within the 2-hour RTO.
+
+## Production migrations
+
+The production deployment script creates an encrypted off-host backup and only
+runs the bundled Drizzle migration runner after that backup succeeds. See
+[docs/migrations.md](docs/migrations.md) for compatibility and recovery policy;
+`npm run db:migrate` remains local-development only.

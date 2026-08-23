@@ -35,6 +35,8 @@
 
 <!-- NOTE: Prometheus alerts on sustained 5xx, `/health` failures, latency, and host disk; backup failures post to the same Alertmanager Slack route. -->
 
+<!-- NOTE: `scripts/deploy-production.sh` takes an off-host backup before migrations; destructive SQL requires a recovery note under `drizzle/notes/`, enforced by CI. -->
+
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
 <!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
@@ -98,6 +100,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 npm run dev           # start dev server
 npm run db:generate   # drizzle-kit generate (after schema changes)
 npm run db:migrate    # apply migrations
+npm run check:migrations # validate destructive migration recovery notes
 npm run db:seed       # seed dummy data
 npm run test          # playwright E2E (needs docker compose up)
 npm run test:smoke    # focused Chromium E2E release smoke tests

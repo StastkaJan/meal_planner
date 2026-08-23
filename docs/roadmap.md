@@ -30,9 +30,6 @@ No remaining P1 items.
 
 ### P2 - make releases recoverable
 
-9. **Migration safety** - back up before schema changes, use backward-compatible
-   expand/migrate/contract changes, and write a rollback or roll-forward note
-   for every destructive migration.
 10. **Deployment rollback** - keep the previous immutable application image and
     document the command that restores it. Exercise the rollback occasionally.
 11. **Dependency and image updates** - automate update PRs and review them on a
@@ -74,6 +71,8 @@ No remaining P1 items.
   [alert runbook](operations-alerts.md).
 - Daily restore verification in a guarded disposable database (RPO 24h, RTO 2h).
 - A bounded deployment version in health responses, metrics, and structured logs.
+- Pre-migration production backups and recovery notes for destructive SQL; see
+  the [migration policy](migrations.md).
 - Production containers start only the application; migrations are an explicit
   release step and development seed data stays outside the image.
 - Weekly grouped dependency/image update PRs and high/critical vulnerability

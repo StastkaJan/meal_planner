@@ -30,6 +30,17 @@ describe('production deployment', () => {
     expect(removeOld).toBeGreaterThan(publicHealth)
   })
 
+  it('takes an off-host backup before applying migrations', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+    const backup = script.indexOf('compose run --rm --build backup once')
+    const migrate = script.indexOf(
+      'compose run --rm --no-deps "$target_service" node scripts-dist/migrate.js',
+    )
+
+    expect(backup).toBeGreaterThan(-1)
+    expect(migrate).toBeGreaterThan(backup)
+  })
+
   it('defines two production application slots behind a reloadable upstream', () => {
     const compose = readProjectFile('docker-compose.production.yml')
     const caddy = readProjectFile('monitoring/caddy/Caddyfile')
