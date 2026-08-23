@@ -58,7 +58,9 @@ jobs:
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    environment: production
+    environment:
+      name: production
+      url: https://papuplan.cz
     env:
       VPS_HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
       VPS_USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
