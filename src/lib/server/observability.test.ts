@@ -175,4 +175,17 @@ describe('request observability', () => {
       /hunter2|session-secret|private recipe|person@example\.com|private body/,
     )
   })
+
+  it('counts slow service operations with bounded labels', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    vi.spyOn(performance, 'now')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(1500)
+
+    await monitorService('plans', 'compose', async () => undefined)
+
+    expect(renderMetrics()).toContain(
+      'slow_service_operations_total{service="plans",operation="compose"} 1',
+    )
+  })
 })

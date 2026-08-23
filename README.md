@@ -61,6 +61,10 @@ For incident triage, follow the [debugging runbook](docs/runbooks/debugging.md)
 from an alert or response `x-request-id` to metrics, correlated logs, and the
 failing backend operation.
 
+The provisioned **Capacity Overview** dashboard covers database size and
+connections, container memory, database disk, and slow service operations. See
+[the capacity runbook](docs/capacity.md) for thresholds and response steps.
+
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup

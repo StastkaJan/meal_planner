@@ -56,6 +56,14 @@ services:
         condition: service_started
       node-exporter:
         condition: service_started
+      postgres-exporter:
+        condition: service_started
+      cadvisor:
+        condition: service_started
+
+  postgres-exporter:
+    environment:
+      DATA_SOURCE_NAME: ${DATABASE_URL:?Set DATABASE_URL in the production env file}
 
   alloy:
     ports: !reset []

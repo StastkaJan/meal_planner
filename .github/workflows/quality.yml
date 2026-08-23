@@ -38,6 +38,12 @@ jobs:
         run: npm run test:unit
       - name: Validate migration recovery notes
         run: npm run check:migrations
+      - name: Validate Prometheus capacity rules
+        run: >-
+          docker run --rm --entrypoint promtool
+          -v "$PWD/monitoring:/monitoring:ro"
+          prom/prometheus:v3.13.1
+          check rules /monitoring/alerts.yml /monitoring/capacity-alerts.yml
       - name: Build production app
         run: npm run build
       - name: Install Chromium
