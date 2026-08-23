@@ -57,6 +57,10 @@ Production deployments pass the commit as `DEPLOYMENT_VERSION`; it is exposed
 by `/health`, `app_release_info`, and every structured application log. Missing
 or invalid values appear as `unknown`.
 
+For incident triage, follow the [debugging runbook](docs/runbooks/debugging.md)
+from an alert or response `x-request-id` to metrics, correlated logs, and the
+failing backend operation.
+
 ## Backups
 
 The production Compose profile takes an encrypted PostgreSQL backup on startup
