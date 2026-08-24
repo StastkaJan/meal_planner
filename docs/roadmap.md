@@ -5,21 +5,16 @@ the plan -> shop -> cook loop or prevent user data loss.
 
 ## Product
 
-### Next
-
-1. **Persistent shopping lists** - save checked items, support custom items and
-   exclusions, and group ingredients by aisle.
-
 ### Later
 
-2. **Household sharing** - shared plans, recipes, and synchronized shopping
+1. **Household sharing** - shared plans, recipes, and synchronized shopping
    lists with explicit member permissions.
-3. **Pantry staples** - mark ingredients such as salt or oil as always on hand
+2. **Pantry staples** - mark ingredients such as salt or oil as always on hand
    and omit them from shopping lists. Do not build detailed stock accounting
    until users demonstrate a need for it.
-4. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
+3. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
    history to improve suggestions and reduce repetition.
-5. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
+4. **Cooking mode** - large readable steps, scaled quantities, screen wake lock,
    and lightweight timers.
 
 ## Reliability and operations
