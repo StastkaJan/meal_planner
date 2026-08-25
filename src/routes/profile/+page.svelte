@@ -6,6 +6,7 @@
     deleteAccount,
     updateProfile,
   } from '$lib/api/profile'
+  import { LOCALE_LABELS, SUPPORTED_LOCALES } from '$lib/i18n'
 
   let { data } = $props()
 
@@ -20,6 +21,13 @@
     const body = Object.fromEntries(fd)
     await updateProfile(body)
     targetsSaved = true
+  }
+
+  async function saveLanguage(e: SubmitEvent) {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    await updateProfile({ locale: fd.get('locale') })
+    await goto('/profile')
   }
 
   async function changePassword(e: SubmitEvent) {
@@ -53,6 +61,21 @@
   </header>
 
   <div class="settings-grid">
+    <section class="card">
+      <h2>Language</h2>
+      <p class="hint">Used to select available recipe translations.</p>
+      <form method="POST" onsubmit={saveLanguage}>
+        <label>
+          Preferred language
+          <select name="locale" value={data.locale}>
+            {#each SUPPORTED_LOCALES as locale}
+              <option value={locale}>{LOCALE_LABELS[locale]}</option>
+            {/each}
+          </select>
+        </label>
+        <button type="submit">Save language</button>
+      </form>
+    </section>
     <section class="card">
       <h2>Nutrition targets</h2>
       <p class="hint">
@@ -236,7 +259,8 @@
     font-weight: 600;
     color: $color-text-muted;
   }
-  input {
+  input,
+  select {
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;

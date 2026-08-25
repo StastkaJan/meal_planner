@@ -1,19 +1,37 @@
-import { and, or, isNull, eq, inArray } from 'drizzle-orm'
+import { and, or, isNull, eq, inArray, getTableColumns, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   meals,
   mealFavorites,
   ingredients,
   mealIngredients,
+  mealTranslations,
 } from '$lib/database/schema'
 import type { IngredientInput } from '$lib/types'
+import type { Locale } from '$lib/i18n'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-export async function listMeals(userId?: number) {
+export async function listMeals(userId?: number, locale: Locale = 'en') {
   return db
-    .select()
+    .select({
+      ...getTableColumns(meals),
+      name: sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`,
+      description: sql<
+        string | null
+      >`coalesce(${mealTranslations.description}, ${meals.description})`,
+      instructions: sql<
+        string | null
+      >`coalesce(${mealTranslations.instructions}, ${meals.instructions})`,
+    })
     .from(meals)
+    .leftJoin(
+      mealTranslations,
+      and(
+        eq(mealTranslations.mealId, meals.id),
+        eq(mealTranslations.locale, locale),
+      ),
+    )
     .where(
       and(
         isNull(meals.archivedAt),
@@ -22,7 +40,7 @@ export async function listMeals(userId?: number) {
           : or(isNull(meals.userId), eq(meals.userId, userId)),
       ),
     )
-    .orderBy(meals.name)
+    .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
 }
 
 export async function findMeal(id: number, userId?: number) {
@@ -57,6 +75,44 @@ export async function getMealIngredients(mealId: number) {
     ...row,
     qty: row.qty !== null ? Number(row.qty) : null,
   }))
+}
+
+export async function getMealTranslations(mealId: number) {
+  return db
+    .select()
+    .from(mealTranslations)
+    .where(eq(mealTranslations.mealId, mealId))
+    .orderBy(mealTranslations.locale)
+}
+
+export async function saveMealTranslation(
+  mealId: number,
+  locale: Locale,
+  values: Pick<
+    typeof mealTranslations.$inferInsert,
+    'name' | 'description' | 'instructions'
+  >,
+) {
+  const [translation] = await db
+    .insert(mealTranslations)
+    .values({ mealId, locale, ...values })
+    .onConflictDoUpdate({
+      target: [mealTranslations.mealId, mealTranslations.locale],
+      set: values,
+    })
+    .returning()
+  return translation
+}
+
+export async function deleteMealTranslation(mealId: number, locale: Locale) {
+  await db
+    .delete(mealTranslations)
+    .where(
+      and(
+        eq(mealTranslations.mealId, mealId),
+        eq(mealTranslations.locale, locale),
+      ),
+    )
 }
 
 export async function findAllowedMeal(
@@ -207,12 +263,24 @@ export async function syncMealIngredients(
 export async function createMeal(values: {
   name: string
   ingredients?: IngredientInput[]
+  translations?: Omit<typeof mealTranslations.$inferInsert, 'mealId'>[]
   [k: string]: unknown
 }) {
-  const { ingredients: ingredientInput, ...mealValues } = values
+  const {
+    ingredients: ingredientInput,
+    translations: translationInput,
+    ...mealValues
+  } = values
   return db.transaction(async (tx) => {
     const [meal] = await tx.insert(meals).values(mealValues).returning()
     await syncMealIngredients(tx, meal.id, ingredientInput ?? [])
+    if (translationInput?.length)
+      await tx.insert(mealTranslations).values(
+        translationInput.map((translation) => ({
+          ...translation,
+          mealId: meal.id,
+        })),
+      )
     return meal
   })
 }

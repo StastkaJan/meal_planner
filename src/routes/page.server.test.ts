@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 const mockDb = vi.hoisted(() => ({
   select: vi.fn().mockReturnThis(),
   from: vi.fn().mockReturnThis(),
+  leftJoin: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   orderBy: vi.fn(),
   limit: vi.fn(),

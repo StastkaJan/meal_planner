@@ -14,6 +14,7 @@ export const meals = pgTable('meals', {
   userId: integer('user_id').references(() => users.id, {
     onDelete: 'cascade',
   }),
+  sourceLocale: text('source_locale').notNull().default('en'),
   name: text('name').notNull(),
   calories: integer('calories'),
   proteinG: numeric('protein_g', { precision: 6, scale: 1 }),

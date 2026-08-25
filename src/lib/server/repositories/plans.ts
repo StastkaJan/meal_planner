@@ -19,10 +19,12 @@ import {
   ingredients,
   slotRepeats,
   slotLeftovers,
+  mealTranslations,
 } from '$lib/database/schema'
 import type { Plan } from '$lib/database/schema'
 import type { SlotWithMeal, PlanDetail } from '$lib/types'
 import { addDays, groupWindow } from '$lib/utils/date-time'
+import type { Locale } from '$lib/i18n'
 
 type OwnedPlan = Plan & { userId: number }
 
@@ -136,6 +138,7 @@ function bonusInWeek(planId: number, week: string) {
 export async function getPlanDetail(
   plan: Plan,
   week: string,
+  locale: Locale = 'en',
 ): Promise<PlanDetail> {
   const [rows, bonus, repeats] = await Promise.all([
     db
@@ -144,7 +147,9 @@ export async function getPlanDetail(
         date: weekSlots.date,
         mealType: weekSlots.mealType,
         mealId: weekSlots.mealId,
-        mealName: meals.name,
+        mealName: sql<
+          string | null
+        >`coalesce(${mealTranslations.name}, ${meals.name})`,
         calories: meals.calories,
         proteinG: meals.proteinG,
         carbsG: meals.carbsG,
@@ -154,6 +159,13 @@ export async function getPlanDetail(
       })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
+      .leftJoin(
+        mealTranslations,
+        and(
+          eq(mealTranslations.mealId, meals.id),
+          eq(mealTranslations.locale, locale),
+        ),
+      )
       .leftJoin(
         slotLeftovers,
         and(

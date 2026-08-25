@@ -6,6 +6,7 @@ export const userSettings = pgTable('user_settings', {
   userId: integer('user_id')
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
+  locale: text('locale').notNull().default('en'),
   cuisinePrefs: text('cuisine_prefs')
     .array()
     .notNull()

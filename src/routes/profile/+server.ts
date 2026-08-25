@@ -8,9 +8,17 @@ import {
 } from '$lib/server/services/profile'
 import type { RequestHandler } from './$types'
 
-export const PATCH: RequestHandler = async ({ request, locals }) => {
+export const PATCH: RequestHandler = async ({ request, locals, cookies }) => {
   const { id } = requireUser(locals)
-  return json(await updateProfileSettings(id, await request.json()))
+  const settings = await updateProfileSettings(id, await request.json())
+  if ('locale' in settings && typeof settings.locale === 'string') {
+    cookies.set('locale', settings.locale, {
+      path: '/',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+    })
+  }
+  return json(settings)
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {

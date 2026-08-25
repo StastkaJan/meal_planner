@@ -1,5 +1,15 @@
 # DB Schema
 
+## Localization
+
+- `user_settings.locale` stores the preferred supported locale (`en` or `cs`).
+- `meals.source_locale` identifies the language of the original `name`,
+  `description`, and `instructions` fields.
+- `meal_translations` uses `(meal_id, locale)` as its primary key and stores
+  nullable `name`, `description`, and `instructions` overrides. A missing row or
+  field falls back to the original value in `meals`; deleting a meal cascades to
+  its translations.
+
 Drizzle definitions live in `src/lib/database/schema`, one table per file.
 
 | Table             | Key columns                                                                                                                                                                                                                                                                                                                                                                                                        |

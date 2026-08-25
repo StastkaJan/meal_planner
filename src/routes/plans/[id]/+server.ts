@@ -13,7 +13,7 @@ import { parseMealSlots } from '$lib/domain/meal-slots'
 export const GET: RequestHandler = async ({ params, locals, url }) => {
   const plan = await requireOwnedPlan(locals, params.id)
   const week = validDateStr(url.searchParams.get('week') ?? plan.weekStart)
-  const result = await getPlanDetail(plan, week)
+  const result = await getPlanDetail(plan, week, locals.locale)
   return json(result)
 }
 

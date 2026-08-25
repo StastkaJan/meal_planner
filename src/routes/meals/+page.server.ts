@@ -5,7 +5,7 @@ const PAGE_SIZE = 10
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const [rows, favIds] = await Promise.all([
-    listMeals(locals.user?.id),
+    listMeals(locals.user?.id, locals.locale),
     favoriteMealIds(locals.user?.id),
   ])
   const favoritesOnly = url.searchParams.get('favorites') === '1'
@@ -36,5 +36,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     totalPages,
     totalResults: filtered.length,
     isAdmin: locals.user?.isAdmin ?? false,
+    locale: locals.locale,
   }
 }

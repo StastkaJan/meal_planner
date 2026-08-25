@@ -1,5 +1,14 @@
 # API Routes
 
+## Localization
+
+- `PATCH /meals/[id]/translations/[locale]` upserts translated `name`,
+  `description`, and `instructions` for an editable recipe. Blank fields use the
+  original recipe as fallback.
+- `DELETE /meals/[id]/translations/[locale]` deletes one translation without
+  changing the original recipe.
+- `PATCH /profile` accepts `locale` in addition to the existing settings.
+
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                    |
 | ------ | --------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | /health                     | no    | readiness check for the app and database, including the deployment version                                                                                                                                 |

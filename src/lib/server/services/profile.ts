@@ -7,6 +7,7 @@ import {
   updatePassword,
 } from '../repositories/accounts'
 import { monitorService } from '../observability'
+import { parseLocale } from '$lib/i18n'
 
 const TARGET_FIELDS = [
   'calorieTarget',
@@ -26,6 +27,10 @@ export async function updateProfileSettings(
 ) {
   return monitorService('profile', 'update_settings', async () => {
     const patch: Record<string, unknown> = {}
+    if (body.locale !== undefined) {
+      const locale = parseLocale(body.locale)
+      if (locale) patch.locale = locale
+    }
     if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
     if (body.dietaryRestrictions !== undefined)
       patch.dietaryRestrictions = body.dietaryRestrictions

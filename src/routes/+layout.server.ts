@@ -5,5 +5,5 @@ export const load: LayoutServerLoad = ({ locals, url }) => {
   if (!locals.user && !url.pathname.startsWith('/auth')) {
     redirect(303, '/auth/login')
   }
-  return { user: locals.user }
+  return { user: locals.user, locale: locals.locale }
 }

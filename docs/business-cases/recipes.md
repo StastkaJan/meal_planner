@@ -79,6 +79,10 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 ## Known limitations
 
+- Recipe names, descriptions, and instructions support `en` and `cs`
+  translations with field-level fallback to the original recipe. Ingredient
+  names are still stored once in their original form.
+
 - **Global meals are communally editable** — any logged-in user can edit or
   delete a global meal. There is no admin or owner distinction for the shared
   library.

@@ -4,12 +4,24 @@
   import { deleteMeal as removeMeal, duplicateMeal } from '$lib/api/meals'
   import CookingMode from './_components/CookingMode.svelte'
   import MealEditForm from './_components/MealEditForm.svelte'
+  import MealTranslationForm from './_components/MealTranslationForm.svelte'
   import type { PageData } from './$types'
   import { DIFF_LABEL } from '$lib/constants'
 
   let { data }: { data: PageData } = $props()
-  let meal = $derived(data.meal)
+  let sourceMeal = $derived(data.sourceMeal)
+  let translations = $derived(data.translations)
+  let meal = $derived.by(() => {
+    const translation = translations.find((item) => item.locale === data.locale)
+    return {
+      ...sourceMeal,
+      name: translation?.name ?? sourceMeal.name,
+      description: translation?.description ?? sourceMeal.description,
+      instructions: translation?.instructions ?? sourceMeal.instructions,
+    }
+  })
   let editing = $state(false)
+  let translating = $state(false)
   const cooking = $derived($page.url.searchParams.get('cook') === '1')
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
@@ -54,12 +66,28 @@
   {/if}
   {#if editing}
     <MealEditForm
-      {meal}
+      meal={sourceMeal}
       ingredients={data.ingredients}
       onCancel={() => (editing = false)}
       onSaved={(updated) => {
-        meal = updated
+        sourceMeal = updated
         editing = false
+      }}
+    />
+  {:else if translating}
+    <MealTranslationForm
+      meal={sourceMeal}
+      {translations}
+      currentLocale={data.locale}
+      onCancel={() => (translating = false)}
+      onChanged={(translation, locale) => {
+        translations = translation
+          ? [
+              ...translations.filter((item) => item.locale !== locale),
+              translation,
+            ]
+          : translations.filter((item) => item.locale !== locale)
+        translating = false
       }}
     />
   {:else}
@@ -72,6 +100,9 @@
         <div class="actions">
           <button class="btn ghost sm" onclick={() => (editing = true)}
             >Edit</button
+          >
+          <button class="btn ghost sm" onclick={() => (translating = true)}
+            >Translate</button
           >
           <button class="btn danger sm" type="button" onclick={deleteMeal}
             >Delete</button
@@ -92,7 +123,7 @@
       <div class="header">
         <div class="title">
           <p class="eyebrow">Recipe</p>
-          <h1>{meal.name}</h1>
+          <h1 lang={data.locale}>{meal.name}</h1>
         </div>
         <div class="meta">
           {#if meal.timeMinutes}<span class="badge"
@@ -140,7 +171,7 @@
       {/if}
 
       {#if meal.description}
-        <p class="description">{meal.description}</p>
+        <p class="description" lang={data.locale}>{meal.description}</p>
       {/if}
 
       {#if data.ingredients.length}
@@ -167,7 +198,7 @@
       {#if meal.instructions}
         <section>
           <h2>Instructions</h2>
-          <p class="instructions">{meal.instructions}</p>
+          <p class="instructions" lang={data.locale}>{meal.instructions}</p>
         </section>
       {/if}
     </div>

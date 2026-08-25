@@ -11,6 +11,7 @@
   import Input from '$lib/components/ui/Input.svelte'
   import Select from '$lib/components/ui/Select.svelte'
   import MealsTable from './_components/MealsTable.svelte'
+  import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
 
   let { data }: { data: PageData } = $props()
   let meals = $derived(data.meals)
@@ -19,12 +20,13 @@
   let importUrl = $state('')
   let importError = $state('')
   let importBusy = $state(false)
+  let importLocale = $derived<Locale>(data.locale)
 
   async function handleCreate(
     name: FormDataEntryValue | null,
     scope: FormDataEntryValue | null,
   ) {
-    const created = await createMeal({ name, scope })
+    const created = await createMeal({ name, scope, sourceLocale: data.locale })
     if (!data.favoritesOnly)
       meals = [...meals, { ...created, isFavorite: false }].sort((a, b) =>
         a.name.localeCompare(b.name),
@@ -76,6 +78,7 @@
         ...fields,
         ingredients: fields.ingredients ?? [],
         scope: 'personal',
+        sourceLocale: importLocale,
       })
       await goto(`/meals/${created.id}`)
     } catch (error) {
@@ -121,6 +124,17 @@
         onkeydown={(event) => {
           if (event.key === 'Enter') importRecipe()
         }}
+      />
+      <Select
+        title="Recipe language"
+        value={importLocale}
+        onchange={(event) =>
+          (importLocale = (event.currentTarget as HTMLSelectElement)
+            .value as Locale)}
+        options={SUPPORTED_LOCALES.map((locale) => ({
+          value: locale,
+          label: LOCALE_LABELS[locale],
+        }))}
       />
       <Button size="sm" onclick={importRecipe} disabled={importBusy}>
         {importBusy ? 'Importing…' : 'Import'}
