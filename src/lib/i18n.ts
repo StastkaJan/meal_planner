@@ -331,7 +331,7 @@ export function translate(
   params: MessageParams = {},
 ): string {
   const template = locale === 'cs' ? CS_MESSAGES[message] : message
-  return Object.entries(params).reduce(
+  return Object.entries(params).reduce<string>(
     (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
     template,
   )
