@@ -14,7 +14,10 @@ const authenticate: Handle = async ({ event, resolve }) => {
     parseLocale(event.locals.user?.locale) ??
     parseLocale(event.cookies.get('locale')) ??
     localeFromAcceptLanguage(event.request.headers.get('accept-language'))
-  return resolve(event)
+  return resolve(event, {
+    transformPageChunk: ({ html }) =>
+      html.replace('%lang%', event.locals.locale),
+  })
 }
 
 export const handle = sequence(observeRequests, authenticate)

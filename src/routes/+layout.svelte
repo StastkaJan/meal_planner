@@ -1,26 +1,34 @@
 <script lang="ts">
   import '../app.scss'
+  import { browser } from '$app/environment'
   import { page } from '$app/stores'
+  import { provideI18n } from '$lib/i18n-context'
 
   let { children, data } = $props()
+  const { t } = provideI18n(() => data.locale)
+
+  $effect(() => {
+    if (browser) document.documentElement.lang = data.locale
+  })
 </script>
 
 <header class="shell-header">
-  <nav aria-label="Main navigation">
-    <a class="brand" href="/" aria-label="Meal Plan home">
+  <nav aria-label={t('Main navigation')}>
+    <a class="brand" href="/" aria-label={t('Meal Plan home')}>
       <span class="brand-mark">M</span>
-      <span>Meal Plan</span>
+      <span>{t('Meal plan')}</span>
     </a>
     {#if data.user}
       <div class="main-links">
-        <a href="/" class:active={$page.url.pathname === '/'}>Planner</a>
+        <a href="/" class:active={$page.url.pathname === '/'}>{t('Planner')}</a>
         <a href="/meals" class:active={$page.url.pathname.startsWith('/meals')}
-          >Recipes</a
+          >{t('Recipes')}</a
         >
         {#if data.user.isAdmin}
           <a
             href="/admin/recipes"
-            class:active={$page.url.pathname.startsWith('/admin')}>Review</a
+            class:active={$page.url.pathname.startsWith('/admin')}
+            >{t('Review')}</a
           >
         {/if}
       </div>
@@ -35,7 +43,7 @@
           <span class="email">{data.user.email}</span>
         </a>
         <form method="POST" action="/auth/logout">
-          <button type="submit">Sign out</button>
+          <button type="submit">{t('Sign out')}</button>
         </form>
       </div>
     {/if}

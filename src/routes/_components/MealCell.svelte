@@ -3,6 +3,10 @@
   import type { SlotWithMeal } from '$lib/types'
   import Dialog from '$lib/components/ui/Dialog.svelte'
   import MealPicker from './MealPicker.svelte'
+  import { useI18n } from '$lib/i18n-context'
+  import { localeCode } from '$lib/i18n'
+
+  const { t, label, locale } = useI18n()
 
   let {
     slot,
@@ -37,7 +41,10 @@
   const usesLeftovers = $derived(slot?.leftoverSourceDate != null)
   const sourceLabel = $derived(
     leftoverSource
-      ? `${leftoverSource.date} ${leftoverSource.mealType.replaceAll('_', ' ')}`
+      ? `${new Date(`${leftoverSource.date}T00:00:00Z`).toLocaleDateString(
+          localeCode(locale()),
+          { dateStyle: 'medium', timeZone: 'UTC' },
+        )} ${label(leftoverSource.mealType)}`
       : '',
   )
 </script>
@@ -50,20 +57,20 @@
         <span class="kcal">{slot.calories} kcal</span>
       {/if}
       {#if usesLeftovers}
-        <span class="leftover-label">leftovers</span>
+        <span class="leftover-label">{t('leftovers')}</span>
       {/if}
     </div>
     <div class="actions">
       <button
         type="button"
         onclick={openPicker}
-        title="Edit meal assignment"
-        aria-label="Edit meal assignment">✎</button
+        title={t('Edit meal assignment')}
+        aria-label={t('Edit meal assignment')}>✎</button
       >
       <a
         href="/meals/{slot.mealId}"
-        title="Show recipe"
-        aria-label="Show recipe">↗</a
+        title={t('Show recipe')}
+        aria-label={t('Show recipe')}>↗</a
       >
       {#if leftoverSource || usesLeftovers}
         <button
@@ -79,18 +86,19 @@
                   },
             )}
           title={usesLeftovers
-            ? 'Prepare separately'
-            : `Use leftovers from ${sourceLabel}`}
+            ? t('Prepare separately')
+            : t('Use leftovers from {source}', { source: sourceLabel })}
           aria-label={usesLeftovers
-            ? 'Prepare separately'
-            : `Use leftovers from ${sourceLabel}`}>↶</button
+            ? t('Prepare separately')
+            : t('Use leftovers from {source}', { source: sourceLabel })}
+          >↶</button
         >
       {/if}
       <button
         type="button"
         onclick={() => onPick(null)}
-        title="Remove meal"
-        aria-label="Remove meal">×</button
+        title={t('Remove meal')}
+        aria-label={t('Remove meal')}>×</button
       >
     </div>
   </div>
@@ -98,7 +106,7 @@
   <button
     class="cell {mealType}"
     onclick={openPicker}
-    title="Click to assign meal"
+    title={t('Click to assign meal')}
   >
     <span class="empty">—</span>
   </button>

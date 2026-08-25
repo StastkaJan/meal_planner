@@ -2,6 +2,9 @@
   import { onMount } from 'svelte'
   import { cookingSteps, formatTimer } from '$lib/domain/cooking'
   import type { IngredientInput } from '$lib/types'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, label } = useI18n()
 
   type Timer = {
     id: number
@@ -108,18 +111,19 @@
 <div class="cooking-mode">
   <header>
     <div>
-      <p class="eyebrow">Cooking mode</p>
+      <p class="eyebrow">{t('Cooking mode')}</p>
       <h1>{name}</h1>
     </div>
     <div class="header-actions">
-      <span class="wake" title="Screen wake lock status">
+      <span class="wake" title={t('Screen wake lock status')}>
         {wakeStatus === 'active'
-          ? 'Screen awake'
+          ? t('Screen awake')
           : wakeStatus === 'unsupported'
-            ? 'Wake lock unavailable'
-            : 'Wake lock inactive'}
+            ? t('Wake lock unavailable')
+            : t('Wake lock inactive')}
       </span>
-      <a class="close" href={closeHref} aria-label="Close cooking mode">Close</a
+      <a class="close" href={closeHref} aria-label={t('Close cooking mode')}
+        >{t('Close')}</a
       >
     </div>
   </header>
@@ -127,17 +131,17 @@
   <div class="cooking-content">
     <aside>
       <div class="servings">
-        <strong>Ingredients for {servings}</strong>
+        <strong>{t('Ingredients for {count}', { count: servings })}</strong>
         <div>
           <button
             type="button"
-            aria-label="Fewer cooking servings"
+            aria-label={t('Fewer cooking servings')}
             onclick={() => (servings = Math.max(1, servings - 1))}>−</button
           >
           <span>{servings}</span>
           <button
             type="button"
-            aria-label="More cooking servings"
+            aria-label={t('More cooking servings')}
             onclick={() => (servings += 1)}>+</button
           >
         </div>
@@ -147,34 +151,36 @@
           {#each ingredients as ingredient}
             <li>
               {ingredient.qty !== null
-                ? `${scaledQty(ingredient.qty)}${ingredient.unit ? ` ${ingredient.unit}` : ''} `
+                ? `${scaledQty(ingredient.qty)}${ingredient.unit ? ` ${label(ingredient.unit)}` : ''} `
                 : ''}{ingredient.name}
             </li>
           {/each}
         </ul>
       {:else}
-        <p class="muted">No ingredients listed.</p>
+        <p class="muted">{t('No ingredients listed.')}</p>
       {/if}
     </aside>
 
     <section class="step" aria-live="polite">
-      <p class="progress">Step {step + 1} of {steps.length}</p>
+      <p class="progress">
+        {t('Step {step} of {count}', { step: step + 1, count: steps.length })}
+      </p>
       <p class="instruction">{steps[step]}</p>
-      <nav aria-label="Cooking steps">
+      <nav aria-label={t('Cooking steps')}>
         <button type="button" disabled={step === 0} onclick={() => step--}
-          >Previous</button
+          >{t('Previous')}</button
         >
         <button
           class="primary"
           type="button"
           disabled={step === steps.length - 1}
-          onclick={() => step++}>Next step</button
+          onclick={() => step++}>{t('Next step')}</button
         >
       </nav>
     </section>
 
     <aside class="timer-panel">
-      <h2>Timers</h2>
+      <h2>{t('Timers')}</h2>
       <form
         onsubmit={(event) => {
           event.preventDefault()
@@ -182,29 +188,33 @@
         }}
       >
         <label>
-          Minutes
+          {t('Minutes')}
           <input type="number" min="0.1" step="0.1" bind:value={timerMinutes} />
         </label>
-        <button class="primary" type="submit">Start timer</button>
+        <button class="primary" type="submit">{t('Start timer')}</button>
       </form>
       <div class="timers">
         {#each timers as timer}
           <div class:done={timer.remaining === 0} class="timer">
             <strong
               >{timer.remaining === 0
-                ? "Time's up"
+                ? t("Time's up")
                 : formatTimer(timer.remaining)}</strong
             >
             <div>
               <button type="button" onclick={() => toggleTimer(timer)}>
-                {timer.endsAt ? 'Pause' : timer.remaining ? 'Resume' : 'Done'}
+                {timer.endsAt
+                  ? t('Pause')
+                  : timer.remaining
+                    ? t('Resume')
+                    : t('Done')}
               </button>
               <button
                 type="button"
-                aria-label="Remove timer"
+                aria-label={t('Remove timer')}
                 onclick={() =>
                   (timers = timers.filter((item) => item.id !== timer.id))}
-                >Remove</button
+                >{t('Remove')}</button
               >
             </div>
           </div>

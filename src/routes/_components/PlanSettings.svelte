@@ -3,6 +3,9 @@
   import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
   import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
   import { normalizeMealSlot } from '$lib/domain/meal-slots'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, label, locale } = useI18n()
 
   let {
     plan,
@@ -27,7 +30,11 @@
     onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
   } = $props()
 
-  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const dayLabels = $derived(
+    locale() === 'cs'
+      ? ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne']
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  )
   // no saved row = every day independent, same as all gaps split
   const NO_GROUPING = [true, true, true, true, true, true]
   const customSlots = $derived(
@@ -79,29 +86,32 @@
 </script>
 
 <details class="settings">
-  <summary>Plan settings</summary>
+  <summary>{t('Plan settings')}</summary>
   <div class="body">
     <section>
-      <h4>Cuisine preferences</h4>
+      <h4>{t('Cuisine preferences')}</h4>
       <ChoiceChips
         options={CUISINE_OPTIONS}
         selected={preferences.cuisinePrefs}
+        format={label}
         onChange={(cuisinePrefs) => onPreferenceChange({ cuisinePrefs })}
       />
     </section>
     <section>
-      <h4>Dietary restrictions</h4>
+      <h4>{t('Dietary restrictions')}</h4>
       <ChoiceChips
         options={DIET_OPTIONS}
         selected={preferences.dietaryRestrictions}
-        format={(value) => value.replace('_', ' ')}
+        format={label}
         onChange={(dietaryRestrictions) =>
           onPreferenceChange({ dietaryRestrictions })}
       />
     </section>
     <section>
-      <h4>Meal slots</h4>
-      <p class="hint">Disabled slots and their planned meals are removed.</p>
+      <h4>{t('Meal slots')}</h4>
+      <p class="hint">
+        {t('Disabled slots and their planned meals are removed.')}
+      </p>
       <div class="slot-options">
         {#each MEAL_TYPES as mealType}
           <label>
@@ -113,7 +123,7 @@
               onchange={(event) =>
                 toggleSlot(mealType, event.currentTarget.checked)}
             />
-            {mealType.replaceAll('_', ' ')}
+            {label(mealType)}
           </label>
         {/each}
       </div>
@@ -121,11 +131,11 @@
         <div class="custom-slots">
           {#each customSlots as mealType}
             <span>
-              {mealType.replaceAll('_', ' ')}
+              {label(mealType)}
               <button
                 type="button"
                 disabled={plan.mealSlots.length === 1}
-                aria-label={`Remove ${mealType.replaceAll('_', ' ')} slot`}
+                aria-label={t('Remove {name}', { name: label(mealType) })}
                 onclick={() =>
                   onMealSlotsChange(
                     plan.mealSlots.filter((slot) => slot !== mealType),
@@ -139,32 +149,39 @@
         <input
           name="customSlot"
           maxlength="40"
-          placeholder="Custom slot name"
-          aria-label="Custom slot name"
+          placeholder={t('Custom slot name')}
+          aria-label={t('Custom slot name')}
           required
         />
         <button type="submit" disabled={plan.mealSlots.length >= 10}
-          >Add slot</button
+          >{t('Add slot')}</button
         >
       </form>
     </section>
     {#if onRepeatChange}
       <section>
-        <h4>Repeat pattern</h4>
+        <h4>{t('Repeat pattern')}</h4>
         {#each plan.mealSlots as mealType}
           {@const breaks = breaksFor(mealType)}
           <div class="repeat-row">
-            <span class="mt-label">{mealType.replace('_', ' ')}</span>
+            <span class="mt-label">{label(mealType)}</span>
             <div class="days">
-              {#each DAY_LABELS as day, i}
+              {#each dayLabels as day, i}
                 <span class="day">{day}</span>
                 {#if i < 6}
                   <button
                     type="button"
                     class="gap"
                     class:joined={!breaks[i]}
-                    title={breaks[i] ? 'Different meal' : 'Same meal'}
-                    aria-label={`${mealType.replace('_', ' ')}: ${day} and ${DAY_LABELS[i + 1]} use the same meal`}
+                    title={breaks[i] ? t('Different meal') : t('Same meal')}
+                    aria-label={t(
+                      '{meal}: {day1} and {day2} use the same meal',
+                      {
+                        meal: label(mealType),
+                        day1: day,
+                        day2: dayLabels[i + 1],
+                      },
+                    )}
                     aria-pressed={!breaks[i]}
                     onclick={() => toggleGap(mealType, i)}
                   ></button>

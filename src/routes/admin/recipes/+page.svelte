@@ -2,8 +2,10 @@
   import type { PageData } from './$types'
   import { queueCatalogue, reviewCatalogueRecipe } from '$lib/api/catalogue'
   import Button from '$lib/components/ui/Button.svelte'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  const { t, message: translateMessage } = useI18n()
   let imports = $derived(data.imports)
   let payload = $state('')
   let message = $state('')
@@ -15,10 +17,20 @@
     try {
       const parsed = JSON.parse(payload)
       const result = await queueCatalogue(parsed)
-      message = `${result.accepted} queued, ${result.duplicates} duplicates, ${result.errors.length} invalid.`
+      message = t(
+        '{accepted} queued, {duplicates} duplicates, {invalid} invalid.',
+        {
+          accepted: result.accepted,
+          duplicates: result.duplicates,
+          invalid: result.errors.length,
+        },
+      )
       if (result.accepted) location.reload()
     } catch (cause) {
-      message = cause instanceof Error ? cause.message : 'Import failed'
+      message =
+        cause instanceof Error
+          ? translateMessage(cause.message)
+          : t('Import failed')
     } finally {
       busy = false
     }
@@ -32,31 +44,34 @@
 
 <div class="page">
   <div>
-    <p class="eyebrow">Global catalogue</p>
-    <h1>Recipe review</h1>
+    <p class="eyebrow">{t('Global catalogue')}</p>
+    <h1>{t('Recipe review')}</h1>
     <p class="subtitle">
-      Queue licensed recipe data, then approve it for everyone.
+      {t('Queue licensed recipe data, then approve it for everyone.')}
     </p>
   </div>
 
   <section>
-    <h2>Batch import</h2>
+    <h2>{t('Batch import')}</h2>
     <p>
-      Paste a JSON array of 1–300 recipes. Each needs a name, ingredients, and
-      instructions.
+      {t(
+        'Paste a JSON array of 1–300 recipes. Each needs a name, ingredients, and instructions.',
+      )}
     </p>
-    <textarea bind:value={payload} rows="8" placeholder="Paste recipe JSON here"
-    ></textarea>
+    <textarea
+      bind:value={payload}
+      rows="8"
+      placeholder={t('Paste recipe JSON here')}></textarea>
     <div class="submit">
       <Button onclick={queue} disabled={busy || !payload.trim()}>
-        {busy ? 'Validating…' : 'Queue recipes'}
+        {busy ? t('Validating…') : t('Queue recipes')}
       </Button>
       {#if message}<span>{message}</span>{/if}
     </div>
   </section>
 
   <section>
-    <h2>Pending ({imports.length})</h2>
+    <h2>{t('Pending ({count})', { count: imports.length })}</h2>
     {#if imports.length}
       <div class="queue">
         {#each imports as entry}
@@ -64,11 +79,11 @@
             <div>
               <h3>{String(entry.recipe.name)}</h3>
               <details>
-                <summary>Review content</summary>
+                <summary>{t('Review content')}</summary>
                 {#if entry.recipe.description}
                   <p>{String(entry.recipe.description)}</p>
                 {/if}
-                <h4>Ingredients</h4>
+                <h4>{t('Ingredients')}</h4>
                 <ul>
                   {#each entry.recipe.ingredients as ingredient}
                     <li>
@@ -78,25 +93,26 @@
                     </li>
                   {/each}
                 </ul>
-                <h4>Instructions</h4>
+                <h4>{t('Instructions')}</h4>
                 <p class="instructions">{String(entry.recipe.instructions)}</p>
               </details>
             </div>
             <div class="actions">
               <Button size="sm" onclick={() => review(entry.id, 'approved')}
-                >Approve</Button
+                >{t('Approve')}</Button
               >
               <Button
                 size="sm"
                 variant="danger"
-                onclick={() => review(entry.id, 'rejected')}>Reject</Button
+                onclick={() => review(entry.id, 'rejected')}
+                >{t('Reject')}</Button
               >
             </div>
           </article>
         {/each}
       </div>
     {:else}
-      <p>No recipes awaiting review.</p>
+      <p>{t('No recipes awaiting review.')}</p>
     {/if}
   </section>
 </div>

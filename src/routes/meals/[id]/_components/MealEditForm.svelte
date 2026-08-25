@@ -4,12 +4,14 @@
   import {
     CUISINE_OPTIONS,
     DIET_OPTIONS,
-    DIFF_LABEL,
     MEAL_TYPES,
     UNIT_OPTIONS,
   } from '$lib/constants'
   import type { Meal } from '$lib/database/schema'
   import type { IngredientInput } from '$lib/types'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, label } = useI18n()
 
   let {
     meal,
@@ -75,43 +77,42 @@
 
 <form method="POST" class="edit-form" onsubmit={handleSave}>
   <div class="field-row">
-    <label>Name<input type="text" name="name" value={meal.name} /></label>
+    <label>{t('Name')}<input type="text" name="name" value={meal.name} /></label
+    >
     <label
-      >Image URL<input
+      >{t('Image URL')}<input
         type="url"
         name="imageUrl"
         value={meal.imageUrl ?? ''}
       /></label
     >
     <label
-      >Preparation (min)<input
+      >{t('Preparation (min)')}<input
         type="number"
         name="timeMinutes"
         value={meal.timeMinutes ?? ''}
       /></label
     >
     <label
-      >Difficulty
+      >{t('Difficulty')}
       <select name="difficulty">
         <option value="">—</option>
         {#each ['easy', 'medium', 'hard'] as d}
-          <option value={d} selected={meal.difficulty === d}
-            >{DIFF_LABEL[d]}</option
-          >
+          <option value={d} selected={meal.difficulty === d}>{label(d)}</option>
         {/each}
       </select>
     </label>
   </div>
   <div class="field-row">
     <label
-      >Calories<input
+      >{t('Calories')}<input
         type="number"
         name="calories"
         value={meal.calories ?? ''}
       /></label
     >
     <label
-      >Protein (g)<input
+      >{t('Protein (g)')}<input
         type="number"
         step="0.1"
         name="proteinG"
@@ -119,7 +120,7 @@
       /></label
     >
     <label
-      >Carbs (g)<input
+      >{t('Carbs (g)')}<input
         type="number"
         step="0.1"
         name="carbsG"
@@ -127,7 +128,7 @@
       /></label
     >
     <label
-      >Fat (g)<input
+      >{t('Fat (g)')}<input
         type="number"
         step="0.1"
         name="fatG"
@@ -137,7 +138,7 @@
   </div>
   <div class="field-row">
     <label
-      >Servings<input
+      >{t('Servings')}<input
         type="number"
         min="1"
         name="servings"
@@ -146,7 +147,7 @@
     >
   </div>
   <fieldset class="tags-field">
-    <legend>Cuisine</legend>
+    <legend>{t('Cuisine')}</legend>
     <div class="chips">
       {#each CUISINE_OPTIONS as opt}
         <label class="chip" class:active={tags.includes(opt)}>
@@ -157,13 +158,13 @@
             checked={tags.includes(opt)}
             onchange={() => toggleTag(opt)}
           />
-          {opt.replace('_', ' ')}
+          {label(opt)}
         </label>
       {/each}
     </div>
   </fieldset>
   <fieldset class="tags-field">
-    <legend>Diet</legend>
+    <legend>{t('Diet')}</legend>
     <div class="chips">
       {#each DIET_OPTIONS as opt}
         <label class="chip" class:active={tags.includes(opt)}>
@@ -174,13 +175,16 @@
             checked={tags.includes(opt)}
             onchange={() => toggleTag(opt)}
           />
-          {opt.replace('_', ' ')}
+          {label(opt)}
         </label>
       {/each}
     </div>
   </fieldset>
   <fieldset class="tags-field">
-    <legend>Allowed slots <span class="hint">(none = any)</span></legend>
+    <legend
+      >{t('Allowed slots')}
+      <span class="hint">{t('(none = any)')}</span></legend
+    >
     <div class="chips">
       {#each MEAL_TYPES as opt}
         <label class="chip" class:active={allowedSlots.includes(opt)}>
@@ -191,60 +195,66 @@
             checked={allowedSlots.includes(opt)}
             onchange={() => toggleSlot(opt)}
           />
-          {opt.replace('_', ' ')}
+          {label(opt)}
         </label>
       {/each}
     </div>
   </fieldset>
   <label
-    >Description<Textarea
+    >{t('Description')}<Textarea
       name="description"
       rows={2}
       value={meal.description ?? ''}
     /></label
   >
   <fieldset class="ingredients-field">
-    <legend>Ingredients</legend>
+    <legend>{t('Ingredients')}</legend>
     <div class="ingredient-rows">
       {#each ingredientRows as row, i}
         <div class="ingredient-row">
-          <input type="text" placeholder="Ingredient" bind:value={row.name} />
+          <input
+            type="text"
+            placeholder={t('Ingredient')}
+            bind:value={row.name}
+          />
           <input
             type="number"
             step="any"
             min="0"
-            placeholder="Qty"
+            placeholder={t('Qty')}
             bind:value={row.qty}
           />
           <select bind:value={row.unit}>
             <option value="">—</option>
             {#each UNIT_OPTIONS as u}
-              <option value={u}>{u}</option>
+              <option value={u}>{label(u)}</option>
             {/each}
           </select>
           <button
             class="btn sm ghost"
             type="button"
-            aria-label="Remove ingredient"
+            aria-label={t('Remove ingredient')}
             onclick={() => removeIngredientRow(i)}>×</button
           >
         </div>
       {/each}
     </div>
     <button class="btn sm ghost" type="button" onclick={addIngredientRow}
-      >+ Add ingredient</button
+      >{t('+ Add ingredient')}</button
     >
   </fieldset>
   <label
-    >Instructions<Textarea
+    >{t('Instructions')}<Textarea
       name="instructions"
       rows={8}
       value={meal.instructions ?? ''}
     /></label
   >
   <div class="form-actions">
-    <button class="btn" type="submit">Save</button>
-    <button class="btn ghost" type="button" onclick={onCancel}>Cancel</button>
+    <button class="btn" type="submit">{t('Save')}</button>
+    <button class="btn ghost" type="button" onclick={onCancel}
+      >{t('Cancel')}</button
+    >
   </div>
 </form>
 

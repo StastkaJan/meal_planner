@@ -43,7 +43,9 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
-<!-- NOTE: `user_settings.locale` selects `meal_translations` overlays for recipe name/description/instructions; nullable translated fields fall back to the original text in `meals`. -->
+<!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/instructions; nullable translated fields fall back to the original text in `meals`. -->
+
+<!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->
 
 <!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
 

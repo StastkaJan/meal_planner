@@ -3,6 +3,9 @@
   import Textarea from '$lib/components/ui/Textarea.svelte'
   import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
   import type { Meal, MealTranslation } from '$lib/database/schema'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t } = useI18n()
 
   let {
     meal,
@@ -37,7 +40,14 @@
   }
 
   async function remove() {
-    if (!confirm(`Delete the ${LOCALE_LABELS[locale]} translation?`)) return
+    if (
+      !confirm(
+        t('Delete the {language} translation?', {
+          language: LOCALE_LABELS[locale],
+        }),
+      )
+    )
+      return
     await deleteMealTranslation(meal.id, locale)
     onChanged(null, locale)
   }
@@ -46,11 +56,15 @@
 <form class="translation-form" onsubmit={save}>
   <div class="form-header">
     <div>
-      <p class="eyebrow">Recipe translation</p>
-      <h2>Translate from {LOCALE_LABELS[meal.sourceLocale as Locale]}</h2>
+      <p class="eyebrow">{t('Recipe translation')}</p>
+      <h2>
+        {t('Translate from {language}', {
+          language: LOCALE_LABELS[meal.sourceLocale as Locale],
+        })}
+      </h2>
     </div>
     <label>
-      Language
+      {t('Language')}
       <select bind:value={locale}>
         {#each targets as option}
           <option value={option}>{LOCALE_LABELS[option]}</option>
@@ -60,7 +74,7 @@
   </div>
 
   <label>
-    Name
+    {t('Name')}
     <input
       name="name"
       value={translation?.name ?? ''}
@@ -68,31 +82,33 @@
     />
   </label>
   <label>
-    Description
+    {t('Description')}
     <Textarea
       name="description"
       rows={3}
       value={translation?.description ?? ''}
-      placeholder={meal.description ?? 'No original description'}
+      placeholder={meal.description ?? t('No original description')}
     />
   </label>
   <label>
-    Instructions
+    {t('Instructions')}
     <Textarea
       name="instructions"
       rows={8}
       value={translation?.instructions ?? ''}
-      placeholder={meal.instructions ?? 'No original instructions'}
+      placeholder={meal.instructions ?? t('No original instructions')}
     />
   </label>
-  <p class="hint">Blank fields fall back to the original recipe.</p>
+  <p class="hint">{t('Blank fields fall back to the original recipe.')}</p>
 
   <div class="actions">
-    <button class="btn" type="submit">Save translation</button>
-    <button class="btn ghost" type="button" onclick={onCancel}>Cancel</button>
+    <button class="btn" type="submit">{t('Save translation')}</button>
+    <button class="btn ghost" type="button" onclick={onCancel}
+      >{t('Cancel')}</button
+    >
     {#if translation}
       <button class="btn danger remove" type="button" onclick={remove}
-        >Delete translation</button
+        >{t('Delete translation')}</button
       >
     {/if}
   </div>

@@ -1,8 +1,21 @@
 <script lang="ts">
   import { setPlanPortions } from '$lib/api/plans'
+  import { localeCode } from '$lib/i18n'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data } = $props()
+  const { t, label, locale } = useI18n()
   let shareStatus = $state('')
+
+  const weekLabel = $derived(
+    new Date(`${data.week}T00:00:00Z`).toLocaleDateString(
+      localeCode(locale()),
+      {
+        dateStyle: 'long',
+        timeZone: 'UTC',
+      },
+    ),
+  )
 
   async function handlePortionsChange(portions: number) {
     await setPlanPortions(data.planId, portions)
@@ -11,12 +24,12 @@
 
   const shoppingText = $derived(
     [
-      `Shopping list — week of ${data.week}`,
+      `${t('Shopping list')} — ${t('Week of {week}', { week: weekLabel })}`,
       '',
       ...data.items.map((item) => {
         const amount =
           item.qty !== null
-            ? `${item.qty}${item.unit ? ` ${item.unit}` : ''} `
+            ? `${item.qty}${item.unit ? ` ${label(item.unit)}` : ''} `
             : item.count > 1
               ? `${item.count}× `
               : ''
@@ -29,7 +42,7 @@
     shareStatus = ''
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Shopping list', text: shoppingText })
+        await navigator.share({ title: t('Shopping list'), text: shoppingText })
         return
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
@@ -40,36 +53,40 @@
 
   async function copyList() {
     if (!navigator.clipboard) {
-      shareStatus = 'Sharing and copying are not supported by this browser.'
+      shareStatus = t('Sharing and copying are not supported by this browser.')
       return
     }
     try {
       await navigator.clipboard.writeText(shoppingText)
-      shareStatus = 'Copied. Paste it into Google Keep or another app.'
+      shareStatus = t('Copied. Paste it into Google Keep or another app.')
     } catch {
-      shareStatus = 'Could not share or copy this list.'
+      shareStatus = t('Could not share or copy this list.')
     }
   }
 </script>
 
 <div class="shopping">
   <div class="toolbar">
-    <a class="back" href="/?plan={data.planId}&week={data.week}">← Meal plan</a>
+    <a class="back" href="/?plan={data.planId}&week={data.week}"
+      >{t('← Meal plan')}</a
+    >
     <div class="actions">
-      <button class="share" type="button" onclick={copyList}>Copy list</button>
+      <button class="share" type="button" onclick={copyList}
+        >{t('Copy list')}</button
+      >
       <button
         class="share"
         type="button"
-        title="Choose Google Keep or another app from the share menu"
-        onclick={shareList}>Share list</button
+        title={t('Choose Google Keep or another app from the share menu')}
+        onclick={shareList}>{t('Share list')}</button
       >
     </div>
   </div>
-  <p class="eyebrow">Everything for the week</p>
-  <h1>Shopping list</h1>
-  <p class="week">Week of {data.week}</p>
+  <p class="eyebrow">{t('Everything for the week')}</p>
+  <h1>{t('Shopping list')}</h1>
+  <p class="week">{t('Week of {week}', { week: weekLabel })}</p>
   <label class="portions">
-    People served
+    {t('People served')}
     <input
       type="number"
       min="1"
@@ -84,7 +101,9 @@
     </p>{/if}
 
   {#if data.items.length === 0}
-    <p class="empty">No meals assigned this week — nothing to shop for yet.</p>
+    <p class="empty">
+      {t('No meals assigned this week — nothing to shop for yet.')}
+    </p>
   {:else}
     <ul>
       {#each data.items as item (item.name)}
@@ -93,7 +112,7 @@
             <input type="checkbox" />
             {#if item.qty !== null}
               <span
-                >{item.qty}{item.unit ? ` ${item.unit}` : ''}
+                >{item.qty}{item.unit ? ` ${label(item.unit)}` : ''}
                 {item.name}</span
               >
             {:else}

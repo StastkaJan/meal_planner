@@ -6,8 +6,10 @@
   import { updateProfile } from '$lib/api/profile'
   import WeekTable from './_components/WeekTable.svelte'
   import PlanSettings from './_components/PlanSettings.svelte'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  const { t, message } = useI18n()
 
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
@@ -37,7 +39,7 @@
   }
 
   async function deletePlan(id: number) {
-    if (!confirm('Delete this plan?')) return
+    if (!confirm(t('Delete this plan?'))) return
     await planApi.deletePlan(id)
     await goto('/')
   }
@@ -72,8 +74,10 @@
     if (filled === 0) {
       alert(
         favoritesOnly
-          ? "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'."
-          : 'No empty slots to fill.',
+          ? t(
+              "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'.",
+            )
+          : t('No empty slots to fill.'),
       )
     }
     await refreshPlan()
@@ -84,7 +88,7 @@
     const from = addDays(data.viewWeek, -7)
     if (
       !confirm(
-        'Copy last week into this week? Existing slots will be overwritten.',
+        t('Copy last week into this week? Existing slots will be overwritten.'),
       )
     )
       return
@@ -97,7 +101,7 @@
   async function alertIfFailed(res: Response): Promise<boolean> {
     if (res.ok) return false
     const body = await res.json().catch(() => ({}))
-    alert(body.message ?? 'Something went wrong.')
+    alert(body.message ? message(body.message) : t('Something went wrong.'))
     return true
   }
 
@@ -130,7 +134,7 @@
     if (await alertIfFailed(res)) return
     const { filled } = await res.json()
     if (filled === 0)
-      alert('Nothing to recalculate — that day has no empty slots.')
+      alert(t('Nothing to recalculate — that day has no empty slots.'))
     await refreshPlan()
   }
 
@@ -162,23 +166,25 @@
 <div class="page">
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Weekly planner</p>
-      <h1>Meal plan</h1>
-      <p class="subtitle">Plan the week, balance nutrition, shop once.</p>
+      <p class="eyebrow">{t('Weekly planner')}</p>
+      <h1>{t('Meal plan')}</h1>
+      <p class="subtitle">
+        {t('Plan the week, balance nutrition, shop once.')}
+      </p>
     </div>
   </div>
   <div class="plan-bar">
     <div class="plan-actions">
       {#if !plan}
-        <button class="btn" onclick={createPlan}>Create plan</button>
+        <button class="btn" onclick={createPlan}>{t('Create plan')}</button>
       {:else}
         <a
           class="btn"
           href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
-          >Shopping list</a
+          >{t('Shopping list')}</a
         >
         <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
-          >Delete</button
+          >{t('Delete')}</button
         >
       {/if}
     </div>
@@ -208,9 +214,9 @@
       onNextWeek={() => shiftWeek(1)}
     />
   {:else if data.plans.length === 0}
-    <p class="empty-state">Create your meal plan to get started.</p>
+    <p class="empty-state">{t('Create your meal plan to get started.')}</p>
   {:else}
-    <p class="empty-state">Loading…</p>
+    <p class="empty-state">{t('Loading…')}</p>
   {/if}
 </div>
 
