@@ -47,6 +47,7 @@ describe('POST /meals', () => {
     expect(createMeal).toHaveBeenCalledWith({
       name: 'Soup',
       ingredients: [{ name: 'carrots', qty: 2, unit: null }],
+      sourceLocale: 'en',
       userId: 1,
     })
   })
@@ -54,7 +55,11 @@ describe('POST /meals', () => {
   it('defaults new meals to personal ownership', async () => {
     createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew' })
     await POST(makeEvent({ name: 'Stew' }))
-    expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: 1 })
+    expect(createMeal).toHaveBeenCalledWith({
+      name: 'Stew',
+      sourceLocale: 'en',
+      userId: 1,
+    })
   })
 
   it('allows only admins to create a global meal', async () => {
@@ -64,6 +69,10 @@ describe('POST /meals', () => {
 
     createMeal.mockResolvedValueOnce({ id: 2, name: 'Stew' })
     await POST(makeEvent({ name: 'Stew', scope: 'global' }, 1, true))
-    expect(createMeal).toHaveBeenCalledWith({ name: 'Stew', userId: null })
+    expect(createMeal).toHaveBeenCalledWith({
+      name: 'Stew',
+      sourceLocale: 'en',
+      userId: null,
+    })
   })
 })

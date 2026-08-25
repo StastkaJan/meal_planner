@@ -2,9 +2,12 @@ import {
   createMeal,
   findMeal,
   getMealIngredients,
+  getMealTranslations,
   updateMeal,
 } from '../repositories/meals'
 import { monitorService } from '../observability'
+import { parseLocale, type Locale } from '$lib/i18n'
+import type { Meal, MealTranslation } from '$lib/database/schema'
 
 const WRITABLE = [
   'name',
@@ -21,6 +24,7 @@ const WRITABLE = [
   'timeMinutes',
   'difficulty',
   'servings',
+  'sourceLocale',
 ] as const
 
 const NULLABLE_NUMBERS = new Set([
@@ -35,7 +39,10 @@ const NULLABLE_NUMBERS = new Set([
 export function pickMealFields(body: Record<string, unknown>) {
   const values: Record<string, unknown> = {}
   for (const field of WRITABLE) {
-    if (body[field] !== undefined)
+    if (field === 'sourceLocale' && body[field] !== undefined) {
+      const locale = parseLocale(body[field])
+      if (locale) values[field] = locale
+    } else if (body[field] !== undefined)
       values[field] =
         body[field] === '' && NULLABLE_NUMBERS.has(field) ? null : body[field]
   }
@@ -45,12 +52,27 @@ export function pickMealFields(body: Record<string, unknown>) {
 export async function createUserMeal(
   userId: number,
   body: Record<string, unknown>,
+  locale: Locale = 'en',
 ) {
   return monitorService('meals', 'create', async () => {
     const values = pickMealFields(body)
+    values.sourceLocale ??= locale
     values.userId = body.scope === 'global' ? null : userId
     return createMeal(values as { name: string })
   })
+}
+
+export function localizeMeal(
+  meal: Meal,
+  translation: MealTranslation | undefined,
+): Meal {
+  if (!translation) return meal
+  return {
+    ...meal,
+    name: translation.name ?? meal.name,
+    description: translation.description ?? meal.description,
+    instructions: translation.instructions ?? meal.instructions,
+  }
 }
 
 export async function updateUserMeal(
@@ -71,6 +93,7 @@ export async function duplicateGlobalMeal(userId: number, id: number) {
       name: source.name,
       userId,
       ingredients: await getMealIngredients(id),
+      translations: await getMealTranslations(id),
     })
   })
 }

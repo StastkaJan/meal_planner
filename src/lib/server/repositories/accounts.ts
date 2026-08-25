@@ -43,6 +43,7 @@ export async function updatePassword(id: number, passwordHash: string) {
 export async function getSettings(userId: number) {
   const [settings] = await db
     .select({
+      locale: userSettings.locale,
       cuisinePrefs: userSettings.cuisinePrefs,
       dietaryRestrictions: userSettings.dietaryRestrictions,
       calorieTarget: userSettings.calorieTarget,

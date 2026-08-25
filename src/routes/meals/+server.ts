@@ -4,7 +4,7 @@ import { listMeals } from '$lib/server/repositories/meals'
 import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ locals }) => {
-  return json(await listMeals(locals.user?.id))
+  return json(await listMeals(locals.user?.id, locals.locale))
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -15,6 +15,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     error(403, 'Only admins can create global recipes')
   if (body.scope && !['personal', 'global'].includes(body.scope))
     error(400, 'Invalid scope')
-  const meal = await createUserMeal(locals.user.id, body)
+  const meal = await createUserMeal(locals.user.id, body, locals.locale)
   return json(meal, { status: 201 })
 }

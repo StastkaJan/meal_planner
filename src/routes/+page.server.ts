@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
   const [plans, meals, u] = await Promise.all([
     listPlans(userId),
-    listMeals(userId),
+    listMeals(userId, locals.locale),
     getSettings(userId),
   ])
   const targets = resolveTargets(u)
@@ -38,7 +38,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     url.searchParams.get('week') ??
       mondayOf(new Date().toISOString().slice(0, 10)),
   )
-  const plan = await getPlanDetail(activePlan, viewWeek)
+  const plan = await getPlanDetail(activePlan, viewWeek, locals.locale)
 
   return {
     plans,
