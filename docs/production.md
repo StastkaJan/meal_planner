@@ -14,7 +14,7 @@ Grafana binds only to the private address configured by
    domain:
 
    ```caddyfile
-   meals.example.com {
+   papuplan.cz {
      reverse_proxy meal-plan-proxy:80
    }
    ```
@@ -54,7 +54,7 @@ fingerprint against the VPS console, and then save it; do not collect an
 unverified key during the workflow. `VPS_SSH_KEY` should be a dedicated,
 unencrypted private key for the deployment user.
 
-The workflow supplies `meal.stastka.dev` as `DOMAIN`, overriding any stale
+The workflow supplies `papuplan.cz` as `DOMAIN`, overriding any stale
 domain value in `.env.production` while leaving manual deployments compatible
 with the env file.
 

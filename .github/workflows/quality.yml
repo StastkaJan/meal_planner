@@ -68,9 +68,9 @@ jobs:
     timeout-minutes: 30
     environment:
       name: production
-      url: https://meal.stastka.dev
+      url: https://papuplan.cz
     env:
-      DOMAIN: meal.stastka.dev
+      DOMAIN: papuplan.cz
       VPS_HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
       VPS_USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
