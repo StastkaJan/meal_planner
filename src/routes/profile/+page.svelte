@@ -7,8 +7,10 @@
     updateProfile,
   } from '$lib/api/profile'
   import { LOCALE_LABELS, SUPPORTED_LOCALES } from '$lib/i18n'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data } = $props()
+  const { t, message } = useI18n()
 
   let targetsSaved = $state(false)
   let passwordError = $state('')
@@ -36,8 +38,8 @@
     passwordSuccess = ''
     const fd = new FormData(e.target as HTMLFormElement)
     const data = await updatePassword(fd.get('current'), fd.get('next'))
-    if (data.error) passwordError = data.error
-    else if (data.success) passwordSuccess = 'Password updated.'
+    if (data.error) passwordError = message(data.error)
+    else if (data.success) passwordSuccess = t('Password updated.')
   }
 
   async function removeAccount(e: SubmitEvent) {
@@ -48,44 +50,49 @@
       fd.get('password'),
       fd.get('confirmation'),
     )
-    if (result.error) deletionError = result.error
+    if (result.error) deletionError = message(result.error)
     else if (result.success) await goto('/auth/login')
   }
 </script>
 
 <div class="profile-page">
   <header>
-    <p class="eyebrow">Your account</p>
-    <h1>Profile</h1>
+    <p class="eyebrow">{t('Your account')}</p>
+    <h1>{t('Profile')}</h1>
     <p class="email">{data.email}</p>
   </header>
 
   <div class="settings-grid">
     <section class="card">
-      <h2>Language</h2>
-      <p class="hint">Used to select available recipe translations.</p>
+      <h2>{t('Language')}</h2>
+      <p class="hint">
+        {t('Used for the app interface and available recipe translations.')}
+      </p>
       <form method="POST" onsubmit={saveLanguage}>
         <label>
-          Preferred language
+          {t('Preferred language')}
           <select name="locale" value={data.locale}>
             {#each SUPPORTED_LOCALES as locale}
               <option value={locale}>{LOCALE_LABELS[locale]}</option>
             {/each}
           </select>
         </label>
-        <button type="submit">Save language</button>
+        <button type="submit">{t('Save language')}</button>
       </form>
     </section>
     <section class="card">
-      <h2>Nutrition targets</h2>
+      <h2>{t('Nutrition targets')}</h2>
       <p class="hint">
-        Daily goals for nutrition bars and auto-compose. Blank uses the default.
+        {t(
+          'Daily goals for nutrition bars and auto-compose. Blank uses the default.',
+        )}
       </p>
       <form class="nutrition-form" method="POST" onsubmit={saveTargets}>
-        {#if targetsSaved}<p class="success">Targets saved.</p>{/if}
+        {#if targetsSaved}<p class="success">{t('Targets saved.')}</p>{/if}
         <div class="target-grid">
           <label
-            >Calories (kcal) <input
+            >{t('Calories')} (kcal)
+            <input
               type="number"
               min="1"
               name="calorieTarget"
@@ -94,7 +101,8 @@
             /></label
           >
           <label
-            >Protein (g) <input
+            >{t('Protein (g)')}
+            <input
               type="number"
               min="1"
               name="proteinTarget"
@@ -103,7 +111,8 @@
             /></label
           >
           <label
-            >Carbs (g) <input
+            >{t('Carbs (g)')}
+            <input
               type="number"
               min="1"
               name="carbsTarget"
@@ -112,7 +121,8 @@
             /></label
           >
           <label
-            >Fat (g) <input
+            >{t('Fat (g)')}
+            <input
               type="number"
               min="1"
               name="fatTarget"
@@ -121,58 +131,55 @@
             /></label
           >
         </div>
-        <button type="submit">Save targets</button>
+        <button type="submit">{t('Save targets')}</button>
       </form>
     </section>
 
     <section class="card security-card">
-      <h2>Change password</h2>
-      <p class="hint">Use at least eight characters.</p>
+      <h2>{t('Change password')}</h2>
+      <p class="hint">{t('Use at least eight characters.')}</p>
       <form method="POST" onsubmit={changePassword}>
         {#if passwordError}<p class="error">{passwordError}</p>{/if}
         {#if passwordSuccess}<p class="success">{passwordSuccess}</p>{/if}
         <label
-          >Current password <input
-            type="password"
-            name="current"
-            required
-          /></label
+          >{t('Current password')}
+          <input type="password" name="current" required /></label
         >
         <label
-          >New password <input
-            type="password"
-            name="next"
-            required
-            minlength="8"
-          /></label
+          >{t('New password')}
+          <input type="password" name="next" required minlength="8" /></label
         >
-        <button type="submit">Update password</button>
+        <button type="submit">{t('Update password')}</button>
       </form>
     </section>
 
     <section class="card data-card">
-      <h2>Your data</h2>
+      <h2>{t('Your data')}</h2>
       <p class="hint">
-        Download a JSON copy of your profile settings, personal recipes, plans,
-        favourites, and recipe submissions.
+        {t(
+          'Download a JSON copy of your profile settings, personal recipes, plans, favourites, and recipe submissions.',
+        )}
       </p>
-      <a class="download" href="/profile/export" download>Download my data</a>
+      <a class="download" href="/profile/export" download
+        >{t('Download my data')}</a
+      >
     </section>
 
     <section class="card danger-card">
-      <h2>Delete account</h2>
+      <h2>{t('Delete account')}</h2>
       <p class="hint">
-        Permanently deletes your sessions, settings, recipes, plans, and other
-        personal data. Shared recipes stay in the catalogue. This cannot be
-        undone.
+        {t(
+          'Permanently deletes your sessions, settings, recipes, plans, and other personal data. Shared recipes stay in the catalogue. This cannot be undone.',
+        )}
       </p>
       <form method="POST" onsubmit={removeAccount}>
         {#if deletionError}<p class="error">{deletionError}</p>{/if}
         <label
-          >Password <input type="password" name="password" required /></label
+          >{t('Password')}
+          <input type="password" name="password" required /></label
         >
         <label
-          >Type {data.email} to confirm
+          >{t('Type {email} to confirm', { email: data.email })}
           <input
             type="email"
             name="confirmation"
@@ -181,7 +188,7 @@
           /></label
         >
         <button class="danger" type="submit"
-          >Delete my account permanently</button
+          >{t('Delete my account permanently')}</button
         >
       </form>
     </section>

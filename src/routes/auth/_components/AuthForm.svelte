@@ -2,6 +2,9 @@
   import Button from '$lib/components/ui/Button.svelte'
   import Field from '$lib/components/ui/Field.svelte'
   import Input from '$lib/components/ui/Input.svelte'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, message } = useI18n()
 
   let {
     title,
@@ -23,10 +26,10 @@
 <div class="auth-box">
   <div class="auth-mark">M</div>
   <h1>{title}</h1>
-  <p class="intro">Plan better meals, one week at a time.</p>
+  <p class="intro">{t('Plan better meals, one week at a time.')}</p>
   <form method="POST">
-    {#if error}<p class="error">{error}</p>{/if}
-    <Field label="Email" for="email">
+    {#if error}<p class="error">{message(error)}</p>{/if}
+    <Field label={t('Email')} for="email">
       <Input
         id="email"
         type="email"
@@ -35,7 +38,7 @@
         required
       />
     </Field>
-    <Field label="Password" for="password">
+    <Field label={t('Password')} for="password">
       <Input
         id="password"
         type="password"
@@ -49,18 +52,18 @@
       <label class="legal-choice">
         <input type="checkbox" name="termsAccepted" required />
         <span
-          >I accept the <a href="/legal/terms.md" target="_blank" rel="noopener"
-            >Terms and Conditions</a
+          >{t('I accept the')}
+          <a href="/legal/terms.md" target="_blank" rel="noopener"
+            >{t('Terms and Conditions')}</a
           >.</span
         >
       </label>
       <label class="legal-choice">
         <input type="checkbox" name="privacyAcknowledged" required />
         <span
-          >I acknowledge the <a
-            href="/legal/privacy.md"
-            target="_blank"
-            rel="noopener">Privacy Policy</a
+          >{t('I acknowledge the')}
+          <a href="/legal/privacy.md" target="_blank" rel="noopener"
+            >{t('Privacy Policy')}</a
           >.</span
         >
       </label>

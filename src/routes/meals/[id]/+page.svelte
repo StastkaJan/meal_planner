@@ -6,9 +6,10 @@
   import MealEditForm from './_components/MealEditForm.svelte'
   import MealTranslationForm from './_components/MealTranslationForm.svelte'
   import type { PageData } from './$types'
-  import { DIFF_LABEL } from '$lib/constants'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  const { t, label, namedCount } = useI18n()
   let sourceMeal = $derived(data.sourceMeal)
   let translations = $derived(data.translations)
   let meal = $derived.by(() => {
@@ -42,7 +43,7 @@
   const scaleQty = (v: number) => Number((v * factor).toFixed(2))
 
   async function deleteMeal() {
-    if (!confirm('Delete this meal?')) return
+    if (!confirm(t('Delete this meal?'))) return
     await removeMeal(meal.id)
     await goto('/meals')
   }
@@ -92,25 +93,25 @@
     />
   {:else}
     <div class="top-bar">
-      <a class="back" href="/meals">← Meals</a>
+      <a class="back" href="/meals">{t('← Meals')}</a>
       {#if meal.instructions}
-        <a class="btn cook sm" href={`?cook=1`}>Start cooking</a>
+        <a class="btn cook sm" href={`?cook=1`}>{t('Start cooking')}</a>
       {/if}
       {#if data.editable}
         <div class="actions">
           <button class="btn ghost sm" onclick={() => (editing = true)}
-            >Edit</button
+            >{t('Edit')}</button
           >
           <button class="btn ghost sm" onclick={() => (translating = true)}
-            >Translate</button
+            >{t('Translate')}</button
           >
           <button class="btn danger sm" type="button" onclick={deleteMeal}
-            >Delete</button
+            >{t('Delete')}</button
           >
         </div>
       {:else}
         <button class="btn ghost sm" type="button" onclick={duplicate}
-          >Make a personal copy</button
+          >{t('Make a personal copy')}</button
         >
       {/if}
     </div>
@@ -122,15 +123,17 @@
 
       <div class="header">
         <div class="title">
-          <p class="eyebrow">Recipe</p>
+          <p class="eyebrow">{t('Recipe')}</p>
           <h1 lang={data.locale}>{meal.name}</h1>
         </div>
         <div class="meta">
           {#if meal.timeMinutes}<span class="badge"
-              >{meal.timeMinutes} min preparation</span
+              >{t('{minutes} min preparation', {
+                minutes: meal.timeMinutes,
+              })}</span
             >{/if}
           {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
-              >{DIFF_LABEL[meal.difficulty] ?? meal.difficulty}</span
+              >{label(meal.difficulty)}</span
             >{/if}
         </div>
       </div>
@@ -138,7 +141,7 @@
       {#if meal.tags?.length}
         <div class="chips">
           {#each meal.tags as tag}
-            <span class="chip">{tag.replace('_', ' ')}</span>
+            <span class="chip">{label(tag)}</span>
           {/each}
         </div>
       {/if}
@@ -148,23 +151,32 @@
           <div class="servings-step">
             <button
               type="button"
-              aria-label="Fewer servings"
+              aria-label={t('Fewer servings')}
               onclick={() => (servings = Math.max(1, servings - 1))}>−</button
             >
-            <span>{servings} serving{servings === 1 ? '' : 's'}</span>
+            <span>{namedCount(servings, 'serving')}</span>
             <button
               type="button"
-              aria-label="More servings"
+              aria-label={t('More servings')}
               onclick={() => (servings += 1)}>+</button
             >
           </div>
           {#if hasNutrition}
             <div class="nutrition">
               {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
-              {#if meal.proteinG}<span>{scaleG(meal.proteinG)}g protein</span
+              {#if meal.proteinG}<span
+                  >{t('{value}g protein', {
+                    value: scaleG(meal.proteinG) ?? '',
+                  })}</span
                 >{/if}
-              {#if meal.carbsG}<span>{scaleG(meal.carbsG)}g carbs</span>{/if}
-              {#if meal.fatG}<span>{scaleG(meal.fatG)}g fat</span>{/if}
+              {#if meal.carbsG}<span
+                  >{t('{value}g carbs', {
+                    value: scaleG(meal.carbsG) ?? '',
+                  })}</span
+                >{/if}
+              {#if meal.fatG}<span
+                  >{t('{value}g fat', { value: scaleG(meal.fatG) ?? '' })}</span
+                >{/if}
             </div>
           {/if}
         </div>
@@ -176,18 +188,19 @@
 
       {#if data.ingredients.length}
         <section>
-          <h2>Ingredients</h2>
+          <h2>{t('Ingredients')}</h2>
           {#if hasUnscalableIngredients}
             <p class="scale-notice" role="note">
-              Ingredients without a numeric quantity cannot be scaled. Edit the
-              recipe to add one.
+              {t(
+                'Ingredients without a numeric quantity cannot be scaled. Edit the recipe to add one.',
+              )}
             </p>
           {/if}
           <ul>
             {#each data.ingredients as ing}
               <li>
                 {ing.qty !== null
-                  ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + ing.unit : ''} `
+                  ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + label(ing.unit) : ''} `
                   : ''}{ing.name}
               </li>
             {/each}
@@ -197,7 +210,7 @@
 
       {#if meal.instructions}
         <section>
-          <h2>Instructions</h2>
+          <h2>{t('Instructions')}</h2>
           <p class="instructions" lang={data.locale}>{meal.instructions}</p>
         </section>
       {/if}

@@ -1,6 +1,9 @@
 <script lang="ts">
   import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import type { NutritionTargets } from '$lib/types'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t } = useI18n()
 
   let {
     calories,
@@ -21,7 +24,13 @@
 </script>
 
 <div class="bar-col">
-  <div class="bar-row" title="Calories: {calories} / {targets.calories} kcal">
+  <div
+    class="bar-row"
+    title={t('Calories: {value} / {target} kcal', {
+      value: calories,
+      target: targets.calories,
+    })}
+  >
     <div class="track">
       <div
         class="fill calories"
@@ -30,7 +39,13 @@
     </div>
     <span class="val">{calories}</span>
   </div>
-  <div class="bar-row" title="Protein: {proteinG}g / {targets.proteinG}g">
+  <div
+    class="bar-row"
+    title={t('Protein: {value}g / {target}g', {
+      value: proteinG,
+      target: targets.proteinG,
+    })}
+  >
     <div class="track">
       <div
         class="fill protein"
@@ -38,7 +53,13 @@
       ></div>
     </div>
   </div>
-  <div class="bar-row" title="Carbs: {carbsG}g / {targets.carbsG}g">
+  <div
+    class="bar-row"
+    title={t('Carbs: {value}g / {target}g', {
+      value: carbsG,
+      target: targets.carbsG,
+    })}
+  >
     <div class="track">
       <div
         class="fill carbs"
@@ -46,7 +67,13 @@
       ></div>
     </div>
   </div>
-  <div class="bar-row" title="Fat: {fatG}g / {targets.fatG}g">
+  <div
+    class="bar-row"
+    title={t('Fat: {value}g / {target}g', {
+      value: fatG,
+      target: targets.fatG,
+    })}
+  >
     <div class="track">
       <div class="fill fat" style="width:{pct(fatG, targets.fatG)}%"></div>
     </div>

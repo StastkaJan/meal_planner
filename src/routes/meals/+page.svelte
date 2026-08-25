@@ -12,8 +12,10 @@
   import Select from '$lib/components/ui/Select.svelte'
   import MealsTable from './_components/MealsTable.svelte'
   import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
+  import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  const { t, message, label, namedCount } = useI18n()
   let meals = $derived(data.meals)
   let creating = $state(false)
   let importing = $state(false)
@@ -35,7 +37,7 @@
   }
 
   async function deleteMeal(id: number) {
-    if (!confirm('Delete this meal?')) return
+    if (!confirm(t('Delete this meal?'))) return
     await removeMeal(id)
     meals = meals.filter((meal) => meal.id !== id)
   }
@@ -82,7 +84,8 @@
       })
       await goto(`/meals/${created.id}`)
     } catch (error) {
-      importError = error instanceof Error ? error.message : 'Import failed'
+      importError =
+        error instanceof Error ? message(error.message) : t('Import failed')
     } finally {
       importBusy = false
     }
@@ -92,9 +95,11 @@
 <div class="page">
   <div class="top-bar">
     <div>
-      <p class="eyebrow">Recipe library</p>
-      <h1>Recipes</h1>
-      <p class="subtitle">Keep your favourites ready for the week ahead.</p>
+      <p class="eyebrow">{t('Recipe library')}</p>
+      <h1>{t('Recipes')}</h1>
+      <p class="subtitle">
+        {t('Keep your favourites ready for the week ahead.')}
+      </p>
     </div>
     <div class="top-actions">
       <Button
@@ -102,16 +107,16 @@
         class={data.favoritesOnly ? 'active' : ''}
         onclick={toggleFavoritesFilter}
       >
-        {data.favoritesOnly ? 'Show all' : 'Favourites only'}
+        {data.favoritesOnly ? t('Show all') : t('Favourites only')}
       </Button>
       <Button
         variant="secondary"
         onclick={() => {
           importing = !importing
           importError = ''
-        }}>Import from URL</Button
+        }}>{t('Import from URL')}</Button
       >
-      <Button onclick={() => (creating = true)}>+ Add meal</Button>
+      <Button onclick={() => (creating = true)}>{t('+ Add meal')}</Button>
     </div>
   </div>
 
@@ -119,14 +124,14 @@
     <div class="import-bar">
       <Input
         type="url"
-        placeholder="https://…recipe page URL"
+        placeholder={`https://…${t('Recipe page URL')}`}
         bind:value={importUrl}
         onkeydown={(event) => {
           if (event.key === 'Enter') importRecipe()
         }}
       />
       <Select
-        title="Recipe language"
+        title={t('Recipe language')}
         value={importLocale}
         onchange={(event) =>
           (importLocale = (event.currentTarget as HTMLSelectElement)
@@ -137,7 +142,7 @@
         }))}
       />
       <Button size="sm" onclick={importRecipe} disabled={importBusy}>
-        {importBusy ? 'Importing…' : 'Import'}
+        {importBusy ? t('Importing…') : t('Import')}
       </Button>
       <Button
         size="sm"
@@ -145,7 +150,7 @@
         onclick={() => {
           importing = false
           importError = ''
-        }}>Cancel</Button
+        }}>{t('Cancel')}</Button
       >
       {#if importError}<span class="import-error">{importError}</span>{/if}
     </div>
@@ -156,17 +161,17 @@
       type="search"
       name="q"
       value={data.query}
-      placeholder="Search recipes…"
+      placeholder={t('Search recipes…')}
     />
     <Select
       name="difficulty"
       value={data.difficulty}
-      title="Filter by difficulty"
+      title={t('Filter by difficulty')}
       options={[
-        { value: '', label: 'Any difficulty' },
-        { value: 'easy', label: 'Easy' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'hard', label: 'Hard' },
+        { value: '', label: t('Any difficulty') },
+        { value: 'easy', label: label('easy') },
+        { value: 'medium', label: label('medium') },
+        { value: 'hard', label: label('hard') },
       ]}
     />
     {#if data.favoritesOnly}<input
@@ -174,11 +179,13 @@
         name="favorites"
         value="1"
       />{/if}
-    <Button type="submit" size="sm">Apply</Button>
+    <Button type="submit" size="sm">{t('Apply')}</Button>
     {#if data.query || data.difficulty}
-      <a class="clear" href={recipeUrl({ clear: true, page: 1 })}>Clear</a>
+      <a class="clear" href={recipeUrl({ clear: true, page: 1 })}
+        >{t('Clear')}</a
+      >
     {/if}
-    <span class="result-count">{data.totalResults} recipes</span>
+    <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span>
   </form>
 
   <MealsTable
@@ -186,22 +193,27 @@
     isAdmin={data.isAdmin}
     bind:creating
     emptyMessage={data.query || data.difficulty
-      ? 'No matching recipes.'
+      ? t('No matching recipes.')
       : data.favoritesOnly
-        ? 'No favourites yet.'
-        : 'No meals yet.'}
+        ? t('No favourites yet.')
+        : t('No meals yet.')}
     onCreate={handleCreate}
     onDelete={deleteMeal}
     onFavorite={toggleFavorite}
   />
   {#if data.totalPages > 1}
-    <nav class="pagination" aria-label="Recipe pages">
+    <nav class="pagination" aria-label={t('Recipe pages')}>
       {#if data.page > 1}<a href={recipeUrl({ page: data.page - 1 })}
-          >Previous</a
+          >{t('Previous')}</a
         >{/if}
-      <span>Page {data.page} of {data.totalPages}</span>
+      <span
+        >{t('Page {page} of {pages}', {
+          page: data.page,
+          pages: data.totalPages,
+        })}</span
+      >
       {#if data.page < data.totalPages}<a
-          href={recipeUrl({ page: data.page + 1 })}>Next</a
+          href={recipeUrl({ page: data.page + 1 })}>{t('Next')}</a
         >{/if}
     </nav>
   {/if}

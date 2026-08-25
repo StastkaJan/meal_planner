@@ -5,6 +5,9 @@
   import Input from '$lib/components/ui/Input.svelte'
   import Select from '$lib/components/ui/Select.svelte'
   import Table from '$lib/components/ui/Table.svelte'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, label } = useI18n()
 
   let {
     meals,
@@ -38,10 +41,10 @@
   <tr>
     <td class="meal-name">
       <a href="/meals/{meal.id}">{meal.name}</a>
-      {#if meal.userId}<span class="own-tag">Personal</span>{/if}
+      {#if meal.userId}<span class="own-tag">{t('Personal')}</span>{/if}
     </td>
     <td>
-      {meal.difficulty ? (DIFF_LABEL[meal.difficulty] ?? meal.difficulty) : '—'}
+      {meal.difficulty ? label(meal.difficulty) : '—'}
     </td>
     <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
     <td class="actions">
@@ -49,14 +52,14 @@
         size="sm"
         variant="secondary"
         class={meal.isFavorite ? 'active' : ''}
-        aria-label={meal.isFavorite ? 'Unfavourite' : 'Mark as favourite'}
+        aria-label={meal.isFavorite ? t('Unfavourite') : t('Mark as favourite')}
         onclick={() => onFavorite(meal.id, !meal.isFavorite)}
       >
         {meal.isFavorite ? '★' : '☆'}
       </Button>
       {#if meal.userId}
         <Button size="sm" variant="danger" onclick={() => onDelete(meal.id)}
-          >Delete</Button
+          >{t('Delete')}</Button
         >
       {/if}
     </td>
@@ -66,28 +69,28 @@
 <div class="table-wrap">
   {#if creating}
     <form class="create-form" method="POST" onsubmit={submit}>
-      <Input type="text" name="name" placeholder="Meal name" required />
+      <Input type="text" name="name" placeholder={t('Meal name')} required />
       {#if isAdmin}
         <Select
           name="scope"
-          title="Who can see this recipe"
+          title={t('Who can see this recipe')}
           options={[
-            { value: 'personal', label: 'Just me' },
-            { value: 'global', label: 'Everyone' },
+            { value: 'personal', label: t('Just me') },
+            { value: 'global', label: t('Everyone') },
           ]}
         />
       {:else}
         <input type="hidden" name="scope" value="personal" />
       {/if}
-      <Button size="sm" type="submit">Save</Button>
+      <Button size="sm" type="submit">{t('Save')}</Button>
       <Button size="sm" variant="secondary" onclick={() => (creating = false)}
-        >Cancel</Button
+        >{t('Cancel')}</Button
       >
     </form>
   {/if}
   <Table
     data={meals}
-    columns={['Name', 'Difficulty', 'Preparation', 'Actions']}
+    columns={[t('Name'), t('Difficulty'), t('Preparation'), t('Actions')]}
     row={mealRow}
     {emptyMessage}
   />

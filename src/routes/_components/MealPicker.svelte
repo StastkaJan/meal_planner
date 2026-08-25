@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { Meal } from '$lib/database/schema'
   import { mealFitsSlot } from '$lib/domain/meals'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t } = useI18n()
 
   let {
     meals,
@@ -30,11 +33,13 @@
     <input
       class="search"
       type="search"
-      placeholder="Search meals…"
+      placeholder={t('Search meals…')}
       bind:value={search}
     />
-    <button class="close" onclick={() => onSelect(current)} aria-label="Cancel"
-      >✕</button
+    <button
+      class="close"
+      onclick={() => onSelect(current)}
+      aria-label={t('Cancel')}>✕</button
     >
   </div>
 
@@ -42,7 +47,7 @@
     {#if current !== null}
       <li>
         <button class="item clear-item" onclick={() => onSelect(null)}>
-          Clear slot
+          {t('Clear slot')}
         </button>
       </li>
     {/if}
@@ -60,7 +65,7 @@
         </button>
       </li>
     {:else}
-      <li class="no-results">No meals found</li>
+      <li class="no-results">{t('No meals found')}</li>
     {/each}
   </ul>
 </div>

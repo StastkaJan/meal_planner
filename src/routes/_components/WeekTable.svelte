@@ -4,6 +4,10 @@
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'
+  import { localeCode } from '$lib/i18n'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t, label, locale } = useI18n()
 
   let {
     plan,
@@ -55,7 +59,7 @@
   let favoritesOnly = $state(false)
 
   const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
-    d.toLocaleDateString('en', { timeZone: 'UTC', ...opts })
+    d.toLocaleDateString(localeCode(locale()), { timeZone: 'UTC', ...opts })
 
   const isoDate = (d: Date) => d.toISOString().slice(0, 10) // extract YYYY-MM-DD from UTC ISO string
 
@@ -121,11 +125,11 @@
 
 <div class="cal-wrap">
   <div class="week-nav">
-    <button class="nav-btn" onclick={onPrevWeek} aria-label="Previous week"
+    <button class="nav-btn" onclick={onPrevWeek} aria-label={t('Previous week')}
       >‹</button
     >
     <span class="month-label">{monthLabel}</span>
-    <button class="nav-btn" onclick={onNextWeek} aria-label="Next week"
+    <button class="nav-btn" onclick={onNextWeek} aria-label={t('Next week')}
       >›</button
     >
   </div>
@@ -146,7 +150,7 @@
       <tbody>
         {#each plan.mealSlots as mt}
           <tr>
-            <td class="row-label">{mt.replaceAll('_', ' ')}</td>
+            <td class="row-label">{label(mt)}</td>
             {#each weekDates as dt}
               {@const date = isoDate(dt)}
               {@const slot = slotMap.get(`${date}-${mt}`) ?? null}
@@ -164,7 +168,7 @@
           </tr>
         {/each}
         <tr class="extras-row">
-          <td class="row-label nutrition-label">extras</td>
+          <td class="row-label nutrition-label">{t('extras')}</td>
           {#each weekDates as dt}
             <td class="slot-cell extras-cell">
               <div class="extras-inner">
@@ -177,15 +181,16 @@
                 <button
                   class="btn-recalc"
                   onclick={() => onRecalcDay(isoDate(dt))}
-                  title="Re-fill this day's empty slots to fit the remaining budget"
-                  >Recalculate</button
+                  title={t(
+                    "Re-fill this day's empty slots to fit the remaining budget",
+                  )}>{t('Recalculate')}</button
                 >
               </div>
             </td>
           {/each}
         </tr>
         <tr class="nutrition-row">
-          <td class="row-label nutrition-label">nutrition</td>
+          <td class="row-label nutrition-label">{t('nutrition')}</td>
           {#each dailyNutrition as dn}
             <td class="slot-cell nutrition-cell">
               <NutritionBar {...dn} {targets} />
@@ -200,17 +205,18 @@
     <div class="foot-actions">
       {#if onCopyWeek}
         <button class="btn-ghost" onclick={onCopyWeek}
-          >Copy from last week</button
+          >{t('Copy from last week')}</button
         >
       {/if}
       {#if onAutoCompose}
         <label class="favorites-only">
           <input type="checkbox" bind:checked={favoritesOnly} />
-          Favourites only
+          {t('Favourites only')}
         </label>
         <button
           class="btn-autocompose"
-          onclick={() => onAutoCompose(favoritesOnly)}>Auto-compose</button
+          onclick={() => onAutoCompose(favoritesOnly)}
+          >{t('Auto-compose')}</button
         >
       {/if}
     </div>

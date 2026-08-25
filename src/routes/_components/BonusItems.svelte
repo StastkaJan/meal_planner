@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { BonusItem } from '$lib/database/schema'
+  import { useI18n } from '$lib/i18n-context'
+
+  const { t } = useI18n()
 
   type BonusFields = {
     name: string
@@ -54,46 +57,46 @@
       <button
         class="del"
         onclick={() => onDelete(item.id)}
-        aria-label="Remove {item.name}">×</button
+        aria-label={t('Remove {name}', { name: item.name })}>×</button
       >
     </div>
   {/each}
-  <button class="add-btn" onclick={openForm}>+ extra</button>
+  <button class="add-btn" onclick={openForm}>{t('+ extra')}</button>
 </div>
 
 <dialog bind:this={dialogEl} onclose={() => (open = false)}>
   {#if open}
     <form class="bonus-form" onsubmit={submit}>
-      <h4>Add off-plan item</h4>
+      <h4>{t('Add off-plan item')}</h4>
       <input
         type="text"
-        placeholder="Name (e.g. Pizza, Beer)"
+        placeholder={t('Name (e.g. Pizza, Beer)')}
         bind:value={name}
       />
       <input
         type="number"
-        placeholder="Calories"
+        placeholder={t('Calories')}
         bind:value={calories}
         min="0"
       />
       <div class="macro-row">
         <input
           type="number"
-          placeholder="Protein g"
+          placeholder={t('Protein g')}
           bind:value={proteinG}
           min="0"
           step="0.1"
         />
         <input
           type="number"
-          placeholder="Carbs g"
+          placeholder={t('Carbs g')}
           bind:value={carbsG}
           min="0"
           step="0.1"
         />
         <input
           type="number"
-          placeholder="Fat g"
+          placeholder={t('Fat g')}
           bind:value={fatG}
           min="0"
           step="0.1"
@@ -103,9 +106,9 @@
         <button
           type="button"
           class="btn-ghost"
-          onclick={() => dialogEl?.close()}>Cancel</button
+          onclick={() => dialogEl?.close()}>{t('Cancel')}</button
         >
-        <button type="submit" class="btn-add">Add</button>
+        <button type="submit" class="btn-add">{t('Add')}</button>
       </div>
     </form>
   {/if}

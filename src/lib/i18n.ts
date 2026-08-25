@@ -9,6 +9,414 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   cs: 'Čeština',
 }
 
+const CS_MESSAGES = {
+  'Meal Plan home': 'Domů – jídelní plán',
+  'Main navigation': 'Hlavní navigace',
+  Planner: 'Plánovač',
+  Recipes: 'Recepty',
+  Review: 'Kontrola',
+  'Sign out': 'Odhlásit se',
+  'Weekly planner': 'Týdenní plánovač',
+  'Meal plan': 'Jídelní plán',
+  'Plan the week, balance nutrition, shop once.':
+    'Naplánujte týden, vyvažte výživu a nakupte najednou.',
+  'Create plan': 'Vytvořit plán',
+  'Shopping list': 'Nákupní seznam',
+  Delete: 'Smazat',
+  'Delete this plan?': 'Smazat tento plán?',
+  'Create your meal plan to get started.':
+    'Začněte vytvořením jídelního plánu.',
+  'Loading…': 'Načítání…',
+  "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'.":
+    'Do žádného prázdného času se nevejde oblíbené jídlo — nejprve označte některá jídla jako oblíbená nebo vypněte „Pouze oblíbené“.',
+  'No empty slots to fill.': 'Nejsou žádné prázdné časy k vyplnění.',
+  'Copy last week into this week? Existing slots will be overwritten.':
+    'Zkopírovat minulý týden do tohoto týdne? Stávající jídla budou přepsána.',
+  'Something went wrong.': 'Něco se pokazilo.',
+  'Nothing to recalculate — that day has no empty slots.':
+    'Není co přepočítat — tento den nemá žádné prázdné časy.',
+  'Plan settings': 'Nastavení plánu',
+  'Cuisine preferences': 'Preferované kuchyně',
+  'Dietary restrictions': 'Dietní omezení',
+  'Meal slots': 'Časy jídel',
+  'Disabled slots and their planned meals are removed.':
+    'Vypnuté časy a jejich naplánovaná jídla budou odstraněny.',
+  'Custom slot name': 'Název vlastního času',
+  'Add slot': 'Přidat čas',
+  'Repeat pattern': 'Opakování jídel',
+  'Different meal': 'Jiné jídlo',
+  'Same meal': 'Stejné jídlo',
+  '{meal}: {day1} and {day2} use the same meal':
+    '{meal}: {day1} a {day2} používají stejné jídlo',
+  'Previous week': 'Předchozí týden',
+  'Next week': 'Následující týden',
+  extras: 'navíc',
+  nutrition: 'výživa',
+  "Re-fill this day's empty slots to fit the remaining budget":
+    'Znovu vyplnit prázdné časy tohoto dne podle zbývajícího limitu',
+  Recalculate: 'Přepočítat',
+  'Copy from last week': 'Kopírovat z minulého týdne',
+  'Favourites only': 'Pouze oblíbené',
+  'Auto-compose': 'Automaticky sestavit',
+  'Remove {name}': 'Odebrat {name}',
+  '+ extra': '+ navíc',
+  'Add off-plan item': 'Přidat položku mimo plán',
+  'Name (e.g. Pizza, Beer)': 'Název (např. pizza, pivo)',
+  Calories: 'Kalorie',
+  'Protein g': 'Bílkoviny g',
+  'Carbs g': 'Sacharidy g',
+  'Fat g': 'Tuky g',
+  Cancel: 'Zrušit',
+  Add: 'Přidat',
+  leftovers: 'zbytky',
+  'Edit meal assignment': 'Upravit přiřazení jídla',
+  'Show recipe': 'Zobrazit recept',
+  'Prepare separately': 'Připravit zvlášť',
+  'Use leftovers from {source}': 'Použít zbytky z {source}',
+  'Remove meal': 'Odebrat jídlo',
+  'Click to assign meal': 'Kliknutím přiřadíte jídlo',
+  'Search meals…': 'Hledat jídla…',
+  'Clear slot': 'Vymazat čas',
+  'No meals found': 'Nebyla nalezena žádná jídla',
+  'Calories: {value} / {target} kcal': 'Kalorie: {value} / {target} kcal',
+  'Protein: {value}g / {target}g': 'Bílkoviny: {value} g / {target} g',
+  'Carbs: {value}g / {target}g': 'Sacharidy: {value} g / {target} g',
+  'Fat: {value}g / {target}g': 'Tuky: {value} g / {target} g',
+  'Global catalogue': 'Globální katalog',
+  'Recipe review': 'Kontrola receptů',
+  'Queue licensed recipe data, then approve it for everyone.':
+    'Zařaďte licencovaná data receptů do fronty a poté je schvalte pro všechny.',
+  'Batch import': 'Hromadný import',
+  'Paste a JSON array of 1–300 recipes. Each needs a name, ingredients, and instructions.':
+    'Vložte pole JSON s 1–300 recepty. Každý musí mít název, suroviny a postup.',
+  'Paste recipe JSON here': 'Sem vložte JSON receptů',
+  'Validating…': 'Ověřování…',
+  'Queue recipes': 'Zařadit recepty',
+  '{accepted} queued, {duplicates} duplicates, {invalid} invalid.':
+    'Zařazeno: {accepted}, duplicity: {duplicates}, neplatné: {invalid}.',
+  'Import failed': 'Import se nezdařil',
+  'Pending ({count})': 'Čekající ({count})',
+  'Review content': 'Zkontrolovat obsah',
+  Ingredients: 'Suroviny',
+  Instructions: 'Postup',
+  Approve: 'Schválit',
+  Reject: 'Zamítnout',
+  'No recipes awaiting review.': 'Žádné recepty nečekají na kontrolu.',
+  'Plan better meals, one week at a time.':
+    'Plánujte lepší jídla, týden po týdnu.',
+  Email: 'E-mail',
+  Password: 'Heslo',
+  'I accept the': 'Souhlasím s',
+  'Terms and Conditions': 'obchodními podmínkami',
+  'I acknowledge the': 'Beru na vědomí',
+  'Privacy Policy': 'zásady ochrany osobních údajů',
+  'Sign in': 'Přihlásit se',
+  'Create account': 'Vytvořit účet',
+  'Sign in instead': 'Místo toho se přihlásit',
+  'Recipe library': 'Knihovna receptů',
+  'Keep your favourites ready for the week ahead.':
+    'Mějte oblíbené recepty připravené na příští týden.',
+  'Show all': 'Zobrazit vše',
+  'Import from URL': 'Importovat z URL',
+  '+ Add meal': '+ Přidat jídlo',
+  'Recipe language': 'Jazyk receptu',
+  'Recipe page URL': 'URL stránky s receptem',
+  'Importing…': 'Importování…',
+  Import: 'Importovat',
+  'Search recipes…': 'Hledat recepty…',
+  'Filter by difficulty': 'Filtrovat podle obtížnosti',
+  'Any difficulty': 'Libovolná obtížnost',
+  Apply: 'Použít',
+  Clear: 'Vymazat',
+  'No matching recipes.': 'Nebyly nalezeny odpovídající recepty.',
+  'No favourites yet.': 'Zatím nemáte žádné oblíbené recepty.',
+  'No meals yet.': 'Zatím zde nejsou žádná jídla.',
+  'Recipe pages': 'Stránky receptů',
+  Previous: 'Předchozí',
+  'Page {page} of {pages}': 'Strana {page} z {pages}',
+  Next: 'Další',
+  Personal: 'Osobní',
+  Unfavourite: 'Odebrat z oblíbených',
+  'Mark as favourite': 'Přidat do oblíbených',
+  'Meal name': 'Název jídla',
+  'Who can see this recipe': 'Kdo může tento recept vidět',
+  'Just me': 'Jen já',
+  Everyone: 'Všichni',
+  Save: 'Uložit',
+  Name: 'Název',
+  Difficulty: 'Obtížnost',
+  Preparation: 'Příprava',
+  Actions: 'Akce',
+  'No rows.': 'Žádné řádky.',
+  'Delete this meal?': 'Smazat toto jídlo?',
+  '← Meals': '← Jídla',
+  'Start cooking': 'Začít vařit',
+  Edit: 'Upravit',
+  Translate: 'Přeložit',
+  'Make a personal copy': 'Vytvořit osobní kopii',
+  Recipe: 'Recept',
+  '{minutes} min preparation': 'Příprava {minutes} min',
+  'Fewer servings': 'Méně porcí',
+  'More servings': 'Více porcí',
+  '{value}g protein': '{value} g bílkovin',
+  '{value}g carbs': '{value} g sacharidů',
+  '{value}g fat': '{value} g tuku',
+  'Ingredients without a numeric quantity cannot be scaled. Edit the recipe to add one.':
+    'Suroviny bez číselného množství nelze přepočítat. Doplňte je úpravou receptu.',
+  'Cooking mode': 'Režim vaření',
+  'Screen wake lock status': 'Stav ponechání obrazovky zapnuté',
+  'Screen awake': 'Obrazovka zůstává zapnutá',
+  'Wake lock unavailable': 'Ponechání obrazovky zapnuté není dostupné',
+  'Wake lock inactive': 'Ponechání obrazovky zapnuté není aktivní',
+  'Close cooking mode': 'Zavřít režim vaření',
+  Close: 'Zavřít',
+  'Ingredients for {count}': 'Suroviny pro {count}',
+  'Fewer cooking servings': 'Méně porcí pro vaření',
+  'More cooking servings': 'Více porcí pro vaření',
+  'No ingredients listed.': 'Nejsou uvedeny žádné suroviny.',
+  'Step {step} of {count}': 'Krok {step} z {count}',
+  'Cooking steps': 'Kroky vaření',
+  'Next step': 'Další krok',
+  Timers: 'Časovače',
+  Minutes: 'Minuty',
+  'Start timer': 'Spustit časovač',
+  "Time's up": 'Čas vypršel',
+  Pause: 'Pozastavit',
+  Resume: 'Pokračovat',
+  Done: 'Hotovo',
+  'Remove timer': 'Odebrat časovač',
+  Remove: 'Odebrat',
+  'Image URL': 'URL obrázku',
+  'Preparation (min)': 'Příprava (min)',
+  'Protein (g)': 'Bílkoviny (g)',
+  'Carbs (g)': 'Sacharidy (g)',
+  'Fat (g)': 'Tuky (g)',
+  Servings: 'Porce',
+  Cuisine: 'Kuchyně',
+  Diet: 'Dieta',
+  'Allowed slots': 'Povolené časy',
+  '(none = any)': '(žádné = libovolné)',
+  Description: 'Popis',
+  Ingredient: 'Surovina',
+  Qty: 'Množství',
+  'Remove ingredient': 'Odebrat surovinu',
+  '+ Add ingredient': '+ Přidat surovinu',
+  'Recipe translation': 'Překlad receptu',
+  'Translate from {language}': 'Přeložit z jazyka {language}',
+  Language: 'Jazyk',
+  'No original description': 'Původní popis není k dispozici',
+  'No original instructions': 'Původní postup není k dispozici',
+  'Blank fields fall back to the original recipe.':
+    'Prázdná pole použijí text původního receptu.',
+  'Save translation': 'Uložit překlad',
+  'Delete translation': 'Smazat překlad',
+  'Delete the {language} translation?': 'Smazat překlad do jazyka {language}?',
+  '← Meal plan': '← Jídelní plán',
+  'Copy list': 'Kopírovat seznam',
+  'Choose Google Keep or another app from the share menu':
+    'V nabídce sdílení vyberte Google Keep nebo jinou aplikaci',
+  'Share list': 'Sdílet seznam',
+  'Everything for the week': 'Vše na celý týden',
+  'Week of {week}': 'Týden od {week}',
+  'People served': 'Počet osob',
+  'Sharing and copying are not supported by this browser.':
+    'Tento prohlížeč nepodporuje sdílení ani kopírování.',
+  'Copied. Paste it into Google Keep or another app.':
+    'Zkopírováno. Vložte seznam do Google Keep nebo jiné aplikace.',
+  'Could not share or copy this list.':
+    'Seznam se nepodařilo sdílet ani zkopírovat.',
+  'No meals assigned this week — nothing to shop for yet.':
+    'Na tento týden nejsou přiřazena žádná jídla — zatím není co nakupovat.',
+  'Your account': 'Váš účet',
+  Profile: 'Profil',
+  'Used for the app interface and available recipe translations.':
+    'Používá se pro rozhraní aplikace a dostupné překlady receptů.',
+  'Preferred language': 'Preferovaný jazyk',
+  'Save language': 'Uložit jazyk',
+  'Nutrition targets': 'Výživové cíle',
+  'Daily goals for nutrition bars and auto-compose. Blank uses the default.':
+    'Denní cíle pro výživové ukazatele a automatické sestavení. Prázdné pole použije výchozí hodnotu.',
+  'Targets saved.': 'Cíle byly uloženy.',
+  'Save targets': 'Uložit cíle',
+  'Change password': 'Změnit heslo',
+  'Use at least eight characters.': 'Použijte alespoň osm znaků.',
+  'Current password': 'Současné heslo',
+  'New password': 'Nové heslo',
+  'Update password': 'Aktualizovat heslo',
+  'Password updated.': 'Heslo bylo aktualizováno.',
+  'Your data': 'Vaše data',
+  'Download a JSON copy of your profile settings, personal recipes, plans, favourites, and recipe submissions.':
+    'Stáhněte si kopii nastavení profilu, osobních receptů, plánů, oblíbených položek a odeslaných receptů ve formátu JSON.',
+  'Download my data': 'Stáhnout moje data',
+  'Delete account': 'Smazat účet',
+  'Permanently deletes your sessions, settings, recipes, plans, and other personal data. Shared recipes stay in the catalogue. This cannot be undone.':
+    'Trvale smaže vaše relace, nastavení, recepty, plány a další osobní data. Sdílené recepty zůstanou v katalogu. Tuto akci nelze vrátit zpět.',
+  'Type {email} to confirm': 'Pro potvrzení napište {email}',
+  'Delete my account permanently': 'Trvale smazat můj účet',
+  'Too many attempts. Try again later.':
+    'Příliš mnoho pokusů. Zkuste to znovu později.',
+  'Invalid email or password': 'Neplatný e-mail nebo heslo',
+  'You must accept both legal documents to create an account':
+    'Pro vytvoření účtu musíte přijmout oba právní dokumenty',
+  'Password must be at least 8 characters': 'Heslo musí mít alespoň 8 znaků',
+  'Password must be at most 128 characters': 'Heslo může mít nejvýše 128 znaků',
+  'Email already in use': 'E-mail je již používán',
+  'New password must be at least 8 characters':
+    'Nové heslo musí mít alespoň 8 znaků',
+  'New password must be at most 128 characters':
+    'Nové heslo může mít nejvýše 128 znaků',
+  'Current password is incorrect': 'Současné heslo není správné',
+  'Password and confirmation are required': 'Je vyžadováno heslo a potvrzení',
+  'Password or confirmation is incorrect': 'Heslo nebo potvrzení není správné',
+  'Request failed': 'Požadavek se nezdařil',
+  'Page not found': 'Stránka nebyla nalezena',
+  'Unexpected error': 'Neočekávaná chyba',
+  'Back to home': 'Zpět na úvod',
+  'Invalid date': 'Neplatné datum',
+  'Status must be approved or rejected':
+    'Stav musí být schválený nebo zamítnutý',
+  'Pending import not found': 'Čekající import nebyl nalezen',
+  'Invalid JSON': 'Neplatný JSON',
+  'Invalid client error': 'Neplatná chyba klienta',
+  'Not authenticated': 'Nejste přihlášeni',
+  'Name is required': 'Název je povinný',
+  'Only admins can create global recipes':
+    'Globální recepty mohou vytvářet pouze správci',
+  'Invalid scope': 'Neplatný rozsah',
+  'Meal not found': 'Jídlo nebylo nalezeno',
+  'Only global meals can be duplicated': 'Duplikovat lze pouze globální jídla',
+  'Unsupported locale': 'Nepodporovaný jazyk',
+  'Edit the original recipe for its source language':
+    'Pro zdrojový jazyk upravte původní recept',
+  'Could not fetch that URL': 'Tuto URL se nepodařilo načíst',
+  'Provide a url or text': 'Zadejte URL nebo text',
+  "Couldn't find recipe data on that page":
+    'Na této stránce se nepodařilo najít data receptu',
+  'Plan already exists': 'Plán již existuje',
+  'Choose between 1 and 10 valid meal slots':
+    'Vyberte 1 až 10 platných časů jídel',
+  'Portions must be a whole number from 1 to 100':
+    'Počet porcí musí být celé číslo od 1 do 100',
+  'Invalid bonus item id': 'Neplatné ID položky navíc',
+  'Source and target week are the same': 'Zdrojový a cílový týden jsou stejné',
+  'Invalid mealType': 'Neplatný typ jídla',
+  'Invalid groupBreaks': 'Neplatné rozdělení skupin',
+  'Meal not allowed for this slot type': 'Jídlo není pro tento čas povoleno',
+  'Slot not found': 'Čas nebyl nalezen',
+  'Invalid source': 'Neplatný zdroj',
+  'Invalid source mealType': 'Neplatný typ zdrojového jídla',
+  'Leftovers must come from an earlier meal':
+    'Zbytky musí pocházet z dřívějšího jídla',
+  'Leftover source must contain the same meal':
+    'Zdroj zbytků musí obsahovat stejné jídlo',
+  'URL must be a public http(s) address': 'URL musí být veřejná adresa HTTP(S)',
+  'URL must resolve only to public addresses':
+    'URL musí odkazovat pouze na veřejné adresy',
+  'Recipe page is too large': 'Stránka receptu je příliš velká',
+  'URL credentials are not allowed': 'Přihlašovací údaje v URL nejsou povoleny',
+  'Fetch failed (bad redirect)': 'Načtení selhalo (neplatné přesměrování)',
+  'Too many redirects': 'Příliš mnoho přesměrování',
+  'Provide between 1 and 300 recipes': 'Zadejte 1 až 300 receptů',
+} as const
+
+export type MessageKey = keyof typeof CS_MESSAGES
+export type MessageParams = Record<string, string | number>
+export type PluralForms = Partial<Record<Intl.LDMLPluralRule, string>> & {
+  other: string
+}
+
+export function translate(
+  locale: Locale,
+  message: MessageKey,
+  params: MessageParams = {},
+): string {
+  const template = locale === 'cs' ? CS_MESSAGES[message] : message
+  return Object.entries(params).reduce(
+    (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
+    template,
+  )
+}
+
+export function translateMessage(locale: Locale, message: string): string {
+  if (locale !== 'cs') return message
+  if (message in CS_MESSAGES) return CS_MESSAGES[message as MessageKey]
+  const fetchStatus = message.match(/^Fetch failed \((.+)\)$/)
+  return fetchStatus ? `Načtení selhalo (${fetchStatus[1]})` : message
+}
+
+export const localeCode = (locale: Locale) =>
+  locale === 'cs' ? 'cs-CZ' : 'en-US'
+
+const CS_LABELS: Record<string, string> = {
+  breakfast: 'snídaně',
+  morning_snack: 'dopolední svačina',
+  lunch: 'oběd',
+  afternoon_snack: 'odpolední svačina',
+  dinner: 'večeře',
+  easy: 'Snadná',
+  medium: 'Střední',
+  hard: 'Náročná',
+  Italian: 'Italská',
+  Chinese: 'Čínská',
+  Japanese: 'Japonská',
+  Mexican: 'Mexická',
+  Indian: 'Indická',
+  Mediterranean: 'Středomořská',
+  Thai: 'Thajská',
+  American: 'Americká',
+  Vegetarian: 'Vegetariánská',
+  Vegan: 'Veganská',
+  no_lactose: 'bez laktózy',
+  no_gluten: 'bez lepku',
+  no_fiber: 'bez vlákniny',
+  no_nuts: 'bez ořechů',
+  no_eggs: 'bez vajec',
+  low_carb: 'nízkosacharidová',
+  low_fat: 'nízkotučná',
+  high_protein: 'vysokoproteinová',
+  tsp: 'lžička',
+  tbsp: 'lžíce',
+  cup: 'hrnek',
+  piece: 'ks',
+  clove: 'stroužek',
+  pinch: 'špetka',
+  slice: 'plátek',
+  can: 'plechovka',
+}
+
+export function localizeLabel(locale: Locale, value: string): string {
+  if (locale === 'cs' && CS_LABELS[value]) return CS_LABELS[value]
+  return value.replaceAll('_', ' ')
+}
+
+export function formatCount(
+  locale: Locale,
+  count: number,
+  forms: PluralForms,
+): string {
+  const rule = new Intl.PluralRules(localeCode(locale)).select(count)
+  return `${count} ${forms[rule] ?? forms.other}`
+}
+
+const COUNT_FORMS = {
+  recipe: {
+    en: { one: 'recipe', other: 'recipes' },
+    cs: { one: 'recept', few: 'recepty', other: 'receptů' },
+  },
+  serving: {
+    en: { one: 'serving', other: 'servings' },
+    cs: { one: 'porce', few: 'porce', other: 'porcí' },
+  },
+} satisfies Record<string, Record<Locale, PluralForms>>
+
+export type CountedNoun = keyof typeof COUNT_FORMS
+
+export const formatNamedCount = (
+  locale: Locale,
+  count: number,
+  noun: CountedNoun,
+) => formatCount(locale, count, COUNT_FORMS[noun][locale])
+
 export function parseLocale(value: unknown): Locale | null {
   if (typeof value !== 'string') return null
   const language = value.trim().toLowerCase().split(/[-_]/)[0]
