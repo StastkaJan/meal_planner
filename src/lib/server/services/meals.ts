@@ -79,9 +79,8 @@ export async function updateUserMeal(
   id: number,
   body: Record<string, unknown>,
 ) {
-  return monitorService('meals', 'update', () =>
-    updateMeal(id, pickMealFields(body)),
-  )
+  const { sourceLocale: _sourceLocale, ...values } = pickMealFields(body)
+  return monitorService('meals', 'update', () => updateMeal(id, values))
 }
 
 export async function duplicateGlobalMeal(userId: number, id: number) {

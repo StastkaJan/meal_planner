@@ -332,7 +332,7 @@ export function translate(
 ): string {
   const template = locale === 'cs' ? CS_MESSAGES[message] : message
   return Object.entries(params).reduce<string>(
-    (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
+    (text, [key, value]) => text.replaceAll(`{${key}}`, () => String(value)),
     template,
   )
 }
@@ -425,9 +425,25 @@ export function parseLocale(value: unknown): Locale | null {
 
 export function localeFromAcceptLanguage(value: string | null): Locale {
   if (!value) return DEFAULT_LOCALE
+  let preferred: Locale | null = null
+  let preferredQuality = -1
   for (const item of value.split(',')) {
-    const locale = parseLocale(item.split(';')[0])
-    if (locale) return locale
+    const [language, ...parameters] = item.split(';')
+    const locale = parseLocale(language)
+    const qualityParameter = parameters
+      .map((parameter) => parameter.trim())
+      .find((parameter) => parameter.toLowerCase().startsWith('q='))
+    const quality = qualityParameter ? Number(qualityParameter.slice(2)) : 1
+    if (
+      locale &&
+      Number.isFinite(quality) &&
+      quality > 0 &&
+      quality <= 1 &&
+      quality > preferredQuality
+    ) {
+      preferred = locale
+      preferredQuality = quality
+    }
   }
-  return DEFAULT_LOCALE
+  return preferred ?? DEFAULT_LOCALE
 }

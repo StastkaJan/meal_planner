@@ -10,7 +10,11 @@ import type { RequestHandler } from './$types'
 
 export const PATCH: RequestHandler = async ({ request, locals, cookies }) => {
   const { id } = requireUser(locals)
-  const settings = await updateProfileSettings(id, await request.json())
+  const body = await request.json()
+  const settings = await updateProfileSettings(id, {
+    locale: locals.locale,
+    ...body,
+  })
   if ('locale' in settings && typeof settings.locale === 'string') {
     cookies.set('locale', settings.locale, {
       path: '/',

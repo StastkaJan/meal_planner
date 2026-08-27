@@ -12,8 +12,10 @@
   const { t, label, namedCount } = useI18n()
   let sourceMeal = $derived(data.sourceMeal)
   let translations = $derived(data.translations)
+  const translation = $derived(
+    translations.find((item) => item.locale === data.locale),
+  )
   let meal = $derived.by(() => {
-    const translation = translations.find((item) => item.locale === data.locale)
     return {
       ...sourceMeal,
       name: translation?.name ?? sourceMeal.name,
@@ -124,7 +126,9 @@
       <div class="header">
         <div class="title">
           <p class="eyebrow">{t('Recipe')}</p>
-          <h1 lang={data.locale}>{meal.name}</h1>
+          <h1 lang={translation?.name ? data.locale : sourceMeal.sourceLocale}>
+            {meal.name}
+          </h1>
         </div>
         <div class="meta">
           {#if meal.timeMinutes}<span class="badge"
@@ -183,7 +187,14 @@
       {/if}
 
       {#if meal.description}
-        <p class="description" lang={data.locale}>{meal.description}</p>
+        <p
+          class="description"
+          lang={translation?.description
+            ? data.locale
+            : sourceMeal.sourceLocale}
+        >
+          {meal.description}
+        </p>
       {/if}
 
       {#if data.ingredients.length}
@@ -211,7 +222,14 @@
       {#if meal.instructions}
         <section>
           <h2>{t('Instructions')}</h2>
-          <p class="instructions" lang={data.locale}>{meal.instructions}</p>
+          <p
+            class="instructions"
+            lang={translation?.instructions
+              ? data.locale
+              : sourceMeal.sourceLocale}
+          >
+            {meal.instructions}
+          </p>
         </section>
       {/if}
     </div>

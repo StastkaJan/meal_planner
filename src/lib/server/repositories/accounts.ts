@@ -5,6 +5,7 @@ import {
   ingredients,
   mealFavorites,
   mealIngredients,
+  mealTranslations,
   meals,
   plans,
   recipeImports,
@@ -95,6 +96,17 @@ export async function getAccountExport(userId: number) {
       .innerJoin(ingredients, eq(mealIngredients.ingredientId, ingredients.id))
       .where(eq(meals.userId, userId))
       .orderBy(mealIngredients.position)
+    const translationRows = await tx
+      .select({
+        mealId: mealTranslations.mealId,
+        locale: mealTranslations.locale,
+        name: mealTranslations.name,
+        description: mealTranslations.description,
+        instructions: mealTranslations.instructions,
+      })
+      .from(mealTranslations)
+      .innerJoin(meals, eq(mealTranslations.mealId, meals.id))
+      .where(eq(meals.userId, userId))
     const planRows = await tx
       .select()
       .from(plans)
@@ -162,6 +174,9 @@ export async function getAccountExport(userId: number) {
             ...item,
             qty: item.qty === null ? null : Number(item.qty),
           })),
+        translations: translationRows
+          .filter((translation) => translation.mealId === recipe.id)
+          .map(({ mealId: _mealId, ...translation }) => translation),
       })),
       plans: planRows.map(({ userId: _userId, ...plan }) => ({
         ...plan,
