@@ -25,6 +25,8 @@
 
 <!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
 
+<!-- NOTE: The runtime image upgrades Alpine's OpenSSL packages over the digest-pinned Node base before security scanning. -->
+
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
 
 <!-- NOTE: Production serves `papuplan.cz` via `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, WireGuard-only Grafana on a dedicated admin network, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md` and `docs/wireguard.md`. -->
