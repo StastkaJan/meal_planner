@@ -7,6 +7,7 @@ RUN npm run build
 RUN npx esbuild src/lib/database/migrate.ts --bundle --platform=node --format=esm --packages=external --outdir=scripts-dist
 
 FROM node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019
+RUN apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
 COPY --from=build /app/build .
 COPY --from=build /app/package*.json .
