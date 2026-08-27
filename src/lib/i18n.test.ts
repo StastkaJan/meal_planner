@@ -21,6 +21,7 @@ describe('locale resolution', () => {
   it('honors Accept-Language quality weights and exclusions', () => {
     expect(localeFromAcceptLanguage('en;q=0, cs;q=0.9')).toBe('cs')
     expect(localeFromAcceptLanguage('en;q=0.2, cs;q=0.8')).toBe('cs')
+    expect(localeFromAcceptLanguage('en;q=0, *;q=1')).toBe('cs')
   })
 
   it('falls back to English', () => {
@@ -46,6 +47,12 @@ describe('translations', () => {
   it('translates known server messages and preserves unknown ones', () => {
     expect(translateMessage('cs', 'Invalid email or password')).toBe(
       'Neplatný e-mail nebo heslo',
+    )
+    expect(translateMessage('cs', 'Admin access required')).toBe(
+      'Je vyžadován přístup správce',
+    )
+    expect(translateMessage('cs', 'Plan not found')).toBe(
+      'Jídelní plán nebyl nalezen',
     )
     expect(translateMessage('cs', 'Database unavailable')).toBe(
       'Database unavailable',
