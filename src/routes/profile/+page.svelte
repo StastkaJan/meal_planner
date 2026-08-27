@@ -29,7 +29,7 @@
     e.preventDefault()
     const fd = new FormData(e.target as HTMLFormElement)
     await updateProfile({ locale: fd.get('locale') })
-    await goto('/profile')
+    location.reload()
   }
 
   async function changePassword(e: SubmitEvent) {

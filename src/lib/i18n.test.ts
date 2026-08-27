@@ -18,6 +18,11 @@ describe('locale resolution', () => {
     expect(localeFromAcceptLanguage('de-DE, cs-CZ;q=0.9, en;q=0.8')).toBe('cs')
   })
 
+  it('honors Accept-Language quality weights and exclusions', () => {
+    expect(localeFromAcceptLanguage('en;q=0, cs;q=0.9')).toBe('cs')
+    expect(localeFromAcceptLanguage('en;q=0.2, cs;q=0.8')).toBe('cs')
+  })
+
   it('falls back to English', () => {
     expect(localeFromAcceptLanguage('de-DE')).toBe('en')
   })
@@ -30,6 +35,12 @@ describe('translations', () => {
       translate('cs', 'Page {page} of {pages}', { page: 2, pages: 4 }),
     ).toBe('Strana 2 z 4')
     expect(translate('en', 'Shopping list')).toBe('Shopping list')
+  })
+
+  it('interpolates replacement-token characters literally', () => {
+    expect(translate('en', 'Remove {name}', { name: '$& sauce' })).toBe(
+      'Remove $& sauce',
+    )
   })
 
   it('translates known server messages and preserves unknown ones', () => {

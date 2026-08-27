@@ -2,15 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const deleteAccount = vi.hoisted(() => vi.fn())
 const exportAccountData = vi.hoisted(() => vi.fn())
+const updateProfileSettings = vi.hoisted(() => vi.fn())
 
 vi.mock('$lib/server/services/profile', () => ({
   changePassword: vi.fn(),
   deleteAccount,
   exportAccountData,
-  updateProfileSettings: vi.fn(),
+  updateProfileSettings,
 }))
 
-import { DELETE } from './+server'
+import { DELETE, PATCH } from './+server'
 import { GET } from './export/+server'
 
 function deleteEvent(body: object, userId?: number) {
@@ -18,6 +19,14 @@ function deleteEvent(body: object, userId?: number) {
     request: { json: () => Promise.resolve(body) },
     locals: userId ? { user: { id: userId } } : {},
     cookies: { delete: vi.fn() },
+  } as any
+}
+
+function patchEvent(body: object, locale: App.Locale = 'cs') {
+  return {
+    request: { json: () => Promise.resolve(body) },
+    locals: { user: { id: 42 }, locale },
+    cookies: { set: vi.fn() },
   } as any
 }
 
@@ -34,7 +43,12 @@ describe('GET /profile/export', () => {
     exportAccountData.mockResolvedValueOnce({
       version: 1,
       account: { email: 'cook@example.com' },
-      recipes: [],
+      recipes: [
+        {
+          id: 7,
+          translations: [{ locale: 'cs', name: 'Polévka' }],
+        },
+      ],
       plans: [],
     })
     const response = await GET({ locals: { user: { id: 42 } } } as any)
@@ -43,9 +57,46 @@ describe('GET /profile/export', () => {
     expect(await response.json()).toMatchObject({
       version: 1,
       account: { email: 'cook@example.com' },
+      recipes: [
+        {
+          id: 7,
+          translations: [{ locale: 'cs', name: 'Polévka' }],
+        },
+      ],
       exportedAt: expect.any(String),
     })
     expect(exportAccountData).toHaveBeenCalledWith(42)
+  })
+})
+
+describe('PATCH /profile', () => {
+  it('preserves the resolved locale when creating settings implicitly', async () => {
+    updateProfileSettings.mockResolvedValueOnce({
+      locale: 'cs',
+      calorieTarget: 2_000,
+    })
+    const event = patchEvent({ calorieTarget: 2_000 })
+
+    await PATCH(event)
+
+    expect(updateProfileSettings).toHaveBeenCalledWith(42, {
+      locale: 'cs',
+      calorieTarget: 2_000,
+    })
+    expect(event.cookies.set).toHaveBeenCalledWith(
+      'locale',
+      'cs',
+      expect.objectContaining({ path: '/' }),
+    )
+  })
+
+  it('uses an explicitly selected locale', async () => {
+    updateProfileSettings.mockResolvedValueOnce({ locale: 'en' })
+    const event = patchEvent({ locale: 'en' })
+
+    await PATCH(event)
+
+    expect(updateProfileSettings).toHaveBeenCalledWith(42, { locale: 'en' })
   })
 })
 
