@@ -279,6 +279,8 @@ const CS_MESSAGES = {
   'Invalid JSON': 'Neplatný JSON',
   'Invalid client error': 'Neplatná chyba klienta',
   'Not authenticated': 'Nejste přihlášeni',
+  'Admin access required': 'Je vyžadován přístup správce',
+  'Plan not found': 'Jídelní plán nebyl nalezen',
   'Name is required': 'Název je povinný',
   'Only admins can create global recipes':
     'Globální recepty mohou vytvářet pouze správci',
@@ -427,23 +429,31 @@ export function localeFromAcceptLanguage(value: string | null): Locale {
   if (!value) return DEFAULT_LOCALE
   let preferred: Locale | null = null
   let preferredQuality = -1
+  let wildcardQuality = -1
+  const specified = new Set<Locale>()
   for (const item of value.split(',')) {
     const [language, ...parameters] = item.split(';')
-    const locale = parseLocale(language)
     const qualityParameter = parameters
       .map((parameter) => parameter.trim())
       .find((parameter) => parameter.toLowerCase().startsWith('q='))
     const quality = qualityParameter ? Number(qualityParameter.slice(2)) : 1
-    if (
-      locale &&
-      Number.isFinite(quality) &&
-      quality > 0 &&
-      quality <= 1 &&
-      quality > preferredQuality
-    ) {
+    if (!Number.isFinite(quality) || quality < 0 || quality > 1) continue
+    if (language.trim() === '*') {
+      wildcardQuality = Math.max(wildcardQuality, quality)
+      continue
+    }
+    const locale = parseLocale(language)
+    if (locale) specified.add(locale)
+    if (locale && quality > 0 && quality > preferredQuality) {
       preferred = locale
       preferredQuality = quality
     }
+  }
+  if (wildcardQuality > 0 && wildcardQuality > preferredQuality) {
+    const wildcardLocale = SUPPORTED_LOCALES.find(
+      (locale) => !specified.has(locale),
+    )
+    if (wildcardLocale) return wildcardLocale
   }
   return preferred ?? DEFAULT_LOCALE
 }
