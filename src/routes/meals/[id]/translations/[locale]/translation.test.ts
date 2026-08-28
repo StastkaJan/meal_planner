@@ -39,6 +39,7 @@ describe('meal translation endpoint', () => {
     expect(saveMealTranslation).toHaveBeenCalledWith(1, 'cs', {
       name: 'Polévka',
       description: null,
+      ingredients: null,
       instructions: 'Vařit',
     })
   })
@@ -46,6 +47,19 @@ describe('meal translation endpoint', () => {
   it('rejects a translation in the source language', async () => {
     await expect(PATCH(event('en'))).rejects.toMatchObject({ status: 400 })
     expect(saveMealTranslation).not.toHaveBeenCalled()
+  })
+
+  it('trims translated ingredient names and leaves blank names as fallbacks', async () => {
+    saveMealTranslation.mockResolvedValue({ mealId: 1, locale: 'cs' })
+
+    await PATCH(event('cs', { ingredients: [' Mrkev ', ''] }))
+
+    expect(saveMealTranslation).toHaveBeenCalledWith(1, 'cs', {
+      name: null,
+      description: null,
+      ingredients: ['Mrkev', ''],
+      instructions: null,
+    })
   })
 
   it('deletes one locale without touching the recipe', async () => {

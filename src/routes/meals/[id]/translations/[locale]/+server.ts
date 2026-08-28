@@ -31,7 +31,17 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
       ]
     }),
   )
-  return json(await saveMealTranslation(mealId, locale, values))
+  const ingredients = Array.isArray(body.ingredients)
+    ? (body.ingredients as unknown[]).map((value: unknown) =>
+        typeof value === 'string' ? value.trim() : '',
+      )
+    : null
+  return json(
+    await saveMealTranslation(mealId, locale, {
+      ...values,
+      ingredients: ingredients?.some(Boolean) ? ingredients : null,
+    }),
+  )
 }
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {

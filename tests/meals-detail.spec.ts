@@ -99,6 +99,34 @@ test('scales ingredient quantities with servings', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveText('1.5 cup Flour')
 })
 
+test('translates recipe ingredient names', async ({ page }) => {
+  const name = `Translate-${Date.now()}`
+  await page.getByRole('button', { name: '+ Add meal' }).click()
+  await page.getByPlaceholder('Meal name').fill(name)
+  await page
+    .locator('.create-form')
+    .getByRole('button', { name: 'Save' })
+    .click()
+  await page.getByRole('link', { name, exact: true }).click()
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByPlaceholder('Ingredient').fill('Carrot')
+  await page.getByLabel('Instructions').fill('Chop the carrot.')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await page.reload()
+
+  await page.getByRole('button', { name: 'Translate' }).click()
+  await page.getByLabel('Carrot').fill('Mrkev')
+  await page.getByRole('button', { name: 'Save translation' }).click()
+
+  const recipeUrl = page.url()
+  await page.goto('/profile')
+  await page.locator('select[name="locale"]').selectOption('cs')
+  await page.getByRole('button', { name: 'Save language' }).click()
+  await page.waitForLoadState('networkidle')
+  await page.goto(recipeUrl)
+  await expect(page.getByRole('listitem')).toHaveText('Mrkev')
+})
+
 test('cooking mode scales ingredients, presents steps, and starts timers', async ({
   page,
 }) => {

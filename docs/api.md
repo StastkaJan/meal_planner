@@ -3,8 +3,8 @@
 ## Localization
 
 - `PATCH /meals/[id]/translations/[locale]` upserts translated `name`,
-  `description`, and `instructions` for an editable recipe. Blank fields use the
-  original recipe as fallback.
+  `description`, ordered `ingredients`, and `instructions` for an editable
+  recipe. Blank fields use the original recipe as fallback.
 - `DELETE /meals/[id]/translations/[locale]` deletes one translation without
   changing the original recipe.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.

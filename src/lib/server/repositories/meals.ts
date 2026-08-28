@@ -90,7 +90,7 @@ export async function saveMealTranslation(
   locale: Locale,
   values: Pick<
     typeof mealTranslations.$inferInsert,
-    'name' | 'description' | 'instructions'
+    'name' | 'description' | 'ingredients' | 'instructions'
   >,
 ) {
   const [translation] = await db

@@ -45,6 +45,7 @@ describe('meal localization', () => {
         locale: 'cs',
         name: 'Polévka',
         description: null,
+        ingredients: null,
         instructions: 'Uvařte ji',
       }),
     ).toMatchObject({

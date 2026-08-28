@@ -9,12 +9,14 @@
 
   let {
     meal,
+    ingredients,
     translations,
     currentLocale,
     onCancel,
     onChanged,
   }: {
     meal: Meal
+    ingredients: { name: string }[]
     translations: MealTranslation[]
     currentLocale: Locale
     onCancel: () => void
@@ -33,9 +35,11 @@
 
   async function save(event: SubmitEvent) {
     event.preventDefault()
-    const body = Object.fromEntries(
-      new FormData(event.currentTarget as HTMLFormElement),
-    )
+    const form = new FormData(event.currentTarget as HTMLFormElement)
+    const body = {
+      ...Object.fromEntries(form),
+      ingredients: form.getAll('ingredients'),
+    }
     onChanged(await updateMealTranslation(meal.id, locale, body), locale)
   }
 
@@ -90,6 +94,21 @@
       placeholder={meal.description ?? t('No original description')}
     />
   </label>
+  {#if ingredients.length}
+    <fieldset>
+      <legend>{t('Ingredients')}</legend>
+      {#each ingredients as ingredient, index}
+        <label>
+          {ingredient.name}
+          <input
+            name="ingredients"
+            value={translation?.ingredients?.[index] ?? ''}
+            placeholder={ingredient.name}
+          />
+        </label>
+      {/each}
+    </fieldset>
+  {/if}
   <label>
     {t('Instructions')}
     <Textarea
@@ -145,6 +164,20 @@
   label {
     display: grid;
     gap: 4px;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  fieldset {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+  }
+  legend {
+    padding: 0 4px;
     color: $color-text-muted;
     font-size: 0.8rem;
     font-weight: 500;

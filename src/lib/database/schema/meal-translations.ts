@@ -10,6 +10,7 @@ export const mealTranslations = pgTable(
     locale: text('locale').notNull(),
     name: text('name'),
     description: text('description'),
+    ingredients: text('ingredients').array(),
     instructions: text('instructions'),
   },
   (table) => [primaryKey({ columns: [table.mealId, table.locale] })],

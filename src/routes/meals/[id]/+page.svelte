@@ -23,6 +23,12 @@
       instructions: translation?.instructions ?? sourceMeal.instructions,
     }
   })
+  const ingredients = $derived(
+    data.ingredients.map((ingredient, index) => ({
+      ...ingredient,
+      name: translation?.ingredients?.[index] || ingredient.name,
+    })),
+  )
   let editing = $state(false)
   let translating = $state(false)
   const cooking = $derived($page.url.searchParams.get('cook') === '1')
@@ -61,7 +67,7 @@
     <CookingMode
       name={meal.name}
       instructions={meal.instructions}
-      ingredients={data.ingredients}
+      {ingredients}
       baseServings={base}
       bind:servings
       closeHref={`/meals/${meal.id}`}
@@ -80,6 +86,7 @@
   {:else if translating}
     <MealTranslationForm
       meal={sourceMeal}
+      ingredients={data.ingredients}
       {translations}
       currentLocale={data.locale}
       onCancel={() => (translating = false)}
@@ -208,11 +215,15 @@
             </p>
           {/if}
           <ul>
-            {#each data.ingredients as ing}
+            {#each ingredients as ing, index}
               <li>
                 {ing.qty !== null
                   ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + label(ing.unit) : ''} `
-                  : ''}{ing.name}
+                  : ''}<span
+                  lang={translation?.ingredients?.[index]
+                    ? data.locale
+                    : sourceMeal.sourceLocale}>{ing.name}</span
+                >
               </li>
             {/each}
           </ul>
