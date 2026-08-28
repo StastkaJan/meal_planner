@@ -45,7 +45,7 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
-<!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/instructions; nullable translated fields fall back to the original text in `meals`. -->
+<!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/ordered ingredients/instructions; nullable translated fields fall back to the original recipe. -->
 
 <!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->
 

@@ -1,0 +1,1 @@
+ALTER TABLE "meal_translations" ADD COLUMN "ingredients" text[];
