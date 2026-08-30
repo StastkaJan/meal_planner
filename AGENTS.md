@@ -91,6 +91,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 - Fetch page data via `load` in `+page.server.ts`/`+layout.server.ts` through server services/repositories, not `onMount`/`$effect` in components. Consume it via `let { data }: { data: PageData } = $props()`.
 - Keep reusable controls in `$lib/components/ui`; colocate feature components under the owning route's `_components/`.
 - Browser mutations go through `$lib/api`; server routes use guards/services, and only repositories import `db`.
+- Prefer filtering, joins, and aggregation in repository SQL when doing so reduces rows or data transferred; keep TypeScript filtering for domain logic that SQL cannot express clearly.
 - Plan `portions` is the number of people served; shopping quantities scale by `portions / meal.servings`.
 - Profile `pantryStaples` are case-insensitive shopping-list exclusions, not inventory.
 - Interactive state that should survive navigation/reload belongs in the URL (`?param=`) so `load` reruns automatically — don't shadow it in component `$state`.
