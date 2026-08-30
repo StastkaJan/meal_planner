@@ -41,6 +41,13 @@ test('prefill an extra item from a common preset', async ({ page }) => {
     'Pizza',
   )
   await expect(page.getByPlaceholder('Calories')).toHaveValue('800')
+  await expect(page.getByPlaceholder('Protein g')).toHaveValue('32')
+  await expect(page.getByPlaceholder('Carbs g')).toHaveValue('96')
+  await expect(page.getByPlaceholder('Fat g')).toHaveValue('32')
+  await expect(page.getByPlaceholder('Fibre g')).toHaveValue('6')
+  await expect(page.getByPlaceholder('Sugars g')).toHaveValue('8')
+  await expect(page.getByPlaceholder('Saturated fat g')).toHaveValue('14')
+  await expect(page.getByPlaceholder('Salt g')).toHaveValue('3.2')
 
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(

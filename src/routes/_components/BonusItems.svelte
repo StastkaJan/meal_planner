@@ -17,17 +17,51 @@
   }
 
   const presets = [
-    { name: 'Pizza', calories: 800, proteinG: 32, carbsG: 96, fatG: 32 },
+    {
+      name: 'Pizza',
+      calories: 800,
+      proteinG: 32,
+      carbsG: 96,
+      fatG: 32,
+      fiberG: 6,
+      sugarG: 8,
+      saturatedFatG: 14,
+      saltG: 3.2,
+    },
     {
       name: 'Fast food',
       calories: 1000,
       proteinG: 35,
       carbsG: 110,
       fatG: 48,
+      fiberG: 8,
+      sugarG: 15,
+      saturatedFatG: 16,
+      saltG: 4,
     },
-    { name: 'Beer', calories: 210, proteinG: 2, carbsG: 18, fatG: 0 },
-    { name: 'Dessert', calories: 450, proteinG: 6, carbsG: 58, fatG: 22 },
-  ] as const satisfies readonly BonusFields[]
+    {
+      name: 'Beer',
+      calories: 210,
+      proteinG: 2,
+      carbsG: 18,
+      fatG: 0,
+      fiberG: 0,
+      sugarG: 0,
+      saturatedFatG: 0,
+      saltG: 0.02,
+    },
+    {
+      name: 'Dessert',
+      calories: 450,
+      proteinG: 6,
+      carbsG: 58,
+      fatG: 22,
+      fiberG: 3,
+      sugarG: 40,
+      saturatedFatG: 13,
+      saltG: 0.5,
+    },
+  ] as const satisfies readonly Required<BonusFields>[]
 
   let {
     date,
@@ -86,6 +120,10 @@
     proteinG = preset.proteinG
     carbsG = preset.carbsG
     fatG = preset.fatG
+    fiberG = preset.fiberG
+    sugarG = preset.sugarG
+    saturatedFatG = preset.saturatedFatG
+    saltG = preset.saltG
   }
 </script>
 
