@@ -64,19 +64,21 @@
     await refreshPlan()
   }
 
-  async function handleAutoCompose(favoritesOnly: boolean) {
+  async function handleAutoCompose(
+    favoritesOnly: boolean,
+    myRecipesOnly: boolean,
+  ) {
     if (!plan) return
     const { filled } = await planApi.populatePlan(
       plan.id,
       data.viewWeek,
       favoritesOnly,
+      myRecipesOnly,
     )
     if (filled === 0) {
       alert(
-        favoritesOnly
-          ? t(
-              "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'.",
-            )
+        favoritesOnly || myRecipesOnly
+          ? t('No recipes match the auto-compose filters for any empty slot.')
           : t('No empty slots to fill.'),
       )
     }

@@ -38,7 +38,7 @@
       mealType: string,
       source: { date: string; mealType: string } | null,
     ) => void
-    onAutoCompose?: (favoritesOnly: boolean) => void
+    onAutoCompose?: (favoritesOnly: boolean, myRecipesOnly: boolean) => void
     onCopyWeek?: () => void
     onAddBonus: (
       date: string,
@@ -57,6 +57,7 @@
   } = $props()
 
   let favoritesOnly = $state(false)
+  let myRecipesOnly = $state(false)
 
   const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
     d.toLocaleDateString(localeCode(locale()), { timeZone: 'UTC', ...opts })
@@ -213,9 +214,13 @@
           <input type="checkbox" bind:checked={favoritesOnly} />
           {t('Favourites only')}
         </label>
+        <label class="favorites-only">
+          <input type="checkbox" bind:checked={myRecipesOnly} />
+          {t('My recipes only')}
+        </label>
         <button
           class="btn-autocompose"
-          onclick={() => onAutoCompose(favoritesOnly)}
+          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
           >{t('Auto-compose')}</button
         >
       {/if}

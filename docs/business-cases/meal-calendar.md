@@ -43,8 +43,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
 - **Auto-compose empty slots.** Cuisine preferences are any-match and dietary
   restrictions are all-match. When no meal matches those preferences,
   auto-compose falls back to the visible library, but visibility, slot
-  restrictions, and **Favourites only** remain hard filters. It ranks calorie
-  fit first, macro fit second, and favours meals not already used that week.
+  restrictions, **Favourites only**, and **My recipes only** remain hard
+  filters. The two recipe filters can be combined. It ranks calorie fit first,
+  macro fit second, and favours meals not already used that week.
   It then jointly refines the week's new assignments to reduce daily nutrition
   misses while preserving repeat groups. Filled slots are never replaced, and
   a slot stays empty when no permitted meal exists.

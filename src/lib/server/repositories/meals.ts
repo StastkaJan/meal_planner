@@ -158,6 +158,7 @@ export async function listCandidateMeals(userId: number) {
   return db
     .select({
       id: meals.id,
+      userId: meals.userId,
       calories: meals.calories,
       tags: meals.tags,
       allowedSlots: meals.allowedSlots,
