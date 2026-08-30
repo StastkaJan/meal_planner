@@ -33,7 +33,7 @@
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
-<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
+<!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates and seeds its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
 <!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
 
@@ -92,6 +92,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 - Keep reusable controls in `$lib/components/ui`; colocate feature components under the owning route's `_components/`.
 - Browser mutations go through `$lib/api`; server routes use guards/services, and only repositories import `db`.
 - Plan `portions` is the number of people served; shopping quantities scale by `portions / meal.servings`.
+- Profile `pantryStaples` are case-insensitive shopping-list exclusions, not inventory.
 - Interactive state that should survive navigation/reload belongs in the URL (`?param=`) so `load` reruns automatically — don't shadow it in component `$state`.
 - This project does **not** use `invalidate`/`invalidateAll` and does **not** use `use:enhance`. All mutations use `fetch()` against the REST endpoints (`src/routes/**/+server.ts`), then update local state directly: for an in-place edit, derive a writable copy of load data with `$derived` (e.g. `let plan = $derived(data.plan)`) and reassign it after the `fetch` (see `handleSlotChange`/`handleSettingsChange` in `src/routes/+page.svelte`); for a create/delete that changes which rows exist, `goto()` the new/`/` URL to re-run `load` (see `createPlan`/`deletePlan` in `src/routes/+page.svelte`). If a REST endpoint doesn't exist yet for a form, add one in `+server.ts` — don't use form actions.
 - Note: `goto()` to the same route doesn't remount the component, so local `$state` for "is this form open" (e.g. `creating`) must be reset explicitly in the handler — see `createPlan` in `src/routes/+page.svelte`.

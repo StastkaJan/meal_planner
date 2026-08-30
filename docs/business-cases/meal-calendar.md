@@ -69,7 +69,7 @@ different dietary needs. Plans belong to a logged-in user and are private.
   ingredients from assigned meals. It groups matching names and units, sums
   complete quantities, scales them for the plan's people count and each
   recipe's serving count, keeps different units separate, and uses a plain
-  count when quantities are missing.
+  count when quantities are missing. Profile pantry staples are omitted.
 
 See [../schema.md](../schema.md) (`plans`, `weekSlots`, `slotLeftovers`,
 `slotRepeats`, `bonusItems`) and [../api.md](../api.md) (`/plans/*`) for the data and
@@ -83,8 +83,8 @@ endpoints.
 
 ## Non-goals
 
-- The shopping list is derived from the plan; it does not track pantry stock or
-  completed purchases.
+- The shopping list is derived from the plan. Pantry staples are simple
+  exclusions; it does not track stock quantities or completed purchases.
 - The calendar is not an in-kitchen cooking companion; recipe details belong
   in the [recipe library](./recipes.md).
 - Auto-compose is a starting point to edit, not a nutritionist's prescription.

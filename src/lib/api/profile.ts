@@ -1,7 +1,7 @@
-import { jsonBody, request } from './http'
+import { jsonBody, request, requestJson } from './http'
 
 export const updateProfile = (patch: object) =>
-  request('/profile', { method: 'PATCH', body: jsonBody(patch) })
+  requestJson('/profile', { method: 'PATCH', body: jsonBody(patch) })
 
 export async function changePassword(current: unknown, next: unknown) {
   const response = await request('/profile', {

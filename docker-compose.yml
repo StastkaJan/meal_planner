@@ -37,6 +37,20 @@ services:
       retries: 3
       start_period: 60s
 
+  test-seed:
+    profiles: ['test']
+    build:
+      context: .
+      target: build
+    command: npm run db:seed
+    environment:
+      DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - database
+
   backup:
     profiles: ['production']
     build: ./monitoring/backup

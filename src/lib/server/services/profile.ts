@@ -21,6 +21,24 @@ function toTarget(value: unknown): number | null {
   return Number.isFinite(target) && target > 0 ? target : null
 }
 
+export function toPantryStaples(value: unknown): string[] {
+  const entries = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\r?\n/)
+      : []
+  const staples = new Map<string, string>()
+
+  for (const entry of entries) {
+    if (typeof entry !== 'string') continue
+    const name = entry.trim().slice(0, 100)
+    const key = name.toLocaleLowerCase()
+    if (name && !staples.has(key)) staples.set(key, name)
+    if (staples.size === 100) break
+  }
+  return [...staples.values()]
+}
+
 export async function updateProfileSettings(
   userId: number,
   body: Record<string, unknown>,
@@ -34,6 +52,8 @@ export async function updateProfileSettings(
     if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
     if (body.dietaryRestrictions !== undefined)
       patch.dietaryRestrictions = body.dietaryRestrictions
+    if (body.pantryStaples !== undefined)
+      patch.pantryStaples = toPantryStaples(body.pantryStaples)
     for (const field of TARGET_FIELDS) {
       if (body[field] !== undefined) patch[field] = toTarget(body[field])
     }

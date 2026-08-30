@@ -50,6 +50,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Apply test database migrations
         run: docker compose run --build --rm app node scripts-dist/migrate.js
+      - name: Seed test database
+        run: docker compose --profile test run --build --rm test-seed
       - name: Run E2E smoke tests
         run: npm run test:smoke
 

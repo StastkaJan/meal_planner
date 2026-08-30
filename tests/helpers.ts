@@ -15,6 +15,7 @@ export async function register(
     'x-forwarded-for': `192.0.2.${ipOctet++}`,
   })
   await page.goto('/auth/register')
+  await page.waitForLoadState('networkidle')
   await page.fill('input[name="email"]', email)
   await page.fill('input[name="password"]', password)
   await page.check('input[name="termsAccepted"]')

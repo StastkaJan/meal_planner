@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('shopping list counts a batch once when a later slot uses leftovers', async ({
+test('@smoke shopping list counts a batch once when a later slot uses leftovers', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
@@ -58,4 +58,12 @@ test('shopping list counts a batch once when a later slot uses leftovers', async
     await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
   ).toContain('☐ 2 tbsp Honey')
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
+
+  await page.goto('/profile')
+  await page.getByLabel('Always on hand').fill('honey')
+  await page.getByRole('button', { name: 'Save pantry staples' }).click()
+  await expect(page.getByText('Pantry staples saved.')).toBeVisible()
+  await page.goBack()
+  await page.reload()
+  await expect(page.getByText('2 tbsp Honey')).toHaveCount(0)
 })

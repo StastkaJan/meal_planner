@@ -8,6 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   return {
     email,
     locale: s?.locale ?? locals.locale,
+    pantryStaples: s?.pantryStaples ?? [],
     calorieTarget: s?.calorieTarget ?? null,
     proteinTarget: s?.proteinTarget ?? null,
     carbsTarget: s?.carbsTarget ?? null,

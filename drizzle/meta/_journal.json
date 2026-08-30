@@ -148,6 +148,13 @@
       "when": 1787949617434,
       "tag": "0020_panoramic_moira_mactaggert",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788091121146,
+      "tag": "0021_graceful_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

@@ -47,6 +47,7 @@ export async function getSettings(userId: number) {
       locale: userSettings.locale,
       cuisinePrefs: userSettings.cuisinePrefs,
       dietaryRestrictions: userSettings.dietaryRestrictions,
+      pantryStaples: userSettings.pantryStaples,
       calorieTarget: userSettings.calorieTarget,
       proteinTarget: userSettings.proteinTarget,
       carbsTarget: userSettings.carbsTarget,

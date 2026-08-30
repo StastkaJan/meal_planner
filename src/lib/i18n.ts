@@ -227,12 +227,20 @@ const CS_MESSAGES = {
     'Seznam se nepodařilo sdílet ani zkopírovat.',
   'No meals assigned this week — nothing to shop for yet.':
     'Na tento týden nejsou přiřazena žádná jídla — zatím není co nakupovat.',
+  'No ingredients to shop for this week.':
+    'Tento týden není potřeba nakoupit žádné suroviny.',
   'Your account': 'Váš účet',
   Profile: 'Profil',
   'Used for the app interface and available recipe translations.':
     'Používá se pro rozhraní aplikace a dostupné překlady receptů.',
   'Preferred language': 'Preferovaný jazyk',
   'Save language': 'Uložit jazyk',
+  'Pantry staples': 'Suroviny ve spíži',
+  'Ingredients you always have, such as salt or oil. One per line; they are omitted from shopping lists.':
+    'Suroviny, které máte vždy po ruce, například sůl nebo olej. Jedna na řádek; v nákupních seznamech se vynechají.',
+  'Pantry staples saved.': 'Suroviny ve spíži byly uloženy.',
+  'Always on hand': 'Vždy po ruce',
+  'Save pantry staples': 'Uložit suroviny ve spíži',
   'Nutrition targets': 'Výživové cíle',
   'Daily goals for nutrition bars and auto-compose. Blank uses the default.':
     'Denní cíle pro výživové ukazatele a automatické sestavení. Prázdné pole použije výchozí hodnotu.',

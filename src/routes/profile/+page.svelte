@@ -13,6 +13,8 @@
   const { t, message } = useI18n()
 
   let targetsSaved = $state(false)
+  let pantrySaved = $state(false)
+  let pantryError = $state('')
   let passwordError = $state('')
   let passwordSuccess = $state('')
   let deletionError = $state('')
@@ -30,6 +32,21 @@
     const fd = new FormData(e.target as HTMLFormElement)
     await updateProfile({ locale: fd.get('locale') })
     location.reload()
+  }
+
+  async function savePantry(e: SubmitEvent) {
+    e.preventDefault()
+    pantrySaved = false
+    pantryError = ''
+    const fd = new FormData(e.target as HTMLFormElement)
+    try {
+      await updateProfile({ pantryStaples: fd.get('pantryStaples') })
+      pantrySaved = true
+    } catch (error) {
+      pantryError = message(
+        error instanceof Error ? error.message : 'Request failed',
+      )
+    }
   }
 
   async function changePassword(e: SubmitEvent) {
@@ -78,6 +95,27 @@
           </select>
         </label>
         <button type="submit">{t('Save language')}</button>
+      </form>
+    </section>
+    <section class="card">
+      <h2>{t('Pantry staples')}</h2>
+      <p class="hint">
+        {t(
+          'Ingredients you always have, such as salt or oil. One per line; they are omitted from shopping lists.',
+        )}
+      </p>
+      <form method="POST" onsubmit={savePantry}>
+        {#if pantryError}<p class="error">{pantryError}</p>{/if}
+        {#if pantrySaved}<p class="success">
+            {t('Pantry staples saved.')}
+          </p>{/if}
+        <label>
+          {t('Always on hand')}
+          <textarea name="pantryStaples" rows="5"
+            >{data.pantryStaples.join('\n')}</textarea
+          >
+        </label>
+        <button type="submit">{t('Save pantry staples')}</button>
       </form>
     </section>
     <section class="card">
@@ -267,7 +305,8 @@
     color: $color-text-muted;
   }
   input,
-  select {
+  select,
+  textarea {
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;
@@ -275,6 +314,9 @@
     border-radius: $radius-sm;
     color: $color-text;
     font-size: 0.875rem;
+  }
+  textarea {
+    resize: vertical;
   }
   button {
     justify-self: start;
