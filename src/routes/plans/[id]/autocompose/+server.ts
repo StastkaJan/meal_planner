@@ -7,9 +7,12 @@ import type { RequestHandler } from './$types'
 export const POST: RequestHandler = async ({ params, locals, request }) => {
   requirePro(locals)
   const plan = await requireOwnedPlan(locals, params.id)
-  const { week, favoritesOnly } = (await request.json().catch(() => ({}))) as {
+  const { week, favoritesOnly, myRecipesOnly } = (await request
+    .json()
+    .catch(() => ({}))) as {
     week?: string
     favoritesOnly?: boolean
+    myRecipesOnly?: boolean
   }
 
   const filled = await executePlanPopulation(
@@ -19,6 +22,7 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
       userId: plan.userId,
       week: validDateStr(week ?? plan.weekStart),
       favoritesOnly: !!favoritesOnly,
+      myRecipesOnly: !!myRecipesOnly,
     },
     plan,
   )

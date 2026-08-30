@@ -15,6 +15,8 @@
     weekStart,
     targets,
     isPro,
+    favoritesOnly,
+    myRecipesOnly,
     onSlotChange,
     onSlotLeftover,
     onAutoCompose,
@@ -30,6 +32,8 @@
     weekStart: string
     targets: NutritionTargets
     isPro: boolean
+    favoritesOnly: boolean
+    myRecipesOnly: boolean
     onSlotChange: (
       date: string,
       mealType: string,
@@ -40,7 +44,7 @@
       mealType: string,
       source: { date: string; mealType: string } | null,
     ) => void
-    onAutoCompose?: (favoritesOnly: boolean) => void
+    onAutoCompose?: (favoritesOnly: boolean, myRecipesOnly: boolean) => void
     onCopyWeek?: () => void
     onAddBonus: (
       date: string,
@@ -57,8 +61,6 @@
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
-
-  let favoritesOnly = $state(false)
 
   const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
     d.toLocaleDateString(localeCode(locale()), { timeZone: 'UTC', ...opts })
@@ -215,18 +217,10 @@
         >
       {/if}
       {#if onAutoCompose}
-        <label class="favorites-only">
-          <input
-            type="checkbox"
-            disabled={!isPro}
-            bind:checked={favoritesOnly}
-          />
-          {t('Favourites only')}
-        </label>
         <button
           class="btn-autocompose"
           disabled={!isPro}
-          onclick={() => onAutoCompose(favoritesOnly)}
+          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
           >{t('Auto-compose')}{#if !isPro}
             · {t('Pro')}{/if}</button
         >
@@ -434,15 +428,6 @@
       color: $color-text;
       border-color: $color-accent-dim;
     }
-  }
-
-  .favorites-only {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.78rem;
-    color: $color-text-muted;
-    cursor: pointer;
   }
 
   .btn-autocompose {

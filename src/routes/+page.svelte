@@ -14,6 +14,8 @@
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
   let preferences = $derived(data.preferences)
+  let favoritesOnly = $state(false)
+  let myRecipesOnly = $state(false)
 
   async function refreshPlan() {
     if (!plan) return
@@ -64,19 +66,21 @@
     await refreshPlan()
   }
 
-  async function handleAutoCompose(favoritesOnly: boolean) {
+  async function handleAutoCompose(
+    favoritesOnly: boolean,
+    myRecipesOnly: boolean,
+  ) {
     if (!plan) return
     const { filled } = await planApi.populatePlan(
       plan.id,
       data.viewWeek,
       favoritesOnly,
+      myRecipesOnly,
     )
     if (filled === 0) {
       alert(
-        favoritesOnly
-          ? t(
-              "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'.",
-            )
+        favoritesOnly || myRecipesOnly
+          ? t('No recipes match the auto-compose filters for any empty slot.')
           : t('No empty slots to fill.'),
       )
     }
@@ -194,6 +198,9 @@
     <PlanSettings
       {plan}
       {preferences}
+      isPro={data.user?.isPro ?? false}
+      bind:favoritesOnly
+      bind:myRecipesOnly
       onPreferenceChange={handlePreferenceChange}
       onMealSlotsChange={handleMealSlotsChange}
       onRepeatChange={handleRepeatChange}
@@ -204,6 +211,8 @@
       weekStart={data.viewWeek}
       targets={data.targets}
       isPro={data.user?.isPro ?? false}
+      {favoritesOnly}
+      {myRecipesOnly}
       onSlotChange={handleSlotChange}
       onSlotLeftover={handleSlotLeftover}
       onAutoCompose={handleAutoCompose}

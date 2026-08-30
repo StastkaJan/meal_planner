@@ -10,6 +10,9 @@
   let {
     plan,
     preferences,
+    isPro,
+    favoritesOnly = $bindable(false),
+    myRecipesOnly = $bindable(false),
     onPreferenceChange,
     onMealSlotsChange,
     onRepeatChange,
@@ -22,6 +25,9 @@
       cuisinePrefs: string[]
       dietaryRestrictions: string[]
     }
+    isPro: boolean
+    favoritesOnly?: boolean
+    myRecipesOnly?: boolean
     onPreferenceChange: (patch: {
       cuisinePrefs?: string[]
       dietaryRestrictions?: string[]
@@ -89,7 +95,17 @@
   <summary>{t('Plan settings')}</summary>
   <div class="body">
     <section>
-      <h4>{t('Cuisine preferences')}</h4>
+      <h4>
+        {t('Cuisine preferences')}
+        <button
+          type="button"
+          class="help"
+          tabindex="0"
+          title={t('Used by auto-compose to prefer matching recipes.')}
+          aria-label={t('Used by auto-compose to prefer matching recipes.')}
+          >?</button
+        >
+      </h4>
       <ChoiceChips
         options={CUISINE_OPTIONS}
         selected={preferences.cuisinePrefs}
@@ -98,7 +114,17 @@
       />
     </section>
     <section>
-      <h4>{t('Dietary restrictions')}</h4>
+      <h4>
+        {t('Dietary restrictions')}
+        <button
+          type="button"
+          class="help"
+          tabindex="0"
+          title={t('Auto-compose excludes recipes that do not match.')}
+          aria-label={t('Auto-compose excludes recipes that do not match.')}
+          >?</button
+        >
+      </h4>
       <ChoiceChips
         options={DIET_OPTIONS}
         selected={preferences.dietaryRestrictions}
@@ -108,7 +134,41 @@
       />
     </section>
     <section>
-      <h4>{t('Meal slots')}</h4>
+      <h4>
+        {t('Auto-compose')}
+        <button
+          type="button"
+          class="help"
+          tabindex="0"
+          title={t(
+            'Limit automatic planning by favourites or recipe ownership.',
+          )}
+          aria-label={t(
+            'Limit automatic planning by favourites or recipe ownership.',
+          )}>?</button
+        >
+      </h4>
+      <label class="favorites-only">
+        <input type="checkbox" disabled={!isPro} bind:checked={favoritesOnly} />
+        {t('Favourites only')}
+      </label>
+      <label class="favorites-only">
+        <input type="checkbox" disabled={!isPro} bind:checked={myRecipesOnly} />
+        {t('My recipes only')}
+      </label>
+    </section>
+    <section>
+      <h4>
+        {t('Meal slots')}
+        <button
+          type="button"
+          class="help"
+          tabindex="0"
+          title={t('Choose which meals appear on every day of the plan.')}
+          aria-label={t('Choose which meals appear on every day of the plan.')}
+          >?</button
+        >
+      </h4>
       <p class="hint">
         {t('Disabled slots and their planned meals are removed.')}
       </p>
@@ -160,7 +220,18 @@
     </section>
     {#if onRepeatChange}
       <section>
-        <h4>{t('Repeat pattern')}</h4>
+        <h4>
+          {t('Repeat pattern')}
+          <button
+            type="button"
+            class="help"
+            tabindex="0"
+            title={t('Join neighbouring days that should use the same recipe.')}
+            aria-label={t(
+              'Join neighbouring days that should use the same recipe.',
+            )}>?</button
+          >
+        </h4>
         {#each plan.mealSlots as mealType}
           {@const breaks = breaksFor(mealType)}
           <div class="repeat-row">
@@ -226,6 +297,22 @@
     letter-spacing: 0.05em;
     margin: 0 0 6px;
   }
+  .help {
+    display: inline-grid;
+    width: 16px;
+    height: 16px;
+    margin-left: 3px;
+    place-items: center;
+    border: 1px solid $color-border-strong;
+    border-radius: 50%;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    cursor: help;
+    font-size: 0.65rem;
+    line-height: 1;
+    text-transform: none;
+  }
   .hint {
     margin: 0 0 8px;
     color: $color-text-muted;
@@ -244,6 +331,13 @@
     color: $color-text-muted;
     font-size: 0.78rem;
     text-transform: capitalize;
+  }
+  .favorites-only {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
   }
   .custom-slots {
     margin-top: 10px;

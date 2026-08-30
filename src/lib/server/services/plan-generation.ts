@@ -34,6 +34,7 @@ export type PlanPopulationCommand = {
   userId: number
   week: string
   favoritesOnly: boolean
+  myRecipesOnly: boolean
 }
 
 const toCandidate = (
@@ -51,6 +52,7 @@ async function autocomposeSlots(
   targets: NutritionTargets,
   ownerId: number,
   favoritesOnly: boolean,
+  myRecipesOnly: boolean,
 ) {
   const [mealRows, existingSlots, favoriteIds, weekBonus, repeatRows] =
     await Promise.all([
@@ -63,10 +65,10 @@ async function autocomposeSlots(
   if (!mealRows.length) return 0
 
   const visibleMeals = mealRows.map(toCandidate)
-  let candidateMeals = visibleMeals
-  const visibleMealsById = new Map(
-    candidateMeals.map((meal) => [meal.id, meal]),
-  )
+  let candidateMeals = myRecipesOnly
+    ? mealRows.filter((meal) => meal.userId === ownerId).map(toCandidate)
+    : visibleMeals
+  const visibleMealsById = new Map(visibleMeals.map((meal) => [meal.id, meal]))
   if (favoriteIds)
     candidateMeals = candidateMeals.filter((meal) => favoriteIds.has(meal.id))
 
@@ -230,6 +232,7 @@ export async function executePlanPopulation(
       resolveTargets(settings),
       command.userId,
       command.favoritesOnly,
+      command.myRecipesOnly,
     )
   })
 }

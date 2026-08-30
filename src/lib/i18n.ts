@@ -27,8 +27,8 @@ const CS_MESSAGES = {
   'Create your meal plan to get started.':
     'Začněte vytvořením jídelního plánu.',
   'Loading…': 'Načítání…',
-  "No favourited meals fit any empty slot — mark some meals as favourites first, or turn off 'Favourites only'.":
-    'Do žádného prázdného času se nevejde oblíbené jídlo — nejprve označte některá jídla jako oblíbená nebo vypněte „Pouze oblíbené“.',
+  'No recipes match the auto-compose filters for any empty slot.':
+    'Žádný recept odpovídající filtrům automatického sestavení se nehodí do prázdného času.',
   'No empty slots to fill.': 'Nejsou žádné prázdné časy k vyplnění.',
   'Copy last week into this week? Existing slots will be overwritten.':
     'Zkopírovat minulý týden do tohoto týdne? Stávající jídla budou přepsána.',
@@ -38,12 +38,22 @@ const CS_MESSAGES = {
   'Plan settings': 'Nastavení plánu',
   'Cuisine preferences': 'Preferované kuchyně',
   'Dietary restrictions': 'Dietní omezení',
+  'Used by auto-compose to prefer matching recipes.':
+    'Automatické sestavení upřednostní odpovídající recepty.',
+  'Auto-compose excludes recipes that do not match.':
+    'Automatické sestavení vynechá recepty, které neodpovídají.',
+  'Limit automatic planning by favourites or recipe ownership.':
+    'Omezí automatické plánování podle oblíbených nebo vlastních receptů.',
   'Meal slots': 'Časy jídel',
+  'Choose which meals appear on every day of the plan.':
+    'Vyberte jídla, která se zobrazí v každém dni plánu.',
   'Disabled slots and their planned meals are removed.':
     'Vypnuté časy a jejich naplánovaná jídla budou odstraněny.',
   'Custom slot name': 'Název vlastního času',
   'Add slot': 'Přidat čas',
   'Repeat pattern': 'Opakování jídel',
+  'Join neighbouring days that should use the same recipe.':
+    'Spojte sousední dny, které mají používat stejný recept.',
   'Different meal': 'Jiné jídlo',
   'Same meal': 'Stejné jídlo',
   '{meal}: {day1} and {day2} use the same meal':
@@ -57,6 +67,7 @@ const CS_MESSAGES = {
   Recalculate: 'Přepočítat',
   'Copy from last week': 'Kopírovat z minulého týdne',
   'Favourites only': 'Pouze oblíbené',
+  'My recipes only': 'Pouze moje recepty',
   'Auto-compose': 'Automaticky sestavit',
   Pro: 'Pro',
   'Remove {name}': 'Odebrat {name}',

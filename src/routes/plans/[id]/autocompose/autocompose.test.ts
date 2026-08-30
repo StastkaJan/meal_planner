@@ -59,6 +59,7 @@ describe('POST /plans/:id/autocompose', () => {
         userId: 1,
         week: '2026-06-29',
         favoritesOnly: false,
+        myRecipesOnly: false,
       },
       plan,
     )
@@ -90,6 +91,21 @@ describe('POST /plans/:id/autocompose', () => {
     await POST(makeEvent('1', 1, { favoritesOnly: true }))
     expect(executePlanPopulation).toHaveBeenCalledWith(
       expect.objectContaining({ favoritesOnly: true }),
+      expect.anything(),
+    )
+  })
+
+  it('passes myRecipesOnly through to autocomposeSlots', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({
+      id: 1,
+      weekStart: '2026-06-29',
+      userId: 1,
+      cuisinePrefs: [],
+      dietaryRestrictions: [],
+    })
+    await POST(makeEvent('1', 1, { myRecipesOnly: true }))
+    expect(executePlanPopulation).toHaveBeenCalledWith(
+      expect.objectContaining({ myRecipesOnly: true }),
       expect.anything(),
     )
   })
