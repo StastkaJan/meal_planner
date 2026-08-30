@@ -298,6 +298,7 @@ export function parseRecipeHtml(html: string): ImportedRecipe | null {
       fiberContent: prop('fiberContent')[0],
       sugarContent: prop('sugarContent')[0],
       saturatedFatContent: prop('saturatedFatContent')[0],
+      saltContent: prop('saltContent')[0],
       sodiumContent: prop('sodiumContent')[0],
     },
     totalTime: prop('totalTime')[0],

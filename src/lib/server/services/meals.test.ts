@@ -298,12 +298,14 @@ describe('parseRecipeJsonLd', () => {
         <meta itemprop="name" content="Soup">
         <div itemprop="recipeIngredient">2 cups water</div>
         <div itemprop="recipeInstructions">Stir &amp; serve.</div>
+        <meta itemprop="saltContent" content="1.5 g">
       </article>
     `)
     expect(out).toMatchObject({
       name: 'Soup',
       ingredients: [{ name: 'water', qty: 2, unit: 'cup' }],
       instructions: 'Stir & serve.',
+      saltG: 1.5,
     })
   })
 

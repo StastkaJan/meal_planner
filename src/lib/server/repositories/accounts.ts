@@ -132,6 +132,10 @@ export async function getAccountExport(userId: number) {
         proteinG: bonusItems.proteinG,
         carbsG: bonusItems.carbsG,
         fatG: bonusItems.fatG,
+        fiberG: bonusItems.fiberG,
+        sugarG: bonusItems.sugarG,
+        saturatedFatG: bonusItems.saturatedFatG,
+        saltG: bonusItems.saltG,
       })
       .from(bonusItems)
       .innerJoin(plans, eq(bonusItems.planId, plans.id))
