@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('shopping list counts a batch once when a later slot uses leftovers', async ({
+test('@smoke shopping list counts a batch once when a later slot uses leftovers', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
