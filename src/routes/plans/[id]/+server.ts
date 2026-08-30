@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
-import { requireOwnedPlan } from '$lib/server/guards'
+import { requireOwnedPlan, requireVisiblePlan } from '$lib/server/guards'
 import { validDateStr } from '$lib/server/services/date'
 import {
   deletePlan,
@@ -11,7 +11,7 @@ import {
 import { parseMealSlots } from '$lib/domain/meal-slots'
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
-  const plan = await requireOwnedPlan(locals, params.id)
+  const plan = await requireVisiblePlan(locals, params.id)
   const week = validDateStr(url.searchParams.get('week') ?? plan.weekStart)
   const result = await getPlanDetail(plan, week, locals.locale)
   return json(result)

@@ -15,6 +15,7 @@
     leftoverSource,
     onPick,
     onLeftover,
+    editable = true,
   }: {
     slot: SlotWithMeal | null
     meals: Meal[]
@@ -22,6 +23,7 @@
     leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void
     onLeftover: (source: { date: string; mealType: string } | null) => void
+    editable?: boolean
   } = $props()
 
   let dialogEl = $state<HTMLDialogElement>()
@@ -63,6 +65,7 @@
     <div class="actions">
       <button
         type="button"
+        disabled={!editable}
         onclick={openPicker}
         title={t('Edit meal assignment')}
         aria-label={t('Edit meal assignment')}>✎</button
@@ -76,6 +79,7 @@
         <button
           type="button"
           class:active={usesLeftovers}
+          disabled={!editable}
           onclick={() =>
             onLeftover(
               usesLeftovers || !leftoverSource
@@ -96,6 +100,7 @@
       {/if}
       <button
         type="button"
+        disabled={!editable}
         onclick={() => onPick(null)}
         title={t('Remove meal')}
         aria-label={t('Remove meal')}>×</button
@@ -105,6 +110,7 @@
 {:else}
   <button
     class="cell {mealType}"
+    disabled={!editable}
     onclick={openPicker}
     title={t('Click to assign meal')}
   >
@@ -193,6 +199,9 @@
       &:hover {
         background: $color-surface-2;
         color: $color-text;
+      }
+      &:disabled {
+        display: none;
       }
     }
   }

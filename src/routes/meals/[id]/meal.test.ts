@@ -12,6 +12,9 @@ const mockDb = vi.hoisted(() => ({
 }))
 
 vi.mock('$lib/database', () => ({ db: mockDb }))
+vi.mock('$lib/server/repositories/households', () => ({
+  getHouseholdAccess: vi.fn().mockResolvedValue(null),
+}))
 
 const updateMeal = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/repositories/meals', async (importOriginal) => ({

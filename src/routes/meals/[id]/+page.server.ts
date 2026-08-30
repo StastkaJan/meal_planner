@@ -24,7 +24,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     translations,
     ingredients,
     locale: locals.locale,
-    editable:
-      meal.userId === locals.user?.id || (!meal.userId && locals.user?.isAdmin),
+    editable: meal.canEdit || (!meal.userId && locals.user?.isAdmin),
   }
 }

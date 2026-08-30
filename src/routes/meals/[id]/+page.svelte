@@ -79,7 +79,11 @@
       ingredients={data.ingredients}
       onCancel={() => (editing = false)}
       onSaved={(updated) => {
-        sourceMeal = updated
+        sourceMeal = {
+          ...updated,
+          isOwner: sourceMeal.isOwner,
+          canEdit: sourceMeal.canEdit,
+        }
         editing = false
       }}
     />
@@ -118,7 +122,7 @@
             >{t('Delete')}</button
           >
         </div>
-      {:else}
+      {:else if !meal.userId}
         <button class="btn ghost sm" type="button" onclick={duplicate}
           >{t('Make a personal copy')}</button
         >

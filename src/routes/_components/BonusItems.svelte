@@ -17,11 +17,13 @@
     items,
     onAdd,
     onDelete,
+    editable = true,
   }: {
     date: string
     items: BonusItem[]
     onAdd: (date: string, fields: BonusFields) => void
     onDelete: (id: number) => void
+    editable?: boolean
   } = $props()
 
   let dialogEl: HTMLDialogElement
@@ -56,12 +58,15 @@
       {#if item.calories !== null}<span class="kcal">{item.calories}</span>{/if}
       <button
         class="del"
+        disabled={!editable}
         onclick={() => onDelete(item.id)}
         aria-label={t('Remove {name}', { name: item.name })}>×</button
       >
     </div>
   {/each}
-  <button class="add-btn" onclick={openForm}>{t('+ extra')}</button>
+  <button class="add-btn" disabled={!editable} onclick={openForm}
+    >{t('+ extra')}</button
+  >
 </div>
 
 <dialog bind:this={dialogEl} onclose={() => (open = false)}>
@@ -149,6 +154,9 @@
     &:hover {
       color: $color-danger;
     }
+    &:disabled {
+      display: none;
+    }
   }
   .add-btn {
     background: none;
@@ -160,6 +168,9 @@
     padding: 1px 2px;
     &:hover {
       color: $color-text;
+    }
+    &:disabled {
+      display: none;
     }
   }
 
