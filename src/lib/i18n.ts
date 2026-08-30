@@ -61,6 +61,13 @@ const CS_MESSAGES = {
   'Remove {name}': 'Odebrat {name}',
   '+ extra': '+ navíc',
   'Add off-plan item': 'Přidat položku mimo plán',
+  'Quick picks': 'Rychlý výběr',
+  Pizza: 'Pizza',
+  'Fast food': 'Rychlé občerstvení',
+  Beer: 'Pivo',
+  Dessert: 'Dezert',
+  'Estimated nutrition — adjust if needed.':
+    'Výživové hodnoty jsou orientační — podle potřeby je upravte.',
   'Name (e.g. Pizza, Beer)': 'Název (např. pizza, pivo)',
   Calories: 'Kalorie',
   'Protein g': 'Bílkoviny g',

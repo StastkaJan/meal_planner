@@ -18,6 +18,22 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(page.getByText('Repeat pattern')).toBeVisible()
 })
 
+test('prefill an extra item from a common preset', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  await page.getByRole('button', { name: '+ extra' }).first().click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+
+  await expect(page.getByPlaceholder('Name (e.g. Pizza, Beer)')).toHaveValue(
+    'Pizza',
+  )
+  await expect(page.getByPlaceholder('Calories')).toHaveValue('800')
+
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(
+    page.locator('.bonus-item').filter({ hasText: 'Pizza' }),
+  ).toContainText('800')
+})
+
 test('configure enabled and custom meal slots for auto-compose', async ({
   page,
 }) => {
