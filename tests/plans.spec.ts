@@ -18,6 +18,16 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(
     page.getByRole('checkbox', { name: 'Favourites only' }),
   ).toBeVisible()
+  await expect(
+    page
+      .locator('details.settings')
+      .getByRole('checkbox', { name: 'My recipes only' }),
+  ).toBeVisible()
+  await expect(
+    page
+      .locator('.foot-actions')
+      .getByRole('checkbox', { name: 'My recipes only' }),
+  ).toHaveCount(0)
   await expect(page.getByText('Repeat pattern')).toBeVisible()
   await expect(page).toHaveTitle('Planner · Meal plan')
 })

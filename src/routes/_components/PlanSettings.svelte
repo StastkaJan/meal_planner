@@ -11,6 +11,7 @@
   let {
     plan,
     preferences,
+    myRecipesOnly = $bindable(false),
     onPreferenceChange,
     onMealSlotsChange,
     onRepeatChange,
@@ -23,6 +24,7 @@
       cuisinePrefs: string[]
       dietaryRestrictions: string[]
     }
+    myRecipesOnly?: boolean
     onPreferenceChange: (patch: {
       cuisinePrefs?: string[]
       dietaryRestrictions?: string[]
@@ -107,6 +109,13 @@
         onChange={(dietaryRestrictions) =>
           onPreferenceChange({ dietaryRestrictions })}
       />
+    </section>
+    <section>
+      <h4>{t('Auto-compose')}</h4>
+      <label class="setting-option">
+        <Checkbox bind:checked={myRecipesOnly} />
+        {t('My recipes only')}
+      </label>
     </section>
     <section>
       <h4>{t('Meal slots')}</h4>
@@ -244,6 +253,13 @@
     color: $color-text-muted;
     font-size: 0.78rem;
     text-transform: capitalize;
+  }
+  .setting-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
   }
   .custom-slots {
     margin-top: 10px;

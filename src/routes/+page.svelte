@@ -14,6 +14,7 @@
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
   let preferences = $derived(data.preferences)
+  let myRecipesOnly = $state(false)
 
   async function refreshPlan() {
     if (!plan) return
@@ -64,10 +65,7 @@
     await refreshPlan()
   }
 
-  async function handleAutoCompose(
-    favoritesOnly: boolean,
-    myRecipesOnly: boolean,
-  ) {
+  async function handleAutoCompose(favoritesOnly: boolean) {
     if (!plan) return
     const { filled } = await planApi.populatePlan(
       plan.id,
@@ -200,6 +198,7 @@
     <PlanSettings
       {plan}
       {preferences}
+      bind:myRecipesOnly
       onPreferenceChange={handlePreferenceChange}
       onMealSlotsChange={handleMealSlotsChange}
       onRepeatChange={handleRepeatChange}
