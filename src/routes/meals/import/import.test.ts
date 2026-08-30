@@ -9,10 +9,10 @@ vi.mock('$lib/server/services/safe-fetch', async (importOriginal) => ({
 import { SafeFetchError } from '$lib/server/services/safe-fetch'
 import { POST } from './+server'
 
-function makeEvent(body: object) {
+function makeEvent(body: object, isPro = true) {
   return {
     request: { json: () => Promise.resolve(body) },
-    locals: { user: { id: 1, isAdmin: false } },
+    locals: { user: { id: 1, isAdmin: false, isPro } },
   } as any
 }
 
@@ -21,6 +21,13 @@ const recipeHtml = (node: object) =>
 
 describe('POST /meals/import', () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it('rejects free users before fetching', async () => {
+    await expect(
+      POST(makeEvent({ url: 'https://recipes.example.com/r' }, false)),
+    ).rejects.toMatchObject({ status: 403 })
+    expect(fetchPublicHtml).not.toHaveBeenCalled()
+  })
 
   it('passes safe-fetch failures through', async () => {
     fetchPublicHtml.mockRejectedValueOnce(

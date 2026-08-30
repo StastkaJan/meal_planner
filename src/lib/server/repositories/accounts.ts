@@ -127,7 +127,7 @@ export async function saveSettings(
 export async function getAccountExport(userId: number) {
   return db.transaction(async (tx) => {
     const [account] = await tx
-      .select({ email: users.email })
+      .select({ email: users.email, isPro: users.isPro })
       .from(users)
       .where(eq(users.id, userId))
     const [settingsRow] = await tx
@@ -232,7 +232,7 @@ export async function getAccountExport(userId: number) {
       : null
     return {
       version: 1,
-      account: { email: account?.email, settings },
+      account: { email: account?.email, isPro: account?.isPro, settings },
       recipes: recipeRows.map(({ userId: _userId, ...recipe }) => ({
         ...recipe,
         ingredients: ingredientRows

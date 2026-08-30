@@ -14,6 +14,7 @@
     meals,
     weekStart,
     targets,
+    isPro,
     onSlotChange,
     onSlotLeftover,
     onAutoCompose,
@@ -28,6 +29,7 @@
     meals: Meal[]
     weekStart: string
     targets: NutritionTargets
+    isPro: boolean
     onSlotChange: (
       date: string,
       mealType: string,
@@ -209,10 +211,13 @@
                 />
                 <button
                   class="btn-recalc"
+                  disabled={!isPro}
                   onclick={() => onRecalcDay(isoDate(dt))}
                   title={t(
                     "Re-fill this day's empty slots to fit the remaining budget",
-                  )}>{t('Recalculate')}</button
+                  )}
+                  >{t('Recalculate')}{#if !isPro}
+                    · {t('Pro')}{/if}</button
                 >
               </div>
             </td>
@@ -233,19 +238,26 @@
   {#if onAutoCompose || onCopyWeek}
     <div class="foot-actions">
       {#if onCopyWeek}
-        <button class="btn-ghost" onclick={onCopyWeek}
-          >{t('Copy from last week')}</button
+        <button class="btn-ghost" disabled={!isPro} onclick={onCopyWeek}
+          >{t('Copy from last week')}{#if !isPro}
+            · {t('Pro')}{/if}</button
         >
       {/if}
       {#if onAutoCompose}
         <label class="favorites-only">
-          <input type="checkbox" bind:checked={favoritesOnly} />
+          <input
+            type="checkbox"
+            disabled={!isPro}
+            bind:checked={favoritesOnly}
+          />
           {t('Favourites only')}
         </label>
         <button
           class="btn-autocompose"
+          disabled={!isPro}
           onclick={() => onAutoCompose(favoritesOnly)}
-          >{t('Auto-compose')}</button
+          >{t('Auto-compose')}{#if !isPro}
+            · {t('Pro')}{/if}</button
         >
       {/if}
     </div>
@@ -422,6 +434,10 @@
     color: $color-text-muted;
     cursor: pointer;
     font-size: 0.65rem;
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
@@ -448,6 +464,10 @@
     cursor: pointer;
     font-size: 0.78rem;
     font-weight: 600;
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
@@ -474,6 +494,10 @@
     font-size: 0.78rem;
     font-weight: 650;
     box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       transform: translateY(-1px);
     }
