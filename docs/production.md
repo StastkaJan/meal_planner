@@ -3,8 +3,8 @@
 The production Compose overlay exposes its internal Caddy only on the external
 Docker network `public-web`. The VPS's portfolio Caddy owns ports 80/443,
 terminates TLS, and forwards the Meal Plan domain to `meal-plan-proxy:80` on
-that network. PostgreSQL, Prometheus, Loki, and Alloy have no host ports;
-Grafana binds only to the private address configured by
+that network. Prometheus, Loki, and Alloy have no host ports. PostgreSQL and
+Grafana bind only to the private address configured by
 `GRAFANA_BIND_ADDRESS`.
 
 ## First deployment
@@ -87,6 +87,19 @@ ssh -N -L 3001:127.0.0.1:3001 SSH_USER@PRODUCTION_HOST
 ```
 
 Do not proxy Grafana publicly. Anonymous access and sign-up are disabled.
+
+## PostgreSQL access
+
+With WireGuard active, connect a database client to `10.77.0.1:5432` using
+the database name and credentials from `.env.production`. PostgreSQL binds to
+the same private address as Grafana and must never use a public bind address.
+With the SSH fallback (`GRAFANA_BIND_ADDRESS=127.0.0.1`), forward it instead:
+
+```bash
+ssh -N -L 5433:127.0.0.1:5432 SSH_USER@PRODUCTION_HOST
+```
+
+Then connect the client to `127.0.0.1:5433`.
 
 ## Secret rotation
 

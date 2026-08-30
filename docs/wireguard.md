@@ -1,6 +1,7 @@
 # WireGuard access
 
-Grafana is available only through WireGuard at `http://10.77.0.1:3001`.
+Grafana is available through WireGuard at `http://10.77.0.1:3001`, and
+PostgreSQL at `10.77.0.1:5432`.
 WireGuard keys are machine secrets: never put them in this repository or a
 deployment environment file.
 
@@ -75,13 +76,14 @@ PersistentKeepalive = 25
 
 Copy the client public key displayed by the application into the server peer.
 Copy `/etc/wireguard/server.pub` into the client peer. Activate the tunnel and
-verify `http://10.77.0.1:3001/api/health` before opening Grafana.
+verify `http://10.77.0.1:3001/api/health` before opening Grafana. Database
+clients can connect to `10.77.0.1:5432` using the production credentials.
 
 Choose a different private subnet if `10.77.0.0/24` overlaps a client network.
 Give every additional client its own key pair, address, and server `[Peer]`
 entry.
 
-## Deploy Grafana binding
+## Deploy private service bindings
 
 After `wg0` is active, set this in `.env.production`:
 
@@ -89,9 +91,10 @@ After `wg0` is active, set this in `.env.production`:
 GRAFANA_BIND_ADDRESS=10.77.0.1
 ```
 
-Run the normal production deployment or recreate Grafana with the production
-Compose files. Verify that `docker compose ... ps grafana` reports
-`10.77.0.1:3001->3000/tcp`.
+Run the normal production deployment or recreate Grafana and PostgreSQL with
+the production Compose files. Verify that `docker compose ... ps` reports
+`10.77.0.1:3001->3000/tcp` for Grafana and
+`10.77.0.1:5432->5432/tcp` for PostgreSQL.
 
 ## Rollback
 
