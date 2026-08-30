@@ -63,12 +63,8 @@
           "name": "bonus_items_plan_id_plans_id_fk",
           "tableFrom": "bonus_items",
           "tableTo": "plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -103,9 +99,7 @@
         "ingredients_name_unique": {
           "name": "ingredients_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -135,12 +129,8 @@
           "name": "meal_favorites_user_id_users_id_fk",
           "tableFrom": "meal_favorites",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -148,12 +138,8 @@
           "name": "meal_favorites_meal_id_meals_id_fk",
           "tableFrom": "meal_favorites",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -161,10 +147,7 @@
       "compositePrimaryKeys": {
         "meal_favorites_user_id_meal_id_pk": {
           "name": "meal_favorites_user_id_meal_id_pk",
-          "columns": [
-            "user_id",
-            "meal_id"
-          ]
+          "columns": ["user_id", "meal_id"]
         }
       },
       "uniqueConstraints": {},
@@ -219,12 +202,8 @@
           "name": "meal_ingredients_meal_id_meals_id_fk",
           "tableFrom": "meal_ingredients",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -232,12 +211,8 @@
           "name": "meal_ingredients_ingredient_id_ingredients_id_fk",
           "tableFrom": "meal_ingredients",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -295,12 +270,8 @@
           "name": "meal_translations_meal_id_meals_id_fk",
           "tableFrom": "meal_translations",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -308,10 +279,7 @@
       "compositePrimaryKeys": {
         "meal_translations_meal_id_locale_pk": {
           "name": "meal_translations_meal_id_locale_pk",
-          "columns": [
-            "meal_id",
-            "locale"
-          ]
+          "columns": ["meal_id", "locale"]
         }
       },
       "uniqueConstraints": {},
@@ -436,12 +404,8 @@
           "name": "meals_user_id_users_id_fk",
           "tableFrom": "meals",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -517,12 +481,8 @@
           "name": "plans_user_id_users_id_fk",
           "tableFrom": "plans",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -532,9 +492,7 @@
         "plans_user_id_unique": {
           "name": "plans_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -618,12 +576,8 @@
           "name": "recipe_imports_submitted_by_users_id_fk",
           "tableFrom": "recipe_imports",
           "tableTo": "users",
-          "columnsFrom": [
-            "submitted_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submitted_by"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -631,12 +585,8 @@
           "name": "recipe_imports_meal_id_meals_id_fk",
           "tableFrom": "recipe_imports",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -676,12 +626,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -733,16 +679,8 @@
           "name": "slot_leftovers_plan_id_date_meal_type_week_slots_plan_id_date_meal_type_fk",
           "tableFrom": "slot_leftovers",
           "tableTo": "week_slots",
-          "columnsFrom": [
-            "plan_id",
-            "date",
-            "meal_type"
-          ],
-          "columnsTo": [
-            "plan_id",
-            "date",
-            "meal_type"
-          ],
+          "columnsFrom": ["plan_id", "date", "meal_type"],
+          "columnsTo": ["plan_id", "date", "meal_type"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -750,16 +688,8 @@
           "name": "slot_leftovers_plan_id_source_date_source_meal_type_week_slots_plan_id_date_meal_type_fk",
           "tableFrom": "slot_leftovers",
           "tableTo": "week_slots",
-          "columnsFrom": [
-            "plan_id",
-            "source_date",
-            "source_meal_type"
-          ],
-          "columnsTo": [
-            "plan_id",
-            "date",
-            "meal_type"
-          ],
+          "columnsFrom": ["plan_id", "source_date", "source_meal_type"],
+          "columnsTo": ["plan_id", "date", "meal_type"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -767,11 +697,7 @@
       "compositePrimaryKeys": {
         "slot_leftovers_plan_id_date_meal_type_pk": {
           "name": "slot_leftovers_plan_id_date_meal_type_pk",
-          "columns": [
-            "plan_id",
-            "date",
-            "meal_type"
-          ]
+          "columns": ["plan_id", "date", "meal_type"]
         }
       },
       "uniqueConstraints": {},
@@ -808,12 +734,8 @@
           "name": "slot_repeats_plan_id_plans_id_fk",
           "tableFrom": "slot_repeats",
           "tableTo": "plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -821,10 +743,7 @@
       "compositePrimaryKeys": {
         "slot_repeats_plan_id_meal_type_pk": {
           "name": "slot_repeats_plan_id_meal_type_pk",
-          "columns": [
-            "plan_id",
-            "meal_type"
-          ]
+          "columns": ["plan_id", "meal_type"]
         }
       },
       "uniqueConstraints": {},
@@ -901,12 +820,8 @@
           "name": "user_settings_user_id_users_id_fk",
           "tableFrom": "user_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -954,9 +869,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -998,12 +911,8 @@
           "name": "week_slots_plan_id_plans_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1011,12 +920,8 @@
           "name": "week_slots_meal_id_meals_id_fk",
           "tableFrom": "week_slots",
           "tableTo": "meals",
-          "columnsFrom": [
-            "meal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["meal_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1024,11 +929,7 @@
       "compositePrimaryKeys": {
         "week_slots_plan_id_date_meal_type_pk": {
           "name": "week_slots_plan_id_date_meal_type_pk",
-          "columns": [
-            "plan_id",
-            "date",
-            "meal_type"
-          ]
+          "columns": ["plan_id", "date", "meal_type"]
         }
       },
       "uniqueConstraints": {},
