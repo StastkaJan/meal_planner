@@ -69,6 +69,13 @@
     const copy = await duplicateMeal(meal.id)
     await goto(`/meals/${copy.id}`)
   }
+
+  function closeEditor() {
+    editing = false
+    if ($page.url.searchParams.get('edit') === '1') {
+      void goto(`/meals/${meal.id}`, { replaceState: true, noScroll: true })
+    }
+  }
 </script>
 
 <div class="page">
@@ -86,10 +93,10 @@
     <MealEditForm
       meal={sourceMeal}
       ingredients={data.ingredients}
-      onCancel={() => (editing = false)}
+      onCancel={closeEditor}
       onSaved={(updated) => {
         sourceMeal = updated
-        editing = false
+        closeEditor()
       }}
     />
   {:else if translating}

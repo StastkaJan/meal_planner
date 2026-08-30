@@ -44,4 +44,10 @@
       opacity: 0.45;
     }
   }
+
+  @media (forced-colors: active) {
+    input {
+      appearance: auto;
+    }
+  }
 </style>

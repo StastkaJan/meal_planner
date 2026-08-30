@@ -157,71 +157,51 @@
         </div>
         <small>{t('Estimated nutrition — adjust if needed.')}</small>
       </fieldset>
-      <input
-        type="text"
-        placeholder={t('Name (e.g. Pizza, Beer)')}
-        bind:value={name}
-      />
-      <input
-        type="number"
-        placeholder={t('Calories')}
-        bind:value={calories}
-        min="0"
-      />
+      <label>
+        <span>{t('Name')}</span>
+        <input
+          type="text"
+          placeholder={t('Name (e.g. Pizza, Beer)')}
+          bind:value={name}
+        />
+      </label>
+      <label>
+        <span>{t('Calories')}</span>
+        <input type="number" bind:value={calories} min="0" />
+      </label>
       <div class="macro-row">
-        <input
-          type="number"
-          placeholder={t('Protein g')}
-          bind:value={proteinG}
-          min="0"
-          step="0.1"
-        />
-        <input
-          type="number"
-          placeholder={t('Carbs g')}
-          bind:value={carbsG}
-          min="0"
-          step="0.1"
-        />
-        <input
-          type="number"
-          placeholder={t('Fat g')}
-          bind:value={fatG}
-          min="0"
-          step="0.1"
-        />
+        <label>
+          <span>{t('Protein g')}</span>
+          <input type="number" bind:value={proteinG} min="0" step="0.1" />
+        </label>
+        <label>
+          <span>{t('Carbs g')}</span>
+          <input type="number" bind:value={carbsG} min="0" step="0.1" />
+        </label>
+        <label>
+          <span>{t('Fat g')}</span>
+          <input type="number" bind:value={fatG} min="0" step="0.1" />
+        </label>
       </div>
       <div class="macro-row">
-        <input
-          type="number"
-          placeholder={t('Fibre g')}
-          bind:value={fiberG}
-          min="0"
-          step="0.01"
-        />
-        <input
-          type="number"
-          placeholder={t('Sugars g')}
-          bind:value={sugarG}
-          min="0"
-          step="0.01"
-        />
+        <label>
+          <span>{t('Fibre g')}</span>
+          <input type="number" bind:value={fiberG} min="0" step="0.01" />
+        </label>
+        <label>
+          <span>{t('Sugars g')}</span>
+          <input type="number" bind:value={sugarG} min="0" step="0.01" />
+        </label>
       </div>
       <div class="macro-row">
-        <input
-          type="number"
-          placeholder={t('Saturated fat g')}
-          bind:value={saturatedFatG}
-          min="0"
-          step="0.01"
-        />
-        <input
-          type="number"
-          placeholder={t('Salt g')}
-          bind:value={saltG}
-          min="0"
-          step="0.01"
-        />
+        <label>
+          <span>{t('Saturated fat g')}</span>
+          <input type="number" bind:value={saturatedFatG} min="0" step="0.01" />
+        </label>
+        <label>
+          <span>{t('Salt g')}</span>
+          <input type="number" bind:value={saltG} min="0" step="0.01" />
+        </label>
       </div>
       <div class="actions">
         <button
@@ -329,6 +309,18 @@
   .macro-row {
     display: flex;
     gap: 6px;
+
+    label {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+  .bonus-form > label,
+  .macro-row label {
+    display: grid;
+    gap: 4px;
+    color: $color-text-muted;
+    font-size: 0.72rem;
   }
   .presets {
     margin: 0;
