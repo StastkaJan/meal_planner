@@ -14,6 +14,7 @@
 
   let targetsSaved = $state(false)
   let pantrySaved = $state(false)
+  let pantryError = $state('')
   let passwordError = $state('')
   let passwordSuccess = $state('')
   let deletionError = $state('')
@@ -35,9 +36,17 @@
 
   async function savePantry(e: SubmitEvent) {
     e.preventDefault()
+    pantrySaved = false
+    pantryError = ''
     const fd = new FormData(e.target as HTMLFormElement)
-    await updateProfile({ pantryStaples: fd.get('pantryStaples') })
-    pantrySaved = true
+    try {
+      await updateProfile({ pantryStaples: fd.get('pantryStaples') })
+      pantrySaved = true
+    } catch (error) {
+      pantryError = message(
+        error instanceof Error ? error.message : 'Request failed',
+      )
+    }
   }
 
   async function changePassword(e: SubmitEvent) {
@@ -96,6 +105,7 @@
         )}
       </p>
       <form method="POST" onsubmit={savePantry}>
+        {#if pantryError}<p class="error">{pantryError}</p>{/if}
         {#if pantrySaved}<p class="success">
             {t('Pantry staples saved.')}
           </p>{/if}
