@@ -39,8 +39,16 @@ test('edit meal from detail page', async ({ page }) => {
   await page.getByRole('button', { name: 'Edit' }).click()
   const updated = `Updated-${Date.now()}`
   await page.locator('input[type="text"]').first().fill(updated)
+  await page.getByLabel('Fibre (g)').fill('4.5')
+  await page.getByLabel('Sugars (g)').fill('8')
+  await page.getByLabel('Saturated fat (g)').fill('2.5')
+  await page.getByLabel('Salt (g)').fill('1')
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page.locator('h1')).toHaveText(updated)
+  await expect(page.getByText('4.5g fibre')).toBeVisible()
+  await expect(page.getByText('8.0g sugars')).toBeVisible()
+  await expect(page.getByText('2.5g saturated fat')).toBeVisible()
+  await expect(page.getByText('1.0g salt')).toBeVisible()
 })
 
 test('delete meal from detail page', async ({ page }) => {

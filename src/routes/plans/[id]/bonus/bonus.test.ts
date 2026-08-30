@@ -60,7 +60,36 @@ describe('POST /plans/:id/bonus', () => {
       proteinG: null,
       carbsG: null,
       fatG: null,
+      fiberG: null,
+      sugarG: null,
+      saturatedFatG: null,
+      saltG: null,
     })
+  })
+
+  it('accepts the extended nutrition fields', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockAddBonusItem.mockResolvedValueOnce({ id: 9, name: 'Snack' })
+    await POST(
+      makeEvent({
+        date: '2026-06-30',
+        name: 'Snack',
+        fiberG: 4.5,
+        sugarG: 8,
+        saturatedFatG: 2.5,
+        saltG: 1,
+      }),
+    )
+    expect(mockAddBonusItem).toHaveBeenCalledWith(
+      1,
+      '2026-06-30',
+      expect.objectContaining({
+        fiberG: 4.5,
+        sugarG: 8,
+        saturatedFatG: 2.5,
+        saltG: 1,
+      }),
+    )
   })
 
   it('coerces a non-numeric calorie value to null instead of passing it through', async () => {

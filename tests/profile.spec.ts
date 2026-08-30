@@ -9,7 +9,14 @@ test.beforeEach(async ({ page }) => {
 test('profile controls stay visible and save settings', async ({ page }) => {
   const calories = page.getByLabel('Calories (kcal)')
   await expect(calories).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Preferences' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  )
+  await page.getByRole('link', { name: 'Security' }).click()
   await expect(page.getByLabel('Current password')).toBeVisible()
+  await expect(calories).not.toBeVisible()
+  await page.getByRole('link', { name: 'Preferences' }).click()
 
   await page.goto('/')
   await page.getByRole('button', { name: 'Create plan' }).click()
@@ -52,6 +59,8 @@ test('exports private account data and permanently deletes the account', async (
   })
   await page.request.post('/plans', { data: {} })
 
+  await page.getByRole('link', { name: 'Data & privacy' }).click()
+  await expect(page).toHaveURL(/\/profile\?tab=data$/)
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('link', { name: 'Download my data' }).click()
   const stream = await (await downloadPromise).createReadStream()

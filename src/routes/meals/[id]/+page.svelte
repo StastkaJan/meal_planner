@@ -29,7 +29,7 @@
       name: translation?.ingredients?.[index] || ingredient.name,
     })),
   )
-  let editing = $state(false)
+  let editing = $state($page.url.searchParams.get('edit') === '1')
   let translating = $state(false)
   const cooking = $derived($page.url.searchParams.get('cook') === '1')
 
@@ -39,7 +39,16 @@
   let servings = $derived(meal.servings || 1)
   const factor = $derived(servings / base)
   const hasNutrition = $derived(
-    !!(meal.calories || meal.proteinG || meal.carbsG || meal.fatG),
+    !!(
+      meal.calories ||
+      meal.proteinG ||
+      meal.carbsG ||
+      meal.fatG ||
+      meal.fiberG ||
+      meal.sugarG ||
+      meal.saturatedFatG ||
+      meal.saltG
+    ),
   )
   const hasUnscalableIngredients = $derived(
     data.ingredients.some((ingredient) => ingredient.qty === null),
@@ -187,6 +196,26 @@
                 >{/if}
               {#if meal.fatG}<span
                   >{t('{value}g fat', { value: scaleG(meal.fatG) ?? '' })}</span
+                >{/if}
+              {#if meal.fiberG}<span
+                  >{t('{value}g fibre', {
+                    value: scaleG(meal.fiberG) ?? '',
+                  })}</span
+                >{/if}
+              {#if meal.sugarG}<span
+                  >{t('{value}g sugars', {
+                    value: scaleG(meal.sugarG) ?? '',
+                  })}</span
+                >{/if}
+              {#if meal.saturatedFatG}<span
+                  >{t('{value}g saturated fat', {
+                    value: scaleG(meal.saturatedFatG) ?? '',
+                  })}</span
+                >{/if}
+              {#if meal.saltG}<span
+                  >{t('{value}g salt', {
+                    value: scaleG(meal.saltG) ?? '',
+                  })}</span
                 >{/if}
             </div>
           {/if}

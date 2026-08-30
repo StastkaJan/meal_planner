@@ -10,6 +10,10 @@
     proteinG: number | null
     carbsG: number | null
     fatG: number | null
+    fiberG?: number | null
+    sugarG?: number | null
+    saturatedFatG?: number | null
+    saltG?: number | null
   }
 
   const presets = [
@@ -45,10 +49,15 @@
   let proteinG: number | null = $state(null)
   let carbsG: number | null = $state(null)
   let fatG: number | null = $state(null)
+  let fiberG: number | null = $state(null)
+  let sugarG: number | null = $state(null)
+  let saturatedFatG: number | null = $state(null)
+  let saltG: number | null = $state(null)
 
   function openForm() {
     name = ''
     calories = proteinG = carbsG = fatG = null
+    fiberG = sugarG = saturatedFatG = saltG = null
     open = true
     dialogEl?.showModal()
   }
@@ -56,7 +65,17 @@
   function submit(e: Event) {
     e.preventDefault()
     if (!name.trim()) return
-    onAdd(date, { name: name.trim(), calories, proteinG, carbsG, fatG })
+    onAdd(date, {
+      name: name.trim(),
+      calories,
+      proteinG,
+      carbsG,
+      fatG,
+      fiberG,
+      sugarG,
+      saturatedFatG,
+      saltG,
+    })
     dialogEl?.close()
     open = false
   }
@@ -132,6 +151,38 @@
           bind:value={fatG}
           min="0"
           step="0.1"
+        />
+      </div>
+      <div class="macro-row">
+        <input
+          type="number"
+          placeholder={t('Fibre g')}
+          bind:value={fiberG}
+          min="0"
+          step="0.01"
+        />
+        <input
+          type="number"
+          placeholder={t('Sugars g')}
+          bind:value={sugarG}
+          min="0"
+          step="0.01"
+        />
+      </div>
+      <div class="macro-row">
+        <input
+          type="number"
+          placeholder={t('Saturated fat g')}
+          bind:value={saturatedFatG}
+          min="0"
+          step="0.01"
+        />
+        <input
+          type="number"
+          placeholder={t('Salt g')}
+          bind:value={saltG}
+          min="0"
+          step="0.01"
         />
       </div>
       <div class="actions">

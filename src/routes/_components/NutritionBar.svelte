@@ -10,17 +10,26 @@
     proteinG,
     carbsG,
     fatG,
+    fiberG,
+    sugarG,
+    saturatedFatG,
+    saltG,
     targets = NUTRITION_TARGETS,
   }: {
     calories: number
     proteinG: number
     carbsG: number
     fatG: number
+    fiberG: number
+    sugarG: number
+    saturatedFatG: number
+    saltG: number
     targets?: NutritionTargets
   } = $props()
 
   const pct = (v: number, max: number) =>
     Math.min(100, Math.round((v / max) * 100))
+  const grams = (value: number) => Number(value.toFixed(1))
 </script>
 
 <div class="bar-col">
@@ -78,6 +87,22 @@
       <div class="fill fat" style="width:{pct(fatG, targets.fatG)}%"></div>
     </div>
   </div>
+  <div class="secondary">
+    <span title={t('Fibre: {value}g', { value: grams(fiberG) })}
+      >{t('Fibre')} {grams(fiberG)}</span
+    >
+    <span title={t('Sugars: {value}g', { value: grams(sugarG) })}
+      >{t('Sugars')} {grams(sugarG)}</span
+    >
+    <span
+      title={t('Saturated fat: {value}g', {
+        value: grams(saturatedFatG),
+      })}>{t('Saturates')} {grams(saturatedFatG)}</span
+    >
+    <span title={t('Salt: {value}g', { value: grams(saltG) })}
+      >{t('Salt')} {grams(saltG)}</span
+    >
+  </div>
 </div>
 
 <style lang="scss">
@@ -121,5 +146,14 @@
     color: $color-text-muted;
     min-width: 24px;
     text-align: right;
+  }
+  .secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 6px;
+    margin-top: 1px;
+    color: $color-text-muted;
+    font-size: 0.58rem;
+    line-height: 1.2;
   }
 </style>

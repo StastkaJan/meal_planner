@@ -115,6 +115,10 @@
       proteinG: number | null
       carbsG: number | null
       fatG: number | null
+      fiberG?: number | null
+      sugarG?: number | null
+      saturatedFatG?: number | null
+      saltG?: number | null
     },
   ) {
     if (!plan) return

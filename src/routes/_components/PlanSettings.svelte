@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SlotRepeat } from '$lib/database/schema'
   import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
+  import Checkbox from '$lib/components/ui/Checkbox.svelte'
   import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
   import { normalizeMealSlot } from '$lib/domain/meal-slots'
   import { useI18n } from '$lib/i18n-context'
@@ -115,8 +116,7 @@
       <div class="slot-options">
         {#each MEAL_TYPES as mealType}
           <label>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={plan.mealSlots.includes(mealType)}
               disabled={plan.mealSlots.length === 1 &&
                 plan.mealSlots.includes(mealType)}

@@ -13,6 +13,10 @@ export type SlotWithMeal = WeekSlot & {
   proteinG: string | null
   carbsG: string | null
   fatG: string | null
+  fiberG: string | null
+  sugarG: string | null
+  saturatedFatG: string | null
+  saltG: string | null
   leftoverSourceDate: string | null
   leftoverSourceMealType: string | null
 }
@@ -47,5 +51,12 @@ export type ImportedRecipe = {
   ingredients?: IngredientInput[]
   instructions?: string
   calories?: number
+  proteinG?: number
+  carbsG?: number
+  fatG?: number
+  fiberG?: number
+  sugarG?: number
+  saturatedFatG?: number
+  saltG?: number
   timeMinutes?: number
 }

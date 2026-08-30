@@ -82,7 +82,7 @@
         scope: 'personal',
         sourceLocale: importLocale,
       })
-      await goto(`/meals/${created.id}`)
+      await goto(`/meals/${created.id}?edit=1`)
     } catch (error) {
       importError =
         error instanceof Error ? message(error.message) : t('Import failed')
@@ -121,39 +121,61 @@
   </div>
 
   {#if importing}
-    <div class="import-bar">
-      <Input
-        type="url"
-        placeholder={`https://…${t('Recipe page URL')}`}
-        bind:value={importUrl}
-        onkeydown={(event) => {
-          if (event.key === 'Enter') importRecipe()
-        }}
-      />
-      <Select
-        title={t('Recipe language')}
-        value={importLocale}
-        onchange={(event) =>
-          (importLocale = (event.currentTarget as HTMLSelectElement)
-            .value as Locale)}
-        options={SUPPORTED_LOCALES.map((locale) => ({
-          value: locale,
-          label: LOCALE_LABELS[locale],
-        }))}
-      />
-      <Button size="sm" onclick={importRecipe} disabled={importBusy}>
-        {importBusy ? t('Importing…') : t('Import')}
-      </Button>
-      <Button
-        size="sm"
-        variant="secondary"
-        onclick={() => {
-          importing = false
-          importError = ''
-        }}>{t('Cancel')}</Button
-      >
-      {#if importError}<span class="import-error">{importError}</span>{/if}
-    </div>
+    <form
+      class="import-panel"
+      onsubmit={(event) => {
+        event.preventDefault()
+        importRecipe()
+      }}
+    >
+      <div>
+        <h2>{t('Import a recipe')}</h2>
+        <p>
+          {t(
+            'Paste a public recipe page URL. The personal recipe opens for editing after import.',
+          )}
+        </p>
+      </div>
+      <div class="import-fields">
+        <label class="url-field">
+          <span>{t('Recipe page URL')}</span>
+          <Input
+            type="url"
+            placeholder="https://example.com/recipe"
+            bind:value={importUrl}
+            required
+          />
+        </label>
+        <label>
+          <span>{t('Recipe language')}</span>
+          <Select
+            value={importLocale}
+            onchange={(event) =>
+              (importLocale = (event.currentTarget as HTMLSelectElement)
+                .value as Locale)}
+            options={SUPPORTED_LOCALES.map((locale) => ({
+              value: locale,
+              label: LOCALE_LABELS[locale],
+            }))}
+          />
+        </label>
+      </div>
+      {#if importError}<p class="import-error" role="alert">
+          {importError}
+        </p>{/if}
+      <div class="import-actions">
+        <Button type="submit" disabled={importBusy}>
+          {importBusy ? t('Importing…') : t('Import and edit')}
+        </Button>
+        <Button
+          variant="secondary"
+          onclick={() => {
+            importing = false
+            importError = ''
+          }}>{t('Cancel')}</Button
+        >
+      </div>
+    </form>
   {/if}
 
   <form class="filters" method="GET">
@@ -226,8 +248,7 @@
   }
 
   .top-bar,
-  .top-actions,
-  .import-bar {
+  .top-actions {
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -294,16 +315,38 @@
     color: $color-accent;
   }
 
-  .import-bar {
-    padding: 0.8rem;
+  .import-panel {
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem;
     border: 1px solid $color-border;
     border-radius: $radius;
     background: $color-surface;
     box-shadow: 0 8px 24px rgb(41 39 33 / 4%);
   }
-
-  .import-bar :global(.ui-input) {
-    flex: 1;
+  .import-panel h2 {
+    margin-bottom: 0.2rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+  .import-panel p,
+  .import-panel label span {
+    color: $color-text-muted;
+    font-size: 0.83rem;
+  }
+  .import-fields {
+    display: grid;
+    grid-template-columns: minmax(16rem, 1fr) 12rem;
+    gap: 0.75rem;
+  }
+  .import-fields label {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .import-actions {
+    display: flex;
+    gap: 0.5rem;
   }
 
   .import-error {
@@ -324,12 +367,8 @@
     .top-actions :global(.ui-button) {
       flex: 0 0 auto;
     }
-    .import-bar {
-      align-items: stretch;
-      flex-wrap: wrap;
-    }
-    .import-bar :global(.ui-input) {
-      flex-basis: 100%;
+    .import-fields {
+      grid-template-columns: 1fr;
     }
     .filters {
       grid-template-columns: 1fr 1fr;
