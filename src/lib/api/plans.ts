@@ -48,10 +48,11 @@ export const populatePlan = (
   planId: number,
   week: string,
   favoritesOnly: boolean,
+  myRecipesOnly: boolean,
 ) =>
   requestJson<{ filled: number }>(`/plans/${planId}/autocompose`, {
     method: 'POST',
-    body: jsonBody({ week, favoritesOnly }),
+    body: jsonBody({ week, favoritesOnly, myRecipesOnly }),
   })
 
 export const copyWeek = (planId: number, from: string, to: string) =>
