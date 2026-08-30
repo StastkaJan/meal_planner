@@ -138,6 +138,44 @@
   </div>
   <div class="field-row">
     <label
+      >{t('Fibre (g)')}<input
+        type="number"
+        min="0"
+        step="0.01"
+        name="fiberG"
+        value={meal.fiberG ?? ''}
+      /></label
+    >
+    <label
+      >{t('Sugars (g)')}<input
+        type="number"
+        min="0"
+        step="0.01"
+        name="sugarG"
+        value={meal.sugarG ?? ''}
+      /></label
+    >
+    <label
+      >{t('Saturated fat (g)')}<input
+        type="number"
+        min="0"
+        step="0.01"
+        name="saturatedFatG"
+        value={meal.saturatedFatG ?? ''}
+      /></label
+    >
+    <label
+      >{t('Salt (g)')}<input
+        type="number"
+        min="0"
+        step="0.01"
+        name="saltG"
+        value={meal.saltG ?? ''}
+      /></label
+    >
+  </div>
+  <div class="field-row">
+    <label
       >{t('Servings')}<input
         type="number"
         min="1"

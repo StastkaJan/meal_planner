@@ -12,5 +12,9 @@ Content-Type: application/json
   "calories": 550,
   "proteinG": 45,
   "carbsG": 60,
-  "fatG": 10
+  "fatG": 10,
+  "fiberG": 7,
+  "sugarG": 5,
+  "saturatedFatG": 2.5,
+  "saltG": 1.2
 }

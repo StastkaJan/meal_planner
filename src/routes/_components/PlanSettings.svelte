@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SlotRepeat } from '$lib/database/schema'
   import ChoiceChips from '$lib/components/ui/ChoiceChips.svelte'
+  import Checkbox from '$lib/components/ui/Checkbox.svelte'
   import { CUISINE_OPTIONS, DIET_OPTIONS, MEAL_TYPES } from '$lib/constants'
   import { normalizeMealSlot } from '$lib/domain/meal-slots'
   import { useI18n } from '$lib/i18n-context'
@@ -10,6 +11,7 @@
   let {
     plan,
     preferences,
+    myRecipesOnly = $bindable(false),
     onPreferenceChange,
     onMealSlotsChange,
     onRepeatChange,
@@ -22,6 +24,7 @@
       cuisinePrefs: string[]
       dietaryRestrictions: string[]
     }
+    myRecipesOnly?: boolean
     onPreferenceChange: (patch: {
       cuisinePrefs?: string[]
       dietaryRestrictions?: string[]
@@ -108,6 +111,13 @@
       />
     </section>
     <section>
+      <h4>{t('Auto-compose')}</h4>
+      <label class="setting-option">
+        <Checkbox bind:checked={myRecipesOnly} />
+        {t('My recipes only')}
+      </label>
+    </section>
+    <section>
       <h4>{t('Meal slots')}</h4>
       <p class="hint">
         {t('Disabled slots and their planned meals are removed.')}
@@ -115,8 +125,7 @@
       <div class="slot-options">
         {#each MEAL_TYPES as mealType}
           <label>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={plan.mealSlots.includes(mealType)}
               disabled={plan.mealSlots.length === 1 &&
                 plan.mealSlots.includes(mealType)}
@@ -244,6 +253,13 @@
     color: $color-text-muted;
     font-size: 0.78rem;
     text-transform: capitalize;
+  }
+  .setting-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
   }
   .custom-slots {
     margin-top: 10px;

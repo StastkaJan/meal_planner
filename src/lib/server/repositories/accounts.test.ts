@@ -48,6 +48,16 @@ describe('getAccountExport', () => {
 
     const result = await getAccountExport(42)
 
+    expect(tx.select).toHaveBeenNthCalledWith(
+      8,
+      expect.objectContaining({
+        fiberG: expect.anything(),
+        sugarG: expect.anything(),
+        saturatedFatG: expect.anything(),
+        saltG: expect.anything(),
+      }),
+    )
+
     expect(result.recipes).toEqual([
       {
         id: 7,

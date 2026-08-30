@@ -19,6 +19,10 @@ export const bonusItems = pgTable('bonus_items', {
   proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
   carbsG: numeric('carbs_g', { precision: 6, scale: 1 }),
   fatG: numeric('fat_g', { precision: 6, scale: 1 }),
+  fiberG: numeric('fiber_g', { precision: 7, scale: 2 }),
+  sugarG: numeric('sugar_g', { precision: 7, scale: 2 }),
+  saturatedFatG: numeric('saturated_fat_g', { precision: 7, scale: 2 }),
+  saltG: numeric('salt_g', { precision: 7, scale: 2 }),
 })
 
 export type BonusItem = typeof bonusItems.$inferSelect

@@ -55,6 +55,8 @@
 
 <!-- NOTE: `slot_leftovers` links a later slot to an earlier same-meal slot; linked consumers still count toward nutrition but not shopping ingredients. -->
 
+<!-- NOTE: Meal and bonus nutrition includes calories, macros, fibre, sugars, saturated fat, and salt; the four secondary nutrients are displayed and totaled but do not affect auto-compose targets. -->
+
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
 <!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email and preserves global meals. -->

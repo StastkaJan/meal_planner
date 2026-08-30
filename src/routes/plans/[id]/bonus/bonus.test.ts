@@ -60,7 +60,36 @@ describe('POST /plans/:id/bonus', () => {
       proteinG: null,
       carbsG: null,
       fatG: null,
+      fiberG: null,
+      sugarG: null,
+      saturatedFatG: null,
+      saltG: null,
     })
+  })
+
+  it('accepts the extended nutrition fields', async () => {
+    mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+    mockAddBonusItem.mockResolvedValueOnce({ id: 9, name: 'Snack' })
+    await POST(
+      makeEvent({
+        date: '2026-06-30',
+        name: 'Snack',
+        fiberG: 4.5,
+        sugarG: 8,
+        saturatedFatG: 2.5,
+        saltG: 1,
+      }),
+    )
+    expect(mockAddBonusItem).toHaveBeenCalledWith(
+      1,
+      '2026-06-30',
+      expect.objectContaining({
+        fiberG: 4.5,
+        sugarG: 8,
+        saturatedFatG: 2.5,
+        saltG: 1,
+      }),
+    )
   })
 
   it('coerces a non-numeric calorie value to null instead of passing it through', async () => {
@@ -79,6 +108,28 @@ describe('POST /plans/:id/bonus', () => {
       expect.objectContaining({ calories: null }),
     )
   })
+
+  it.each([
+    { calories: -1 },
+    { calories: 1.5 },
+    { proteinG: 100_000 },
+    { fiberG: 100_000 },
+  ])(
+    'rejects nutrition outside its database column bounds: %o',
+    async (nutrition) => {
+      mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+      await expect(
+        POST(
+          makeEvent({
+            date: '2026-06-30',
+            name: 'Pizza',
+            ...nutrition,
+          }),
+        ),
+      ).rejects.toMatchObject({ status: 400 })
+      expect(mockAddBonusItem).not.toHaveBeenCalled()
+    },
+  )
 
   it('rejects a malformed request body with 400 instead of throwing unhandled', async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })

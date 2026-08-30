@@ -64,8 +64,12 @@ describe('pickMealFields', () => {
   })
 
   it('normalizes blank numeric form fields to null', () => {
-    expect(pickMealFields({ calories: '', timeMinutes: '' })).toEqual({
+    expect(
+      pickMealFields({ calories: '', fiberG: '', saltG: '', timeMinutes: '' }),
+    ).toEqual({
       calories: null,
+      fiberG: null,
+      saltG: null,
       timeMinutes: null,
     })
   })
@@ -196,7 +200,16 @@ describe('parseRecipeJsonLd', () => {
         { '@type': 'HowToStep', text: 'Mix' },
         { '@type': 'HowToStep', text: 'Fry' },
       ],
-      nutrition: { calories: '320 kcal' },
+      nutrition: {
+        calories: '320 kcal',
+        proteinContent: '12 g',
+        carbohydrateContent: '42 g',
+        fatContent: '9 g',
+        fiberContent: '4.5 g',
+        sugarContent: '8 g',
+        saturatedFatContent: '2.5 g',
+        sodiumContent: '400 mg',
+      },
       totalTime: 'PT25M',
     })
     expect(out).toEqual({
@@ -209,6 +222,13 @@ describe('parseRecipeJsonLd', () => {
       ],
       instructions: 'Mix\nFry',
       calories: 320,
+      proteinG: 12,
+      carbsG: 42,
+      fatG: 9,
+      fiberG: 4.5,
+      sugarG: 8,
+      saturatedFatG: 2.5,
+      saltG: 1,
       timeMinutes: 25,
     })
   })
@@ -278,12 +298,14 @@ describe('parseRecipeJsonLd', () => {
         <meta itemprop="name" content="Soup">
         <div itemprop="recipeIngredient">2 cups water</div>
         <div itemprop="recipeInstructions">Stir &amp; serve.</div>
+        <meta itemprop="saltContent" content="1.5 g">
       </article>
     `)
     expect(out).toMatchObject({
       name: 'Soup',
       ingredients: [{ name: 'water', qty: 2, unit: 'cup' }],
       instructions: 'Stir & serve.',
+      saltG: 1.5,
     })
   })
 

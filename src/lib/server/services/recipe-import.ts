@@ -119,6 +119,15 @@ function flattenSteps(instructions: unknown): string[] {
   return []
 }
 
+function parseGrams(value: unknown): number | undefined {
+  if (typeof value === 'number')
+    return Number.isFinite(value) ? value : undefined
+  if (typeof value !== 'string') return undefined
+  const amount = parseFloat(value.replace(',', '.'))
+  if (!Number.isFinite(amount)) return undefined
+  return /\b(?:mg|milligrams?)\b/i.test(value) ? amount / 1000 : amount
+}
+
 export function parseRecipeJsonLd(recipe: Record<string, any>): ImportedRecipe {
   const result: ImportedRecipe = {}
   if (typeof recipe.name === 'string') result.name = recipe.name.trim()
@@ -157,6 +166,26 @@ export function parseRecipeJsonLd(recipe: Record<string, any>): ImportedRecipe {
         ? calories
         : NaN
   if (Number.isFinite(calorieValue)) result.calories = calorieValue
+
+  const nutrition = recipe.nutrition ?? {}
+  const nutrientFields = {
+    proteinG: nutrition.proteinContent,
+    carbsG: nutrition.carbohydrateContent,
+    fatG: nutrition.fatContent,
+    fiberG: nutrition.fiberContent,
+    sugarG: nutrition.sugarContent,
+    saturatedFatG: nutrition.saturatedFatContent,
+  } as const
+  for (const [field, value] of Object.entries(nutrientFields)) {
+    const grams = parseGrams(value)
+    if (grams !== undefined)
+      result[field as keyof typeof nutrientFields] = grams
+  }
+  const salt = parseGrams(nutrition.saltContent)
+  const sodium = parseGrams(nutrition.sodiumContent)
+  if (salt !== undefined) result.saltG = salt
+  else if (sodium !== undefined)
+    result.saltG = Number((sodium * 2.5).toFixed(2))
 
   const minutes =
     isoDurationToMinutes(recipe.totalTime) ??
@@ -261,7 +290,17 @@ export function parseRecipeHtml(html: string): ImportedRecipe | null {
     image: prop('image')[0] ?? meta('og:image'),
     recipeIngredient: recipeIngredients,
     recipeInstructions,
-    nutrition: { calories: prop('calories')[0] },
+    nutrition: {
+      calories: prop('calories')[0],
+      proteinContent: prop('proteinContent')[0],
+      carbohydrateContent: prop('carbohydrateContent')[0],
+      fatContent: prop('fatContent')[0],
+      fiberContent: prop('fiberContent')[0],
+      sugarContent: prop('sugarContent')[0],
+      saturatedFatContent: prop('saturatedFatContent')[0],
+      saltContent: prop('saltContent')[0],
+      sodiumContent: prop('sodiumContent')[0],
+    },
     totalTime: prop('totalTime')[0],
   })
 }

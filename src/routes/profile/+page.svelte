@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
   import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
   import {
     changePassword as updatePassword,
@@ -11,6 +12,13 @@
 
   let { data } = $props()
   const { t, message } = useI18n()
+  const tab = $derived(
+    ['preferences', 'security', 'data'].includes(
+      $page.url.searchParams.get('tab') ?? '',
+    )
+      ? $page.url.searchParams.get('tab')
+      : 'preferences',
+  )
 
   let targetsSaved = $state(false)
   let pantrySaved = $state(false)
@@ -79,157 +87,176 @@
     <p class="email">{data.email}</p>
   </header>
 
+  <nav class="tabs" aria-label={t('Profile sections')}>
+    <a
+      href="/profile?tab=preferences"
+      aria-current={tab === 'preferences' ? 'page' : undefined}
+      >{t('Preferences')}</a
+    >
+    <a
+      href="/profile?tab=security"
+      aria-current={tab === 'security' ? 'page' : undefined}>{t('Security')}</a
+    >
+    <a
+      href="/profile?tab=data"
+      aria-current={tab === 'data' ? 'page' : undefined}
+      >{t('Data & privacy')}</a
+    >
+  </nav>
+
   <div class="settings-grid">
-    <section class="card">
-      <h2>{t('Language')}</h2>
-      <p class="hint">
-        {t('Used for the app interface and available recipe translations.')}
-      </p>
-      <form method="POST" onsubmit={saveLanguage}>
-        <label>
-          {t('Preferred language')}
-          <select name="locale" value={data.locale}>
-            {#each SUPPORTED_LOCALES as locale}
-              <option value={locale}>{LOCALE_LABELS[locale]}</option>
-            {/each}
-          </select>
-        </label>
-        <button type="submit">{t('Save language')}</button>
-      </form>
-    </section>
-    <section class="card">
-      <h2>{t('Pantry staples')}</h2>
-      <p class="hint">
-        {t(
-          'Ingredients you always have, such as salt or oil. One per line; they are omitted from shopping lists.',
-        )}
-      </p>
-      <form method="POST" onsubmit={savePantry}>
-        {#if pantryError}<p class="error">{pantryError}</p>{/if}
-        {#if pantrySaved}<p class="success">
-            {t('Pantry staples saved.')}
-          </p>{/if}
-        <label>
-          {t('Always on hand')}
-          <textarea name="pantryStaples" rows="5"
-            >{data.pantryStaples.join('\n')}</textarea
-          >
-        </label>
-        <button type="submit">{t('Save pantry staples')}</button>
-      </form>
-    </section>
-    <section class="card">
-      <h2>{t('Nutrition targets')}</h2>
-      <p class="hint">
-        {t(
-          'Daily goals for nutrition bars and auto-compose. Blank uses the default.',
-        )}
-      </p>
-      <form class="nutrition-form" method="POST" onsubmit={saveTargets}>
-        {#if targetsSaved}<p class="success">{t('Targets saved.')}</p>{/if}
-        <div class="target-grid">
+    {#if tab === 'preferences'}
+      <section class="card">
+        <h2>{t('Language')}</h2>
+        <p class="hint">
+          {t('Used for the app interface and available recipe translations.')}
+        </p>
+        <form method="POST" onsubmit={saveLanguage}>
+          <label>
+            {t('Preferred language')}
+            <select name="locale" value={data.locale}>
+              {#each SUPPORTED_LOCALES as locale}
+                <option value={locale}>{LOCALE_LABELS[locale]}</option>
+              {/each}
+            </select>
+          </label>
+          <button type="submit">{t('Save language')}</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>{t('Pantry staples')}</h2>
+        <p class="hint">
+          {t(
+            'Ingredients you always have, such as salt or oil. One per line; they are omitted from shopping lists.',
+          )}
+        </p>
+        <form method="POST" onsubmit={savePantry}>
+          {#if pantryError}<p class="error">{pantryError}</p>{/if}
+          {#if pantrySaved}<p class="success">
+              {t('Pantry staples saved.')}
+            </p>{/if}
+          <label>
+            {t('Always on hand')}
+            <textarea name="pantryStaples" rows="5"
+              >{data.pantryStaples.join('\n')}</textarea
+            >
+          </label>
+          <button type="submit">{t('Save pantry staples')}</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>{t('Nutrition targets')}</h2>
+        <p class="hint">
+          {t(
+            'Daily goals for nutrition bars and auto-compose. Blank uses the default.',
+          )}
+        </p>
+        <form class="nutrition-form" method="POST" onsubmit={saveTargets}>
+          {#if targetsSaved}<p class="success">{t('Targets saved.')}</p>{/if}
+          <div class="target-grid">
+            <label
+              >{t('Calories')} (kcal)
+              <input
+                type="number"
+                min="1"
+                name="calorieTarget"
+                value={data.calorieTarget ?? ''}
+                placeholder={String(NUTRITION_TARGETS.calories)}
+              /></label
+            >
+            <label
+              >{t('Protein (g)')}
+              <input
+                type="number"
+                min="1"
+                name="proteinTarget"
+                value={data.proteinTarget ?? ''}
+                placeholder={String(NUTRITION_TARGETS.proteinG)}
+              /></label
+            >
+            <label
+              >{t('Carbs (g)')}
+              <input
+                type="number"
+                min="1"
+                name="carbsTarget"
+                value={data.carbsTarget ?? ''}
+                placeholder={String(NUTRITION_TARGETS.carbsG)}
+              /></label
+            >
+            <label
+              >{t('Fat (g)')}
+              <input
+                type="number"
+                min="1"
+                name="fatTarget"
+                value={data.fatTarget ?? ''}
+                placeholder={String(NUTRITION_TARGETS.fatG)}
+              /></label
+            >
+          </div>
+          <button type="submit">{t('Save targets')}</button>
+        </form>
+      </section>
+    {:else if tab === 'security'}
+      <section class="card security-card">
+        <h2>{t('Change password')}</h2>
+        <p class="hint">{t('Use at least eight characters.')}</p>
+        <form method="POST" onsubmit={changePassword}>
+          {#if passwordError}<p class="error">{passwordError}</p>{/if}
+          {#if passwordSuccess}<p class="success">{passwordSuccess}</p>{/if}
           <label
-            >{t('Calories')} (kcal)
-            <input
-              type="number"
-              min="1"
-              name="calorieTarget"
-              value={data.calorieTarget ?? ''}
-              placeholder={String(NUTRITION_TARGETS.calories)}
-            /></label
+            >{t('Current password')}
+            <input type="password" name="current" required /></label
           >
           <label
-            >{t('Protein (g)')}
-            <input
-              type="number"
-              min="1"
-              name="proteinTarget"
-              value={data.proteinTarget ?? ''}
-              placeholder={String(NUTRITION_TARGETS.proteinG)}
-            /></label
+            >{t('New password')}
+            <input type="password" name="next" required minlength="8" /></label
           >
-          <label
-            >{t('Carbs (g)')}
-            <input
-              type="number"
-              min="1"
-              name="carbsTarget"
-              value={data.carbsTarget ?? ''}
-              placeholder={String(NUTRITION_TARGETS.carbsG)}
-            /></label
-          >
-          <label
-            >{t('Fat (g)')}
-            <input
-              type="number"
-              min="1"
-              name="fatTarget"
-              value={data.fatTarget ?? ''}
-              placeholder={String(NUTRITION_TARGETS.fatG)}
-            /></label
-          >
-        </div>
-        <button type="submit">{t('Save targets')}</button>
-      </form>
-    </section>
+          <button type="submit">{t('Update password')}</button>
+        </form>
+      </section>
+    {:else}
+      <section class="card data-card">
+        <h2>{t('Your data')}</h2>
+        <p class="hint">
+          {t(
+            'Download a JSON copy of your profile settings, personal recipes, plans, favourites, and recipe submissions.',
+          )}
+        </p>
+        <a class="download" href="/profile/export" download
+          >{t('Download my data')}</a
+        >
+      </section>
 
-    <section class="card security-card">
-      <h2>{t('Change password')}</h2>
-      <p class="hint">{t('Use at least eight characters.')}</p>
-      <form method="POST" onsubmit={changePassword}>
-        {#if passwordError}<p class="error">{passwordError}</p>{/if}
-        {#if passwordSuccess}<p class="success">{passwordSuccess}</p>{/if}
-        <label
-          >{t('Current password')}
-          <input type="password" name="current" required /></label
-        >
-        <label
-          >{t('New password')}
-          <input type="password" name="next" required minlength="8" /></label
-        >
-        <button type="submit">{t('Update password')}</button>
-      </form>
-    </section>
-
-    <section class="card data-card">
-      <h2>{t('Your data')}</h2>
-      <p class="hint">
-        {t(
-          'Download a JSON copy of your profile settings, personal recipes, plans, favourites, and recipe submissions.',
-        )}
-      </p>
-      <a class="download" href="/profile/export" download
-        >{t('Download my data')}</a
-      >
-    </section>
-
-    <section class="card danger-card">
-      <h2>{t('Delete account')}</h2>
-      <p class="hint">
-        {t(
-          'Permanently deletes your sessions, settings, recipes, plans, and other personal data. Shared recipes stay in the catalogue. This cannot be undone.',
-        )}
-      </p>
-      <form method="POST" onsubmit={removeAccount}>
-        {#if deletionError}<p class="error">{deletionError}</p>{/if}
-        <label
-          >{t('Password')}
-          <input type="password" name="password" required /></label
-        >
-        <label
-          >{t('Type {email} to confirm', { email: data.email })}
-          <input
-            type="email"
-            name="confirmation"
-            required
-            autocomplete="off"
-          /></label
-        >
-        <button class="danger" type="submit"
-          >{t('Delete my account permanently')}</button
-        >
-      </form>
-    </section>
+      <section class="card danger-card">
+        <h2>{t('Delete account')}</h2>
+        <p class="hint">
+          {t(
+            'Permanently deletes your sessions, settings, recipes, plans, and other personal data. Shared recipes stay in the catalogue. This cannot be undone.',
+          )}
+        </p>
+        <form method="POST" onsubmit={removeAccount}>
+          {#if deletionError}<p class="error">{deletionError}</p>{/if}
+          <label
+            >{t('Password')}
+            <input type="password" name="password" required /></label
+          >
+          <label
+            >{t('Type {email} to confirm', { email: data.email })}
+            <input
+              type="email"
+              name="confirmation"
+              required
+              autocomplete="off"
+            /></label
+          >
+          <button class="danger" type="submit"
+            >{t('Delete my account permanently')}</button
+          >
+        </form>
+      </section>
+    {/if}
   </div>
 </div>
 
@@ -269,7 +296,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 18px;
-    align-items: start;
+    align-items: stretch;
   }
   .card {
     padding: 24px;
@@ -277,6 +304,29 @@
     border-radius: $radius;
     background: $color-surface;
     box-shadow: 0 14px 36px rgb(41 39 33 / 5%);
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface-2;
+  }
+  .tabs a {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: calc($radius-sm - 3px);
+    color: $color-text-muted;
+    font-size: 0.85rem;
+    font-weight: 650;
+    text-align: center;
+    text-decoration: none;
+  }
+  .tabs a[aria-current='page'] {
+    background: $color-surface;
+    box-shadow: 0 2px 8px rgb(41 39 33 / 8%);
+    color: $color-text;
   }
   .danger-card {
     grid-column: 1 / -1;
@@ -357,6 +407,12 @@
   @media (max-width: 760px) {
     .settings-grid {
       grid-template-columns: 1fr;
+    }
+    .tabs {
+      overflow-x: auto;
+    }
+    .tabs a {
+      flex: 0 0 auto;
     }
   }
   @media (max-width: 420px) {
