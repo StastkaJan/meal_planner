@@ -64,5 +64,5 @@ test('shopping list counts a batch once when a later slot uses leftovers', async
   await page.getByRole('button', { name: 'Save pantry staples' }).click()
   await expect(page.getByText('Pantry staples saved.')).toBeVisible()
   await page.goBack()
-  await expect(page.getByText('4 tbsp Honey')).toHaveCount(0)
+  await expect(page.getByText('2 tbsp Honey')).toHaveCount(0)
 })

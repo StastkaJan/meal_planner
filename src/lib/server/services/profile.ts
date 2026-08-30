@@ -25,7 +25,7 @@ export function toPantryStaples(value: unknown): string[] {
   const entries = Array.isArray(value)
     ? value
     : typeof value === 'string'
-      ? value.split(/[,\n]/)
+      ? value.split(/\r?\n/)
       : []
   const staples = new Map<string, string>()
 
