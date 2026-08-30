@@ -27,7 +27,7 @@ different dietary needs. Plans belong to a logged-in user and are private.
   remains easy to edit.
 - **One continuous plan** per user keeps every week in one calendar, while
   profile preferences shape what auto-compose picks.
-- **Live nutrition feedback** compares each day with profile targets, falling
+- **Live nutrition comparison** compares each day with profile targets, falling
   back to the app defaults when a target is not set.
 - **Repeat patterns and week copying** support batch cooking and familiar
   routines without repetitive data entry.

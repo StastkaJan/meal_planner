@@ -12,8 +12,6 @@ the plan -> shop -> cook loop or prevent user data loss.
 2. **Pantry staples** - mark ingredients such as salt or oil as always on hand
    and omit them from shopping lists. Do not build detailed stock accounting
    until users demonstrate a need for it.
-3. **Plan feedback** - record cooked/skipped meals and simple ratings, then use
-   history to improve suggestions and reduce repetition.
 
 ## Reliability and operations
 
