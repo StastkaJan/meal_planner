@@ -109,6 +109,28 @@ describe('POST /plans/:id/bonus', () => {
     )
   })
 
+  it.each([
+    { calories: -1 },
+    { calories: 1.5 },
+    { proteinG: 100_000 },
+    { fiberG: 100_000 },
+  ])(
+    'rejects nutrition outside its database column bounds: %o',
+    async (nutrition) => {
+      mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
+      await expect(
+        POST(
+          makeEvent({
+            date: '2026-06-30',
+            name: 'Pizza',
+            ...nutrition,
+          }),
+        ),
+      ).rejects.toMatchObject({ status: 400 })
+      expect(mockAddBonusItem).not.toHaveBeenCalled()
+    },
+  )
+
   it('rejects a malformed request body with 400 instead of throwing unhandled', async () => {
     mockRequireOwnedPlan.mockResolvedValueOnce({ id: 1, userId: 1 })
     await expect(

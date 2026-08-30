@@ -37,17 +37,17 @@ test('prefill an extra item from a common preset', async ({ page }) => {
   await page.getByRole('button', { name: '+ extra' }).first().click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
 
-  await expect(page.getByPlaceholder('Name (e.g. Pizza, Beer)')).toHaveValue(
-    'Pizza',
+  await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Pizza')
+  await expect(page.getByLabel('Calories', { exact: true })).toHaveValue('800')
+  await expect(page.getByLabel('Protein g', { exact: true })).toHaveValue('32')
+  await expect(page.getByLabel('Carbs g', { exact: true })).toHaveValue('96')
+  await expect(page.getByLabel('Fat g', { exact: true })).toHaveValue('32')
+  await expect(page.getByLabel('Fibre g', { exact: true })).toHaveValue('6')
+  await expect(page.getByLabel('Sugars g', { exact: true })).toHaveValue('8')
+  await expect(page.getByLabel('Saturated fat g', { exact: true })).toHaveValue(
+    '14',
   )
-  await expect(page.getByPlaceholder('Calories')).toHaveValue('800')
-  await expect(page.getByPlaceholder('Protein g')).toHaveValue('32')
-  await expect(page.getByPlaceholder('Carbs g')).toHaveValue('96')
-  await expect(page.getByPlaceholder('Fat g')).toHaveValue('32')
-  await expect(page.getByPlaceholder('Fibre g')).toHaveValue('6')
-  await expect(page.getByPlaceholder('Sugars g')).toHaveValue('8')
-  await expect(page.getByPlaceholder('Saturated fat g')).toHaveValue('14')
-  await expect(page.getByPlaceholder('Salt g')).toHaveValue('3.2')
+  await expect(page.getByLabel('Salt g', { exact: true })).toHaveValue('3.2')
 
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(
