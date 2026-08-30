@@ -14,9 +14,18 @@ function toNumOrNull(v: unknown): number | null {
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
   const plan = await requireOwnedPlan(locals, params.id)
-  const { date, name, calories, proteinG, carbsG, fatG } = await request
-    .json()
-    .catch(() => ({}))
+  const {
+    date,
+    name,
+    calories,
+    proteinG,
+    carbsG,
+    fatG,
+    fiberG,
+    sugarG,
+    saturatedFatG,
+    saltG,
+  } = await request.json().catch(() => ({}))
   validDateStr(date)
   if (!name || typeof name !== 'string' || !name.trim())
     error(400, 'Name is required')
@@ -27,6 +36,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
     proteinG: toNumOrNull(proteinG),
     carbsG: toNumOrNull(carbsG),
     fatG: toNumOrNull(fatG),
+    fiberG: toNumOrNull(fiberG),
+    sugarG: toNumOrNull(sugarG),
+    saturatedFatG: toNumOrNull(saturatedFatG),
+    saltG: toNumOrNull(saltG),
   })
   return json(item, { status: 201 })
 }

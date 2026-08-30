@@ -51,7 +51,13 @@
 
 {#if slot?.mealName}
   <div class="cell {mealType}">
-    <div class="meal-info">
+    <button
+      type="button"
+      class="meal-info"
+      onclick={openPicker}
+      title={t('Edit meal assignment')}
+      aria-label={t('Edit meal assignment')}
+    >
       <span class="name">{slot.mealName}</span>
       {#if slot.calories}
         <span class="kcal">{slot.calories} kcal</span>
@@ -59,18 +65,16 @@
       {#if usesLeftovers}
         <span class="leftover-label">{t('leftovers')}</span>
       {/if}
-    </div>
+    </button>
     <div class="actions">
-      <button
-        type="button"
-        onclick={openPicker}
-        title={t('Edit meal assignment')}
-        aria-label={t('Edit meal assignment')}>✎</button
-      >
       <a
         href="/meals/{slot.mealId}"
         title={t('Show recipe')}
-        aria-label={t('Show recipe')}>↗</a
+        aria-label={t('Show recipe')}
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M7 4h9v9M16 4 8 12M13 10v5H4V6h5" />
+        </svg></a
       >
       {#if leftoverSource || usesLeftovers}
         <button
@@ -91,14 +95,21 @@
           aria-label={usesLeftovers
             ? t('Prepare separately')
             : t('Use leftovers from {source}', { source: sourceLabel })}
-          >↶</button
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M7 6 3 10l4 4M4 10h7a5 5 0 0 1 5 5" />
+          </svg></button
         >
       {/if}
       <button
         type="button"
         onclick={() => onPick(null)}
         title={t('Remove meal')}
-        aria-label={t('Remove meal')}>×</button
+        aria-label={t('Remove meal')}
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="m6 6 8 8m0-8-8 8" />
+        </svg></button
       >
     </div>
   </div>
@@ -129,6 +140,7 @@
 
 <style lang="scss">
   .cell {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -167,8 +179,14 @@
   .meal-info {
     display: flex;
     flex: 1;
+    width: 100%;
     flex-direction: column;
     gap: 2px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
   }
   .actions {
     display: flex;
@@ -194,6 +212,16 @@
         background: $color-surface-2;
         color: $color-text;
       }
+
+      svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.7;
+      }
     }
   }
   .name {
@@ -214,6 +242,20 @@
   .actions button.active {
     background: $color-accent-dim;
     color: $color-accent;
+  }
+  @media (hover: hover) {
+    .actions {
+      opacity: 0;
+      transform: translateY(3px);
+      transition:
+        opacity 0.15s,
+        transform 0.15s;
+    }
+    .cell:hover .actions,
+    .cell:focus-within .actions {
+      opacity: 1;
+      transform: none;
+    }
   }
   .empty {
     font-size: 0.8rem;

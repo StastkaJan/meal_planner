@@ -162,6 +162,13 @@
       "when": 1788095879451,
       "tag": "0022_wise_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788099403453,
+      "tag": "0023_modern_boomerang",
+      "breakpoints": true
     }
   ]
 }

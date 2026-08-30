@@ -54,6 +54,10 @@
         proteinG: number | null
         carbsG: number | null
         fatG: number | null
+        fiberG?: number | null
+        sugarG?: number | null
+        saturatedFatG?: number | null
+        saltG?: number | null
       },
     ) => void
     onDeleteBonus: (id: number) => void
@@ -122,6 +126,24 @@
         fatG:
           daySlots.reduce((sum, s) => sum + parseFloat(s.fatG ?? '0'), 0) +
           dayBonus.reduce((sum, b) => sum + parseFloat(b.fatG ?? '0'), 0),
+        fiberG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.fiberG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.fiberG ?? '0'), 0),
+        sugarG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.sugarG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.sugarG ?? '0'), 0),
+        saturatedFatG:
+          daySlots.reduce(
+            (sum, s) => sum + parseFloat(s.saturatedFatG ?? '0'),
+            0,
+          ) +
+          dayBonus.reduce(
+            (sum, b) => sum + parseFloat(b.saturatedFatG ?? '0'),
+            0,
+          ),
+        saltG:
+          daySlots.reduce((sum, s) => sum + parseFloat(s.saltG ?? '0'), 0) +
+          dayBonus.reduce((sum, b) => sum + parseFloat(b.saltG ?? '0'), 0),
       }
     }),
   )
@@ -129,13 +151,20 @@
 
 <div class="cal-wrap">
   <div class="week-nav">
-    <button class="nav-btn" onclick={onPrevWeek} aria-label={t('Previous week')}
-      >‹</button
+    <button
+      class="nav-btn"
+      onclick={onPrevWeek}
+      aria-label={t('Previous week')}
     >
+      <svg viewBox="0 0 20 20" aria-hidden="true"
+        ><path d="m12 5-5 5 5 5" /></svg
+      >
+    </button>
     <span class="month-label">{monthLabel}</span>
-    <button class="nav-btn" onclick={onNextWeek} aria-label={t('Next week')}
-      >›</button
-    >
+    <button class="nav-btn" onclick={onNextWeek} aria-label={t('Next week')}>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5" /></svg
+      >
+    </button>
   </div>
 
   <div class="cal-scroll">
@@ -271,13 +300,22 @@
     width: 34px;
     height: 34px;
     place-items: center;
-    font-size: 1.4rem;
-    line-height: 1;
     padding: 0;
     border-radius: 50%;
     &:hover {
       color: $color-text;
       background: $color-surface-2;
+    }
+
+    svg {
+      display: block;
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
     }
   }
 

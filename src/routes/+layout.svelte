@@ -7,10 +7,27 @@
   let { children, data } = $props()
   const { t } = provideI18n(() => data.locale)
 
+  const pageTitle = $derived.by(() => {
+    const path = $page.url.pathname
+    if (path.startsWith('/plans/') && path.endsWith('/shopping'))
+      return t('Shopping list')
+    if (path === '/' || path.startsWith('/plans/')) return t('Planner')
+    if (path.startsWith('/meals')) return t('Recipes')
+    if (path.startsWith('/admin')) return t('Review')
+    if (path === '/profile') return t('Profile')
+    if (path.startsWith('/auth/login')) return t('Sign in')
+    if (path.startsWith('/auth/register')) return t('Create account')
+    return t('Meal plan')
+  })
+
   $effect(() => {
     if (browser) document.documentElement.lang = data.locale
   })
 </script>
+
+<svelte:head>
+  <title>{pageTitle} · {t('Meal plan')}</title>
+</svelte:head>
 
 <header class="shell-header">
   <nav aria-label={t('Main navigation')}>
@@ -20,7 +37,11 @@
     </a>
     {#if data.user}
       <div class="main-links">
-        <a href="/" class:active={$page.url.pathname === '/'}>{t('Planner')}</a>
+        <a
+          href="/"
+          class:active={$page.url.pathname === '/' ||
+            $page.url.pathname.startsWith('/plans/')}>{t('Planner')}</a
+        >
         <a href="/meals" class:active={$page.url.pathname.startsWith('/meals')}
           >{t('Recipes')}</a
         >
@@ -119,7 +140,7 @@
     }
     &.active {
       color: $color-text;
-      background: $color-accent-dim;
+      background: #f9e9e1;
     }
   }
   .profile {

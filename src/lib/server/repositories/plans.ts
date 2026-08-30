@@ -154,6 +154,10 @@ export async function getPlanDetail(
         proteinG: meals.proteinG,
         carbsG: meals.carbsG,
         fatG: meals.fatG,
+        fiberG: meals.fiberG,
+        sugarG: meals.sugarG,
+        saturatedFatG: meals.saturatedFatG,
+        saltG: meals.saltG,
         leftoverSourceDate: slotLeftovers.sourceDate,
         leftoverSourceMealType: slotLeftovers.sourceMealType,
       })
@@ -191,6 +195,10 @@ export async function addBonusItem(
     proteinG: number | null
     carbsG: number | null
     fatG: number | null
+    fiberG: number | null
+    sugarG: number | null
+    saturatedFatG: number | null
+    saltG: number | null
   },
 ) {
   const [row] = await db
@@ -203,6 +211,10 @@ export async function addBonusItem(
       proteinG: fields.proteinG?.toString() ?? null,
       carbsG: fields.carbsG?.toString() ?? null,
       fatG: fields.fatG?.toString() ?? null,
+      fiberG: fields.fiberG?.toString() ?? null,
+      sugarG: fields.sugarG?.toString() ?? null,
+      saturatedFatG: fields.saturatedFatG?.toString() ?? null,
+      saltG: fields.saltG?.toString() ?? null,
     })
     .returning()
   return row

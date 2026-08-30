@@ -10,7 +10,24 @@
     proteinG: number | null
     carbsG: number | null
     fatG: number | null
+    fiberG?: number | null
+    sugarG?: number | null
+    saturatedFatG?: number | null
+    saltG?: number | null
   }
+
+  const presets = [
+    { name: 'Pizza', calories: 800, proteinG: 32, carbsG: 96, fatG: 32 },
+    {
+      name: 'Fast food',
+      calories: 1000,
+      proteinG: 35,
+      carbsG: 110,
+      fatG: 48,
+    },
+    { name: 'Beer', calories: 210, proteinG: 2, carbsG: 18, fatG: 0 },
+    { name: 'Dessert', calories: 450, proteinG: 6, carbsG: 58, fatG: 22 },
+  ] as const satisfies readonly BonusFields[]
 
   let {
     date,
@@ -32,10 +49,15 @@
   let proteinG: number | null = $state(null)
   let carbsG: number | null = $state(null)
   let fatG: number | null = $state(null)
+  let fiberG: number | null = $state(null)
+  let sugarG: number | null = $state(null)
+  let saturatedFatG: number | null = $state(null)
+  let saltG: number | null = $state(null)
 
   function openForm() {
     name = ''
     calories = proteinG = carbsG = fatG = null
+    fiberG = sugarG = saturatedFatG = saltG = null
     open = true
     dialogEl?.showModal()
   }
@@ -43,9 +65,27 @@
   function submit(e: Event) {
     e.preventDefault()
     if (!name.trim()) return
-    onAdd(date, { name: name.trim(), calories, proteinG, carbsG, fatG })
+    onAdd(date, {
+      name: name.trim(),
+      calories,
+      proteinG,
+      carbsG,
+      fatG,
+      fiberG,
+      sugarG,
+      saturatedFatG,
+      saltG,
+    })
     dialogEl?.close()
     open = false
+  }
+
+  function usePreset(preset: (typeof presets)[number]) {
+    name = t(preset.name)
+    calories = preset.calories
+    proteinG = preset.proteinG
+    carbsG = preset.carbsG
+    fatG = preset.fatG
   }
 </script>
 
@@ -68,6 +108,17 @@
   {#if open}
     <form class="bonus-form" onsubmit={submit}>
       <h4>{t('Add off-plan item')}</h4>
+      <fieldset class="presets">
+        <legend>{t('Quick picks')}</legend>
+        <div class="preset-buttons">
+          {#each presets as preset}
+            <button type="button" onclick={() => usePreset(preset)}
+              >{t(preset.name)}</button
+            >
+          {/each}
+        </div>
+        <small>{t('Estimated nutrition — adjust if needed.')}</small>
+      </fieldset>
       <input
         type="text"
         placeholder={t('Name (e.g. Pizza, Beer)')}
@@ -100,6 +151,38 @@
           bind:value={fatG}
           min="0"
           step="0.1"
+        />
+      </div>
+      <div class="macro-row">
+        <input
+          type="number"
+          placeholder={t('Fibre g')}
+          bind:value={fiberG}
+          min="0"
+          step="0.01"
+        />
+        <input
+          type="number"
+          placeholder={t('Sugars g')}
+          bind:value={sugarG}
+          min="0"
+          step="0.01"
+        />
+      </div>
+      <div class="macro-row">
+        <input
+          type="number"
+          placeholder={t('Saturated fat g')}
+          bind:value={saturatedFatG}
+          min="0"
+          step="0.01"
+        />
+        <input
+          type="number"
+          placeholder={t('Salt g')}
+          bind:value={saltG}
+          min="0"
+          step="0.01"
         />
       </div>
       <div class="actions">
@@ -208,6 +291,43 @@
   .macro-row {
     display: flex;
     gap: 6px;
+  }
+  .presets {
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    legend {
+      margin-bottom: 6px;
+      color: $color-text-muted;
+      font-size: 0.75rem;
+    }
+
+    small {
+      display: block;
+      margin-top: 5px;
+      color: $color-text-muted;
+      font-size: 0.68rem;
+    }
+  }
+  .preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    button {
+      padding: 5px 9px;
+      background: $color-surface;
+      border: 1px solid $color-border-strong;
+      border-radius: 999px;
+      color: $color-text;
+      cursor: pointer;
+      font-size: 0.75rem;
+
+      &:hover {
+        border-color: $color-accent;
+      }
+    }
   }
   .actions {
     display: flex;

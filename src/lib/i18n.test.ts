@@ -60,7 +60,8 @@ describe('translations', () => {
   })
 
   it('localizes domain labels and Czech plural forms', () => {
-    expect(localizeLabel('cs', 'morning_snack')).toBe('dopolední svačina')
+    expect(localizeLabel('cs', 'morning_snack')).toBe('svačina')
+    expect(localizeLabel('cs', 'afternoon_snack')).toBe('svačina')
     expect(formatNamedCount('cs', 1, 'recipe')).toBe('1 recept')
     expect(formatNamedCount('cs', 3, 'recipe')).toBe('3 recepty')
     expect(formatNamedCount('cs', 5, 'recipe')).toBe('5 receptů')
