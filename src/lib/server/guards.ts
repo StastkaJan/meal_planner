@@ -13,6 +13,12 @@ export function requireAdmin(locals: App.Locals) {
   return user
 }
 
+export function requirePro(locals: App.Locals) {
+  const user = requireUser(locals)
+  if (!user.isPro) error(403, 'Pro subscription required')
+  return user
+}
+
 export async function requireOwnedPlan(
   locals: App.Locals,
   id: number | string,

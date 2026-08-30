@@ -45,6 +45,8 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
+<!-- NOTE: `users.is_pro` is the temporary billing entitlement switch. Pro gates recipe URL import, auto-compose, copy-week, and day recalculation; set it directly until billing owns the flag. -->
+
 <!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/ordered ingredients/instructions; nullable translated fields fall back to the original recipe. -->
 
 <!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->

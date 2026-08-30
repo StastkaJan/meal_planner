@@ -111,10 +111,14 @@
       </Button>
       <Button
         variant="secondary"
+        disabled={!data.user?.isPro}
+        title={!data.user?.isPro ? t('Pro subscription required') : undefined}
         onclick={() => {
           importing = !importing
           importError = ''
-        }}>{t('Import from URL')}</Button
+        }}
+        >{t('Import from URL')}{#if !data.user?.isPro}
+          · {t('Pro')}{/if}</Button
       >
       <Button onclick={() => (creating = true)}>{t('+ Add meal')}</Button>
     </div>

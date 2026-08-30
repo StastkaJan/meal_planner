@@ -58,6 +58,7 @@ const CS_MESSAGES = {
   'Copy from last week': 'Kopírovat z minulého týdne',
   'Favourites only': 'Pouze oblíbené',
   'Auto-compose': 'Automaticky sestavit',
+  Pro: 'Pro',
   'Remove {name}': 'Odebrat {name}',
   '+ extra': '+ navíc',
   'Add off-plan item': 'Přidat položku mimo plán',
@@ -230,6 +231,15 @@ const CS_MESSAGES = {
   'No ingredients to shop for this week.':
     'Tento týden není potřeba nakoupit žádné suroviny.',
   'Your account': 'Váš účet',
+  'Free plan': 'Bezplatný tarif',
+  'Pro plan': 'Tarif Pro',
+  'Your current plan': 'Váš aktuální tarif',
+  'Pro is active': 'Pro je aktivní',
+  'Recipe import and planning automation are unlocked.':
+    'Import receptů a automatizace plánování jsou odemčené.',
+  'Manual planning, recipes, favourites, and shopping lists are included.':
+    'Ruční plánování, recepty, oblíbené položky a nákupní seznamy jsou součástí tarifu.',
+  'Pro payments are coming soon.': 'Platby za Pro budou brzy k dispozici.',
   Profile: 'Profil',
   'Used for the app interface and available recipe translations.':
     'Používá se pro rozhraní aplikace a dostupné překlady receptů.',
@@ -288,6 +298,7 @@ const CS_MESSAGES = {
   'Invalid client error': 'Neplatná chyba klienta',
   'Not authenticated': 'Nejste přihlášeni',
   'Admin access required': 'Je vyžadován přístup správce',
+  'Pro subscription required': 'Je vyžadováno předplatné Pro',
   'Plan not found': 'Jídelní plán nebyl nalezen',
   'Name is required': 'Název je povinný',
   'Only admins can create global recipes':

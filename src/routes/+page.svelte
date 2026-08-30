@@ -203,6 +203,7 @@
       meals={data.meals}
       weekStart={data.viewWeek}
       targets={data.targets}
+      isPro={data.user?.isPro ?? false}
       onSlotChange={handleSlotChange}
       onSlotLeftover={handleSlotLeftover}
       onAutoCompose={handleAutoCompose}
