@@ -4,6 +4,8 @@
 
 > Commits: do not add Claude/AI co-author or "Generated with" trailers to commits or PRs.
 
+> Before every commit, run `npm run check` and fix any failures.
+
 ## Stack
 
 - **Frontend**: SvelteKit 5, Svelte 5, Vite 6, Sass
