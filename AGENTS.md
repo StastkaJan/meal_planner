@@ -57,7 +57,7 @@
 
 <!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email and preserves global meals. -->
 
-<!-- NOTE: Household membership shares every member's plans, personal recipes, and derived shopping lists; `household_members.can_edit` grants edit access without transferring ownership. -->
+<!-- NOTE: Accepted household membership shares every member's plans, personal recipes, and derived shopping lists; `household_invitations` grants no access until acceptance, and `household_members.can_edit` grants edit access without transferring ownership. -->
 
 ## Project layout
 

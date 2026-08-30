@@ -189,9 +189,10 @@
       </label>
     {/if}
     <div class="plan-actions">
-      {#if !plan}
+      {#if data.canCreatePlan}
         <button class="btn" onclick={createPlan}>{t('Create plan')}</button>
-      {:else}
+      {/if}
+      {#if plan}
         <a
           class="btn"
           href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"

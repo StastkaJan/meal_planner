@@ -82,6 +82,18 @@ describe('load /', () => {
     const result = await load(makeEvent())
     expect(result.activePlanId).toBe(0)
     expect(result.plan).toBeNull()
+    expect(result.canCreatePlan).toBe(true)
+  })
+
+  it('allows creating an owned plan while a household plan is visible', async () => {
+    mockDb.orderBy
+      .mockResolvedValueOnce([
+        { id: 2, userId: 2, weekStart: '2026-06-29', canEdit: false },
+      ])
+      .mockResolvedValueOnce([])
+    const result = await load(makeEvent({}, 1))
+    expect(result.activePlanId).toBe(2)
+    expect(result.canCreatePlan).toBe(true)
   })
 
   it('loads auto-compose preferences with the planner', async () => {

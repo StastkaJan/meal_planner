@@ -79,7 +79,11 @@
       ingredients={data.ingredients}
       onCancel={() => (editing = false)}
       onSaved={(updated) => {
-        sourceMeal = { ...updated, canEdit: sourceMeal.canEdit }
+        sourceMeal = {
+          ...updated,
+          isOwner: sourceMeal.isOwner,
+          canEdit: sourceMeal.canEdit,
+        }
         editing = false
       }}
     />

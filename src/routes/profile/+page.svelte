@@ -9,8 +9,11 @@
   import { LOCALE_LABELS, SUPPORTED_LOCALES } from '$lib/i18n'
   import { useI18n } from '$lib/i18n-context'
   import {
+    acceptInvitation,
     addMember,
     createHousehold,
+    declineInvitation,
+    leaveHousehold,
     removeMember,
     updateMember,
   } from '$lib/api/household'
@@ -70,6 +73,30 @@
     if (!confirm('Remove this household member?')) return
     const response = await removeMember(userId)
     if (response.ok) await refreshHousehold()
+  }
+
+  async function respondToInvitation(householdId: number, accept: boolean) {
+    householdError = ''
+    const response = accept
+      ? await acceptInvitation(householdId)
+      : await declineInvitation(householdId)
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      householdError = body.message ?? 'Request failed'
+      return
+    }
+    await refreshHousehold()
+  }
+
+  async function leaveCurrentHousehold() {
+    if (!confirm('Leave this household?')) return
+    const response = await leaveHousehold()
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      householdError = body.message ?? 'Request failed'
+      return
+    }
+    await refreshHousehold()
   }
 
   async function saveTargets(e: SubmitEvent) {
@@ -332,10 +359,40 @@
             <label class="permission">
               <input type="checkbox" name="canEdit" /> Can edit
             </label>
-            <button type="submit">Add member</button>
+            <button type="submit">Send invitation</button>
           </form>
+        {:else}
+          <button
+            type="button"
+            class="remove-member"
+            onclick={leaveCurrentHousehold}>Leave household</button
+          >
         {/if}
       {:else}
+        {#if data.householdInvitations.length}
+          <h3>Household invitations</h3>
+          <ul class="members">
+            {#each data.householdInvitations as invitation}
+              <li>
+                <span>{invitation.householdName}</span>
+                <small>{invitation.canEdit ? 'Can edit' : 'View only'}</small>
+                <button
+                  type="button"
+                  onclick={() =>
+                    respondToInvitation(invitation.householdId, true)}
+                  >Accept</button
+                >
+                <button
+                  class="remove-member"
+                  type="button"
+                  onclick={() =>
+                    respondToInvitation(invitation.householdId, false)}
+                  >Decline</button
+                >
+              </li>
+            {/each}
+          </ul>
+        {/if}
         <form onsubmit={createHouseholdFromForm}>
           <label
             >Household name

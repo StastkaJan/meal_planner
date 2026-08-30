@@ -1,6 +1,11 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '$lib/database'
-import { householdMembers, households, users } from '$lib/database/schema'
+import {
+  householdInvitations,
+  householdMembers,
+  households,
+  users,
+} from '$lib/database/schema'
 
 export async function getHouseholdAccess(userId: number) {
   const [membership] = await db
@@ -43,6 +48,19 @@ export async function getHouseholdDetail(userId: number) {
   return { ...household, members, isOwner: access.ownerId === userId }
 }
 
+export async function getHouseholdInvitations(userId: number) {
+  return db
+    .select({
+      householdId: householdInvitations.householdId,
+      householdName: households.name,
+      canEdit: householdInvitations.canEdit,
+    })
+    .from(householdInvitations)
+    .innerJoin(households, eq(households.id, householdInvitations.householdId))
+    .where(eq(householdInvitations.userId, userId))
+    .orderBy(households.name)
+}
+
 export async function createHousehold(userId: number, name: string) {
   return db.transaction(async (tx) => {
     const [household] = await tx
@@ -52,6 +70,9 @@ export async function createHousehold(userId: number, name: string) {
     await tx
       .insert(householdMembers)
       .values({ householdId: household.id, userId, canEdit: true })
+    await tx
+      .delete(householdInvitations)
+      .where(eq(householdInvitations.userId, userId))
     return household
   })
 }
@@ -65,7 +86,7 @@ async function ownedHousehold(ownerId: number) {
   return household ?? null
 }
 
-export async function addHouseholdMember(
+export async function createHouseholdInvitation(
   ownerId: number,
   email: string,
   canEdit: boolean,
@@ -85,9 +106,70 @@ export async function addHouseholdMember(
     .limit(1)
   if (existing) return 'already_member' as const
   await db
-    .insert(householdMembers)
+    .insert(householdInvitations)
     .values({ householdId: household.id, userId: user.id, canEdit })
-  return 'added' as const
+    .onConflictDoUpdate({
+      target: [householdInvitations.householdId, householdInvitations.userId],
+      set: { canEdit },
+    })
+  return 'invited' as const
+}
+
+export async function acceptHouseholdInvitation(
+  userId: number,
+  householdId: number,
+) {
+  return db.transaction(async (tx) => {
+    const [invitation] = await tx
+      .select({ canEdit: householdInvitations.canEdit })
+      .from(householdInvitations)
+      .where(
+        and(
+          eq(householdInvitations.householdId, householdId),
+          eq(householdInvitations.userId, userId),
+        ),
+      )
+      .limit(1)
+    if (!invitation) return 'not_found' as const
+
+    const [member] = await tx
+      .insert(householdMembers)
+      .values({ householdId, userId, canEdit: invitation.canEdit })
+      .onConflictDoNothing({ target: householdMembers.userId })
+      .returning({ userId: householdMembers.userId })
+    if (!member) return 'already_member' as const
+
+    await tx
+      .delete(householdInvitations)
+      .where(eq(householdInvitations.userId, userId))
+    return 'accepted' as const
+  })
+}
+
+export async function declineHouseholdInvitation(
+  userId: number,
+  householdId: number,
+) {
+  const [invitation] = await db
+    .delete(householdInvitations)
+    .where(
+      and(
+        eq(householdInvitations.householdId, householdId),
+        eq(householdInvitations.userId, userId),
+      ),
+    )
+    .returning({ userId: householdInvitations.userId })
+  return Boolean(invitation)
+}
+
+export async function leaveHousehold(userId: number) {
+  const access = await getHouseholdAccess(userId)
+  if (!access || access.ownerId === userId) return false
+  const [member] = await db
+    .delete(householdMembers)
+    .where(eq(householdMembers.userId, userId))
+    .returning({ userId: householdMembers.userId })
+  return Boolean(member)
 }
 
 export async function updateHouseholdMember(

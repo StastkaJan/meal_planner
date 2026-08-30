@@ -17,3 +17,11 @@ export const updateMember = (userId: number, canEdit: boolean) =>
 
 export const removeMember = (userId: number) =>
   request(`/household/members/${userId}`, { method: 'DELETE' })
+
+export const acceptInvitation = (householdId: number) =>
+  request(`/household/invitations/${householdId}`, { method: 'POST' })
+
+export const declineInvitation = (householdId: number) =>
+  request(`/household/invitations/${householdId}`, { method: 'DELETE' })
+
+export const leaveHousehold = () => request('/household', { method: 'DELETE' })

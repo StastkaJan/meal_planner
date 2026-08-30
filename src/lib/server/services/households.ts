@@ -1,7 +1,10 @@
 import {
-  addHouseholdMember,
+  acceptHouseholdInvitation,
   createHousehold,
+  createHouseholdInvitation,
+  declineHouseholdInvitation,
   getHouseholdDetail,
+  leaveHousehold as leaveHouseholdRepository,
   removeHouseholdMember,
   updateHouseholdMember,
 } from '../repositories/households'
@@ -22,7 +25,21 @@ export async function inviteExistingMember(
 ) {
   const normalized = typeof email === 'string' ? email.trim().toLowerCase() : ''
   if (!normalized || typeof canEdit !== 'boolean') return 'invalid' as const
-  return addHouseholdMember(userId, normalized, canEdit)
+  return createHouseholdInvitation(userId, normalized, canEdit)
+}
+
+export async function acceptInvitation(userId: number, householdId: number) {
+  if (!Number.isSafeInteger(householdId)) return 'not_found' as const
+  return acceptHouseholdInvitation(userId, householdId)
+}
+
+export async function declineInvitation(userId: number, householdId: number) {
+  if (!Number.isSafeInteger(householdId)) return false
+  return declineHouseholdInvitation(userId, householdId)
+}
+
+export async function leaveHousehold(userId: number) {
+  return leaveHouseholdRepository(userId)
 }
 
 export async function setMemberPermission(

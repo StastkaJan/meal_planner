@@ -4,6 +4,7 @@ import { getHouseholdDetail } from '$lib/server/repositories/households'
 import {
   createUserHousehold,
   inviteExistingMember,
+  leaveHousehold,
 } from '$lib/server/services/households'
 import type { RequestHandler } from './$types'
 
@@ -33,5 +34,12 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
   if (result === 'not_found') error(404, 'No registered user has that email')
   if (result === 'already_member')
     error(409, 'User already belongs to a household')
+  return new Response(null, { status: 204 })
+}
+
+export const DELETE: RequestHandler = async ({ locals }) => {
+  const { id } = requireUser(locals)
+  if (!(await leaveHousehold(id)))
+    error(409, 'Household owners cannot leave their household')
   return new Response(null, { status: 204 })
 }

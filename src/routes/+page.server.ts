@@ -21,12 +21,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   const requestedId = Number(url.searchParams.get('plan'))
   const activePlan = plans.find((p) => p.id === requestedId) ?? plans.at(-1)
+  const canCreatePlan = !plans.some((plan) => plan.userId === userId)
 
   if (!activePlan) {
     return {
       plans,
       meals,
       plan: null,
+      canCreatePlan,
       activePlanId: 0,
       viewWeek: '',
       targets,
@@ -44,6 +46,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     plans,
     meals,
     plan,
+    canCreatePlan,
     activePlanId: activePlan.id,
     viewWeek,
     targets,

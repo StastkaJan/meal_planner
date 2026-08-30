@@ -18,7 +18,11 @@
     onFavorite,
     isAdmin,
   }: {
-    meals: (Meal & { isFavorite: boolean; canEdit: boolean })[]
+    meals: (Meal & {
+      isFavorite: boolean
+      isOwner: boolean
+      canEdit: boolean
+    })[]
     emptyMessage: string
     creating?: boolean
     onCreate: (
@@ -37,12 +41,18 @@
   }
 </script>
 
-{#snippet mealRow(meal: Meal & { isFavorite: boolean; canEdit: boolean })}
+{#snippet mealRow(
+  meal: Meal & { isFavorite: boolean; isOwner: boolean; canEdit: boolean },
+)}
   <tr>
     <td class="meal-name">
       <a href="/meals/{meal.id}">{meal.name}</a>
       {#if meal.userId}<span class="own-tag"
-          >{meal.canEdit ? 'Household' : 'Shared'}</span
+          >{meal.isOwner
+            ? t('Personal')
+            : meal.canEdit
+              ? 'Household'
+              : 'Shared'}</span
         >{/if}
     </td>
     <td>

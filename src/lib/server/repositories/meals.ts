@@ -46,6 +46,7 @@ export async function listMeals(userId?: number, locale: Locale = 'en') {
     .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
   return rows.map((meal) => ({
     ...meal,
+    isOwner: meal.userId === userId,
     canEdit:
       meal.userId === userId ||
       (meal.userId !== null && Boolean(access?.canEdit)),
@@ -71,6 +72,7 @@ export async function findMeal(id: number, userId?: number) {
   return meal
     ? {
         ...meal,
+        isOwner: meal.userId === userId,
         canEdit:
           meal.userId === userId ||
           (meal.userId !== null && Boolean(access?.canEdit)),

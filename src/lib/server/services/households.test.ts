@@ -1,17 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const repo = vi.hoisted(() => ({
-  addHouseholdMember: vi.fn(),
+  acceptHouseholdInvitation: vi.fn(),
   createHousehold: vi.fn(),
+  createHouseholdInvitation: vi.fn(),
+  declineHouseholdInvitation: vi.fn(),
   getHouseholdDetail: vi.fn(),
+  leaveHousehold: vi.fn(),
   removeHouseholdMember: vi.fn(),
   updateHouseholdMember: vi.fn(),
 }))
 vi.mock('../repositories/households', () => repo)
 
 import {
+  acceptInvitation,
   createUserHousehold,
+  declineInvitation,
   inviteExistingMember,
+  leaveHousehold,
   setMemberPermission,
 } from './households'
 
@@ -39,11 +45,11 @@ describe('household service', () => {
   })
 
   it('normalizes member email and requires an explicit boolean permission', async () => {
-    repo.addHouseholdMember.mockResolvedValue('added')
+    repo.createHouseholdInvitation.mockResolvedValue('invited')
     await expect(
       inviteExistingMember(7, ' MEMBER@EXAMPLE.COM ', false),
-    ).resolves.toBe('added')
-    expect(repo.addHouseholdMember).toHaveBeenCalledWith(
+    ).resolves.toBe('invited')
+    expect(repo.createHouseholdInvitation).toHaveBeenCalledWith(
       7,
       'member@example.com',
       false,
@@ -51,6 +57,22 @@ describe('household service', () => {
     await expect(
       inviteExistingMember(7, 'member@example.com', 'yes'),
     ).resolves.toBe('invalid')
+  })
+
+  it('requires the invited user to accept membership explicitly', async () => {
+    repo.acceptHouseholdInvitation.mockResolvedValue('accepted')
+    await expect(acceptInvitation(8, 3)).resolves.toBe('accepted')
+    expect(repo.acceptHouseholdInvitation).toHaveBeenCalledWith(8, 3)
+
+    repo.declineHouseholdInvitation.mockResolvedValue(true)
+    await expect(declineInvitation(8, 3)).resolves.toBe(true)
+    expect(repo.declineHouseholdInvitation).toHaveBeenCalledWith(8, 3)
+  })
+
+  it('allows non-owner members to leave through the repository guard', async () => {
+    repo.leaveHousehold.mockResolvedValue(true)
+    await expect(leaveHousehold(8)).resolves.toBe(true)
+    expect(repo.leaveHousehold).toHaveBeenCalledWith(8)
   })
 
   it('rejects malformed permission updates', async () => {
