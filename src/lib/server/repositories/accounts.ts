@@ -3,6 +3,7 @@ import { db } from '$lib/database'
 import {
   bonusItems,
   ingredients,
+  legalDocumentEvents,
   mealFavorites,
   mealIngredients,
   mealTranslations,
@@ -14,6 +15,7 @@ import {
   userSettings,
   weekSlots,
 } from '$lib/database/schema'
+import type { LegalNotice } from '$lib/legal'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -66,12 +68,26 @@ export async function updateUserAdmin(
   })
 }
 
-export async function createUser(email: string, passwordHash: string) {
-  const [user] = await db
-    .insert(users)
-    .values({ email, passwordHash })
-    .returning()
-  return user
+export async function createUser(
+  email: string,
+  passwordHash: string,
+  legalNotices: readonly LegalNotice[],
+) {
+  return db.transaction(async (tx) => {
+    const [user] = await tx
+      .insert(users)
+      .values({ email, passwordHash })
+      .returning()
+    await tx.insert(legalDocumentEvents).values(
+      legalNotices.map(({ document, version, action }) => ({
+        userId: user.id,
+        document,
+        version,
+        action,
+      })),
+    )
+    return user
+  })
 }
 
 export async function updatePassword(id: number, passwordHash: string) {
@@ -201,6 +217,15 @@ export async function getAccountExport(userId: number) {
       })
       .from(recipeImports)
       .where(eq(recipeImports.submittedBy, userId))
+    const legalEvents = await tx
+      .select({
+        document: legalDocumentEvents.document,
+        version: legalDocumentEvents.version,
+        action: legalDocumentEvents.action,
+        occurredAt: legalDocumentEvents.occurredAt,
+      })
+      .from(legalDocumentEvents)
+      .where(eq(legalDocumentEvents.userId, userId))
 
     const settings = settingsRow
       ? (({ userId: _userId, ...value }) => value)(settingsRow)
@@ -234,6 +259,7 @@ export async function getAccountExport(userId: number) {
       })),
       favoriteMealIds: favorites.map(({ mealId }) => mealId),
       recipeImports: imports,
+      legalDocumentEvents: legalEvents,
     }
   })
 }

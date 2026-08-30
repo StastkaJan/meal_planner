@@ -61,7 +61,9 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
-<!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
+<!-- NOTE: `/profile/export` returns only caller-owned account data, including legal-document events; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
+
+<!-- NOTE: `legal_document_events` records each terms acceptance or privacy-notice acknowledgement by user, document, and version; missing current-version rows drive the signed-in legal notice. -->
 
 ## Project layout
 
@@ -108,7 +110,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 ## Auth flow
 
-1. Registration requires terms acceptance and privacy acknowledgement before account creation. Register/login → `createSession()` creates a `sessions` row and sets the httpOnly cookie. Login uses a constant-time dummy hash when the user is absent.
+1. Registration requires terms acceptance and privacy acknowledgement, records both current document versions with the new user, then creates the session. Register/login → `createSession()` creates a `sessions` row and sets the httpOnly cookie. Login uses a constant-time dummy hash when the user is absent.
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
 3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.
 4. Rate-limited login/register: 10 attempts per 15 min per IP (in-memory, single-instance)

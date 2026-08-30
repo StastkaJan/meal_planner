@@ -152,6 +152,18 @@ const CS_MESSAGES = {
   'Terms and Conditions': 'obchodními podmínkami',
   'I acknowledge the': 'Beru na vědomí',
   'Privacy Policy': 'zásady ochrany osobních údajů',
+  'Legal updates': 'Právní aktualizace',
+  'Please review our Terms and Conditions':
+    'Přečtěte si prosím naše obchodní podmínky',
+  'Please review our Privacy Policy':
+    'Přečtěte si prosím naše zásady ochrany osobních údajů',
+  'Review version {version}. You can accept it here after reading.':
+    'Přečtěte si verzi {version}. Po přečtení ji zde můžete přijmout.',
+  'Review version {version}. This acknowledgement confirms that you saw the notice.':
+    'Přečtěte si verzi {version}. Potvrzení znamená, že jste oznámení viděli.',
+  'Read document': 'Přečíst dokument',
+  Accept: 'Přijmout',
+  Acknowledge: 'Potvrdit seznámení',
   'Sign in': 'Přihlásit se',
   'Create account': 'Vytvořit účet',
   'Sign in instead': 'Místo toho se přihlásit',

@@ -12,6 +12,7 @@ import {
   checkRateLimit,
   register,
 } from './auth'
+import { CURRENT_LEGAL_DOCUMENTS } from '$lib/legal'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -51,5 +52,20 @@ describe('checkRateLimit', () => {
     const ip = `test-${Date.now()}`
     for (let i = 0; i < 10; i++) expect(checkRateLimit(ip)).toBe(true)
     expect(checkRateLimit(ip)).toBe(false)
+  })
+})
+
+describe('register', () => {
+  it('records the current legal documents with the new account', async () => {
+    findUserByEmail.mockResolvedValueOnce(null)
+    createUser.mockResolvedValueOnce({ id: 42 })
+
+    await register('new@example.com', 'password1')
+
+    expect(createUser).toHaveBeenCalledWith(
+      'new@example.com',
+      expect.any(String),
+      CURRENT_LEGAL_DOCUMENTS,
+    )
   })
 })
