@@ -47,7 +47,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 export const DELETE: RequestHandler = async ({ request, locals, cookies }) => {
   const { id } = requireUser(locals)
-  const { password, confirmation } = await request.json()
+  const body = await request.json().catch(() => null)
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return json({ error: 'Invalid JSON' }, { status: 400 })
+  const { password, confirmation } = body
   if (
     typeof password !== 'string' ||
     !password ||

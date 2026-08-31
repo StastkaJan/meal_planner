@@ -14,7 +14,7 @@ vi.mock('$lib/server/services/profile', () => ({
 import { DELETE, PATCH } from './+server'
 import { GET } from './export/+server'
 
-function deleteEvent(body: object, userId?: number) {
+function deleteEvent(body: unknown, userId?: number) {
   return {
     request: { json: () => Promise.resolve(body) },
     locals: userId ? { user: { id: userId } } : {},
@@ -108,6 +108,23 @@ describe('DELETE /profile', () => {
   it('rejects missing confirmation without deleting', async () => {
     const response = await DELETE(deleteEvent({ password: 'secret' }, 42))
     expect(response.status).toBe(400)
+    expect(deleteAccount).not.toHaveBeenCalled()
+  })
+
+  it('rejects malformed or non-object JSON without deleting', async () => {
+    const malformed = deleteEvent({}, 42)
+    malformed.request.json = () => Promise.reject(new SyntaxError('bad JSON'))
+
+    for (const event of [
+      malformed,
+      deleteEvent(null, 42),
+      deleteEvent([], 42),
+      deleteEvent('invalid', 42),
+    ]) {
+      const response = await DELETE(event)
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toEqual({ error: 'Invalid JSON' })
+    }
     expect(deleteAccount).not.toHaveBeenCalled()
   })
 
