@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   bonusItems,
@@ -27,6 +27,36 @@ export async function findUserByEmail(email: string) {
 export async function findUserById(id: number) {
   const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1)
   return user ?? null
+}
+
+export async function listUsers() {
+  return db
+    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    .from(users)
+    .orderBy(asc(users.email))
+}
+
+export async function updateUserAdmin(
+  actingUserId: number,
+  id: number,
+  isAdmin: boolean,
+) {
+  return db.transaction(async (tx) => {
+    const admins = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.isAdmin, true))
+      .orderBy(asc(users.id))
+      .for('update')
+    if (!admins.some((admin) => admin.id === actingUserId)) return false
+
+    const [user] = await tx
+      .update(users)
+      .set({ isAdmin })
+      .where(eq(users.id, id))
+      .returning({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    return user ?? null
+  })
 }
 
 export async function createUser(email: string, passwordHash: string) {

@@ -47,6 +47,8 @@
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->
 
+<!-- NOTE: `/admin/recipes` manages shared recipes and imports; `/admin/users` lets admins grant or revoke admin access for other users. -->
+
 <!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/ordered ingredients/instructions; nullable translated fields fall back to the original recipe. -->
 
 <!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->
