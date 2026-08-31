@@ -88,10 +88,11 @@ export async function deleteAccount(
 ) {
   return monitorService('profile', 'delete_account', async () => {
     const user = await findUserById(userId)
-    if (!user || confirmation !== user.email) return false
+    if (!user || confirmation !== user.email) return 'invalid' as const
     if (!(await verifyPassword(String(password), user.passwordHash)))
-      return false
-    await deleteAccountRecord(userId)
-    return true
+      return 'invalid' as const
+    return (await deleteAccountRecord(userId))
+      ? ('deleted' as const)
+      : ('last-admin' as const)
   })
 }

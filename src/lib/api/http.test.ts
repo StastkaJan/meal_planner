@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { request, requestOk } from './http'
+import { deleteMeal } from './meals'
+import { request } from './http'
 
 afterEach(() => vi.unstubAllGlobals())
 
-describe('requestOk', () => {
-  it('rejects failed responses', async () => {
+describe('HTTP API helpers', () => {
+  it('rejects failed meal deletions', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -15,9 +16,7 @@ describe('requestOk', () => {
       ),
     )
 
-    await expect(requestOk('/meals/1', { method: 'DELETE' })).rejects.toThrow(
-      'Archive failed',
-    )
+    await expect(deleteMeal(1)).rejects.toThrow('Archive failed')
   })
 
   it('leaves raw responses available to callers that inspect status', async () => {

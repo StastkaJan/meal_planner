@@ -61,7 +61,7 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
-<!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email and preserves global meals. -->
+<!-- NOTE: `/profile/export` returns only caller-owned account data; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
 
 ## Project layout
 

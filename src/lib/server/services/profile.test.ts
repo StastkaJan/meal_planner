@@ -48,7 +48,7 @@ describe('deleteAccount', () => {
     })
     await expect(
       deleteAccount(42, 'secret', 'other@example.com'),
-    ).resolves.toBe(false)
+    ).resolves.toBe('invalid')
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(deleteAccountRecord).not.toHaveBeenCalled()
   })
@@ -60,7 +60,7 @@ describe('deleteAccount', () => {
     })
     verifyPassword.mockResolvedValueOnce(false)
     await expect(deleteAccount(42, 'wrong', 'cook@example.com')).resolves.toBe(
-      false,
+      'invalid',
     )
     expect(deleteAccountRecord).not.toHaveBeenCalled()
   })
@@ -71,9 +71,23 @@ describe('deleteAccount', () => {
       passwordHash: 'hash',
     })
     verifyPassword.mockResolvedValueOnce(true)
+    deleteAccountRecord.mockResolvedValueOnce(true)
     await expect(deleteAccount(42, 'secret', 'cook@example.com')).resolves.toBe(
-      true,
+      'deleted',
     )
     expect(deleteAccountRecord).toHaveBeenCalledWith(42)
+  })
+
+  it('reports when the final administrator cannot be deleted', async () => {
+    findUserById.mockResolvedValueOnce({
+      email: 'admin@example.com',
+      passwordHash: 'hash',
+    })
+    verifyPassword.mockResolvedValueOnce(true)
+    deleteAccountRecord.mockResolvedValueOnce(false)
+
+    await expect(
+      deleteAccount(42, 'secret', 'admin@example.com'),
+    ).resolves.toBe('last-admin')
   })
 })

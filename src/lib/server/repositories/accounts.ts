@@ -15,6 +15,18 @@ import {
   weekSlots,
 } from '$lib/database/schema'
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+async function lockAdminIds(tx: Tx) {
+  const admins = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.isAdmin, true))
+    .orderBy(asc(users.id))
+    .for('update')
+  return admins.map((admin) => admin.id)
+}
+
 export async function findUserByEmail(email: string) {
   const [user] = await db
     .select()
@@ -42,13 +54,8 @@ export async function updateUserAdmin(
   isAdmin: boolean,
 ) {
   return db.transaction(async (tx) => {
-    const admins = await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.isAdmin, true))
-      .orderBy(asc(users.id))
-      .for('update')
-    if (!admins.some((admin) => admin.id === actingUserId)) return false
+    const adminIds = await lockAdminIds(tx)
+    if (!adminIds.includes(actingUserId)) return false
 
     const [user] = await tx
       .update(users)
@@ -232,7 +239,10 @@ export async function getAccountExport(userId: number) {
 }
 
 export async function deleteAccount(userId: number) {
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const adminIds = await lockAdminIds(tx)
+    if (adminIds.length === 1 && adminIds[0] === userId) return false
     await tx.delete(users).where(eq(users.id, userId))
+    return true
   })
 }

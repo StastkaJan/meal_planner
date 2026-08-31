@@ -7,7 +7,12 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
   const admin = requireAdmin(locals)
   const id = Number(params.id)
   const body = await request.json().catch(() => null)
-  if (!Number.isInteger(id)) error(400, 'Invalid user id')
+  if (
+    !/^[1-9]\d*$/.test(params.id) ||
+    !Number.isSafeInteger(id) ||
+    id > 2_147_483_647
+  )
+    error(400, 'Invalid user id')
   if (!body || typeof body !== 'object' || Array.isArray(body))
     error(400, 'Invalid JSON')
   const { isAdmin } = body as Record<string, unknown>

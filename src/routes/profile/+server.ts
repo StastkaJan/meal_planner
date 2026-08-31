@@ -59,10 +59,16 @@ export const DELETE: RequestHandler = async ({ request, locals, cookies }) => {
       { status: 400 },
     )
 
-  if (!(await deleteAccount(id, password, confirmation)))
+  const result = await deleteAccount(id, password, confirmation)
+  if (result === 'invalid')
     return json(
       { error: 'Password or confirmation is incorrect' },
       { status: 400 },
+    )
+  if (result === 'last-admin')
+    return json(
+      { error: 'Promote another administrator before deleting your account' },
+      { status: 409 },
     )
 
   cookies.delete('session', { path: '/' })

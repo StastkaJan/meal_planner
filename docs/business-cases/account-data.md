@@ -18,6 +18,7 @@ Permanent deletion requires both the current password and the exact account
 email. One database transaction deletes the user; foreign-key cascades remove
 sessions, settings, personal recipes, plans, favourites, submissions, and their
 dependent rows. Global catalogue recipes remain independent and are preserved.
+The final administrator must promote another user before deleting their account.
 
 ## Non-goals
 

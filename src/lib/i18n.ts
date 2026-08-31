@@ -334,6 +334,8 @@ const CS_MESSAGES = {
   'Current password is incorrect': 'Současné heslo není správné',
   'Password and confirmation are required': 'Je vyžadováno heslo a potvrzení',
   'Password or confirmation is incorrect': 'Heslo nebo potvrzení není správné',
+  'Promote another administrator before deleting your account':
+    'Před smazáním účtu povyšte jiného uživatele na správce',
   'Request failed': 'Požadavek se nezdařil',
   'Page not found': 'Stránka nebyla nalezena',
   'Unexpected error': 'Neočekávaná chyba',

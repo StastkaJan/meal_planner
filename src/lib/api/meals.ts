@@ -23,9 +23,6 @@ export const deleteMealTranslation = (id: number, locale: Locale) =>
   request(`/meals/${id}/translations/${locale}`, { method: 'DELETE' })
 
 export const deleteMeal = (id: number) =>
-  request(`/meals/${id}`, { method: 'DELETE' })
-
-export const archiveMeal = (id: number) =>
   requestOk(`/meals/${id}`, { method: 'DELETE' })
 
 export const duplicateMeal = (id: number) =>

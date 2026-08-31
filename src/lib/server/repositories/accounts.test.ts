@@ -4,7 +4,7 @@ const db = vi.hoisted(() => ({ transaction: vi.fn() }))
 
 vi.mock('$lib/database', () => ({ db }))
 
-import { getAccountExport, updateUserAdmin } from './accounts'
+import { deleteAccount, getAccountExport, updateUserAdmin } from './accounts'
 
 function makeTx(responses: unknown[]) {
   let index = 0
@@ -114,5 +114,41 @@ describe('updateUserAdmin', () => {
     await expect(updateUserAdmin(7, 8, false)).resolves.toBe(false)
     expect(lock.for).toHaveBeenCalledWith('update')
     expect(tx.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('deleteAccount', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  function deletionTx(admins: { id: number }[]) {
+    const lock: any = {}
+    for (const method of ['from', 'where', 'orderBy'])
+      lock[method] = vi.fn(() => lock)
+    lock.for = vi.fn().mockResolvedValue(admins)
+
+    const deletion = { where: vi.fn().mockResolvedValue(undefined) }
+    const tx = {
+      select: vi.fn(() => lock),
+      delete: vi.fn(() => deletion),
+    }
+    db.transaction.mockImplementationOnce(
+      (callback: (transaction: unknown) => unknown) => callback(tx),
+    )
+    return { tx, lock }
+  }
+
+  it('rejects deletion of the final administrator under the admin lock', async () => {
+    const { tx, lock } = deletionTx([{ id: 7 }])
+
+    await expect(deleteAccount(7)).resolves.toBe(false)
+    expect(lock.for).toHaveBeenCalledWith('update')
+    expect(tx.delete).not.toHaveBeenCalled()
+  })
+
+  it('allows deletion when another administrator remains', async () => {
+    const { tx } = deletionTx([{ id: 7 }, { id: 8 }])
+
+    await expect(deleteAccount(7)).resolves.toBe(true)
+    expect(tx.delete).toHaveBeenCalled()
   })
 })

@@ -25,6 +25,12 @@ describe('admin user API', () => {
   })
 
   it('rejects invalid role changes and self-demotion', async () => {
+    await expect(
+      PATCH(event('2147483648', { isAdmin: true })),
+    ).rejects.toMatchObject({ status: 400 })
+    await expect(PATCH(event('1e3', { isAdmin: true }))).rejects.toMatchObject({
+      status: 400,
+    })
     await expect(PATCH(event('8', null))).rejects.toMatchObject({ status: 400 })
     await expect(PATCH(event('8', { isAdmin: 'yes' }))).rejects.toMatchObject({
       status: 400,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types'
   import { queueCatalogue, reviewCatalogueRecipe } from '$lib/api/catalogue'
-  import { archiveMeal } from '$lib/api/meals'
+  import { deleteMeal } from '$lib/api/meals'
   import Button from '$lib/components/ui/Button.svelte'
   import Table from '$lib/components/ui/Table.svelte'
   import { useI18n } from '$lib/i18n-context'
@@ -52,7 +52,7 @@
     recipeError = ''
     archiveBusy = true
     try {
-      await archiveMeal(id)
+      await deleteMeal(id)
       recipes = recipes.filter((recipe) => recipe.id !== id)
     } catch (cause) {
       recipeError =
