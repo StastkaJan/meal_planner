@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const importCatalogueBatch = vi.hoisted(() => vi.fn())
 const reviewRecipeImport = vi.hoisted(() => vi.fn())
 const listRecipeImports = vi.hoisted(() => vi.fn())
-const listMeals = vi.hoisted(() => vi.fn())
+const listSharedMealSummaries = vi.hoisted(() => vi.fn())
 vi.mock('$lib/server/services/catalogue-imports', () => ({
   importCatalogueBatch,
 }))
@@ -11,7 +11,7 @@ vi.mock('$lib/server/repositories/recipe-imports', () => ({
   reviewRecipeImport,
   listRecipeImports,
 }))
-vi.mock('$lib/server/repositories/meals', () => ({ listMeals }))
+vi.mock('$lib/server/repositories/meals', () => ({ listSharedMealSummaries }))
 
 import { POST } from './+server'
 import { PATCH } from './[id]/+server'
@@ -54,7 +54,7 @@ describe('admin recipe catalogue API', () => {
 
   it('loads shared recipes alongside pending imports', async () => {
     listRecipeImports.mockResolvedValueOnce([{ id: 1 }])
-    listMeals.mockResolvedValueOnce([{ id: 2, name: 'Soup' }])
+    listSharedMealSummaries.mockResolvedValueOnce([{ id: 2, name: 'Soup' }])
 
     const result = await load({
       locals: {
@@ -67,6 +67,6 @@ describe('admin recipe catalogue API', () => {
       imports: [{ id: 1 }],
       recipes: [{ id: 2, name: 'Soup' }],
     })
-    expect(listMeals).toHaveBeenCalledWith(undefined, 'cs')
+    expect(listSharedMealSummaries).toHaveBeenCalledWith('cs')
   })
 })

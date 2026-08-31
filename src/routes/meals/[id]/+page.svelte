@@ -9,7 +9,7 @@
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
-  const { t, label, namedCount } = useI18n()
+  const { t, label, namedCount, message } = useI18n()
   let sourceMeal = $derived(data.sourceMeal)
   let translations = $derived(data.translations)
   const translation = $derived(
@@ -31,6 +31,7 @@
   )
   let editing = $state($page.url.searchParams.get('edit') === '1')
   let translating = $state(false)
+  let deleteError = $state('')
   const cooking = $derived($page.url.searchParams.get('cook') === '1')
 
   // Servings scaler: nutrition is stored for the recipe's own serving count; the stepper
@@ -61,8 +62,14 @@
 
   async function deleteMeal() {
     if (!confirm(t('Delete this meal?'))) return
-    await removeMeal(meal.id)
-    await goto('/meals')
+    deleteError = ''
+    try {
+      await removeMeal(meal.id)
+      await goto('/meals')
+    } catch (cause) {
+      deleteError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    }
   }
 
   async function duplicate() {
@@ -140,6 +147,8 @@
         >
       {/if}
     </div>
+
+    {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
 
     <div class="detail">
       {#if meal.imageUrl}
@@ -309,6 +318,9 @@
     display: flex;
     gap: 6px;
     align-items: center;
+  }
+  .delete-error {
+    color: $color-danger;
   }
 
   .detail {

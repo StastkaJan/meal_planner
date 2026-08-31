@@ -21,6 +21,7 @@
   let importing = $state(false)
   let importUrl = $state('')
   let importError = $state('')
+  let deleteError = $state('')
   let importBusy = $state(false)
   let importLocale = $derived<Locale>(data.locale)
 
@@ -38,8 +39,14 @@
 
   async function deleteMeal(id: number) {
     if (!confirm(t('Delete this meal?'))) return
-    await removeMeal(id)
-    meals = meals.filter((meal) => meal.id !== id)
+    deleteError = ''
+    try {
+      await removeMeal(id)
+      meals = meals.filter((meal) => meal.id !== id)
+    } catch (cause) {
+      deleteError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    }
   }
 
   async function toggleFavorite(id: number, next: boolean) {
@@ -210,6 +217,7 @@
     <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span>
   </form>
 
+  {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
   <MealsTable
     {meals}
     isAdmin={data.isAdmin}
@@ -352,6 +360,9 @@
   .import-error {
     color: $color-danger;
     font-size: 0.8rem;
+  }
+  .delete-error {
+    color: $color-danger;
   }
 
   @media (max-width: 720px) {
