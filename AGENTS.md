@@ -27,6 +27,8 @@
 
 <!-- NOTE: Production containers start only the app. The image bundles the production migration runner for an explicit release step; development seeds are never bundled or run on startup. -->
 
+<!-- NOTE: Production deploys reconcile monitoring service definitions so new mounts and scrape configuration take effect; named volumes preserve monitoring data. -->
+
 <!-- NOTE: The runtime image upgrades Alpine's OpenSSL packages over the digest-pinned Node base before security scanning. -->
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
