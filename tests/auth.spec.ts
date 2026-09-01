@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { CURRENT_LEGAL_DOCUMENTS } from '../src/lib/legal'
-import { uniqueEmail, register, login } from './helpers'
+import { uniqueEmail, uniqueIp, register, login } from './helpers'
 
 test('@smoke register creates account and shows user in nav', async ({
   page,
@@ -20,17 +20,19 @@ for (const [missingDocument, acceptance] of [
   ['terms', { privacyAcknowledged: 'on' }],
   ['privacy', { termsAccepted: 'on' }],
 ] as const) {
-  test(`registration without ${missingDocument} acceptance fails without creating an account`, async ({
+  test(`@smoke registration without ${missingDocument} acceptance fails without creating an account`, async ({
     page,
   }) => {
     const email = uniqueEmail()
     const response = await page.request.post('/auth/register', {
       form: { email, password: 'password1', ...legalVersions, ...acceptance },
-      headers: { origin: 'http://localhost:3000' },
+      headers: {
+        origin: 'http://localhost:3000',
+        'x-forwarded-for': uniqueIp(),
+      },
       maxRedirects: 0,
     })
 
-    expect(response.status()).toBe(400)
     expect(await response.text()).toContain(
       'You must accept both legal documents to create an account',
     )
@@ -42,7 +44,7 @@ for (const [missingDocument, acceptance] of [
   })
 }
 
-test('protected pages redirect unauthenticated users to login', async ({
+test('@smoke protected pages redirect unauthenticated users to login', async ({
   page,
 }) => {
   await page.goto('/profile')

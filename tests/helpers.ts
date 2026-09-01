@@ -1,7 +1,12 @@
 import { execFileSync } from 'node:child_process'
 import type { Page } from '@playwright/test'
 
-let ipOctet = 1
+let ipValue = Math.floor(Math.random() * 131_072)
+
+export function uniqueIp() {
+  ipValue = (ipValue + 1) % 131_072
+  return `198.${18 + (ipValue >> 16)}.${(ipValue >> 8) & 255}.${ipValue & 255}`
+}
 
 export function uniqueEmail() {
   return `test-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@test.com`
@@ -30,7 +35,7 @@ export async function register(
   password = 'password1',
 ) {
   await page.setExtraHTTPHeaders({
-    'x-forwarded-for': `192.0.2.${ipOctet++}`,
+    'x-forwarded-for': uniqueIp(),
   })
   await page.goto('/auth/register')
   await page.waitForLoadState('networkidle')
