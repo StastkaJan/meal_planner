@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { uniqueEmail, register } from './helpers'
+import { grantPro, uniqueEmail, register } from './helpers'
+
+let email: string
 
 test.beforeEach(async ({ page }) => {
-  await register(page, uniqueEmail())
+  email = uniqueEmail()
+  await register(page, email)
   await page.waitForLoadState('networkidle')
 })
 
@@ -17,7 +20,7 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(page.getByText('Dietary restrictions')).toBeVisible()
   await expect(
     page.getByRole('checkbox', { name: 'Favourites only' }),
-  ).toBeVisible()
+  ).toBeDisabled()
   await expect(
     page
       .locator('details.settings')
@@ -58,6 +61,8 @@ test('prefill an extra item from a common preset', async ({ page }) => {
 test('configure enabled and custom meal slots for auto-compose', async ({
   page,
 }) => {
+  grantPro(email)
+  await page.reload()
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.getByText('Plan settings').click()
 

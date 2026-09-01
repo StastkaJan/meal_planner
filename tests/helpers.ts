@@ -1,9 +1,27 @@
+import { execFileSync } from 'node:child_process'
 import type { Page } from '@playwright/test'
 
 let ipOctet = 1
 
 export function uniqueEmail() {
   return `test-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@test.com`
+}
+
+export function grantPro(email: string) {
+  if (!/^[\w.@-]+$/.test(email)) throw new Error('Unsafe test email')
+  execFileSync('docker', [
+    'compose',
+    'exec',
+    '-T',
+    'db',
+    'psql',
+    '-U',
+    'mealplan',
+    '-d',
+    'mealplan',
+    '-c',
+    `update users set is_pro = true where email = '${email}'`,
+  ])
 }
 
 export async function register(
