@@ -27,6 +27,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the production env file}
     ports:
       - '${GRAFANA_BIND_ADDRESS:-127.0.0.1}:5432:5432'
+    networks:
+      - database
+      - admin
 
   app:
     profiles: ['development']

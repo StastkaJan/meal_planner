@@ -31,7 +31,7 @@
 
 <!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
 
-<!-- NOTE: Production serves `papuplan.cz` via `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, WireGuard-only Grafana and PostgreSQL host ports, and blue/green app slots switched by `scripts/deploy-production.sh`. See `docs/production.md` and `docs/wireguard.md`. -->
+<!-- NOTE: Production serves `papuplan.cz` via `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, WireGuard-only Grafana and PostgreSQL host ports, and blue/green app slots switched by `scripts/deploy-production.sh`. PostgreSQL also joins the non-internal `admin` network because Docker cannot publish a port from an exclusively internal network. See `docs/production.md` and `docs/wireguard.md`. -->
 
 <!-- NOTE: Dependabot proposes weekly npm, Docker, and Actions updates; `Dependency security` audits the lockfile and scans the built application image. -->
 
