@@ -65,10 +65,12 @@ describe('production deployment', () => {
     )
   })
 
-  it('reconciles the proxy without recreating shared data services', () => {
+  it('reconciles monitoring configuration changes', () => {
     const script = readProjectFile('scripts/deploy-production.sh')
 
-    expect(script).toContain('backup prometheus loki alloy grafana\n')
+    expect(script).toContain(
+      'compose up -d --wait --wait-timeout 120 \\\n  backup prometheus loki alloy grafana',
+    )
     expect(script).toContain('compose up -d --wait --wait-timeout 120 proxy')
   })
 
