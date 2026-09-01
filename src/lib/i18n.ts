@@ -152,6 +152,8 @@ const CS_MESSAGES = {
   'Terms and Conditions': 'obchodními podmínkami',
   'I acknowledge the': 'Beru na vědomí',
   'Privacy Policy': 'zásady ochrany osobních údajů',
+  Terms: 'Obchodní podmínky',
+  Privacy: 'Zásady ochrany osobních údajů',
   'Legal updates': 'Právní aktualizace',
   'Please review our Terms and Conditions':
     'Přečtěte si prosím naše obchodní podmínky',

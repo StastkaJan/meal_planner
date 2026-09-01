@@ -140,10 +140,10 @@
 
 <footer class="shell-footer">
   <a href="/legal/terms.md" target="_blank" rel="noopener">
-    {t('Terms and Conditions')}
+    {t('Terms')}
   </a>
   <a href="/legal/privacy.md" target="_blank" rel="noopener">
-    {t('Privacy Policy')}
+    {t('Privacy')}
   </a>
 </footer>
 
