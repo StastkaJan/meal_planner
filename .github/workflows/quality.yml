@@ -79,14 +79,26 @@ jobs:
       VPS_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS || secrets.VPS_KNOWN_HOSTS }}
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Configure SSH
+      - name: Check preview configuration
+        id: preview_config
         run: |
+          if [[ -z "$VPS_HOST$VPS_USER$VPS_SSH_KEY$VPS_KNOWN_HOSTS" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview deployment skipped until PREVIEW_VPS_* is configured"
+            exit 0
+          fi
           test -n "$VPS_HOST"
           test -n "$VPS_USER"
           test -n "$VPS_SSH_KEY"
           test -n "$VPS_KNOWN_HOSTS"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.preview_config.outputs.enabled == 'true'
+
+      - name: Configure SSH
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
@@ -139,15 +151,18 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
 
       - name: Package source
+        if: steps.preview_config.outputs.enabled == 'true'
         run: git archive --format=tar.gz --output="$RUNNER_TEMP/meal-plan-preview.tar.gz" HEAD
 
       - name: Upload source
+        if: steps.preview_config.outputs.enabled == 'true'
         run: |
           scp -o BatchMode=yes -o IdentitiesOnly=yes -P 22 \
             "$RUNNER_TEMP/meal-plan-preview.tar.gz" \
             "$VPS_USER@$VPS_HOST:meal-plan-preview-$GITHUB_RUN_ID.tar.gz"
 
       - name: Deploy preview on VPS
+        if: steps.preview_config.outputs.enabled == 'true'
         run: |
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
             "$VPS_USER@$VPS_HOST" bash -s -- \
@@ -173,4 +188,5 @@ jobs:
           REMOTE
 
       - name: Add preview URL to summary
+        if: steps.preview_config.outputs.enabled == 'true'
         run: echo "Preview https://pr-$PR_NUMBER.$PREVIEW_BASE_DOMAIN" >> "$GITHUB_STEP_SUMMARY"

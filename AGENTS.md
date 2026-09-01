@@ -37,7 +37,7 @@
 
 <!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates and seeds its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
-<!-- NOTE: Same-repository PRs deploy to isolated `pr-N.test.papuplan.cz` previews after CI; `.github/workflows/preview-cleanup.yml` deletes their containers, image, volume, route, and secret state when the PR closes. -->
+<!-- NOTE: When the `preview` GitHub environment is configured, same-repository PRs deploy to isolated `pr-N.test.papuplan.cz` previews after CI; `.github/workflows/preview-cleanup.yml` deletes their containers, image, volume, route, and secret state when the PR closes. -->
 
 <!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
 

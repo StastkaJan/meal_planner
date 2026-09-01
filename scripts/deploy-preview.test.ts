@@ -20,6 +20,8 @@ describe('pull request previews', () => {
       'github.event.pull_request.head.repo.full_name == github.repository',
     )
     expect(workflow).toContain('needs: quality')
+    expect(workflow).toContain('id: preview_config')
+    expect(workflow).toContain('echo "enabled=false" >> "$GITHUB_OUTPUT"')
     expect(workflow).toContain('bash scripts/deploy-preview.sh deploy')
   })
 
@@ -38,6 +40,7 @@ describe('pull request previews', () => {
 
     expect(workflow).toContain('pull_request_target:')
     expect(workflow).toContain('types: [closed]')
+    expect(workflow).toContain('id: preview_config')
     expect(workflow).toContain('bash scripts/deploy-preview.sh delete')
     expect(script).toContain('rm -f "$route_file"')
     expect(script).toContain('down --volumes --remove-orphans --rmi local')

@@ -107,6 +107,10 @@ One-time host setup:
    only same-repository pull requests deploy, but their branches build and run
    their Dockerfile on this host.
 
+Until all four values exist, preview deployment and cleanup succeed as no-ops
+instead of failing the pull request pipeline. Partially configured credentials
+still fail so the incomplete setup remains visible.
+
 Preview databases start empty and are not backed up or connected to production
 monitoring. They exist only for reviewing the pull request.
 
