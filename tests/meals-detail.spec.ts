@@ -100,13 +100,12 @@ test('allows an ingredient quantity without a unit', async ({ page }) => {
   await page.getByPlaceholder('Ingredient').fill('Eggs')
   await page.getByPlaceholder('Qty').fill('2')
   await page.getByRole('button', { name: 'Save' }).click()
+  await page.reload()
 
   await expect(page.getByRole('listitem')).toHaveText('2 Eggs')
 })
 
 test('does not silently discard a partial ingredient row', async ({ page }) => {
-  test.fail(true, 'Known gap: partial ingredient rows are silently discarded')
-
   const response = await page.request.post('/meals', {
     data: { name: `Partial-${Date.now()}` },
   })
@@ -115,6 +114,7 @@ test('does not silently discard a partial ingredient row', async ({ page }) => {
   await page.getByPlaceholder('Qty').fill('2')
   await page.getByRole('button', { name: 'Save' }).click()
 
+  test.fail(true, 'Known gap: partial ingredient rows are silently discarded')
   await expect(page.getByPlaceholder('Qty')).toHaveValue('2')
   await expect(page.getByRole('alert')).toContainText('Ingredient name')
 })

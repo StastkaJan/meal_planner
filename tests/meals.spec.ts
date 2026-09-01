@@ -14,12 +14,11 @@ test('rejects a new meal without its required name', async ({ page }) => {
 })
 
 test('rejects a whitespace-only meal name', async ({ page }) => {
-  test.fail(true, 'Known gap: meal names are not trimmed before validation')
-
   const response = await page.request.post('/meals', {
     data: { name: '   ' },
   })
 
+  test.fail(true, 'Known gap: meal names are not trimmed before validation')
   expect(response.status()).toBe(400)
 })
 
@@ -28,12 +27,11 @@ for (const [field, value] of [
   ['servings', 0],
 ] as const) {
   test(`rejects an invalid ${field} value`, async ({ page }) => {
-    test.fail(true, 'Known gap: meal numeric fields lack server validation')
-
     const response = await page.request.post('/meals', {
       data: { name: 'Invalid meal', [field]: value },
     })
 
+    test.fail(true, 'Known gap: meal numeric fields lack server validation')
     expect(response.status()).toBe(400)
   })
 }
@@ -46,19 +44,16 @@ for (const [caseName, ingredient] of [
   ['with a unit but no quantity', { name: 'Flour', qty: null, unit: 'cup' }],
 ] as const) {
   test(`rejects an ingredient ${caseName}`, async ({ page }) => {
-    test.fail(true, 'Known gap: ingredient payloads lack server validation')
-
     const response = await page.request.post('/meals', {
       data: { name: 'Invalid ingredient', ingredients: [ingredient] },
     })
 
+    test.fail(true, 'Known gap: ingredient payloads lack server validation')
     expect(response.status()).toBe(400)
   })
 }
 
 test('rejects a malformed ingredient collection', async ({ page }) => {
-  test.fail(true, 'Known gap: malformed ingredient payloads return 500')
-
   const response = await page.request.post('/meals', {
     data: {
       name: 'Invalid ingredients',
@@ -66,6 +61,7 @@ test('rejects a malformed ingredient collection', async ({ page }) => {
     },
   })
 
+  test.fail(true, 'Known gap: malformed ingredient payloads return 500')
   expect(response.status()).toBe(400)
 })
 
