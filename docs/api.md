@@ -7,6 +7,9 @@
   recipe. Blank fields use the original recipe as fallback.
 - `DELETE /meals/[id]/translations/[locale]` deletes one translation without
   changing the original recipe.
+- `GET /meals/[id]/image` returns an uploaded recipe image. Recipe owners and
+  admins use `PUT` to upload or replace it and `DELETE` to remove it; accepted
+  images are JPEG, PNG, WebP, or GIF up to 5 MB.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |

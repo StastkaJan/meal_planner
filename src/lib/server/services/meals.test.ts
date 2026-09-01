@@ -126,6 +126,25 @@ describe('createMeal / updateMeal ingredient sync', () => {
     expect(tx.insert).toHaveBeenCalledTimes(1) // only the meals insert
   })
 
+  it('createMeal stores an uploaded image in the same transaction', async () => {
+    const tx = makeTx([[{ id: 2, name: 'Toast' }], undefined, undefined])
+    mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
+      cb(tx),
+    )
+    const data = Buffer.from([0xff, 0xd8, 0xff])
+
+    await createMeal({
+      name: 'Toast',
+      image: { contentType: 'image/jpeg', data },
+    })
+
+    expect(tx.values).toHaveBeenLastCalledWith({
+      mealId: 2,
+      contentType: 'image/jpeg',
+      data,
+    })
+  })
+
   it('updateMeal resyncs mealIngredients when ingredients is part of the write', async () => {
     const tx = makeTx([
       [{ id: 1, name: 'Soup' }], // update(meals).set().where().returning()

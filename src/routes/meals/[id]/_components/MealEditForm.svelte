@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { updateMeal } from '$lib/api/meals'
+  import { deleteMealImage, updateMeal, uploadMealImage } from '$lib/api/meals'
   import Textarea from '$lib/components/ui/Textarea.svelte'
   import {
     CUISINE_OPTIONS,
@@ -16,17 +16,23 @@
   let {
     meal,
     ingredients,
+    hasUploadedImage,
     onCancel,
     onSaved,
   }: {
     meal: Meal
     ingredients: IngredientInput[]
+    hasUploadedImage: boolean
     onCancel: () => void
-    onSaved: (meal: Meal) => void
+    onSaved: (meal: Meal, hasUploadedImage: boolean) => void
   } = $props()
 
   let tags = $derived(meal.tags ?? [])
   let allowedSlots = $derived(meal.allowedSlots ?? [])
+  let imageFile = $state<File | null>(null)
+  let removeUploadedImage = $state(false)
+  let saving = $state(false)
+  let saveError = $state('')
 
   type IngredientRow = { name: string; qty: number | ''; unit: string }
   const emptyRow = (): IngredientRow => ({ name: '', qty: '', unit: '' })
@@ -71,7 +77,25 @@
         qty: r.qty === '' ? null : Number(r.qty),
         unit: r.unit || null,
       }))
-    onSaved(await updateMeal(meal.id, body))
+    saving = true
+    saveError = ''
+    try {
+      const updated = await updateMeal(meal.id, body)
+      let uploadedImage = hasUploadedImage
+      if (removeUploadedImage) {
+        await deleteMealImage(meal.id)
+        uploadedImage = false
+      }
+      if (imageFile) {
+        await uploadMealImage(meal.id, imageFile)
+        uploadedImage = true
+      }
+      onSaved(updated, uploadedImage)
+    } catch (cause) {
+      saveError = cause instanceof Error ? cause.message : t('Request failed')
+    } finally {
+      saving = false
+    }
   }
 </script>
 
@@ -103,6 +127,26 @@
       </select>
     </label>
   </div>
+  <fieldset class="image-field">
+    <legend>{t('Recipe image')}</legend>
+    <label
+      >{t('Upload image')}<input
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onchange={(event) => {
+          imageFile = event.currentTarget.files?.[0] ?? null
+          if (imageFile) removeUploadedImage = false
+        }}
+      /></label
+    >
+    <span class="hint">{t('JPEG, PNG, WebP, or GIF. Maximum 5 MB.')}</span>
+    {#if hasUploadedImage}
+      <label class="remove-image">
+        <input type="checkbox" bind:checked={removeUploadedImage} />
+        {t('Remove uploaded image')}
+      </label>
+    {/if}
+  </fieldset>
   <div class="field-row">
     <label
       >{t('Calories')}<input
@@ -289,11 +333,14 @@
     /></label
   >
   <div class="form-actions">
-    <button class="btn" type="submit">{t('Save')}</button>
+    <button class="btn" type="submit" disabled={saving}
+      >{saving ? t('Saving') : t('Save')}</button
+    >
     <button class="btn ghost" type="button" onclick={onCancel}
       >{t('Cancel')}</button
     >
   </div>
+  {#if saveError}<p class="form-error" role="alert">{saveError}</p>{/if}
 </form>
 
 <style lang="scss">
@@ -312,6 +359,41 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
+  }
+
+  .image-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+
+    legend {
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: $color-text-muted;
+    }
+
+    .hint {
+      color: $color-text-muted;
+      font-size: 0.75rem;
+    }
+
+    .remove-image {
+      flex-direction: row;
+      align-items: center;
+
+      input {
+        width: auto;
+        min-height: auto;
+      }
+    }
+  }
+
+  .form-error {
+    color: $color-danger;
+    font-size: 0.8rem;
   }
 
   label {

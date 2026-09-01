@@ -230,6 +230,7 @@ const CS_MESSAGES = {
   'Just me': 'Jen já',
   Everyone: 'Všichni',
   Save: 'Uložit',
+  Saving: 'Ukládání',
   Name: 'Název',
   Difficulty: 'Obtížnost',
   Preparation: 'Příprava',
@@ -278,6 +279,11 @@ const CS_MESSAGES = {
   'Remove timer': 'Odebrat časovač',
   Remove: 'Odebrat',
   'Image URL': 'URL obrázku',
+  'Recipe image': 'Obrázek receptu',
+  'Upload image': 'Nahrát obrázek',
+  'JPEG, PNG, WebP, or GIF. Maximum 5 MB.':
+    'JPEG, PNG, WebP nebo GIF. Maximálně 5 MB.',
+  'Remove uploaded image': 'Odebrat nahraný obrázek',
   'Preparation (min)': 'Příprava (min)',
   'Protein (g)': 'Bílkoviny (g)',
   'Carbs (g)': 'Sacharidy (g)',
@@ -437,6 +443,11 @@ const CS_MESSAGES = {
     'Globální recepty mohou vytvářet pouze správci',
   'Invalid scope': 'Neplatný rozsah',
   'Meal not found': 'Jídlo nebylo nalezeno',
+  'Image not found': 'Obrázek nebyl nalezen',
+  'Choose an image': 'Vyberte obrázek',
+  'Image must be 5 MB or smaller': 'Obrázek musí mít nejvýše 5 MB',
+  'Use a JPEG, PNG, WebP, or GIF image':
+    'Použijte obrázek JPEG, PNG, WebP nebo GIF',
   'Only global meals can be duplicated': 'Duplikovat lze pouze globální jídla',
   'Unsupported locale': 'Nepodporovaný jazyk',
   'Edit the original recipe for its source language':

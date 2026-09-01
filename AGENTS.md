@@ -71,6 +71,8 @@
 
 <!-- NOTE: Meal and bonus nutrition includes calories, macros, fibre, sugars, saturated fat, and salt; the four secondary nutrients are displayed and totaled but do not affect auto-compose targets. -->
 
+<!-- NOTE: `meal_images` stores one uploaded JPEG/PNG/WebP/GIF per recipe (5 MB maximum); `/meals/[id]/image` serves and manages it, and app containers set `BODY_SIZE_LIMIT=6M`. -->
+
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
 <!-- NOTE: `/profile/export` returns only caller-owned account data, including legal-document events; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->

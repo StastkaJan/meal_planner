@@ -14,6 +14,7 @@ import { db } from '$lib/database'
 import {
   meals,
   mealFavorites,
+  mealImages,
   ingredients,
   mealIngredients,
   mealTranslations,
@@ -398,11 +399,13 @@ export async function createMeal(values: {
   name: string
   ingredients?: IngredientInput[]
   translations?: Omit<typeof mealTranslations.$inferInsert, 'mealId'>[]
+  image?: Pick<typeof mealImages.$inferInsert, 'contentType' | 'data'>
   [k: string]: unknown
 }) {
   const {
     ingredients: ingredientInput,
     translations: translationInput,
+    image: imageInput,
     ...mealValues
   } = values
   return db.transaction(async (tx) => {
@@ -415,6 +418,8 @@ export async function createMeal(values: {
           mealId: meal.id,
         })),
       )
+    if (imageInput)
+      await tx.insert(mealImages).values({ mealId: meal.id, ...imageInput })
     return meal
   })
 }

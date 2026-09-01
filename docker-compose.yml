@@ -21,6 +21,7 @@ services:
     environment:
       DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
       ORIGIN: http://localhost:3000
+      BODY_SIZE_LIMIT: 6M
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-dev}
     depends_on:

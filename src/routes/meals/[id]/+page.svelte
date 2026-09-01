@@ -11,6 +11,7 @@
   let { data }: { data: PageData } = $props()
   const { t, label, namedCount, message } = useI18n()
   let sourceMeal = $derived(data.sourceMeal)
+  let hasUploadedImage = $derived(data.hasUploadedImage)
   let translations = $derived(data.translations)
   const translation = $derived(
     translations.find((item) => item.locale === data.locale),
@@ -100,9 +101,11 @@
     <MealEditForm
       meal={sourceMeal}
       ingredients={data.ingredients}
+      {hasUploadedImage}
       onCancel={closeEditor}
-      onSaved={(updated) => {
+      onSaved={(updated, uploadedImage) => {
         sourceMeal = updated
+        hasUploadedImage = uploadedImage
         closeEditor()
       }}
     />
@@ -151,8 +154,12 @@
     {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
 
     <div class="detail">
-      {#if meal.imageUrl}
-        <img class="hero" src={meal.imageUrl} alt={meal.name} />
+      {#if hasUploadedImage || meal.imageUrl}
+        <img
+          class="hero"
+          src={hasUploadedImage ? `/meals/${meal.id}/image` : meal.imageUrl}
+          alt={meal.name}
+        />
       {/if}
 
       <div class="header">
