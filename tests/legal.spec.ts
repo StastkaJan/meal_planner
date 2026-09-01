@@ -2,6 +2,28 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { register, uniqueEmail } from './helpers'
 
+test('legal documents are public UTF-8 pages', async ({ page }) => {
+  await page.goto('/legal/terms')
+  await expect(
+    page.getByRole('heading', {
+      name: 'Podmínky používání služby Papu Plan',
+      level: 1,
+    }),
+  ).toBeVisible()
+
+  await page
+    .getByRole('link', {
+      name: 'Informace o zpracování osobních údajů',
+    })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      name: 'Informace o zpracování osobních údajů',
+      level: 1,
+    }),
+  ).toBeVisible()
+})
+
 test('@smoke legacy users acknowledge current legal documents once', async ({
   page,
 }) => {

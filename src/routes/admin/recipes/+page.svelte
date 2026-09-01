@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import type { PageData } from './$types'
   import { queueCatalogue, reviewCatalogueRecipe } from '$lib/api/catalogue'
   import { deleteMeal } from '$lib/api/meals'
@@ -15,6 +16,9 @@
   let recipeError = $state('')
   let busy = $state(false)
   let archiveBusy = $state(false)
+  const tab = $derived(
+    $page.url.searchParams.get('tab') === 'imports' ? 'imports' : 'recipes',
+  )
 
   async function queue() {
     message = ''
@@ -91,86 +95,103 @@
     </p>
   </div>
 
-  <section>
-    <div class="section-heading">
-      <h2>{t('Shared recipes')}</h2>
-      <a class="edit-link" href="/meals">{t('Open recipe library')}</a>
-    </div>
-    {#if recipeError}<p class="error" role="alert">{recipeError}</p>{/if}
-    <div class="table-wrap">
-      <Table
-        data={recipes}
-        columns={[t('Name'), t('Language'), t('Difficulty'), t('Actions')]}
-        row={recipeRow}
-        emptyMessage={t('No shared recipes.')}
-      />
-    </div>
-  </section>
+  <nav class="tabs" aria-label={t('Admin recipe sections')}>
+    <a
+      href="/admin/recipes"
+      aria-current={tab === 'recipes' ? 'page' : undefined}
+      >{t('Shared recipes')}</a
+    >
+    <a
+      href="/admin/recipes?tab=imports"
+      aria-current={tab === 'imports' ? 'page' : undefined}
+      >{t('Imports & approvals')}</a
+    >
+  </nav>
 
-  <section>
-    <h2>{t('Batch import')}</h2>
-    <p>
-      {t(
-        'Paste a JSON array of 1–300 recipes. Each needs a name, ingredients, and instructions.',
-      )}
-    </p>
-    <textarea
-      bind:value={payload}
-      rows="8"
-      placeholder={t('Paste recipe JSON here')}></textarea>
-    <div class="submit">
-      <Button onclick={queue} disabled={busy || !payload.trim()}>
-        {busy ? t('Validating…') : t('Queue recipes')}
-      </Button>
-      {#if message}<span>{message}</span>{/if}
-    </div>
-  </section>
-
-  <section>
-    <h2>{t('Pending ({count})', { count: imports.length })}</h2>
-    {#if imports.length}
-      <div class="queue">
-        {#each imports as entry}
-          <article>
-            <div>
-              <h3>{String(entry.recipe.name)}</h3>
-              <details>
-                <summary>{t('Review content')}</summary>
-                {#if entry.recipe.description}
-                  <p>{String(entry.recipe.description)}</p>
-                {/if}
-                <h4>{t('Ingredients')}</h4>
-                <ul>
-                  {#each entry.recipe.ingredients as ingredient}
-                    <li>
-                      {ingredient.qty ?? ''}
-                      {ingredient.unit ?? ''}
-                      {ingredient.name}
-                    </li>
-                  {/each}
-                </ul>
-                <h4>{t('Instructions')}</h4>
-                <p class="instructions">{String(entry.recipe.instructions)}</p>
-              </details>
-            </div>
-            <div class="actions">
-              <Button size="sm" onclick={() => review(entry.id, 'approved')}
-                >{t('Approve')}</Button
-              >
-              <Button
-                size="sm"
-                variant="danger"
-                onclick={() => review(entry.id, 'rejected')}
-                >{t('Reject')}</Button
-              >
-            </div>
-          </article>
-        {/each}
+  {#if tab === 'recipes'}
+    <section>
+      <div class="section-heading">
+        <h2>{t('Shared recipes')}</h2>
+        <a class="edit-link" href="/meals">{t('Open recipe library')}</a>
       </div>
-    {:else}
-      <p>{t('No recipes awaiting review.')}</p>
-    {/if}
-  </section>
+      {#if recipeError}<p class="error" role="alert">{recipeError}</p>{/if}
+      <div class="table-wrap">
+        <Table
+          data={recipes}
+          columns={[t('Name'), t('Language'), t('Difficulty'), t('Actions')]}
+          row={recipeRow}
+          emptyMessage={t('No shared recipes.')}
+        />
+      </div>
+    </section>
+  {:else}
+    <section>
+      <h2>{t('Batch import')}</h2>
+      <p>
+        {t(
+          'Paste a JSON array of 1–300 recipes. Each needs a name, ingredients, and instructions.',
+        )}
+      </p>
+      <textarea
+        bind:value={payload}
+        rows="8"
+        placeholder={t('Paste recipe JSON here')}></textarea>
+      <div class="submit">
+        <Button onclick={queue} disabled={busy || !payload.trim()}>
+          {busy ? t('Validating…') : t('Queue recipes')}
+        </Button>
+        {#if message}<span>{message}</span>{/if}
+      </div>
+    </section>
+
+    <section>
+      <h2>{t('Pending ({count})', { count: imports.length })}</h2>
+      {#if imports.length}
+        <div class="queue">
+          {#each imports as entry}
+            <article>
+              <div>
+                <h3>{String(entry.recipe.name)}</h3>
+                <details>
+                  <summary>{t('Review content')}</summary>
+                  {#if entry.recipe.description}
+                    <p>{String(entry.recipe.description)}</p>
+                  {/if}
+                  <h4>{t('Ingredients')}</h4>
+                  <ul>
+                    {#each entry.recipe.ingredients as ingredient}
+                      <li>
+                        {ingredient.qty ?? ''}
+                        {ingredient.unit ?? ''}
+                        {ingredient.name}
+                      </li>
+                    {/each}
+                  </ul>
+                  <h4>{t('Instructions')}</h4>
+                  <p class="instructions">
+                    {String(entry.recipe.instructions)}
+                  </p>
+                </details>
+              </div>
+              <div class="actions">
+                <Button size="sm" onclick={() => review(entry.id, 'approved')}
+                  >{t('Approve')}</Button
+                >
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onclick={() => review(entry.id, 'rejected')}
+                  >{t('Reject')}</Button
+                >
+              </div>
+            </article>
+          {/each}
+        </div>
+      {:else}
+        <p>{t('No recipes awaiting review.')}</p>
+      {/if}
+    </section>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -200,6 +221,27 @@
   section > p,
   .submit span {
     color: $color-text-muted;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface-2;
+  }
+  .tabs a {
+    padding: 8px 14px;
+    border-radius: calc($radius-sm - 3px);
+    color: $color-text-muted;
+    font-size: 0.85rem;
+    font-weight: 650;
+    text-decoration: none;
+  }
+  .tabs a[aria-current='page'] {
+    background: $color-surface;
+    box-shadow: 0 2px 8px rgb(41 39 33 / 8%);
+    color: $color-text;
   }
   section {
     padding: 1.25rem;
@@ -244,7 +286,8 @@
     color: $color-danger;
   }
   td.actions {
-    width: 1%;
+    width: 11rem;
+    min-width: 11rem;
     white-space: nowrap;
   }
   article {

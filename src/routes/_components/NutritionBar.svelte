@@ -40,7 +40,6 @@
       value: calories,
       target: targets.calories,
       unit: 'kcal',
-      primary: true,
     },
     {
       key: 'protein',
@@ -48,7 +47,6 @@
       value: proteinG,
       target: targets.proteinG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'carbs',
@@ -56,7 +54,6 @@
       value: carbsG,
       target: targets.carbsG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'fat',
@@ -64,7 +61,6 @@
       value: fatG,
       target: targets.fatG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'fiber',
@@ -72,7 +68,6 @@
       value: fiberG,
       target: NUTRITION_DISPLAY_REFERENCES.fiberG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'sugar',
@@ -80,7 +75,6 @@
       value: sugarG,
       target: NUTRITION_DISPLAY_REFERENCES.sugarG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'saturates',
@@ -88,7 +82,6 @@
       value: saturatedFatG,
       target: NUTRITION_DISPLAY_REFERENCES.saturatedFatG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'salt',
@@ -96,7 +89,6 @@
       value: saltG,
       target: NUTRITION_DISPLAY_REFERENCES.saltG,
       unit: 'g',
-      primary: false,
     },
   ])
 </script>
@@ -106,18 +98,14 @@
     {@const progress = nutritionProgress(row.value, row.target)}
     <div
       class="bar-row"
-      class:secondary={!row.primary}
       class:over={progress.wayOver}
       title={`${row.label}: ${grams(row.value)}${row.unit} / ${row.target}${row.unit}`}
     >
-      {#if !row.primary}<span class="nutrient">{row.label}</span>{/if}
       <div class="track">
         <div class="fill {row.key}" style="width:{progress.percent}%"></div>
       </div>
       <span class="val"
-        >{grams(row.value)}{row.primary && row.key === 'calories'
-          ? ''
-          : 'g'}</span
+        >{grams(row.value)}{row.key === 'calories' ? '' : 'g'}</span
       >
     </div>
   {/each}
@@ -134,10 +122,6 @@
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-  .bar-row.secondary {
-    gap: 3px;
-    margin-top: 1px;
   }
   .track {
     flex: 1;
@@ -192,14 +176,5 @@
     color: $color-text-muted;
     min-width: 24px;
     text-align: right;
-  }
-  .nutrient {
-    width: 36px;
-    overflow: hidden;
-    color: $color-text-muted;
-    font-size: 0.58rem;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 </style>

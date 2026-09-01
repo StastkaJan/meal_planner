@@ -57,6 +57,8 @@
 
 <!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->
 
+<!-- NOTE: `/legal/terms` and `/legal/privacy` publicly render the versioned UTF-8 legal Markdown used by registration and account notices. -->
+
 <!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
 
 <!-- NOTE: `slot_leftovers` links a later slot to an earlier same-meal slot; linked consumers still count toward nutrition but not shopping ingredients. -->

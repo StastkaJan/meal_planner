@@ -1,4 +1,4 @@
-# Podmínky používání služby Meal Plan
+# Podmínky používání služby Papu Plan
 
 > **NÁVRH – PŘED ZVEŘEJNĚNÍM DOPLŇTE VŠECHNY ÚDAJE V HRANATÝCH ZÁVORKÁCH A NECHTE TEXT POSOUDIT PODLE SKUTEČNÉHO ZPŮSOBU PROVOZU.**
 
@@ -6,15 +6,15 @@ Verze 0.1, účinná od [DATUM ÚČINNOSTI]
 
 ## 1. Kdo službu poskytuje
 
-Službu Meal Plan (dále jen „služba“) provozuje [JMÉNO / OBCHODNÍ FIRMA], IČO [IČO, JE-LI PŘIDĚLENO], se sídlem [ADRESA], [ÚDAJ O ZÁPISU V REJSTŘÍKU, POKUD SE POUŽIJE] (dále jen „provozovatel“).
+Službu Papu Plan (dále jen „služba“) provozuje [JMÉNO / OBCHODNÍ FIRMA], IČO [IČO, JE-LI PŘIDĚLENO], se sídlem [ADRESA], [ÚDAJ O ZÁPISU V REJSTŘÍKU, POKUD SE POUŽIJE] (dále jen „provozovatel“).
 
 Kontakt: [KONTAKTNÍ E-MAIL], [PŘÍPADNĚ TELEFON]
 
-Tyto podmínky upravují používání služby dostupné na [URL SLUŽBY]. Zásady zpracování osobních údajů jsou uvedeny v samostatném dokumentu [Informace o zpracování osobních údajů](./privacy.md).
+Tyto podmínky upravují používání služby dostupné na [URL SLUŽBY]. Zásady zpracování osobních údajů jsou uvedeny v samostatném dokumentu [Informace o zpracování osobních údajů](/legal/privacy).
 
 ## 2. Co služba nabízí
 
-Meal Plan umožňuje zejména vytvářet a spravovat recepty, plánovat jídla, sestavovat nákupní seznamy a pracovat se stravovacími preferencemi a orientačními výživovými hodnotami.
+Papu Plan umožňuje zejména vytvářet a spravovat recepty, plánovat jídla, sestavovat nákupní seznamy a pracovat se stravovacími preferencemi a orientačními výživovými hodnotami.
 
 Služba je v současné verzi poskytována bezplatně. Pokud bude zavedena placená varianta, provozovatel předem zveřejní cenu a příslušné smluvní podmínky; placená služba nebude aktivována bez souhlasu uživatele.
 

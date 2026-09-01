@@ -142,10 +142,10 @@
 
 <footer class="shell-footer">
   <a href="/pricing">{t('Pricing')}</a>
-  <a href="/legal/terms.md" target="_blank" rel="noopener">
+  <a href="/legal/terms">
     {t('Terms')}
   </a>
-  <a href="/legal/privacy.md" target="_blank" rel="noopener">
+  <a href="/legal/privacy">
     {t('Privacy')}
   </a>
 </footer>

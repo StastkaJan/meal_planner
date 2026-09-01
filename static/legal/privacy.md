@@ -4,7 +4,7 @@
 
 Verze 0.1, účinná od [DATUM ÚČINNOSTI]
 
-Tento dokument vysvětluje, jak jsou při používání služby Meal Plan na [URL SLUŽBY] zpracovávány osobní údaje. Je samostatný od [Podmínek používání](./terms.md).
+Tento dokument vysvětluje, jak jsou při používání služby Papu Plan na [URL SLUŽBY] zpracovávány osobní údaje. Je samostatný od [Podmínek používání](/legal/terms).
 
 ## 1. Správce a kontakt
 
@@ -32,7 +32,7 @@ Správce nepoužívá údaje k marketingu, reklamě ani profilování a neprová
 
 ## 3. Údaje o zdraví a výslovný souhlas
 
-Meal Plan není zdravotnická služba. Uživatel nemá do služby zadávat diagnózy, výsledky vyšetření ani jiné podrobné zdravotní informace.
+Papu Plan není zdravotnická služba. Uživatel nemá do služby zadávat diagnózy, výsledky vyšetření ani jiné podrobné zdravotní informace.
 
 Potravinové alergie, intolerance a léčebné diety přesto mohou představovat údaje o zdraví. Před uložením takového údaje musí služba požádat o samostatný výslovný souhlas. Souhlas lze kdykoli odvolat odstraněním údajů a prostřednictvím [POSTUP / KONTAKT PRO ODVOLÁNÍ SOUHLASU]. Odvolání nemá vliv na zákonnost dřívějšího zpracování. Bez souhlasu lze službu používat bez ukládání zdravotně podmíněných omezení.
 
