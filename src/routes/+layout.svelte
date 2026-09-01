@@ -49,14 +49,13 @@
 </script>
 
 <svelte:head>
-  <title>{pageTitle} · {t('Meal plan')}</title>
+  <title>{pageTitle} · Papu Plan</title>
 </svelte:head>
 
 <header class="shell-header">
   <nav aria-label={t('Main navigation')}>
-    <a class="brand" href="/" aria-label={t('Meal Plan home')}>
-      <span class="brand-mark">M</span>
-      <span>{t('Meal plan')}</span>
+    <a class="brand" href="/" aria-label="Papu Plan home">
+      <img src="/logo.svg" alt="Papu Plan" />
     </a>
     {#if data.user}
       <div class="main-links">
@@ -179,16 +178,10 @@
     font-weight: 750;
     letter-spacing: -0.02em;
   }
-  .brand-mark {
-    display: grid;
-    width: 34px;
+  .brand img {
+    display: block;
+    width: 145px;
     height: 34px;
-    place-items: center;
-    border-radius: 12px 12px 12px 4px;
-    background: $color-accent;
-    color: white;
-    font-family: Georgia, serif;
-    font-size: 1.15rem;
   }
   .main-links,
   .account-links {
@@ -248,6 +241,7 @@
     }
   }
   main {
+    flex: 1;
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
@@ -320,7 +314,12 @@
       gap: 12px;
       padding: 0 16px;
     }
-    .brand > span:last-child,
+    .brand img {
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+      object-position: left;
+    }
     .email,
     form {
       display: none;

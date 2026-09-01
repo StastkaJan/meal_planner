@@ -15,12 +15,8 @@
     weekStart,
     targets,
     isPro,
-    favoritesOnly,
-    myRecipesOnly,
     onSlotChange,
     onSlotLeftover,
-    onAutoCompose,
-    onCopyWeek,
     onAddBonus,
     onDeleteBonus,
     onRecalcDay,
@@ -32,8 +28,6 @@
     weekStart: string
     targets: NutritionTargets
     isPro: boolean
-    favoritesOnly: boolean
-    myRecipesOnly: boolean
     onSlotChange: (
       date: string,
       mealType: string,
@@ -44,8 +38,6 @@
       mealType: string,
       source: { date: string; mealType: string } | null,
     ) => void
-    onAutoCompose?: (favoritesOnly: boolean, myRecipesOnly: boolean) => void
-    onCopyWeek?: () => void
     onAddBonus: (
       date: string,
       fields: {
@@ -236,26 +228,6 @@
       </tbody>
     </table>
   </div>
-
-  {#if onAutoCompose || onCopyWeek}
-    <div class="foot-actions">
-      {#if onCopyWeek}
-        <button class="btn-ghost" disabled={!isPro} onclick={onCopyWeek}
-          >{t('Copy from last week')}{#if !isPro}
-            · {t('Pro')}{/if}</button
-        >
-      {/if}
-      {#if onAutoCompose}
-        <button
-          class="btn-autocompose"
-          disabled={!isPro}
-          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
-          >{t('Auto-compose')}{#if !isPro}
-            · {t('Pro')}{/if}</button
-        >
-      {/if}
-    </div>
-  {/if}
 </div>
 
 <style lang="scss">
@@ -438,56 +410,6 @@
     }
   }
 
-  .foot-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 12px 14px;
-    border-top: 1px solid $color-border;
-    background: #faf8f2;
-  }
-
-  .btn-ghost {
-    min-height: 36px;
-    padding: 7px 12px;
-    background: $color-surface;
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-sm;
-    color: $color-text-muted;
-    cursor: pointer;
-    font-size: 0.78rem;
-    font-weight: 600;
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-    }
-    &:hover {
-      color: $color-text;
-      border-color: $color-accent-dim;
-    }
-  }
-
-  .btn-autocompose {
-    min-height: 36px;
-    padding: 7px 13px;
-    background: $color-accent;
-    border: none;
-    border-radius: $radius-sm;
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.78rem;
-    font-weight: 650;
-    box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-    }
-    &:hover {
-      transform: translateY(-1px);
-    }
-  }
-
   @media (max-width: 720px) {
     .cal-wrap {
       margin-inline: -16px;
@@ -497,12 +419,6 @@
     }
     .cal {
       min-width: 780px;
-    }
-    .foot-actions {
-      position: sticky;
-      left: 0;
-      justify-content: flex-start;
-      overflow-x: auto;
     }
   }
 </style>

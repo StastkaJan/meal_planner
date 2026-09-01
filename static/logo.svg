@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 44" role="img" aria-labelledby="title">
+  <title id="title">Papu Plan</title>
+  <g fill="none" stroke="#a84425" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="22" cy="22" r="19" fill="#fff8f1" stroke-width="2" />
+    <path d="M11 24h22c-1.2 7-5.2 11-11 11s-9.8-4-11-11Z" fill="#a84425" stroke-width="1.5" />
+    <path d="M16 18c0-3 2-4 2-7M23 18c0-3 2-4 2-7M30 18c0-3 2-4 2-7" stroke-width="2" />
+  </g>
+  <text x="50" y="29" fill="#24221d" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="700" letter-spacing="-.8">papu</text>
+  <text x="113" y="29" fill="#6f6a60" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="500" letter-spacing="1.2">plan</text>
+</svg>

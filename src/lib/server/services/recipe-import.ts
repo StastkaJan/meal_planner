@@ -32,12 +32,10 @@ const UNIT_ALIASES: Record<string, string> = {
   slices: 'slice',
   can: 'can',
   cans: 'can',
-  oz: 'oz',
-  ounce: 'oz',
-  ounces: 'oz',
-  lb: 'lb',
-  pound: 'lb',
-  pounds: 'lb',
+  bunch: 'bunch',
+  bunches: 'bunch',
+  handful: 'handful',
+  handfuls: 'handful',
 }
 
 const UNICODE_FRACTIONS: Record<string, number> = {

@@ -16,6 +16,10 @@ test('create a meal', async ({ page }) => {
     .getByRole('button', { name: 'Save' })
     .click()
   await expect(page.getByText(name)).toBeVisible()
+
+  await page.getByRole('button', { name: 'My recipes only' }).click()
+  await expect(page.getByText(name)).toBeVisible()
+  await expect(page.getByText('Pasta Bolognese')).not.toBeVisible()
 })
 
 test('delete a meal', async ({ page }) => {

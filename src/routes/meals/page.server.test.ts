@@ -11,6 +11,7 @@ import { load } from './+page.server'
 
 const meal = (id: number, difficulty = 'easy') => ({
   id,
+  userId: id === 14 ? 1 : null,
   name: `Recipe ${id}`,
   description: id === 12 ? 'Tomato soup' : null,
   tags: id === 13 ? ['Italian'] : [],
@@ -47,5 +48,14 @@ describe('recipe library load', () => {
     expect((result as any).meals.map((item: any) => item.id)).toEqual([
       21, 22, 23, 24, 25,
     ])
+  })
+
+  it('filters the library to recipes owned by the current user', async () => {
+    const result = await load({
+      locals: { user: { id: 1 } },
+      url: new URL('http://localhost/meals?mine=1'),
+    } as any)
+    expect(result).toMatchObject({ totalResults: 1, myRecipesOnly: true })
+    expect((result as any).meals[0].id).toBe(14)
   })
 })

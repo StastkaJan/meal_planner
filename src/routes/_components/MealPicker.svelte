@@ -18,11 +18,13 @@
   } = $props()
 
   let search = $state('')
+  let myRecipesOnly = $state(false)
 
   const filtered = $derived(
     meals.filter(
       (m) =>
         m.name.toLowerCase().includes(search.toLowerCase()) &&
+        (!myRecipesOnly || m.userId !== null) &&
         mealFitsSlot(m.allowedSlots, mealType),
     ),
   )
@@ -42,6 +44,10 @@
       aria-label={t('Cancel')}>✕</button
     >
   </div>
+  <label class="my-recipes">
+    <input type="checkbox" bind:checked={myRecipesOnly} />
+    {t('My recipes only')}
+  </label>
 
   <ul class="list">
     {#if current !== null}
@@ -108,6 +114,15 @@
     &:hover {
       color: $color-text;
     }
+  }
+  .my-recipes {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-bottom: 1px solid $color-border;
+    color: $color-text-muted;
+    font-size: 0.78rem;
   }
   .list {
     list-style: none;

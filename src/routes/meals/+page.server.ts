@@ -9,6 +9,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     favoriteMealIds(locals.user?.id),
   ])
   const favoritesOnly = url.searchParams.get('favorites') === '1'
+  const myRecipesOnly = url.searchParams.get('mine') === '1'
   const query = url.searchParams.get('q')?.trim() ?? ''
   const difficulty = url.searchParams.get('difficulty') ?? ''
   const requestedPage = Math.max(1, Number(url.searchParams.get('page')) || 1)
@@ -17,6 +18,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const filtered = rows
     .map((meal) => ({ ...meal, isFavorite: favIds.has(meal.id) }))
     .filter((meal) => !favoritesOnly || meal.isFavorite)
+    .filter(
+      (meal) =>
+        !myRecipesOnly ||
+        (locals.user != null && meal.userId === locals.user.id),
+    )
     .filter((meal) => !difficulty || meal.difficulty === difficulty)
     .filter((meal) => {
       if (!query) return true
@@ -30,6 +36,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   return {
     meals: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     favoritesOnly,
+    myRecipesOnly,
     query,
     difficulty,
     page,

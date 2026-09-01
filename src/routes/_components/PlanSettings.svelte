@@ -17,6 +17,8 @@
     onPreferenceChange,
     onMealSlotsChange,
     onRepeatChange,
+    onAutoCompose,
+    onCopyWeek,
   }: {
     plan: {
       mealSlots: string[]
@@ -35,6 +37,8 @@
     }) => void
     onMealSlotsChange: (mealSlots: string[]) => void
     onRepeatChange?: (mealType: string, groupBreaks: boolean[]) => void
+    onAutoCompose: (favoritesOnly: boolean, myRecipesOnly: boolean) => void
+    onCopyWeek: () => void
   } = $props()
 
   const dayLabels = $derived(
@@ -101,8 +105,7 @@
         <button
           type="button"
           class="help"
-          tabindex="0"
-          title={t('Used by auto-compose to prefer matching recipes.')}
+          data-tooltip={t('Used by auto-compose to prefer matching recipes.')}
           aria-label={t('Used by auto-compose to prefer matching recipes.')}
           >?</button
         >
@@ -120,8 +123,7 @@
         <button
           type="button"
           class="help"
-          tabindex="0"
-          title={t('Auto-compose excludes recipes that do not match.')}
+          data-tooltip={t('Auto-compose excludes recipes that do not match.')}
           aria-label={t('Auto-compose excludes recipes that do not match.')}
           >?</button
         >
@@ -140,8 +142,7 @@
         <button
           type="button"
           class="help"
-          tabindex="0"
-          title={t(
+          data-tooltip={t(
             'Limit automatic planning by favourites or recipe ownership.',
           )}
           aria-label={t(
@@ -157,6 +158,24 @@
         <Checkbox disabled={!isPro} bind:checked={myRecipesOnly} />
         {t('My recipes only')}
       </label>
+      <div class="plan-actions">
+        <button
+          type="button"
+          class="copy"
+          disabled={!isPro}
+          onclick={onCopyWeek}
+          >{t('Copy from last week')}{#if !isPro}
+            · {t('Pro')}{/if}</button
+        >
+        <button
+          type="button"
+          class="compose"
+          disabled={!isPro}
+          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
+          >{t('Auto-compose')}{#if !isPro}
+            · {t('Pro')}{/if}</button
+        >
+      </div>
     </section>
     <section>
       <h4>
@@ -164,8 +183,9 @@
         <button
           type="button"
           class="help"
-          tabindex="0"
-          title={t('Choose which meals appear on every day of the plan.')}
+          data-tooltip={t(
+            'Choose which meals appear on every day of the plan.',
+          )}
           aria-label={t('Choose which meals appear on every day of the plan.')}
           >?</button
         >
@@ -225,8 +245,9 @@
           <button
             type="button"
             class="help"
-            tabindex="0"
-            title={t('Join neighbouring days that should use the same recipe.')}
+            data-tooltip={t(
+              'Join neighbouring days that should use the same recipe.',
+            )}
             aria-label={t(
               'Join neighbouring days that should use the same recipe.',
             )}>?</button
@@ -291,6 +312,7 @@
     gap: 18px;
   }
   h4 {
+    position: relative;
     font-size: 0.72rem;
     color: $color-text-muted;
     text-transform: uppercase;
@@ -312,6 +334,27 @@
     font-size: 0.65rem;
     line-height: 1;
     text-transform: none;
+    &:focus::after {
+      position: absolute;
+      z-index: 4;
+      top: 22px;
+      left: 0;
+      width: max-content;
+      max-width: min(260px, 75vw);
+      padding: 7px 9px;
+      border: 1px solid $color-border-strong;
+      border-radius: $radius-sm;
+      background: $color-text;
+      box-shadow: 0 6px 18px rgb(41 39 33 / 18%);
+      color: $color-surface;
+      content: attr(data-tooltip);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.35;
+      text-align: left;
+      text-transform: none;
+    }
   }
   .hint {
     margin: 0 0 8px;
@@ -338,6 +381,32 @@
     gap: 5px;
     color: $color-text-muted;
     font-size: 0.78rem;
+  }
+  .plan-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+  }
+  .plan-actions button {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid $color-border-strong;
+    border-radius: $radius-sm;
+    background: $color-surface;
+    color: $color-text-muted;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 650;
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+    &.compose {
+      border-color: $color-accent;
+      background: $color-accent;
+      color: white;
+    }
   }
   .custom-slots {
     margin-top: 10px;

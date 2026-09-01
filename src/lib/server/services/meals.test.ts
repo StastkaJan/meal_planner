@@ -259,6 +259,16 @@ describe('parseRecipeJsonLd', () => {
       qty: 0.5,
       unit: 'cup',
     })
+    expect(parseIngredientLine('2 bunches parsley')).toEqual({
+      name: 'parsley',
+      qty: 2,
+      unit: 'bunch',
+    })
+    expect(parseIngredientLine('1 handful almonds')).toEqual({
+      name: 'almonds',
+      qty: 1,
+      unit: 'handful',
+    })
     expect(parseIngredientLine('Salt to taste')).toEqual({
       name: 'Salt to taste',
       qty: null,

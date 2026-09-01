@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { NUTRITION_TARGETS } from '$lib/domain/nutrition'
+  import {
+    NUTRITION_DISPLAY_REFERENCES,
+    NUTRITION_TARGETS,
+    nutritionProgress,
+  } from '$lib/domain/nutrition'
   import type { NutritionTargets } from '$lib/types'
   import { useI18n } from '$lib/i18n-context'
 
@@ -27,82 +31,96 @@
     targets?: NutritionTargets
   } = $props()
 
-  const pct = (v: number, max: number) =>
-    Math.min(100, Math.round((v / max) * 100))
   const grams = (value: number) => Number(value.toFixed(1))
+
+  const rows = $derived([
+    {
+      key: 'calories',
+      label: t('Calories'),
+      value: calories,
+      target: targets.calories,
+      unit: 'kcal',
+      primary: true,
+    },
+    {
+      key: 'protein',
+      label: t('Protein'),
+      value: proteinG,
+      target: targets.proteinG,
+      unit: 'g',
+      primary: true,
+    },
+    {
+      key: 'carbs',
+      label: t('Carbs'),
+      value: carbsG,
+      target: targets.carbsG,
+      unit: 'g',
+      primary: true,
+    },
+    {
+      key: 'fat',
+      label: t('Fat'),
+      value: fatG,
+      target: targets.fatG,
+      unit: 'g',
+      primary: true,
+    },
+    {
+      key: 'fiber',
+      label: t('Fibre'),
+      value: fiberG,
+      target: NUTRITION_DISPLAY_REFERENCES.fiberG,
+      unit: 'g',
+      primary: false,
+    },
+    {
+      key: 'sugar',
+      label: t('Sugars'),
+      value: sugarG,
+      target: NUTRITION_DISPLAY_REFERENCES.sugarG,
+      unit: 'g',
+      primary: false,
+    },
+    {
+      key: 'saturates',
+      label: t('Saturates'),
+      value: saturatedFatG,
+      target: NUTRITION_DISPLAY_REFERENCES.saturatedFatG,
+      unit: 'g',
+      primary: false,
+    },
+    {
+      key: 'salt',
+      label: t('Salt'),
+      value: saltG,
+      target: NUTRITION_DISPLAY_REFERENCES.saltG,
+      unit: 'g',
+      primary: false,
+    },
+  ])
 </script>
 
 <div class="bar-col">
-  <div
-    class="bar-row"
-    title={t('Calories: {value} / {target} kcal', {
-      value: calories,
-      target: targets.calories,
-    })}
-  >
-    <div class="track">
-      <div
-        class="fill calories"
-        style="width:{pct(calories, targets.calories)}%"
-      ></div>
-    </div>
-    <span class="val">{calories}</span>
-  </div>
-  <div
-    class="bar-row"
-    title={t('Protein: {value}g / {target}g', {
-      value: proteinG,
-      target: targets.proteinG,
-    })}
-  >
-    <div class="track">
-      <div
-        class="fill protein"
-        style="width:{pct(proteinG, targets.proteinG)}%"
-      ></div>
-    </div>
-  </div>
-  <div
-    class="bar-row"
-    title={t('Carbs: {value}g / {target}g', {
-      value: carbsG,
-      target: targets.carbsG,
-    })}
-  >
-    <div class="track">
-      <div
-        class="fill carbs"
-        style="width:{pct(carbsG, targets.carbsG)}%"
-      ></div>
-    </div>
-  </div>
-  <div
-    class="bar-row"
-    title={t('Fat: {value}g / {target}g', {
-      value: fatG,
-      target: targets.fatG,
-    })}
-  >
-    <div class="track">
-      <div class="fill fat" style="width:{pct(fatG, targets.fatG)}%"></div>
-    </div>
-  </div>
-  <div class="secondary">
-    <span title={t('Fibre: {value}g', { value: grams(fiberG) })}
-      >{t('Fibre')} {grams(fiberG)}</span
+  {#each rows as row}
+    {@const progress = nutritionProgress(row.value, row.target)}
+    <div
+      class="bar-row"
+      class:secondary={!row.primary}
+      class:over={progress.wayOver}
+      title={`${row.label}: ${grams(row.value)}${row.unit} / ${row.target}${row.unit}`}
     >
-    <span title={t('Sugars: {value}g', { value: grams(sugarG) })}
-      >{t('Sugars')} {grams(sugarG)}</span
-    >
-    <span
-      title={t('Saturated fat: {value}g', {
-        value: grams(saturatedFatG),
-      })}>{t('Saturates')} {grams(saturatedFatG)}</span
-    >
-    <span title={t('Salt: {value}g', { value: grams(saltG) })}
-      >{t('Salt')} {grams(saltG)}</span
-    >
-  </div>
+      {#if !row.primary}<span class="nutrient">{row.label}</span>{/if}
+      <div class="track">
+        <div class="fill {row.key}" style="width:{progress.percent}%"></div>
+      </div>
+      <span class="val"
+        >{grams(row.value)}{row.primary && row.key === 'calories'
+          ? ''
+          : 'g'}</span
+      >
+    </div>
+  {/each}
 </div>
 
 <style lang="scss">
@@ -116,6 +134,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+  .bar-row.secondary {
+    gap: 3px;
+    margin-top: 1px;
   }
   .track {
     flex: 1;
@@ -140,6 +162,30 @@
     &.fat {
       background: #ec4899;
     }
+    &.fiber {
+      background: #8b5cf6;
+    }
+    &.sugar {
+      background: #eab308;
+    }
+    &.saturates {
+      background: #f97316;
+    }
+    &.salt {
+      background: #64748b;
+    }
+  }
+  .bar-row.over {
+    .fill {
+      background: $color-danger;
+    }
+    .track {
+      box-shadow: 0 0 0 1px rgb(184 59 50 / 35%);
+    }
+    .val {
+      color: $color-danger;
+      font-weight: 750;
+    }
   }
   .val {
     font-size: 0.65rem;
@@ -147,13 +193,13 @@
     min-width: 24px;
     text-align: right;
   }
-  .secondary {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 6px;
-    margin-top: 1px;
+  .nutrient {
+    width: 36px;
+    overflow: hidden;
     color: $color-text-muted;
     font-size: 0.58rem;
     line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

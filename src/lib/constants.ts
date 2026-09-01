@@ -19,8 +19,8 @@ export const UNIT_OPTIONS = [
   'pinch',
   'slice',
   'can',
-  'oz',
-  'lb',
+  'bunch',
+  'handful',
 ] as const
 
 export const DIFF_LABEL: Record<string, string> = {

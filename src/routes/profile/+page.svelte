@@ -385,6 +385,9 @@
     grid-column: 1 / -1;
     border-color: color-mix(in srgb, $color-danger 35%, $color-border);
   }
+  .data-card {
+    grid-column: 1 / -1;
+  }
   .hint {
     color: $color-text-muted;
     font-size: 0.83rem;

@@ -32,7 +32,7 @@ test('@smoke create a plan', async ({ page }) => {
       .getByRole('checkbox', { name: 'My recipes only' }),
   ).toHaveCount(0)
   await expect(page.getByText('Repeat pattern')).toBeVisible()
-  await expect(page).toHaveTitle('Planner · Meal plan')
+  await expect(page).toHaveTitle('Planner · Papu Plan')
 })
 
 test('prefill an extra item from a common preset', async ({ page }) => {
