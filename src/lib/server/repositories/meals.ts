@@ -43,6 +43,26 @@ export async function listMeals(userId?: number, locale: Locale = 'en') {
     .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
 }
 
+export async function listSharedMealSummaries(locale: Locale = 'en') {
+  return db
+    .select({
+      id: meals.id,
+      name: sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`,
+      sourceLocale: meals.sourceLocale,
+      difficulty: meals.difficulty,
+    })
+    .from(meals)
+    .leftJoin(
+      mealTranslations,
+      and(
+        eq(mealTranslations.mealId, meals.id),
+        eq(mealTranslations.locale, locale),
+      ),
+    )
+    .where(and(isNull(meals.archivedAt), isNull(meals.userId)))
+    .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
+}
+
 export async function findMeal(id: number, userId?: number) {
   const [meal] = await db
     .select()

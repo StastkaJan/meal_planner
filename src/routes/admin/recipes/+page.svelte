@@ -1,15 +1,20 @@
 <script lang="ts">
   import type { PageData } from './$types'
   import { queueCatalogue, reviewCatalogueRecipe } from '$lib/api/catalogue'
+  import { deleteMeal } from '$lib/api/meals'
   import Button from '$lib/components/ui/Button.svelte'
+  import Table from '$lib/components/ui/Table.svelte'
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
-  const { t, message: translateMessage } = useI18n()
+  const { t, label, message: translateMessage } = useI18n()
   let imports = $derived(data.imports)
+  let recipes = $derived(data.recipes)
   let payload = $state('')
   let message = $state('')
+  let recipeError = $state('')
   let busy = $state(false)
+  let archiveBusy = $state(false)
 
   async function queue() {
     message = ''
@@ -40,16 +45,67 @@
     await reviewCatalogueRecipe(id, status)
     imports = imports.filter((entry) => entry.id !== id)
   }
+
+  async function archive(id: number) {
+    if (archiveBusy) return
+    if (!confirm(t('Archive this shared recipe?'))) return
+    recipeError = ''
+    archiveBusy = true
+    try {
+      await deleteMeal(id)
+      recipes = recipes.filter((recipe) => recipe.id !== id)
+    } catch (cause) {
+      recipeError =
+        cause instanceof Error
+          ? translateMessage(cause.message)
+          : t('Request failed')
+    } finally {
+      archiveBusy = false
+    }
+  }
 </script>
+
+{#snippet recipeRow(recipe: (typeof recipes)[number])}
+  <tr>
+    <td><a class="recipe-link" href="/meals/{recipe.id}">{recipe.name}</a></td>
+    <td>{recipe.sourceLocale.toUpperCase()}</td>
+    <td>{recipe.difficulty ? label(recipe.difficulty) : '—'}</td>
+    <td class="actions">
+      <a class="edit-link" href="/meals/{recipe.id}?edit=1">{t('Edit')}</a>
+      <Button
+        size="sm"
+        variant="danger"
+        disabled={archiveBusy}
+        onclick={() => archive(recipe.id)}>{t('Archive')}</Button
+      >
+    </td>
+  </tr>
+{/snippet}
 
 <div class="page">
   <div>
     <p class="eyebrow">{t('Global catalogue')}</p>
-    <h1>{t('Recipe review')}</h1>
+    <h1>{t('Recipe management')}</h1>
     <p class="subtitle">
-      {t('Queue licensed recipe data, then approve it for everyone.')}
+      {t('Manage shared recipes and review imported recipe data.')}
     </p>
   </div>
+
+  <section>
+    <div class="section-heading">
+      <h2>{t('Shared recipes')}</h2>
+      <a class="edit-link" href="/meals">{t('Open recipe library')}</a>
+    </div>
+    {#if recipeError}<p class="error" role="alert">{recipeError}</p>{/if}
+    <div class="table-wrap">
+      <Table
+        data={recipes}
+        columns={[t('Name'), t('Language'), t('Difficulty'), t('Actions')]}
+        row={recipeRow}
+        emptyMessage={t('No shared recipes.')}
+      />
+    </div>
+  </section>
 
   <section>
     <h2>{t('Batch import')}</h2>
@@ -163,6 +219,33 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .table-wrap {
+    overflow: hidden;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+  }
+  .recipe-link {
+    color: $color-text;
+    font-weight: 650;
+    text-decoration: none;
+  }
+  .edit-link {
+    color: $color-accent;
+    font-size: 0.85rem;
+  }
+  .error {
+    color: $color-danger;
+  }
+  td.actions {
+    width: 1%;
+    white-space: nowrap;
   }
   article {
     display: flex;

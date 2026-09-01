@@ -14,7 +14,7 @@ vi.mock('$lib/server/services/profile', () => ({
 import { DELETE, PATCH } from './+server'
 import { GET } from './export/+server'
 
-function deleteEvent(body: object, userId?: number) {
+function deleteEvent(body: unknown, userId?: number) {
   return {
     request: { json: () => Promise.resolve(body) },
     locals: userId ? { user: { id: userId } } : {},
@@ -111,8 +111,25 @@ describe('DELETE /profile', () => {
     expect(deleteAccount).not.toHaveBeenCalled()
   })
 
+  it('rejects malformed or non-object JSON without deleting', async () => {
+    const malformed = deleteEvent({}, 42)
+    malformed.request.json = () => Promise.reject(new SyntaxError('bad JSON'))
+
+    for (const event of [
+      malformed,
+      deleteEvent(null, 42),
+      deleteEvent([], 42),
+      deleteEvent('invalid', 42),
+    ]) {
+      const response = await DELETE(event)
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toEqual({ error: 'Invalid JSON' })
+    }
+    expect(deleteAccount).not.toHaveBeenCalled()
+  })
+
   it('keeps the session when confirmation fails', async () => {
-    deleteAccount.mockResolvedValueOnce(false)
+    deleteAccount.mockResolvedValueOnce('invalid')
     const event = deleteEvent(
       { password: 'wrong', confirmation: 'cook@example.com' },
       42,
@@ -122,8 +139,24 @@ describe('DELETE /profile', () => {
     expect(event.cookies.delete).not.toHaveBeenCalled()
   })
 
+  it('rejects deletion of the final administrator', async () => {
+    deleteAccount.mockResolvedValueOnce('last-admin')
+    const event = deleteEvent(
+      { password: 'secret', confirmation: 'admin@example.com' },
+      42,
+    )
+
+    const response = await DELETE(event)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({
+      error: 'Promote another administrator before deleting your account',
+    })
+    expect(event.cookies.delete).not.toHaveBeenCalled()
+  })
+
   it('clears the session cookie after permanent deletion', async () => {
-    deleteAccount.mockResolvedValueOnce(true)
+    deleteAccount.mockResolvedValueOnce('deleted')
     const event = deleteEvent(
       { password: 'secret', confirmation: 'cook@example.com' },
       42,

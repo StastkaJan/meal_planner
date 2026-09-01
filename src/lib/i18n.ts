@@ -15,6 +15,9 @@ const CS_MESSAGES = {
   Planner: 'Plánovač',
   Recipes: 'Recepty',
   Review: 'Kontrola',
+  Admin: 'Správa',
+  'Admin sections': 'Sekce správy',
+  Users: 'Uživatelé',
   'Sign out': 'Odhlásit se',
   'Weekly planner': 'Týdenní plánovač',
   'Meal plan': 'Jídelní plán',
@@ -104,6 +107,14 @@ const CS_MESSAGES = {
   Salt: 'Sůl',
   'Global catalogue': 'Globální katalog',
   'Recipe review': 'Kontrola receptů',
+  'Recipe management': 'Správa receptů',
+  'Manage shared recipes and review imported recipe data.':
+    'Spravujte sdílené recepty a kontrolujte importovaná data receptů.',
+  'Shared recipes': 'Sdílené recepty',
+  'Open recipe library': 'Otevřít knihovnu receptů',
+  'Archive this shared recipe?': 'Archivovat tento sdílený recept?',
+  Archive: 'Archivovat',
+  'No shared recipes.': 'Žádné sdílené recepty.',
   'Queue licensed recipe data, then approve it for everyone.':
     'Zařaďte licencovaná data receptů do fronty a poté je schvalte pro všechny.',
   'Batch import': 'Hromadný import',
@@ -122,6 +133,17 @@ const CS_MESSAGES = {
   Approve: 'Schválit',
   Reject: 'Zamítnout',
   'No recipes awaiting review.': 'Žádné recepty nečekají na kontrolu.',
+  Administration: 'Správa',
+  'User management': 'Správa uživatelů',
+  'Control who can manage shared recipes and users.':
+    'Určete, kdo může spravovat sdílené recepty a uživatele.',
+  Administrator: 'Správce',
+  User: 'Uživatel',
+  'Current account': 'Aktuální účet',
+  'Revoke admin': 'Odebrat správce',
+  'Make admin': 'Nastavit jako správce',
+  Role: 'Role',
+  'No users found.': 'Nebyli nalezeni žádní uživatelé.',
   'Plan better meals, one week at a time.':
     'Plánujte lepší jídla, týden po týdnu.',
   Email: 'E-mail',
@@ -312,6 +334,8 @@ const CS_MESSAGES = {
   'Current password is incorrect': 'Současné heslo není správné',
   'Password and confirmation are required': 'Je vyžadováno heslo a potvrzení',
   'Password or confirmation is incorrect': 'Heslo nebo potvrzení není správné',
+  'Promote another administrator before deleting your account':
+    'Před smazáním účtu povyšte jiného uživatele na správce',
   'Request failed': 'Požadavek se nezdařil',
   'Page not found': 'Stránka nebyla nalezena',
   'Unexpected error': 'Neočekávaná chyba',
@@ -324,6 +348,13 @@ const CS_MESSAGES = {
   'Invalid client error': 'Neplatná chyba klienta',
   'Not authenticated': 'Nejste přihlášeni',
   'Admin access required': 'Je vyžadován přístup správce',
+  'Invalid user id': 'Neplatné ID uživatele',
+  'isAdmin must be a boolean': 'Hodnota isAdmin musí být typu boolean',
+  'You cannot change your own admin access':
+    'Nemůžete změnit vlastní oprávnění správce',
+  'User not found': 'Uživatel nebyl nalezen',
+  'Admin access changed; refresh and try again':
+    'Oprávnění správce se změnilo; obnovte stránku a zkuste to znovu',
   'Plan not found': 'Jídelní plán nebyl nalezen',
   'Name is required': 'Název je povinný',
   'Only admins can create global recipes':

@@ -1,7 +1,7 @@
 import type { Meal, MealTranslation } from '$lib/database/schema'
 import type { Locale } from '$lib/i18n'
 import type { ImportedRecipe } from '$lib/types'
-import { jsonBody, request, requestJson } from './http'
+import { jsonBody, request, requestJson, requestOk } from './http'
 
 export const createMeal = (body: object) =>
   requestJson<Meal>('/meals', { method: 'POST', body: jsonBody(body) })
@@ -23,7 +23,7 @@ export const deleteMealTranslation = (id: number, locale: Locale) =>
   request(`/meals/${id}/translations/${locale}`, { method: 'DELETE' })
 
 export const deleteMeal = (id: number) =>
-  request(`/meals/${id}`, { method: 'DELETE' })
+  requestOk(`/meals/${id}`, { method: 'DELETE' })
 
 export const duplicateMeal = (id: number) =>
   requestJson<Meal>(`/meals/${id}/duplicate`, { method: 'POST' })

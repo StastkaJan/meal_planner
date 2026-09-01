@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   bonusItems,
@@ -15,6 +15,18 @@ import {
   weekSlots,
 } from '$lib/database/schema'
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+async function lockAdminIds(tx: Tx) {
+  const admins = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.isAdmin, true))
+    .orderBy(asc(users.id))
+    .for('update')
+  return admins.map((admin) => admin.id)
+}
+
 export async function findUserByEmail(email: string) {
   const [user] = await db
     .select()
@@ -27,6 +39,31 @@ export async function findUserByEmail(email: string) {
 export async function findUserById(id: number) {
   const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1)
   return user ?? null
+}
+
+export async function listUsers() {
+  return db
+    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    .from(users)
+    .orderBy(asc(users.email))
+}
+
+export async function updateUserAdmin(
+  actingUserId: number,
+  id: number,
+  isAdmin: boolean,
+) {
+  return db.transaction(async (tx) => {
+    const adminIds = await lockAdminIds(tx)
+    if (!adminIds.includes(actingUserId)) return false
+
+    const [user] = await tx
+      .update(users)
+      .set({ isAdmin })
+      .where(eq(users.id, id))
+      .returning({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    return user ?? null
+  })
 }
 
 export async function createUser(email: string, passwordHash: string) {
@@ -202,7 +239,10 @@ export async function getAccountExport(userId: number) {
 }
 
 export async function deleteAccount(userId: number) {
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const adminIds = await lockAdminIds(tx)
+    if (adminIds.length === 1 && adminIds[0] === userId) return false
     await tx.delete(users).where(eq(users.id, userId))
+    return true
   })
 }

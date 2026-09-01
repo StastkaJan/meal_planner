@@ -13,7 +13,7 @@
       return t('Shopping list')
     if (path === '/' || path.startsWith('/plans/')) return t('Planner')
     if (path.startsWith('/meals')) return t('Recipes')
-    if (path.startsWith('/admin')) return t('Review')
+    if (path.startsWith('/admin')) return t('Admin')
     if (path === '/profile') return t('Profile')
     if (path.startsWith('/auth/login')) return t('Sign in')
     if (path.startsWith('/auth/register')) return t('Create account')
@@ -49,7 +49,7 @@
           <a
             href="/admin/recipes"
             class:active={$page.url.pathname.startsWith('/admin')}
-            >{t('Review')}</a
+            >{t('Admin')}</a
           >
         {/if}
       </div>
