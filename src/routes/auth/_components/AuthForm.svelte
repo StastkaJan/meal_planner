@@ -61,7 +61,7 @@
         <input type="checkbox" name="termsAccepted" required />
         <span
           >{t('I accept the')}
-          <a href="/legal/terms.md" target="_blank" rel="noopener"
+          <a href="/legal/terms" target="_blank" rel="noopener"
             >{t('Terms and Conditions')}</a
           >.</span
         >
@@ -70,7 +70,7 @@
         <input type="checkbox" name="privacyAcknowledged" required />
         <span
           >{t('I acknowledge the')}
-          <a href="/legal/privacy.md" target="_blank" rel="noopener"
+          <a href="/legal/privacy" target="_blank" rel="noopener"
             >{t('Privacy Policy')}</a
           >.</span
         >

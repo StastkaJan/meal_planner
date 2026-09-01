@@ -123,6 +123,8 @@ const CS_MESSAGES = {
   'Global catalogue': 'Globální katalog',
   'Recipe review': 'Kontrola receptů',
   'Recipe management': 'Správa receptů',
+  'Admin recipe sections': 'Sekce správy receptů',
+  'Imports & approvals': 'Importy a schvalování',
   'Manage shared recipes and review imported recipe data.':
     'Spravujte sdílené recepty a kontrolujte importovaná data receptů.',
   'Shared recipes': 'Sdílené recepty',

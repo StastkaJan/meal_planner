@@ -3,13 +3,13 @@ export const CURRENT_LEGAL_DOCUMENTS = [
     document: 'terms',
     version: '0.1',
     action: 'accepted',
-    href: '/legal/terms.md',
+    href: '/legal/terms',
   },
   {
     document: 'privacy',
     version: '0.1',
     action: 'acknowledged',
-    href: '/legal/privacy.md',
+    href: '/legal/privacy',
   },
 ] as const
 

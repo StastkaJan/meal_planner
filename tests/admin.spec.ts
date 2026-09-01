@@ -70,6 +70,13 @@ test('admin manages users and shared recipes through the UI', async ({
     mealId = Number((await created.json()).id)
 
     await pageA.goto('/admin/recipes')
+    await pageA.getByRole('link', { name: 'Imports & approvals' }).click()
+    await expect(pageA).toHaveURL('/admin/recipes?tab=imports')
+    await expect(
+      pageA.getByRole('heading', { name: 'Batch import' }),
+    ).toBeVisible()
+    await pageA.getByRole('link', { name: 'Shared recipes' }).click()
+
     const recipeRow = pageA.locator('tr').filter({ hasText: recipeName })
     await expect(recipeRow).toBeVisible()
     pageA.once('dialog', (dialog) => dialog.accept())

@@ -19,14 +19,12 @@
   const { t, message, label, namedCount } = useI18n()
   let meals = $derived(data.meals)
   let creating = $state(false)
+  const importing = $derived($page.url.searchParams.get('tab') === 'import')
   let importUrl = $state('')
   let importError = $state('')
   let deleteError = $state('')
   let importBusy = $state(false)
   let importLocale = $derived<Locale>(data.locale)
-  const tab = $derived(
-    $page.url.searchParams.get('tab') === 'import' ? 'import' : 'recipes',
-  )
 
   async function handleCreate(
     name: FormDataEntryValue | null,
@@ -79,6 +77,7 @@
       mine?: boolean
       page?: number
       clear?: boolean
+      import?: boolean
     } = {},
   ) {
     const params = new URLSearchParams()
@@ -87,6 +86,7 @@
       params.set('difficulty', data.difficulty)
     if (patch.favorites ?? data.favoritesOnly) params.set('favorites', '1')
     if (patch.mine ?? data.myRecipesOnly) params.set('mine', '1')
+    if (patch.import ?? importing) params.set('tab', 'import')
     const page = patch.page ?? data.page
     if (page > 1) params.set('page', String(page))
     const query = params.toString()
@@ -125,42 +125,36 @@
       </p>
     </div>
     <div class="top-actions">
-      {#if tab === 'recipes'}
-        <Button
-          variant="secondary"
-          class={data.favoritesOnly ? 'active' : ''}
-          onclick={toggleFavoritesFilter}
-        >
-          {t('Favourites only')}
-        </Button>
-        <Button
-          variant="secondary"
-          class={data.myRecipesOnly ? 'active' : ''}
-          onclick={toggleMyRecipesFilter}
-        >
-          {t('My recipes only')}
-        </Button>
-        <Button onclick={() => (creating = true)}>{t('+ Add meal')}</Button>
-      {/if}
+      <Button
+        variant="secondary"
+        class={data.favoritesOnly ? 'active' : ''}
+        onclick={toggleFavoritesFilter}
+      >
+        {t('Favourites only')}
+      </Button>
+      <Button
+        variant="secondary"
+        class={data.myRecipesOnly ? 'active' : ''}
+        onclick={toggleMyRecipesFilter}
+      >
+        {t('My recipes only')}
+      </Button>
+      <Button
+        variant="secondary"
+        disabled={!data.user?.isPro}
+        onclick={() => {
+          importError = ''
+          goto(recipeUrl({ import: true }), { noScroll: true, keepFocus: true })
+        }}
+      >
+        {t('Import from URL')}{#if !data.user?.isPro}
+          · {t('Pro')}{/if}
+      </Button>
+      <Button onclick={() => (creating = true)}>{t('+ Add meal')}</Button>
     </div>
   </div>
 
-  <nav class="tabs" aria-label={t('Recipe sections')}>
-    <a href="/meals" aria-current={tab === 'recipes' ? 'page' : undefined}
-      >{t('Recipes')}</a
-    >
-    {#if data.user?.isPro}
-      <a
-        href="/meals?tab=import"
-        aria-current={tab === 'import' ? 'page' : undefined}
-        >{t('Import from URL')}</a
-      >
-    {:else}
-      <span aria-disabled="true">{t('Import from URL')} · {t('Pro')}</span>
-    {/if}
-  </nav>
-
-  {#if tab === 'import'}
+  {#if importing}
     <form
       class="import-panel"
       onsubmit={(event) => {
@@ -207,74 +201,84 @@
         <Button type="submit" disabled={importBusy}>
           {importBusy ? t('Importing…') : t('Import and edit')}
         </Button>
-        <a class="cancel-import" href="/meals">{t('Cancel')}</a>
+        <Button
+          type="button"
+          variant="secondary"
+          onclick={() => {
+            importError = ''
+            goto(recipeUrl({ import: false }), {
+              noScroll: true,
+              keepFocus: true,
+            })
+          }}>{t('Cancel')}</Button
+        >
       </div>
     </form>
-  {:else}
-    <form class="filters" method="GET">
-      <Input
-        type="search"
-        name="q"
-        value={data.query}
-        placeholder={t('Search recipes…')}
-      />
-      <Select
-        name="difficulty"
-        value={data.difficulty}
-        title={t('Filter by difficulty')}
-        options={[
-          { value: '', label: t('Any difficulty') },
-          { value: 'easy', label: label('easy') },
-          { value: 'medium', label: label('medium') },
-          { value: 'hard', label: label('hard') },
-        ]}
-      />
-      {#if data.favoritesOnly}<input
-          type="hidden"
-          name="favorites"
-          value="1"
-        />{/if}
-      {#if data.myRecipesOnly}<input type="hidden" name="mine" value="1" />{/if}
-      <Button type="submit" size="sm">{t('Apply')}</Button>
-      {#if data.query || data.difficulty}
-        <a class="clear" href={recipeUrl({ clear: true, page: 1 })}
-          >{t('Clear')}</a
-        >
-      {/if}
-      <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span
-      >
-    </form>
+  {/if}
 
-    {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
-    <MealsTable
-      {meals}
-      isAdmin={data.isAdmin}
-      bind:creating
-      emptyMessage={data.query || data.difficulty
-        ? t('No matching recipes.')
-        : data.favoritesOnly
-          ? t('No favourites yet.')
-          : t('No meals yet.')}
-      onCreate={handleCreate}
-      onDelete={deleteMeal}
-      onFavorite={toggleFavorite}
+  <form class="filters" method="GET">
+    {#if importing}<input type="hidden" name="tab" value="import" />{/if}
+    <Input
+      type="search"
+      name="q"
+      value={data.query}
+      placeholder={t('Search recipes…')}
     />
-    {#if data.totalPages > 1}
-      <nav class="pagination" aria-label={t('Recipe pages')}>
-        {#if data.page > 1}<a href={recipeUrl({ page: data.page - 1 })}
-            >{t('Previous')}</a
-          >{/if}
-        <span
-          >{t('Page {page} of {pages}', {
-            page: data.page,
-            pages: data.totalPages,
-          })}</span
-        >
-        {#if data.page < data.totalPages}<a
-            href={recipeUrl({ page: data.page + 1 })}>{t('Next')}</a
-          >{/if}
-      </nav>
+    <Select
+      name="difficulty"
+      value={data.difficulty}
+      title={t('Filter by difficulty')}
+      options={[
+        { value: '', label: t('Any difficulty') },
+        { value: 'easy', label: label('easy') },
+        { value: 'medium', label: label('medium') },
+        { value: 'hard', label: label('hard') },
+      ]}
+    />
+    {#if data.favoritesOnly}<input
+        type="hidden"
+        name="favorites"
+        value="1"
+      />{/if}
+    {#if data.myRecipesOnly}<input type="hidden" name="mine" value="1" />{/if}
+    <Button type="submit" size="sm">{t('Apply')}</Button>
+    {#if data.query || data.difficulty}
+      <a class="clear" href={recipeUrl({ clear: true, page: 1 })}
+        >{t('Clear')}</a
+      >
     {/if}
+    <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span>
+  </form>
+
+  {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
+  <MealsTable
+    {meals}
+    isAdmin={data.isAdmin}
+    bind:creating
+    emptyMessage={data.query || data.difficulty
+      ? t('No matching recipes.')
+      : data.favoritesOnly
+        ? t('No favourites yet.')
+        : t('No meals yet.')}
+    onCreate={handleCreate}
+    onDelete={deleteMeal}
+    onFavorite={toggleFavorite}
+  />
+  {#if data.totalPages > 1}
+    <nav class="pagination" aria-label={t('Recipe pages')}>
+      {#if data.page > 1}<a href={recipeUrl({ page: data.page - 1 })}
+          >{t('Previous')}</a
+        >{/if}
+      <span
+        >{t('Page {page} of {pages}', {
+          page: data.page,
+          pages: data.totalPages,
+        })}</span
+      >
+      {#if data.page < data.totalPages}<a
+          href={recipeUrl({ page: data.page + 1 })}>{t('Next')}</a
+        >{/if}
+    </nav>
   {/if}
 </div>
 
@@ -290,32 +294,6 @@
     align-items: center;
     gap: 0.4rem;
   }
-  .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 4px;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    background: $color-surface-2;
-  }
-  .tabs a,
-  .tabs span {
-    padding: 8px 14px;
-    border-radius: calc($radius-sm - 3px);
-    color: $color-text-muted;
-    font-size: 0.85rem;
-    font-weight: 650;
-    text-decoration: none;
-  }
-  .tabs a[aria-current='page'] {
-    background: $color-surface;
-    box-shadow: 0 2px 8px rgb(41 39 33 / 8%);
-    color: $color-text;
-  }
-  .tabs span {
-    opacity: 0.55;
-  }
-
   .filters {
     display: grid;
     grid-template-columns: minmax(12rem, 1fr) 11rem auto auto 1fr;
@@ -410,18 +388,6 @@
     display: flex;
     gap: 0.5rem;
   }
-  .cancel-import {
-    align-content: center;
-    min-height: 36px;
-    padding: 7px 12px;
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-sm;
-    color: $color-text-muted;
-    font-size: 0.8rem;
-    font-weight: 650;
-    text-decoration: none;
-  }
-
   .import-error {
     color: $color-danger;
     font-size: 0.8rem;

@@ -158,24 +158,6 @@
         <Checkbox disabled={!isPro} bind:checked={myRecipesOnly} />
         {t('My recipes only')}
       </label>
-      <div class="plan-actions">
-        <button
-          type="button"
-          class="copy"
-          disabled={!isPro}
-          onclick={onCopyWeek}
-          >{t('Copy from last week')}{#if !isPro}
-            · {t('Pro')}{/if}</button
-        >
-        <button
-          type="button"
-          class="compose"
-          disabled={!isPro}
-          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
-          >{t('Auto-compose')}{#if !isPro}
-            · {t('Pro')}{/if}</button
-        >
-      </div>
     </section>
     <section>
       <h4>
@@ -284,6 +266,20 @@
         {/each}
       </section>
     {/if}
+    <div class="plan-actions">
+      <button type="button" class="copy" disabled={!isPro} onclick={onCopyWeek}
+        >{t('Copy from last week')}{#if !isPro}
+          · {t('Pro')}{/if}</button
+      >
+      <button
+        type="button"
+        class="compose"
+        disabled={!isPro}
+        onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
+        >{t('Auto-compose')}{#if !isPro}
+          · {t('Pro')}{/if}</button
+      >
+    </div>
   </div>
 </details>
 
@@ -386,7 +382,9 @@
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
-    margin-top: 10px;
+    justify-content: flex-end;
+    padding-top: 14px;
+    border-top: 1px solid $color-border;
   }
   .plan-actions button {
     min-height: 34px;
