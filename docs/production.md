@@ -72,6 +72,44 @@ application image. Follow [the rollback procedure](deployment.md) to switch back
 without rebuilding. Check migration compatibility first; application rollback
 does not revert the database.
 
+## Pull request previews
+
+Same-repository pull requests deploy after the quality job passes to
+`https://pr-N.test.papuplan.cz`. Each preview has its own application container,
+PostgreSQL container, and persistent database volume. A push rebuilds that PR's
+preview; closing or merging the PR removes its route, containers, image, volume,
+and generated database password. Fork pull requests never receive preview
+credentials and are not deployed.
+
+One-time host setup:
+
+1. Point the wildcard DNS record `*.test.papuplan.cz` at the VPS.
+2. Connect the portfolio Caddy to `public-web` and route the wildcard to the
+   shared preview router:
+
+   ```caddyfile
+   *.test.papuplan.cz {
+     tls {
+       dns <provider>
+     }
+     reverse_proxy meal-plan-preview-proxy:80
+   }
+   ```
+
+   Wildcard certificates require Caddy's ACME DNS challenge and the matching
+   DNS provider module. The preview router is created automatically by the
+   first preview deployment.
+
+3. Create a GitHub `preview` environment with `PREVIEW_VPS_HOST` and
+   `PREVIEW_VPS_USER` variables, a `PREVIEW_VPS_SSH_KEY` secret, and
+   `PREVIEW_VPS_KNOWN_HOSTS` as a variable or secret. Use a dedicated deployment
+   user/key. Do not add a required-reviewer gate if teardown must stay automatic;
+   only same-repository pull requests deploy, but their branches build and run
+   their Dockerfile on this host.
+
+Preview databases start empty and are not backed up or connected to production
+monitoring. They exist only for reviewing the pull request.
+
 ## Grafana access
 
 Use the [WireGuard access runbook](wireguard.md), then open

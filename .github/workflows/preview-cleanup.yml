@@ -1,0 +1,73 @@
+name: Delete pull request preview
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+
+concurrency:
+  group: quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: delete pull request preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: preview
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      VPS_HOST: ${{ vars.PREVIEW_VPS_HOST || secrets.PREVIEW_VPS_HOST }}
+      VPS_USER: ${{ vars.PREVIEW_VPS_USER || secrets.PREVIEW_VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.PREVIEW_VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ vars.PREVIEW_VPS_KNOWN_HOSTS || secrets.PREVIEW_VPS_KNOWN_HOSTS }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Configure SSH
+        run: |
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$VPS_SSH_KEY"
+          test -n "$VPS_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Package trusted cleanup code
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/meal-plan-preview.tar.gz" HEAD
+
+      - name: Upload cleanup code
+        run: |
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -P 22 \
+            "$RUNNER_TEMP/meal-plan-preview.tar.gz" \
+            "$VPS_USER@$VPS_HOST:meal-plan-preview-$GITHUB_RUN_ID.tar.gz"
+
+      - name: Delete preview on VPS
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
+            "$VPS_USER@$VPS_HOST" bash -s -- \
+            "$PR_NUMBER" "$GITHUB_RUN_ID" <<'REMOTE'
+          set -Eeuo pipefail
+          pr_number="$1"
+          run_id="$2"
+          [[ "$pr_number" =~ ^[1-9][0-9]*$ ]]
+          [[ "$run_id" =~ ^[1-9][0-9]*$ ]]
+          base="$(pwd -P)"
+          release="$base/meal-plan-preview-sources/pr-$pr_number"
+          archive="$base/meal-plan-preview-$run_id.tar.gz"
+          trap 'rm -rf -- "$release"; rm -f -- "$archive"' EXIT
+          rm -rf -- "$release"
+          mkdir -p "$release"
+          tar -xzf "$archive" -C "$release"
+          cd "$release"
+          PREVIEW_ROOT="$base/meal-plan-previews" \
+            bash scripts/deploy-preview.sh delete "$pr_number"
+          REMOTE
