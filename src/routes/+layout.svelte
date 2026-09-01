@@ -7,7 +7,7 @@
   import type { LegalNotice } from '$lib/legal'
 
   let { children, data } = $props()
-  const { t } = provideI18n(() => data.locale)
+  const { t, message } = provideI18n(() => data.locale)
   let legalNotices = $derived(data.legalNotices)
   let savingLegalNotice = $state('')
   let legalNoticeError = $state('')
@@ -23,7 +23,7 @@
       )
     } catch (error) {
       legalNoticeError =
-        error instanceof Error ? error.message : t('Request failed')
+        error instanceof Error ? message(error.message) : t('Request failed')
     } finally {
       savingLegalNotice = ''
     }
@@ -130,7 +130,9 @@
         </div>
       </div>
     {/each}
-    {#if legalNoticeError}<p class="legal-error">{legalNoticeError}</p>{/if}
+    {#if legalNoticeError}
+      <p class="legal-error" role="alert">{legalNoticeError}</p>
+    {/if}
   </section>
 {/if}
 
