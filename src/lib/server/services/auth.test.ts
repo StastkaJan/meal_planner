@@ -60,7 +60,7 @@ describe('register', () => {
     findUserByEmail.mockResolvedValueOnce(null)
     createUser.mockResolvedValueOnce({ id: 42 })
 
-    await register('new@example.com', 'password1')
+    await register('new@example.com', 'password1', CURRENT_LEGAL_DOCUMENTS)
 
     expect(createUser).toHaveBeenCalledWith(
       'new@example.com',

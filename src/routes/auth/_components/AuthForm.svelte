@@ -3,6 +3,7 @@
   import Field from '$lib/components/ui/Field.svelte'
   import Input from '$lib/components/ui/Input.svelte'
   import { useI18n } from '$lib/i18n-context'
+  import { CURRENT_LEGAL_DOCUMENTS } from '$lib/legal'
 
   const { t, message } = useI18n()
 
@@ -49,6 +50,13 @@
       />
     </Field>
     {#if legalAcceptance}
+      {#each CURRENT_LEGAL_DOCUMENTS as notice}
+        <input
+          type="hidden"
+          name={`${notice.document}Version`}
+          value={notice.version}
+        />
+      {/each}
       <label class="legal-choice">
         <input type="checkbox" name="termsAccepted" required />
         <span

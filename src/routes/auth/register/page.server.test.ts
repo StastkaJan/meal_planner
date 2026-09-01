@@ -11,6 +11,7 @@ vi.mock('$lib/server/services/auth', () => ({
 }))
 
 import { actions } from './+page.server'
+import { CURRENT_LEGAL_DOCUMENTS } from '$lib/legal'
 
 function request(fields: Record<string, string>) {
   return new Request('http://localhost/auth/register', {
@@ -18,6 +19,8 @@ function request(fields: Record<string, string>) {
     body: new URLSearchParams({
       email: 'new@example.com',
       password: 'password1',
+      termsVersion: '0.1',
+      privacyVersion: '0.1',
       ...fields,
     }),
   })
@@ -50,4 +53,46 @@ describe('register action', () => {
       expect(createSession).not.toHaveBeenCalled()
     },
   )
+
+  it('rejects confirmations for a stale document version', async () => {
+    const result = await actions.default!({
+      request: request({
+        termsAccepted: 'on',
+        privacyAcknowledged: 'on',
+        termsVersion: 'old',
+      }),
+      cookies: {},
+    } as any)
+
+    expect(result).toMatchObject({
+      status: 400,
+      data: {
+        error:
+          'Legal documents changed. Review the current versions and try again.',
+      },
+    })
+    expect(register).not.toHaveBeenCalled()
+    expect(createSession).not.toHaveBeenCalled()
+  })
+
+  it('records the versions displayed by the current form', async () => {
+    register.mockResolvedValueOnce({ id: 42 })
+
+    await expect(
+      actions.default!({
+        request: request({
+          termsAccepted: 'on',
+          privacyAcknowledged: 'on',
+        }),
+        cookies: {},
+      } as any),
+    ).rejects.toMatchObject({ status: 303, location: '/' })
+
+    expect(register).toHaveBeenCalledWith(
+      'new@example.com',
+      'password1',
+      CURRENT_LEGAL_DOCUMENTS,
+    )
+    expect(createSession).toHaveBeenCalledWith(42, {})
+  })
 })

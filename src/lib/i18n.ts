@@ -340,6 +340,8 @@ const CS_MESSAGES = {
     'Pro vytvoření účtu musíte přijmout oba právní dokumenty',
   'Password must be at least 8 characters': 'Heslo musí mít alespoň 8 znaků',
   'Invalid legal document version': 'Neplatná verze právního dokumentu',
+  'Legal documents changed. Review the current versions and try again.':
+    'Právní dokumenty se změnily. Přečtěte si aktuální verze a zkuste to znovu.',
   'Password must be at most 128 characters': 'Heslo může mít nejvýše 128 znaků',
   'Email already in use': 'E-mail je již používán',
   'New password must be at least 8 characters':
