@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('@smoke shopping list counts a batch once when a later slot uses leftovers', async ({
+test('@smoke shopping list handles leftovers and ingredients with different units', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
@@ -21,6 +21,12 @@ test('@smoke shopping list counts a batch once when a later slot uses leftovers'
       .click()
   }
 
+  // Honey is measured in tbsp above and tsp in this recipe.
+  await breakfastCells.nth(2).click()
+  await page
+    .locator('dialog .item', { hasText: 'Cottage Cheese with Fruit' })
+    .click()
+
   await page.getByRole('button', { name: /Use leftovers from/ }).click()
   await expect(page.getByText('leftovers')).toBeVisible()
 
@@ -28,6 +34,7 @@ test('@smoke shopping list counts a batch once when a later slot uses leftovers'
   await page.getByLabel('People served').fill('2')
   await page.getByLabel('People served').blur()
   await expect(page.getByText('2 tbsp Honey')).toBeVisible()
+  await expect(page.getByText('2 tsp Honey')).toBeVisible()
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', {
       configurable: true,

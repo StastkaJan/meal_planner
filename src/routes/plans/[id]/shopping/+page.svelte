@@ -104,7 +104,7 @@
     <p class="empty">{t('No ingredients to shop for this week.')}</p>
   {:else}
     <ul>
-      {#each data.items as item (item.name)}
+      {#each data.items as item}
         <li>
           <label>
             <input type="checkbox" />
