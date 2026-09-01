@@ -152,6 +152,20 @@ const CS_MESSAGES = {
   'Terms and Conditions': 'obchodními podmínkami',
   'I acknowledge the': 'Beru na vědomí',
   'Privacy Policy': 'zásady ochrany osobních údajů',
+  Terms: 'Obchodní podmínky',
+  Privacy: 'Zásady ochrany osobních údajů',
+  'Legal updates': 'Právní aktualizace',
+  'Please review our Terms and Conditions':
+    'Přečtěte si prosím naše obchodní podmínky',
+  'Please review our Privacy Policy':
+    'Přečtěte si prosím naše zásady ochrany osobních údajů',
+  'Review version {version}. You can accept it here after reading.':
+    'Přečtěte si verzi {version}. Po přečtení ji zde můžete přijmout.',
+  'Review version {version}. This acknowledgement confirms that you saw the notice.':
+    'Přečtěte si verzi {version}. Potvrzení znamená, že jste oznámení viděli.',
+  'Read document': 'Přečíst dokument',
+  Accept: 'Přijmout',
+  Acknowledge: 'Potvrdit seznámení',
   'Sign in': 'Přihlásit se',
   'Create account': 'Vytvořit účet',
   'Sign in instead': 'Místo toho se přihlásit',
@@ -325,6 +339,9 @@ const CS_MESSAGES = {
   'You must accept both legal documents to create an account':
     'Pro vytvoření účtu musíte přijmout oba právní dokumenty',
   'Password must be at least 8 characters': 'Heslo musí mít alespoň 8 znaků',
+  'Invalid legal document version': 'Neplatná verze právního dokumentu',
+  'Legal documents changed. Review the current versions and try again.':
+    'Právní dokumenty se změnily. Přečtěte si aktuální verze a zkuste to znovu.',
   'Password must be at most 128 characters': 'Heslo může mít nejvýše 128 znaků',
   'Email already in use': 'E-mail je již používán',
   'New password must be at least 8 characters':

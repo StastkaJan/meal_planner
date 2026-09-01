@@ -5,6 +5,7 @@ import {
   MAX_PASSWORD,
   register,
 } from '$lib/server/services/auth'
+import { CURRENT_LEGAL_DOCUMENTS } from '$lib/legal'
 import type { Actions } from './$types'
 
 export const actions: Actions = {
@@ -25,12 +26,27 @@ export const actions: Actions = {
         error: 'You must accept both legal documents to create an account',
       })
 
+    const submittedVersions = {
+      terms: String(d.get('termsVersion') ?? ''),
+      privacy: String(d.get('privacyVersion') ?? ''),
+    }
+    if (
+      CURRENT_LEGAL_DOCUMENTS.some(
+        ({ document, version }) => submittedVersions[document] !== version,
+      )
+    ) {
+      return fail(400, {
+        error:
+          'Legal documents changed. Review the current versions and try again.',
+      })
+    }
+
     if (password.length < 8)
       return fail(400, { error: 'Password must be at least 8 characters' })
     if (password.length > MAX_PASSWORD)
       return fail(400, { error: 'Password must be at most 128 characters' })
 
-    const user = await register(email, password)
+    const user = await register(email, password, CURRENT_LEGAL_DOCUMENTS)
     if (!user) return fail(400, { error: 'Email already in use' })
 
     await createSession(user.id, cookies)

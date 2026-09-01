@@ -162,6 +162,13 @@
       "when": 1788100399330,
       "tag": "0022_sleepy_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788263131693,
+      "tag": "0023_outgoing_cannonball",
+      "breakpoints": true
     }
   ]
 }

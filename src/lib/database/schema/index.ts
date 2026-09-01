@@ -1,5 +1,6 @@
 export * from './bonus-items'
 export * from './ingredients'
+export * from './legal-document-events'
 export * from './meal-favorites'
 export * from './meal-ingredients'
 export * from './meal-translations'
