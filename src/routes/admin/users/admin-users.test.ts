@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const updateUserAdmin = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/repositories/accounts', () => ({ updateUserAdmin }))
+const updateUserPro = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/repositories/accounts', () => ({
+  updateUserAdmin,
+  updateUserPro,
+}))
 
 import { PATCH } from './[id]/+server'
 
@@ -22,6 +26,7 @@ describe('admin user API', () => {
       PATCH(event('8', { isAdmin: true }, false)),
     ).rejects.toMatchObject({ status: 403 })
     expect(updateUserAdmin).not.toHaveBeenCalled()
+    expect(updateUserPro).not.toHaveBeenCalled()
   })
 
   it('rejects invalid role changes and self-demotion', async () => {
@@ -45,6 +50,32 @@ describe('admin user API', () => {
       status: 400,
     })
     expect(updateUserAdmin).not.toHaveBeenCalled()
+    expect(updateUserPro).not.toHaveBeenCalled()
+  })
+
+  it('updates Pro access', async () => {
+    updateUserPro.mockResolvedValueOnce({
+      id: 8,
+      email: 'cook@example.com',
+      isAdmin: false,
+      isPro: true,
+    })
+
+    const response = await PATCH(event('8', { isPro: true }))
+
+    expect(updateUserPro).toHaveBeenCalledWith(7, 8, true)
+    await expect(response.json()).resolves.toMatchObject({
+      id: 8,
+      isPro: true,
+    })
+  })
+
+  it('rejects ambiguous access changes', async () => {
+    await expect(
+      PATCH(event('8', { isAdmin: true, isPro: true })),
+    ).rejects.toMatchObject({ status: 400 })
+    expect(updateUserAdmin).not.toHaveBeenCalled()
+    expect(updateUserPro).not.toHaveBeenCalled()
   })
 
   it('updates another user role', async () => {
@@ -76,6 +107,13 @@ describe('admin user API', () => {
   it('rejects a role change when the acting admin was concurrently demoted', async () => {
     updateUserAdmin.mockResolvedValueOnce(false)
     await expect(PATCH(event('8', { isAdmin: false }))).rejects.toMatchObject({
+      status: 403,
+    })
+  })
+
+  it('rejects a Pro change when the acting admin was concurrently demoted', async () => {
+    updateUserPro.mockResolvedValueOnce(false)
+    await expect(PATCH(event('8', { isPro: true }))).rejects.toMatchObject({
       status: 403,
     })
   })

@@ -108,7 +108,9 @@
     {#if tab === 'preferences'}
       <section class="card plan-card">
         <div>
-          <p class="plan-label">{data.isPro ? t('Pro plan') : t('Free plan')}</p>
+          <p class="plan-label">
+            {data.isPro ? t('Pro plan') : t('Free plan')}
+          </p>
           <h2>{data.isPro ? t('Pro is active') : t('Your current plan')}</h2>
           <p class="hint">
             {data.isPro
@@ -117,6 +119,7 @@
                   'Manual planning, recipes, favourites, and shopping lists are included.',
                 )}
           </p>
+          <a class="compare-plans" href="/pricing">{t('Compare plans')}</a>
         </div>
         {#if !data.isPro}
           <p class="coming-soon">{t('Pro payments are coming soon.')}</p>
@@ -361,6 +364,13 @@
   }
   .plan-card .hint {
     margin-bottom: 0;
+  }
+  .compare-plans {
+    display: inline-block;
+    margin-top: 12px;
+    color: $color-accent;
+    font-size: 0.875rem;
+    font-weight: 650;
   }
   .coming-soon {
     flex: 0 0 auto;

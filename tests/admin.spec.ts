@@ -59,6 +59,10 @@ test('admin manages users and shared recipes through the UI', async ({
     ).toBeVisible()
     expect(sql(`select is_admin from users where id = ${ids[1]}`)).toBe('t')
 
+    await userRow.getByRole('button', { name: 'Grant Pro' }).click()
+    await expect(userRow.getByText('Pro plan', { exact: true })).toBeVisible()
+    expect(sql(`select is_pro from users where id = ${ids[1]}`)).toBe('t')
+
     const created = await contextA.request.post('/meals', {
       data: { name: recipeName, scope: 'global' },
     })

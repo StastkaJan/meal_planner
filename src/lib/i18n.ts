@@ -18,6 +18,7 @@ const CS_MESSAGES = {
   Admin: 'Správa',
   'Admin sections': 'Sekce správy',
   Users: 'Uživatelé',
+  Pricing: 'Ceník',
   'Sign out': 'Odhlásit se',
   'Weekly planner': 'Týdenní plánovač',
   'Meal plan': 'Jídelní plán',
@@ -148,12 +149,21 @@ const CS_MESSAGES = {
   'User management': 'Správa uživatelů',
   'Control who can manage shared recipes and users.':
     'Určete, kdo může spravovat sdílené recepty a uživatele.',
+  'Control administrator roles and Pro plan access.':
+    'Spravujte role administrátorů a přístup k tarifu Pro.',
   Administrator: 'Správce',
   User: 'Uživatel',
   'Current account': 'Aktuální účet',
   'Revoke admin': 'Odebrat správce',
   'Make admin': 'Nastavit jako správce',
+  'Grant Pro': 'Udělit Pro',
+  'Revoke Pro': 'Odebrat Pro',
   Role: 'Role',
+  Plan: 'Tarif',
+  'Plan access': 'Přístup k tarifům',
+  '{pro} Pro and {free} Free accounts':
+    '{pro} účtů Pro a {free} bezplatných účtů',
+  'View plan comparison': 'Zobrazit porovnání tarifů',
   'No users found.': 'Nebyli nalezeni žádní uživatelé.',
   'Plan better meals, one week at a time.':
     'Plánujte lepší jídla, týden po týdnu.',
@@ -318,6 +328,26 @@ const CS_MESSAGES = {
   'Manual planning, recipes, favourites, and shopping lists are included.':
     'Ruční plánování, recepty, oblíbené položky a nákupní seznamy jsou součástí tarifu.',
   'Pro payments are coming soon.': 'Platby za Pro budou brzy k dispozici.',
+  'Compare plans': 'Porovnat tarify',
+  'Plans & pricing': 'Tarify a ceny',
+  'Simple plans for better weekly meals.':
+    'Jednoduché tarify pro lepší týdenní stravování.',
+  'Start with all the essentials for free. Pro adds time-saving automation when you need it.':
+    'Začněte se všemi základními funkcemi zdarma. Pro přidává automatizaci, která šetří čas.',
+  'Free forever': 'Navždy zdarma',
+  'Manual weekly planning': 'Ruční týdenní plánování',
+  'Personal and shared recipes': 'Osobní a sdílené recepty',
+  'Favourites and shopping lists': 'Oblíbené položky a nákupní seznamy',
+  'Nutrition tracking': 'Sledování výživy',
+  'Coming soon': 'Již brzy',
+  'Everything in Free': 'Vše z bezplatného tarifu',
+  'Import recipes from a URL': 'Import receptů z URL',
+  'Automatic plan composition': 'Automatické sestavení plánu',
+  'Copy a previous week': 'Kopírování předchozího týdne',
+  'Recalculate a day around extras': 'Přepočet dne podle položek navíc',
+  'Pro checkout is not available yet. During preview, administrators can grant access from user management.':
+    'Platba za Pro zatím není dostupná. Během náhledu mohou administrátoři udělit přístup ve správě uživatelů.',
+  'Start planning': 'Začít plánovat',
   Profile: 'Profil',
   'Profile sections': 'Sekce profilu',
   Preferences: 'Předvolby',
@@ -387,6 +417,8 @@ const CS_MESSAGES = {
   'Admin access required': 'Je vyžadován přístup správce',
   'Invalid user id': 'Neplatné ID uživatele',
   'isAdmin must be a boolean': 'Hodnota isAdmin musí být typu boolean',
+  'Provide either isAdmin or isPro as a boolean':
+    'Zadejte buď isAdmin, nebo isPro jako logickou hodnotu',
   'You cannot change your own admin access':
     'Nemůžete změnit vlastní oprávnění správce',
   'User not found': 'Uživatel nebyl nalezen',

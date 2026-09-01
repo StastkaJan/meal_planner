@@ -169,6 +169,13 @@
       "when": 1788263131693,
       "tag": "0023_outgoing_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788274720042,
+      "tag": "0024_medical_slapstick",
+      "breakpoints": true
     }
   ]
 }

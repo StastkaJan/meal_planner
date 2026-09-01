@@ -4,7 +4,12 @@ const db = vi.hoisted(() => ({ transaction: vi.fn() }))
 
 vi.mock('$lib/database', () => ({ db }))
 
-import { deleteAccount, getAccountExport, updateUserAdmin } from './accounts'
+import {
+  deleteAccount,
+  getAccountExport,
+  updateUserAdmin,
+  updateUserPro,
+} from './accounts'
 
 function makeTx(responses: unknown[]) {
   let index = 0
@@ -114,6 +119,39 @@ describe('updateUserAdmin', () => {
     await expect(updateUserAdmin(7, 8, false)).resolves.toBe(false)
     expect(lock.for).toHaveBeenCalledWith('update')
     expect(tx.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('updateUserPro', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('rechecks administrator access before changing Pro entitlement', async () => {
+    const lock: any = {}
+    for (const method of ['from', 'where', 'orderBy'])
+      lock[method] = vi.fn(() => lock)
+    lock.for = vi.fn().mockResolvedValue([{ id: 7 }])
+
+    const update: any = {}
+    for (const method of ['set', 'where']) update[method] = vi.fn(() => update)
+    update.returning = vi
+      .fn()
+      .mockResolvedValue([
+        { id: 8, email: 'cook@example.com', isAdmin: false, isPro: true },
+      ])
+    const tx = {
+      select: vi.fn(() => lock),
+      update: vi.fn(() => update),
+    }
+    db.transaction.mockImplementationOnce(
+      (callback: (transaction: unknown) => unknown) => callback(tx),
+    )
+
+    await expect(updateUserPro(7, 8, true)).resolves.toMatchObject({
+      id: 8,
+      isPro: true,
+    })
+    expect(lock.for).toHaveBeenCalledWith('update')
+    expect(update.set).toHaveBeenCalledWith({ isPro: true })
   })
 })
 

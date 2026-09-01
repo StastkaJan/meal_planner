@@ -45,7 +45,12 @@ export async function findUserById(id: number) {
 
 export async function listUsers() {
   return db
-    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    .select({
+      id: users.id,
+      email: users.email,
+      isAdmin: users.isAdmin,
+      isPro: users.isPro,
+    })
     .from(users)
     .orderBy(asc(users.email))
 }
@@ -63,7 +68,35 @@ export async function updateUserAdmin(
       .update(users)
       .set({ isAdmin })
       .where(eq(users.id, id))
-      .returning({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+      .returning({
+        id: users.id,
+        email: users.email,
+        isAdmin: users.isAdmin,
+        isPro: users.isPro,
+      })
+    return user ?? null
+  })
+}
+
+export async function updateUserPro(
+  actingUserId: number,
+  id: number,
+  isPro: boolean,
+) {
+  return db.transaction(async (tx) => {
+    const adminIds = await lockAdminIds(tx)
+    if (!adminIds.includes(actingUserId)) return false
+
+    const [user] = await tx
+      .update(users)
+      .set({ isPro })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        email: users.email,
+        isAdmin: users.isAdmin,
+        isPro: users.isPro,
+      })
     return user ?? null
   })
 }
