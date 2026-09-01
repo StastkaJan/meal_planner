@@ -7,6 +7,19 @@ export const NUTRITION_TARGETS: NutritionTargets = {
   fatG: 65,
 }
 
+// Display references for nutrients that are tracked but are not auto-compose targets.
+export const NUTRITION_DISPLAY_REFERENCES = {
+  fiberG: 30,
+  sugarG: 90,
+  saturatedFatG: 20,
+  saltG: 6,
+} as const
+
+export const nutritionProgress = (value: number, target: number) => ({
+  percent: Math.min(100, Math.round((value / target) * 100)),
+  wayOver: value >= target * 1.2,
+})
+
 type UserTargets = {
   calorieTarget: number | null
   proteinTarget: number | null

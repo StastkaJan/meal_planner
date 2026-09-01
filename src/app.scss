@@ -33,6 +33,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body > div {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
 button {
   font-family: inherit;
   font-size: inherit;

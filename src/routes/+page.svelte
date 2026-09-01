@@ -208,6 +208,8 @@
       onPreferenceChange={handlePreferenceChange}
       onMealSlotsChange={handleMealSlotsChange}
       onRepeatChange={handleRepeatChange}
+      onAutoCompose={handleAutoCompose}
+      onCopyWeek={handleCopyWeek}
     />
     <WeekTable
       {plan}
@@ -215,12 +217,8 @@
       weekStart={data.viewWeek}
       targets={data.targets}
       isPro={data.user?.isPro ?? false}
-      {favoritesOnly}
-      {myRecipesOnly}
       onSlotChange={handleSlotChange}
       onSlotLeftover={handleSlotLeftover}
-      onAutoCompose={handleAutoCompose}
-      onCopyWeek={handleCopyWeek}
       onAddBonus={handleAddBonus}
       onDeleteBonus={handleDeleteBonus}
       onRecalcDay={handleRecalcDay}

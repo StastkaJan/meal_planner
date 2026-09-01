@@ -86,6 +86,9 @@ const CS_MESSAGES = {
     'Výživové hodnoty jsou orientační — podle potřeby je upravte.',
   'Name (e.g. Pizza, Beer)': 'Název (např. pizza, pivo)',
   Calories: 'Kalorie',
+  Protein: 'Bílkoviny',
+  Carbs: 'Sacharidy',
+  Fat: 'Tuky',
   'Protein g': 'Bílkoviny g',
   'Carbs g': 'Sacharidy g',
   'Fat g': 'Tuky g',
@@ -191,6 +194,7 @@ const CS_MESSAGES = {
   'Create account': 'Vytvořit účet',
   'Sign in instead': 'Místo toho se přihlásit',
   'Recipe library': 'Knihovna receptů',
+  'Recipe sections': 'Sekce receptů',
   'Keep your favourites ready for the week ahead.':
     'Mějte oblíbené recepty připravené na příští týden.',
   'Show all': 'Zobrazit vše',
@@ -529,6 +533,8 @@ const CS_LABELS: Record<string, string> = {
   pinch: 'špetka',
   slice: 'plátek',
   can: 'plechovka',
+  bunch: 'svazek',
+  handful: 'hrst',
 }
 
 export function localizeLabel(locale: Locale, value: string): string {

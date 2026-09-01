@@ -492,6 +492,9 @@
   }
 
   .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 38px;
     padding: 7px 14px;
     background: $color-accent;
@@ -501,6 +504,8 @@
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
     transition: opacity 0.15s;
     &:hover {
       opacity: 0.85;
