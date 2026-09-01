@@ -14,6 +14,9 @@
     meals,
     weekStart,
     targets,
+    isPro,
+    favoritesOnly,
+    myRecipesOnly,
     onSlotChange,
     onSlotLeftover,
     onAutoCompose,
@@ -28,6 +31,9 @@
     meals: Meal[]
     weekStart: string
     targets: NutritionTargets
+    isPro: boolean
+    favoritesOnly: boolean
+    myRecipesOnly: boolean
     onSlotChange: (
       date: string,
       mealType: string,
@@ -38,7 +44,7 @@
       mealType: string,
       source: { date: string; mealType: string } | null,
     ) => void
-    onAutoCompose?: (favoritesOnly: boolean) => void
+    onAutoCompose?: (favoritesOnly: boolean, myRecipesOnly: boolean) => void
     onCopyWeek?: () => void
     onAddBonus: (
       date: string,
@@ -59,8 +65,6 @@
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
-
-  let favoritesOnly = $state(false)
 
   const fmtUTC = (d: Date, opts: Intl.DateTimeFormatOptions) =>
     d.toLocaleDateString(localeCode(locale()), { timeZone: 'UTC', ...opts })
@@ -209,10 +213,13 @@
                 />
                 <button
                   class="btn-recalc"
+                  disabled={!isPro}
                   onclick={() => onRecalcDay(isoDate(dt))}
                   title={t(
                     "Re-fill this day's empty slots to fit the remaining budget",
-                  )}>{t('Recalculate')}</button
+                  )}
+                  >{t('Recalculate')}{#if !isPro}
+                    · {t('Pro')}{/if}</button
                 >
               </div>
             </td>
@@ -233,19 +240,18 @@
   {#if onAutoCompose || onCopyWeek}
     <div class="foot-actions">
       {#if onCopyWeek}
-        <button class="btn-ghost" onclick={onCopyWeek}
-          >{t('Copy from last week')}</button
+        <button class="btn-ghost" disabled={!isPro} onclick={onCopyWeek}
+          >{t('Copy from last week')}{#if !isPro}
+            · {t('Pro')}{/if}</button
         >
       {/if}
       {#if onAutoCompose}
-        <label class="favorites-only">
-          <input type="checkbox" bind:checked={favoritesOnly} />
-          {t('Favourites only')}
-        </label>
         <button
           class="btn-autocompose"
-          onclick={() => onAutoCompose(favoritesOnly)}
-          >{t('Auto-compose')}</button
+          disabled={!isPro}
+          onclick={() => onAutoCompose(favoritesOnly, myRecipesOnly)}
+          >{t('Auto-compose')}{#if !isPro}
+            · {t('Pro')}{/if}</button
         >
       {/if}
     </div>
@@ -422,6 +428,10 @@
     color: $color-text-muted;
     cursor: pointer;
     font-size: 0.65rem;
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
@@ -448,19 +458,14 @@
     cursor: pointer;
     font-size: 0.78rem;
     font-weight: 600;
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       color: $color-text;
       border-color: $color-accent-dim;
     }
-  }
-
-  .favorites-only {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.78rem;
-    color: $color-text-muted;
-    cursor: pointer;
   }
 
   .btn-autocompose {
@@ -474,6 +479,10 @@
     font-size: 0.78rem;
     font-weight: 650;
     box-shadow: 0 4px 12px rgb(216 95 54 / 18%);
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
     &:hover {
       transform: translateY(-1px);
     }

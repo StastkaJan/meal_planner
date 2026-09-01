@@ -2,9 +2,11 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 const mockRecalculatePlanDay = vi.hoisted(() => vi.fn())
 const mockRequireOwnedPlan = vi.hoisted(() => vi.fn())
+const mockRequirePro = vi.hoisted(() => vi.fn())
 
 vi.mock('$lib/server/guards', () => ({
   requireOwnedPlan: mockRequireOwnedPlan,
+  requirePro: mockRequirePro,
 }))
 vi.mock('$lib/server/services/plan-generation', () => ({
   recalculatePlanDay: mockRecalculatePlanDay,
@@ -16,12 +18,24 @@ function makeEvent(body: object, planId = '1', userId = 1) {
   return {
     params: { id: planId },
     request: { json: () => Promise.resolve(body) },
-    locals: { user: { id: userId } },
+    locals: { user: { id: userId, isPro: true } },
   } as any
 }
 
 describe('POST /plans/:id/recalc-day', () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it('requires Pro access', async () => {
+    mockRequirePro.mockImplementationOnce(() => {
+      throw Object.assign(new Error('Pro subscription required'), {
+        status: 403,
+      })
+    })
+    await expect(POST(makeEvent({ date: '2026-06-30' }))).rejects.toMatchObject(
+      { status: 403 },
+    )
+    expect(mockRequireOwnedPlan).not.toHaveBeenCalled()
+  })
 
   it('throws 404 when plan is not owned by the user', async () => {
     mockRequireOwnedPlan.mockRejectedValueOnce(

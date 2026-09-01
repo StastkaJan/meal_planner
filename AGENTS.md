@@ -49,6 +49,10 @@
 
 <!-- NOTE: `/admin/recipes` manages shared recipes and imports; `/admin/users` lets admins grant or revoke admin access for other users. -->
 
+<!-- NOTE: `users.is_pro` is the temporary billing entitlement switch. Pro gates recipe URL import, auto-compose, copy-week, and day recalculation; admins manage it in `/admin/users` until billing owns the flag. -->
+
+<!-- NOTE: `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`. -->
+
 <!-- NOTE: `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/ordered ingredients/instructions; nullable translated fields fall back to the original recipe. -->
 
 <!-- NOTE: The root `+error.svelte` provides localized 404 and server-error UI. -->

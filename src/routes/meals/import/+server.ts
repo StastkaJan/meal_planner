@@ -11,10 +11,11 @@ import {
 import type { ImportedRecipe } from '$lib/types'
 import type { RequestHandler } from './$types'
 import { monitorService } from '$lib/server/observability'
+import { requirePro } from '$lib/server/guards'
 
 export const POST: RequestHandler = ({ request, locals }) =>
   monitorService('recipes', 'import', async () => {
-    if (!locals.user) error(401, 'Not authenticated')
+    requirePro(locals)
     const { url, text } = await request.json()
 
     let recipe: ImportedRecipe | null = null

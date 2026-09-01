@@ -106,6 +106,25 @@
 
   <div class="settings-grid">
     {#if tab === 'preferences'}
+      <section class="card plan-card">
+        <div>
+          <p class="plan-label">
+            {data.isPro ? t('Pro plan') : t('Free plan')}
+          </p>
+          <h2>{data.isPro ? t('Pro is active') : t('Your current plan')}</h2>
+          <p class="hint">
+            {data.isPro
+              ? t('Recipe import and planning automation are unlocked.')
+              : t(
+                  'Manual planning, recipes, favourites, and shopping lists are included.',
+                )}
+          </p>
+          <a class="compare-plans" href="/pricing">{t('Compare plans')}</a>
+        </div>
+        {#if !data.isPro}
+          <p class="coming-soon">{t('Pro payments are coming soon.')}</p>
+        {/if}
+      </section>
       <section class="card">
         <h2>{t('Language')}</h2>
         <p class="hint">
@@ -328,6 +347,40 @@
     box-shadow: 0 2px 8px rgb(41 39 33 / 8%);
     color: $color-text;
   }
+  .plan-card {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    border-color: color-mix(in srgb, $color-accent 35%, $color-border);
+  }
+  .plan-label {
+    color: $color-accent;
+    font-size: 0.75rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .plan-card .hint {
+    margin-bottom: 0;
+  }
+  .compare-plans {
+    display: inline-block;
+    margin-top: 12px;
+    color: $color-accent;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+  .coming-soon {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: $color-accent-dim;
+    color: $color-text;
+    font-size: 0.8rem;
+    font-weight: 650;
+  }
   .danger-card {
     grid-column: 1 / -1;
     border-color: color-mix(in srgb, $color-danger 35%, $color-border);
@@ -413,6 +466,10 @@
     }
     .tabs a {
       flex: 0 0 auto;
+    }
+    .plan-card {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
   @media (max-width: 420px) {

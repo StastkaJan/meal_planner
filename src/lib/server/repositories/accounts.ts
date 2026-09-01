@@ -45,7 +45,12 @@ export async function findUserById(id: number) {
 
 export async function listUsers() {
   return db
-    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    .select({
+      id: users.id,
+      email: users.email,
+      isAdmin: users.isAdmin,
+      isPro: users.isPro,
+    })
     .from(users)
     .orderBy(asc(users.email))
 }
@@ -63,7 +68,35 @@ export async function updateUserAdmin(
       .update(users)
       .set({ isAdmin })
       .where(eq(users.id, id))
-      .returning({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+      .returning({
+        id: users.id,
+        email: users.email,
+        isAdmin: users.isAdmin,
+        isPro: users.isPro,
+      })
+    return user ?? null
+  })
+}
+
+export async function updateUserPro(
+  actingUserId: number,
+  id: number,
+  isPro: boolean,
+) {
+  return db.transaction(async (tx) => {
+    const adminIds = await lockAdminIds(tx)
+    if (!adminIds.includes(actingUserId)) return false
+
+    const [user] = await tx
+      .update(users)
+      .set({ isPro })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        email: users.email,
+        isAdmin: users.isAdmin,
+        isPro: users.isPro,
+      })
     return user ?? null
   })
 }
@@ -127,7 +160,7 @@ export async function saveSettings(
 export async function getAccountExport(userId: number) {
   return db.transaction(async (tx) => {
     const [account] = await tx
-      .select({ email: users.email })
+      .select({ email: users.email, isPro: users.isPro })
       .from(users)
       .where(eq(users.id, userId))
     const [settingsRow] = await tx
@@ -232,7 +265,7 @@ export async function getAccountExport(userId: number) {
       : null
     return {
       version: 1,
-      account: { email: account?.email, settings },
+      account: { email: account?.email, isPro: account?.isPro, settings },
       recipes: recipeRows.map(({ userId: _userId, ...recipe }) => ({
         ...recipe,
         ingredients: ingredientRows

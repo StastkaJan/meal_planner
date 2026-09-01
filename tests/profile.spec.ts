@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { register, uniqueEmail } from './helpers'
+import { grantPro, register, uniqueEmail } from './helpers'
+
+let email: string
 
 test.beforeEach(async ({ page }) => {
-  await register(page, uniqueEmail())
+  email = uniqueEmail()
+  await register(page, email)
   await page.goto('/profile')
 })
 
@@ -39,6 +42,7 @@ test('profile controls stay visible and save settings', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: 'Italian' })).toBeChecked()
   await expect(calories).toHaveValue('2100')
 
+  grantPro(email)
   await page.goto('/')
   await page.getByRole('button', { name: 'Auto-compose' }).click()
   await expect(page.locator('button.cell').first()).toContainText(

@@ -17,16 +17,17 @@ describe('findSessionUser', () => {
   beforeEach(() => vi.clearAllMocks())
   afterEach(() => vi.unstubAllEnvs())
 
-  it('uses the persisted admin role only', async () => {
+  it('uses the persisted roles only', async () => {
     vi.stubEnv('ADMIN_EMAIL', 'user@example.com')
     db.limit.mockResolvedValueOnce([
-      { id: 1, email: 'user@example.com', isAdmin: false },
+      { id: 1, email: 'user@example.com', isAdmin: false, isPro: true },
     ])
 
     await expect(findSessionUser('token')).resolves.toEqual({
       id: 1,
       email: 'user@example.com',
       isAdmin: false,
+      isPro: true,
     })
   })
 })

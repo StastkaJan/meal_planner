@@ -8,6 +8,7 @@ export async function findSessionUser(token: string) {
       id: users.id,
       email: users.email,
       isAdmin: users.isAdmin,
+      isPro: users.isPro,
       locale: userSettings.locale,
     })
     .from(sessions)
