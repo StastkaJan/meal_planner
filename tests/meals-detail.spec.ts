@@ -115,7 +115,8 @@ test('does not silently discard a partial ingredient row', async ({ page }) => {
   await page.getByPlaceholder('Qty').fill('2')
   await page.getByRole('button', { name: 'Save' }).click()
 
-  await expect(page.locator('.edit-form')).toBeVisible()
+  await expect(page.getByPlaceholder('Qty')).toHaveValue('2')
+  await expect(page.getByRole('alert')).toContainText('Ingredient name')
 })
 
 test('scales ingredient quantities with servings', async ({ page }) => {

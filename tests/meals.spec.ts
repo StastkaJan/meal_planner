@@ -23,15 +23,20 @@ test('rejects a whitespace-only meal name', async ({ page }) => {
   expect(response.status()).toBe(400)
 })
 
-test('rejects invalid numeric meal fields', async ({ page }) => {
-  test.fail(true, 'Known gap: meal numeric fields lack server validation')
+for (const [field, value] of [
+  ['calories', -1],
+  ['servings', 0],
+] as const) {
+  test(`rejects an invalid ${field} value`, async ({ page }) => {
+    test.fail(true, 'Known gap: meal numeric fields lack server validation')
 
-  const response = await page.request.post('/meals', {
-    data: { name: 'Invalid meal', calories: -1, servings: 0 },
+    const response = await page.request.post('/meals', {
+      data: { name: 'Invalid meal', [field]: value },
+    })
+
+    expect(response.status()).toBe(400)
   })
-
-  expect(response.status()).toBe(400)
-})
+}
 
 for (const [caseName, ingredient] of [
   ['without a name field', { qty: 1, unit: 'cup' }],
