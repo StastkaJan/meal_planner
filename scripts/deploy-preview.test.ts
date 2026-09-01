@@ -15,14 +15,20 @@ describe('pull request previews', () => {
 
   it('deploys same-repository pull requests only after quality passes', () => {
     const workflow = readProjectFile('.github/workflows/quality.yml')
+    const productionJob = workflow.slice(
+      workflow.indexOf('\n  deploy:'),
+      workflow.indexOf('\n  preview:'),
+    )
+    const previewJob = workflow.slice(workflow.indexOf('\n  preview:'))
 
-    expect(workflow).toContain(
+    expect(previewJob).toContain(
       'github.event.pull_request.head.repo.full_name == github.repository',
     )
-    expect(workflow).toContain('needs: quality')
-    expect(workflow).toContain('id: preview_config')
-    expect(workflow).toContain('echo "enabled=false" >> "$GITHUB_OUTPUT"')
-    expect(workflow).toContain('bash scripts/deploy-preview.sh deploy')
+    expect(previewJob).toContain('needs: quality')
+    expect(previewJob).toContain('id: preview_config')
+    expect(previewJob).toContain('echo "enabled=false" >> "$GITHUB_OUTPUT"')
+    expect(previewJob).toContain('bash scripts/deploy-preview.sh deploy')
+    expect(productionJob).not.toContain('id: preview_config')
   })
 
   it('routes previews through one host-matching Caddy gateway', () => {
