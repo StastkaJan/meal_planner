@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
   import type { PageData } from './$types'
   import {
     createMeal,
@@ -18,7 +19,7 @@
   const { t, message, label, namedCount } = useI18n()
   let meals = $derived(data.meals)
   let creating = $state(false)
-  let importing = $state(false)
+  const importing = $derived($page.url.searchParams.get('tab') === 'import')
   let importUrl = $state('')
   let importError = $state('')
   let deleteError = $state('')
@@ -76,6 +77,7 @@
       mine?: boolean
       page?: number
       clear?: boolean
+      import?: boolean
     } = {},
   ) {
     const params = new URLSearchParams()
@@ -84,6 +86,7 @@
       params.set('difficulty', data.difficulty)
     if (patch.favorites ?? data.favoritesOnly) params.set('favorites', '1')
     if (patch.mine ?? data.myRecipesOnly) params.set('mine', '1')
+    if (patch.import ?? importing) params.set('tab', 'import')
     const page = patch.page ?? data.page
     if (page > 1) params.set('page', String(page))
     const query = params.toString()
@@ -140,8 +143,8 @@
         variant="secondary"
         disabled={!data.user?.isPro}
         onclick={() => {
-          importing = true
           importError = ''
+          goto(recipeUrl({ import: true }), { noScroll: true, keepFocus: true })
         }}
       >
         {t('Import from URL')}{#if !data.user?.isPro}
@@ -202,8 +205,11 @@
           type="button"
           variant="secondary"
           onclick={() => {
-            importing = false
             importError = ''
+            goto(recipeUrl({ import: false }), {
+              noScroll: true,
+              keepFocus: true,
+            })
           }}>{t('Cancel')}</Button
         >
       </div>
@@ -211,6 +217,7 @@
   {/if}
 
   <form class="filters" method="GET">
+    {#if importing}<input type="hidden" name="tab" value="import" />{/if}
     <Input
       type="search"
       name="q"

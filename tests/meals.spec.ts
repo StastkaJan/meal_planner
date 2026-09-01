@@ -22,6 +22,24 @@ test('create a meal', async ({ page }) => {
   await expect(page.getByText('Pasta Bolognese')).not.toBeVisible()
 })
 
+test('preserves the recipe import panel in the URL', async ({ page }) => {
+  await page.goto('/meals?tab=import')
+  await expect(
+    page.getByPlaceholder('https://example.com/recipe'),
+  ).toBeVisible()
+
+  await page.reload()
+  await expect(
+    page.getByPlaceholder('https://example.com/recipe'),
+  ).toBeVisible()
+
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page).toHaveURL('/meals')
+  await expect(page.getByPlaceholder('https://example.com/recipe')).toHaveCount(
+    0,
+  )
+})
+
 test('delete a meal', async ({ page }) => {
   const name = `Del-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
