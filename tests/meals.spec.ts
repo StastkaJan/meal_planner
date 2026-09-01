@@ -7,6 +7,63 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
+test('rejects a new meal without its required name', async ({ page }) => {
+  const response = await page.request.post('/meals', { data: {} })
+
+  expect(response.status()).toBe(400)
+})
+
+test('rejects a whitespace-only meal name', async ({ page }) => {
+  test.fail(true, 'Known gap: meal names are not trimmed before validation')
+
+  const response = await page.request.post('/meals', {
+    data: { name: '   ' },
+  })
+
+  expect(response.status()).toBe(400)
+})
+
+test('rejects invalid numeric meal fields', async ({ page }) => {
+  test.fail(true, 'Known gap: meal numeric fields lack server validation')
+
+  const response = await page.request.post('/meals', {
+    data: { name: 'Invalid meal', calories: -1, servings: 0 },
+  })
+
+  expect(response.status()).toBe(400)
+})
+
+for (const [caseName, ingredient] of [
+  ['without a name field', { qty: 1, unit: 'cup' }],
+  ['with a blank name', { name: '', qty: 1, unit: 'cup' }],
+  ['with a negative quantity', { name: 'Flour', qty: -1, unit: 'cup' }],
+  ['with an unsupported unit', { name: 'Flour', qty: 1, unit: 'bucket' }],
+  ['with a unit but no quantity', { name: 'Flour', qty: null, unit: 'cup' }],
+] as const) {
+  test(`rejects an ingredient ${caseName}`, async ({ page }) => {
+    test.fail(true, 'Known gap: ingredient payloads lack server validation')
+
+    const response = await page.request.post('/meals', {
+      data: { name: 'Invalid ingredient', ingredients: [ingredient] },
+    })
+
+    expect(response.status()).toBe(400)
+  })
+}
+
+test('rejects a malformed ingredient collection', async ({ page }) => {
+  test.fail(true, 'Known gap: malformed ingredient payloads return 500')
+
+  const response = await page.request.post('/meals', {
+    data: {
+      name: 'Invalid ingredients',
+      ingredients: { name: 'Flour', qty: 1, unit: 'cup' },
+    },
+  })
+
+  expect(response.status()).toBe(400)
+})
+
 test('create a meal', async ({ page }) => {
   const name = `Meal-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()

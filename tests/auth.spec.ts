@@ -8,6 +8,32 @@ test('@smoke register creates account and shows user in nav', async ({
   await expect(page.locator('nav button[type="submit"]')).toHaveText('Sign out')
 })
 
+test('registration without legal acceptance fails without creating an account', async ({
+  page,
+}) => {
+  const email = uniqueEmail()
+  const response = await page.request.post('/auth/register', {
+    form: { email, password: 'password1' },
+    headers: { origin: 'http://localhost:3000' },
+    maxRedirects: 0,
+  })
+
+  expect(response.status()).toBe(400)
+  expect(await response.text()).toContain(
+    'You must accept both legal documents to create an account',
+  )
+
+  await register(page, email)
+  await expect(page.locator('nav button[type="submit"]')).toHaveText('Sign out')
+})
+
+test('protected pages redirect unauthenticated users to login', async ({
+  page,
+}) => {
+  await page.goto('/profile')
+  await expect(page).toHaveURL('/auth/login')
+})
+
 test('login with valid credentials redirects to /', async ({ page }) => {
   const email = uniqueEmail()
   await register(page, email)

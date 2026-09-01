@@ -87,6 +87,37 @@ test('warns when an ingredient cannot be scaled', async ({ page }) => {
   await expect(page.getByRole('note')).toContainText('cannot be scaled')
 })
 
+test('allows an ingredient quantity without a unit', async ({ page }) => {
+  const name = `Unitless-${Date.now()}`
+  await page.getByRole('button', { name: '+ Add meal' }).click()
+  await page.getByPlaceholder('Meal name').fill(name)
+  await page
+    .locator('.create-form')
+    .getByRole('button', { name: 'Save' })
+    .click()
+  await page.getByRole('link', { name, exact: true }).click()
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByPlaceholder('Ingredient').fill('Eggs')
+  await page.getByPlaceholder('Qty').fill('2')
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await expect(page.getByRole('listitem')).toHaveText('2 Eggs')
+})
+
+test('does not silently discard a partial ingredient row', async ({ page }) => {
+  test.fail(true, 'Known gap: partial ingredient rows are silently discarded')
+
+  const response = await page.request.post('/meals', {
+    data: { name: `Partial-${Date.now()}` },
+  })
+  const meal = await response.json()
+  await page.goto(`/meals/${meal.id}?edit=1`)
+  await page.getByPlaceholder('Qty').fill('2')
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await expect(page.locator('.edit-form')).toBeVisible()
+})
+
 test('scales ingredient quantities with servings', async ({ page }) => {
   const name = `Scale-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
