@@ -110,7 +110,6 @@
       class:over={progress.wayOver}
       title={`${row.label}: ${grams(row.value)}${row.unit} / ${row.target}${row.unit}`}
     >
-      {#if !row.primary}<span class="nutrient">{row.label}</span>{/if}
       <div class="track">
         <div class="fill {row.key}" style="width:{progress.percent}%"></div>
       </div>
@@ -192,14 +191,5 @@
     color: $color-text-muted;
     min-width: 24px;
     text-align: right;
-  }
-  .nutrient {
-    width: 36px;
-    overflow: hidden;
-    color: $color-text-muted;
-    font-size: 0.58rem;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 </style>
