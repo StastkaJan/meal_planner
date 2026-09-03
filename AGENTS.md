@@ -71,7 +71,7 @@
 
 <!-- NOTE: Meal and bonus nutrition includes calories, macros, fibre, sugars, saturated fat, and salt; the four secondary nutrients are displayed and totaled but do not affect auto-compose targets. -->
 
-<!-- NOTE: Uploaded recipe images are resized to at most 1600x1200, converted to WebP, and stored in the shared `recipe-images` volume; `/meals/[id]/image` serves and manages them, and app containers set `BODY_SIZE_LIMIT=6M`. -->
+<!-- NOTE: Uploaded recipe images are resized to at most 1200x900, converted to WebP, and stored in the shared `recipe-images` volume; `/meals/[id]/image` serves and manages them, and app containers set `BODY_SIZE_LIMIT=6M`. -->
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 

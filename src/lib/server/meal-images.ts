@@ -11,8 +11,8 @@ import { join, resolve } from 'node:path'
 import sharp from 'sharp'
 
 export const MAX_RECIPE_IMAGE_BYTES = 5 * 1024 * 1024
-export const MAX_RECIPE_IMAGE_WIDTH = 1600
-export const MAX_RECIPE_IMAGE_HEIGHT = 1200
+export const MAX_RECIPE_IMAGE_WIDTH = 1200
+export const MAX_RECIPE_IMAGE_HEIGHT = 900
 
 const SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'gif'])
 

@@ -77,7 +77,7 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 
 - No edit history or audit; the current values are the only version.
 - No image galleries; each recipe has at most one upload. JPEG, PNG, WebP, and
-  GIF inputs are resized to fit within 1600x1200 and stored as WebP.
+  GIF inputs are resized to fit within 1200x900 and stored as WebP.
 
 ## Known limitations
 
