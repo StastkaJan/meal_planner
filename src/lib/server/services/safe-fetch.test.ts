@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { isPublicIp } from './safe-fetch'
+import { describe, expect, it, vi } from 'vitest'
+import { createPinnedLookup, isPublicIp } from './safe-fetch'
 
 describe('isPublicIp', () => {
   it.each([
@@ -22,4 +22,24 @@ describe('isPublicIp', () => {
     'allows public address %s',
     (address) => expect(isPublicIp(address)).toBe(true),
   )
+})
+
+describe('createPinnedLookup', () => {
+  const pinned = { address: '203.0.113.10', family: 4 }
+
+  it('returns the modern address array when Node requests all results', () => {
+    const callback = vi.fn()
+
+    createPinnedLookup(pinned)('example.com', { all: true }, callback)
+
+    expect(callback).toHaveBeenCalledWith(null, [pinned])
+  })
+
+  it('returns the legacy address and family for a single result', () => {
+    const callback = vi.fn()
+
+    createPinnedLookup(pinned)('example.com', {}, callback)
+
+    expect(callback).toHaveBeenCalledWith(null, pinned.address, pinned.family)
+  })
 })
