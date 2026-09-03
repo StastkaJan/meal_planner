@@ -110,7 +110,9 @@
       class:over={progress.wayOver}
       title={`${row.label}: ${grams(row.value)}${row.unit} / ${row.target}${row.unit}`}
     >
-      {#if !row.primary}<span class="nutrient">{row.label}</span>{/if}
+      {#if !row.primary}
+        <span class="nutrient">{row.key === 'saturates' ? '' : row.label}</span>
+      {/if}
       <div class="track">
         <div class="fill {row.key}" style="width:{progress.percent}%"></div>
       </div>
