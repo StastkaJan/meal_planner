@@ -13,6 +13,10 @@ notify_failure() {
 	fi
 }
 
+apply_retention() {
+	restic forget --tag meal-plan --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+}
+
 run_backup() {
 	if ! dump_file="$(mktemp /tmp/mealplan-dump-XXXXXX)"; then
 		notify_failure 'temporary dump creation failed'
@@ -32,26 +36,45 @@ run_backup() {
 	rm -f "$dump_file"
 	trap - 0
 
-	if ! restic forget --tag meal-plan --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune; then
-		notify_failure 'retention cleanup failed'
-		exit 1
-	fi
-
 	printf '{"level":"info","event":"database_backup_succeeded"}\n'
 }
 
-: "${DATABASE_URL:?DATABASE_URL is required}"
+mode="${1:-once}"
+
+if [ "$mode" = 'schedule' ]; then
+	exec crond -f -l 2
+fi
+
 : "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY is required}"
 : "${RESTIC_PASSWORD:?RESTIC_PASSWORD is required}"
 
-if ! restic cat config >/dev/null 2>&1 && ! restic init; then
-	notify_failure 'repository initialization failed'
+if [ "$mode" = 'init' ]; then
+	if ! restic init; then
+		notify_failure 'repository initialization failed'
+		exit 1
+	fi
+	exit 0
+fi
+
+if ! restic cat config >/dev/null; then
+	notify_failure 'repository access check failed'
 	exit 1
 fi
 
-run_backup
-
-if [ "${1:-}" = 'schedule' ]; then
-	/usr/local/bin/restore
-	exec crond -f -l 2
-fi
+case "$mode" in
+	once)
+		: "${DATABASE_URL:?DATABASE_URL is required}"
+		run_backup
+		;;
+	retention)
+		if ! apply_retention; then
+			notify_failure 'retention cleanup failed'
+			exit 1
+		fi
+		printf '{"level":"info","event":"database_backup_retention_succeeded"}\n'
+		;;
+	*)
+		echo "usage: backup [once|schedule|retention|init]" >&2
+		exit 2
+		;;
+esac

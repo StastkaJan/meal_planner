@@ -67,9 +67,9 @@ connections, container memory, database disk, and slow service operations. See
 
 ## Backups
 
-The production Compose profile takes an encrypted PostgreSQL backup on startup
-and at 02:00 UTC daily, then keeps 7 daily, 4 weekly, and 6 monthly snapshots in an
-off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
+The production Compose profile takes an encrypted PostgreSQL backup before each
+deployment and at 02:00 UTC daily, then applies weekly pruning to keep 7 daily,
+4 weekly, and 6 monthly snapshots in an off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
 Set the backup variables in `.env.production` from `.env.production.example`,
 including the operator-monitored Alertmanager webhook file, then start it with the secure
 production overlay:

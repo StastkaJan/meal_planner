@@ -29,13 +29,29 @@ describe('production deployment', () => {
 
   it('takes an off-host backup before applying migrations', () => {
     const script = readProjectFile('scripts/deploy-production.sh')
-    const backup = script.indexOf('compose run --rm --build backup once')
+    const backup = script.lastIndexOf('require_backup_for_migrations')
     const migrate = script.indexOf(
       'compose run --rm --no-deps "$target_service" node scripts-dist/migrate.js',
     )
 
     expect(backup).toBeGreaterThan(-1)
     expect(migrate).toBeGreaterThan(backup)
+  })
+
+  it('only bypasses a failed backup for an app-only release', () => {
+    const script = readProjectFile('scripts/deploy-production.sh')
+
+    expect(script).toContain('if compose run --rm --build backup once; then')
+    expect(script).toContain('if [[ -z "$active" ]]')
+    expect(script).toContain(
+      'if [[ "$current_fingerprint" != "$active_fingerprint" ]]',
+    )
+    expect(script).toContain(
+      'migrations changed; refusing to migrate without a fresh backup',
+    )
+    expect(script).toContain(
+      'migrations are unchanged, continuing with an app-only release',
+    )
   })
 
   it('defines two production application slots behind a reloadable upstream', () => {

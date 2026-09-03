@@ -45,6 +45,8 @@
 
 <!-- NOTE: `scripts/deploy-production.sh` takes an off-host backup before migrations; destructive SQL requires a recovery note under `drizzle/notes/`, enforced by CI. -->
 
+<!-- NOTE: Backup scheduler restarts do no repository work; backups/restores run daily and retention pruning weekly. A failed pre-deploy backup may be bypassed only when the release migration fingerprint matches the active image; first deploys and migration changes still fail closed. -->
+
 <!-- NOTE: `bash scripts/deploy-production.sh rollback` switches to the inactive slot's retained image; it rolls back app code only, so check migration compatibility first. -->
 
 <!-- NOTE: Set `users.is_admin=true` to grant global recipe import/review/edit access. -->

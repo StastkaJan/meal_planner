@@ -38,9 +38,12 @@ Grafana bind only to the private address configured by
    ```
 
 The command fails before deployment when a required database, backup, Grafana,
-or domain value is absent. Keep `.env.production` out of source control
-and store an encrypted copy in the team's secret manager. Never deploy with
-`docker compose --profile production` alone: the base file intentionally keeps
+or domain value is absent. If the backup upload itself fails, an app-only
+release may continue only when its migration files exactly match those bundled
+in the active production image. First deployments and releases with migration
+changes still fail closed. Keep `.env.production` out of source control and
+store an encrypted copy in the team's secret manager. Never deploy with `docker
+compose --profile production` alone: the base file intentionally keeps
 local-development credentials and ports.
 
 ## Automated deployments
@@ -66,6 +69,36 @@ deployments have no planned downtime. Migrations must remain compatible with
 the currently running application until traffic has switched. Changes to
 the host reverse proxy or shared infrastructure may still require a
 maintenance deployment.
+
+A backup failure that is bypassed for an app-only release remains an incident:
+the scheduled backup and restore checks will continue alerting until the
+repository is writable again. Starting or recreating the scheduler performs no
+repository operations; the cron schedule takes a daily backup, verifies its
+restore, and applies retention pruning weekly. Do not use email attachments as
+the backup repository. To move providers, create a private S3-compatible bucket
+and bucket-scoped credentials, then replace `RESTIC_REPOSITORY`,
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` in
+`.env.production`; keep `RESTIC_PASSWORD` in a separate secret store.
+
+For Backblaze B2, use the exact endpoint and region shown for the bucket. For
+example, an EU Central bucket may use:
+
+```dotenv
+RESTIC_REPOSITORY=s3:https://s3.eu-central-003.backblazeb2.com/meal-planner/meal-plan
+AWS_DEFAULT_REGION=eu-central-003
+```
+
+Use a bucket-scoped Read and Write application key with **List all bucket
+names** enabled. The Backblaze key ID is `AWS_ACCESS_KEY_ID`; the application
+key is `AWS_SECRET_ACCESS_KEY`. Initialize a new empty repository explicitly
+with `compose run --rm backup init`. Normal backup failures never attempt to
+initialize or overwrite a repository.
+
+If Backblaze reports a daily Class B or Class C transaction cap, open **B2
+Cloud Storage → Caps & Alerts → Edit Caps** and either raise the affected cap
+or select **No Cap**. Cap changes can take several minutes; daily counters reset
+at 00:00 UTC. A cap denial can appear as `Access Denied` through the
+S3-compatible API and does not mean that the Restic repository is missing.
 
 After at least two blue/green releases, the inactive slot retains the previous
 application image. Follow [the rollback procedure](deployment.md) to switch back

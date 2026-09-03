@@ -1,2 +1,3 @@
 0 2 * * * /usr/local/bin/backup >> /proc/1/fd/1 2>> /proc/1/fd/2
 0 3 * * * /usr/local/bin/restore >> /proc/1/fd/1 2>> /proc/1/fd/2
+0 4 * * 0 /usr/local/bin/backup retention >> /proc/1/fd/1 2>> /proc/1/fd/2

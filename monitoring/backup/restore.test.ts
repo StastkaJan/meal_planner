@@ -12,6 +12,26 @@ describe('database restore verification', () => {
     expect(backup).toContain('--stdin --stdin-filename mealplan.dump')
   })
 
+  it('does no repository work merely because the scheduler restarted', () => {
+    const schedule = backup.indexOf('if [ "$mode" = \'schedule\' ]')
+    const scheduler = backup.indexOf('exec crond', schedule)
+    const repositoryAccess = backup.indexOf('restic cat config')
+
+    expect(schedule).toBeGreaterThan(-1)
+    expect(scheduler).toBeGreaterThan(schedule)
+    expect(repositoryAccess).toBeGreaterThan(scheduler)
+  })
+
+  it('reports repository access failures without trying to initialize', () => {
+    const repositoryAccess = backup.indexOf('restic cat config')
+    const accessFailure = backup.indexOf(
+      "notify_failure 'repository access check failed'",
+    )
+
+    expect(repositoryAccess).toBeGreaterThan(-1)
+    expect(accessFailure).toBeGreaterThan(repositoryAccess)
+  })
+
   it('only restores into the guarded disposable database', () => {
     expect(compose).toContain('/var/lib/postgresql/data')
     expect(compose).toContain('init-restore-db.sql')
@@ -23,6 +43,7 @@ describe('database restore verification', () => {
   it('runs after the daily backup and removes restored data', () => {
     expect(crontab).toContain('0 2 * * * /usr/local/bin/backup')
     expect(crontab).toContain('0 3 * * * /usr/local/bin/restore')
+    expect(crontab).toContain('0 4 * * 0 /usr/local/bin/backup retention')
     expect(restore.match(/reset_database/g)?.length).toBeGreaterThanOrEqual(4)
   })
 })

@@ -88,6 +88,50 @@ public_health() {
   return 1
 }
 
+migration_fingerprint() {
+  find drizzle -maxdepth 1 -type f -name '*.sql' -print \
+    | LC_ALL=C sort \
+    | while IFS= read -r migration; do
+        sha256sum "$migration"
+      done \
+    | sha256sum \
+    | awk '{print $1}'
+}
+
+active_migration_fingerprint() {
+  local service="$1"
+
+  compose exec -T "$service" sh -c \
+    "cd /app && find drizzle -maxdepth 1 -type f -name '*.sql' -print | sort | while IFS= read -r migration; do sha256sum \"\$migration\"; done | sha256sum | awk '{print \$1}'"
+}
+
+require_backup_for_migrations() {
+  local current_fingerprint
+  local active_fingerprint
+
+  if compose run --rm --build backup once; then
+    return 0
+  fi
+
+  if [[ -z "$active" ]]; then
+    echo "pre-deployment backup failed; refusing an unbacked first deployment" >&2
+    return 1
+  fi
+
+  current_fingerprint="$(migration_fingerprint)"
+  if ! active_fingerprint="$(active_migration_fingerprint "app-$active")"; then
+    echo "pre-deployment backup failed and the active migration set could not be verified" >&2
+    return 1
+  fi
+
+  if [[ "$current_fingerprint" != "$active_fingerprint" ]]; then
+    echo "pre-deployment backup failed and migrations changed; refusing to migrate without a fresh backup" >&2
+    return 1
+  fi
+
+  echo "WARNING: pre-deployment backup failed; migrations are unchanged, continuing with an app-only release" >&2
+}
+
 active=""
 if [[ -f .deploy/active-slot ]]; then
   active="$(<.deploy/active-slot)"
@@ -163,7 +207,7 @@ export DEPLOYMENT_VERSION
 
 compose config --quiet
 compose up -d --wait --wait-timeout 120 db
-compose run --rm --build backup once
+require_backup_for_migrations
 
 if [[ -n "$active" && ! -f ".deploy/$active-version" ]]; then
   active_version="$(compose exec -T "app-$active" printenv DEPLOYMENT_VERSION)"
