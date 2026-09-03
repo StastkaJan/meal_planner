@@ -20,14 +20,14 @@ deploying.
 
 ## Alerts
 
-| Alert                       | Fires when                                                                             |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `SustainedHttp5xxErrors`    | at least three 5xx responses remain in the rolling five-minute window for five minutes |
-| `HealthCheckFailed`         | the database-aware `/health` probe fails for two minutes                               |
-| `BackupFailed`              | `pg_dump`, upload, retention, or repository initialization fails                       |
-| `RestoreVerificationFailed` | scheduled restore verification fails                                                   |
-| `HighHttpLatency`           | mean HTTP latency exceeds one second for ten minutes                                   |
-| `HostDiskSpaceLow`          | host root filesystem availability stays below 10% for fifteen minutes                  |
+| Alert                       | Fires when                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `SustainedHttp5xxErrors`    | at least three 5xx responses remain in the rolling five-minute window for five minutes  |
+| `HealthCheckFailed`         | the database-aware `/health` probe fails for two minutes                                |
+| `BackupFailed`              | database/image snapshot creation, upload, retention, or repository initialization fails |
+| `RestoreVerificationFailed` | scheduled database and image-storage restore verification fails                         |
+| `HighHttpLatency`           | mean HTTP latency exceeds one second for ten minutes                                    |
+| `HostDiskSpaceLow`          | host root filesystem availability stays below 10% for fifteen minutes                   |
 
 Prometheus groups repeated notifications by alert name. Firing alerts repeat
 every four hours; resolved notifications are suppressed to avoid reporting a

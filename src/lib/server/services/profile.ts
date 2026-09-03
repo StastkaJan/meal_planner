@@ -3,11 +3,13 @@ import {
   deleteAccount as deleteAccountRecord,
   findUserById,
   getAccountExport,
+  listUserMealIds,
   saveSettings,
   updatePassword,
 } from '../repositories/accounts'
 import { monitorService } from '../observability'
 import { parseLocale } from '$lib/i18n'
+import { deleteMealImages, readMealImage } from '$lib/server/meal-images'
 
 const TARGET_FIELDS = [
   'calorieTarget',
@@ -76,9 +78,24 @@ export async function changePassword(
 }
 
 export async function exportAccountData(userId: number) {
-  return monitorService('profile', 'export_account', () =>
-    getAccountExport(userId),
-  )
+  return monitorService('profile', 'export_account', async () => {
+    const data = await getAccountExport(userId)
+    const recipes = await Promise.all(
+      data.recipes.map(async (recipe) => {
+        const image = await readMealImage(recipe.id)
+        return {
+          ...recipe,
+          ...(image && {
+            image: {
+              contentType: 'image/webp',
+              data: image.toString('base64'),
+            },
+          }),
+        }
+      }),
+    )
+    return { ...data, recipes }
+  })
 }
 
 export async function deleteAccount(
@@ -91,8 +108,9 @@ export async function deleteAccount(
     if (!user || confirmation !== user.email) return 'invalid' as const
     if (!(await verifyPassword(String(password), user.passwordHash)))
       return 'invalid' as const
-    return (await deleteAccountRecord(userId))
-      ? ('deleted' as const)
-      : ('last-admin' as const)
+    const mealIds = await listUserMealIds(userId)
+    if (!(await deleteAccountRecord(userId))) return 'last-admin' as const
+    await deleteMealImages(mealIds)
+    return 'deleted' as const
   })
 }

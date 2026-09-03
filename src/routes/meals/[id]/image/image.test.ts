@@ -7,12 +7,17 @@ vi.mock('$lib/server/guards', () => ({
   requireVisibleMeal,
 }))
 
+const InvalidRecipeImageError = vi.hoisted(
+  () => class InvalidRecipeImageError extends Error {},
+)
 const deleteMealImage = vi.hoisted(() => vi.fn())
-const findMealImage = vi.hoisted(() => vi.fn())
+const readMealImage = vi.hoisted(() => vi.fn())
 const saveMealImage = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/repositories/meal-images', () => ({
+vi.mock('$lib/server/meal-images', () => ({
+  InvalidRecipeImageError,
+  MAX_RECIPE_IMAGE_BYTES: 5 * 1024 * 1024,
   deleteMealImage,
-  findMealImage,
+  readMealImage,
   saveMealImage,
 }))
 
@@ -25,15 +30,12 @@ describe('REST /meals/:id/image', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('serves a visible meal image without caching or sniffing', async () => {
-    findMealImage.mockResolvedValueOnce({
-      contentType: 'image/png',
-      data: Buffer.from('89504e470d0a1a0a', 'hex'),
-    })
+    readMealImage.mockResolvedValueOnce(Buffer.from('webp'))
 
     const response = await GET(event())
 
     expect(requireVisibleMeal).toHaveBeenCalledWith(event().locals, 7)
-    expect(response.headers.get('content-type')).toBe('image/png')
+    expect(response.headers.get('content-type')).toBe('image/webp')
     expect(response.headers.get('cache-control')).toBe('private, no-store')
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
@@ -49,17 +51,29 @@ describe('REST /meals/:id/image', () => {
     const response = await PUT(event(request))
 
     expect(requireEditableMeal).toHaveBeenCalledWith(event().locals, 7)
-    expect(saveMealImage).toHaveBeenCalledWith(7, 'image/png', data)
+    expect(saveMealImage).toHaveBeenCalledWith(7, data)
     await expect(response.json()).resolves.toEqual({
       imageUrl: '/meals/7/image',
     })
   })
 
-  it('rejects files whose bytes do not match the declared image type', async () => {
+  it('rejects files that the image processor cannot decode', async () => {
+    saveMealImage.mockRejectedValueOnce(new InvalidRecipeImageError())
     const request = new Request('http://localhost/meals/7/image', {
       method: 'PUT',
       headers: { 'content-type': 'image/png' },
       body: 'not an image',
+    })
+
+    await expect(PUT(event(request))).rejects.toMatchObject({ status: 415 })
+    expect(saveMealImage).toHaveBeenCalledWith(7, Buffer.from('not an image'))
+  })
+
+  it('rejects unsupported declared content types before reading the image', async () => {
+    const request = new Request('http://localhost/meals/7/image', {
+      method: 'PUT',
+      headers: { 'content-type': 'image/svg+xml' },
+      body: '<svg />',
     })
 
     await expect(PUT(event(request))).rejects.toMatchObject({ status: 415 })

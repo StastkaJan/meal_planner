@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit'
 import { requireEditableMeal } from '$lib/server/guards'
 import { archiveMeal } from '$lib/server/repositories/meals'
 import { updateUserMeal } from '$lib/server/services/meals'
+import { deleteMealImage } from '$lib/server/meal-images'
 import type { RequestHandler } from './$types'
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
@@ -17,5 +18,6 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
   await requireEditableMeal(locals, id)
   const deleted = await archiveMeal(id)
   if (!deleted) error(404, 'Meal not found')
+  await deleteMealImage(id)
   return new Response(null, { status: 204 })
 }

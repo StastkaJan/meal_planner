@@ -5,7 +5,6 @@ import {
   ingredients,
   legalDocumentEvents,
   mealFavorites,
-  mealImages,
   mealIngredients,
   mealTranslations,
   meals,
@@ -208,14 +207,6 @@ export async function getAccountExport(userId: number) {
           from ${mealTranslations}
           where ${mealTranslations.mealId} = ${meals.id}
         ), '[]'::jsonb)`,
-        image: sql<{ contentType: string; data: string } | null>`(
-          select jsonb_build_object(
-            'contentType', ${mealImages.contentType},
-            'data', encode(${mealImages.data}, 'base64')
-          )
-          from ${mealImages}
-          where ${mealImages.mealId} = ${meals.id}
-        )`,
       })
       .from(meals)
       .where(eq(meals.userId, userId))
@@ -322,4 +313,12 @@ export async function deleteAccount(userId: number) {
     await tx.delete(users).where(eq(users.id, userId))
     return true
   })
+}
+
+export async function listUserMealIds(userId: number) {
+  const rows = await db
+    .select({ id: meals.id })
+    .from(meals)
+    .where(eq(meals.userId, userId))
+  return rows.map(({ id }) => id)
 }

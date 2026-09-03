@@ -12,9 +12,6 @@
 
 Drizzle definitions live in `src/lib/database/schema`, one table per file.
 
-`mealImages` stores one uploaded image per recipe: `mealId` is both its primary
-key and a cascading foreign key, with `contentType` and binary `data` columns.
-
 | Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                                        |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `users`               | id, email, passwordHash, isAdmin (global catalogue review/edit access), isPro (paid-feature entitlement; currently managed directly, defaults false)                                                                                                                                                                                                                                                               |

@@ -176,13 +176,6 @@
       "when": 1788274720042,
       "tag": "0024_medical_slapstick",
       "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
-      "when": 1788290194886,
-      "tag": "0025_real_guardsmen",
-      "breakpoints": true
     }
   ]
 }

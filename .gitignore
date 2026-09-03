@@ -8,3 +8,4 @@ build/
 secrets/
 test-results/
 .deploy/
+data/recipe-images/

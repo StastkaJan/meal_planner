@@ -25,7 +25,7 @@ function makeTx(responses: unknown[]) {
 describe('getAccountExport', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('includes translations and uploaded images belonging to personal recipes', async () => {
+  it('includes translations belonging to personal recipes', async () => {
     const tx = makeTx([
       [{ email: 'cook@example.com' }],
       [],
@@ -42,7 +42,6 @@ describe('getAccountExport', () => {
               instructions: null,
             },
           ],
-          image: { contentType: 'image/png', data: 'aW1hZ2U=' },
         },
       ],
       [],
@@ -61,7 +60,6 @@ describe('getAccountExport', () => {
       expect.objectContaining({
         ingredients: expect.anything(),
         translations: expect.anything(),
-        image: expect.anything(),
       }),
     )
     expect(tx.select).toHaveBeenNthCalledWith(
@@ -86,7 +84,6 @@ describe('getAccountExport', () => {
             instructions: null,
           },
         ],
-        image: { contentType: 'image/png', data: 'aW1hZ2U=' },
       },
     ])
   })

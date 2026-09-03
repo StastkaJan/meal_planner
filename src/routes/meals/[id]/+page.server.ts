@@ -4,7 +4,7 @@ import {
   getMealIngredients,
   getMealTranslations,
 } from '$lib/server/repositories/meals'
-import { hasMealImage } from '$lib/server/repositories/meal-images'
+import { hasMealImage } from '$lib/server/meal-images'
 import { localizeMeal } from '$lib/server/services/meals'
 import type { PageServerLoad } from './$types'
 

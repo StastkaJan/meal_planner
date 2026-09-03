@@ -31,7 +31,7 @@
 
 <!-- NOTE: The runtime image upgrades Alpine's OpenSSL packages over the digest-pinned Node base before security scanning. -->
 
-<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
+<!-- NOTE: The `production` Compose profile runs encrypted daily PostgreSQL and recipe-image backups and verifies restores in a guarded tmpfs database; both failures post to Alertmanager; production deployment also requires `docker-compose.production.yml`. -->
 
 <!-- NOTE: Production serves `papuplan.cz` via `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, WireGuard-only Grafana and PostgreSQL host ports, and blue/green app slots switched by `scripts/deploy-production.sh`. PostgreSQL also joins the non-internal `admin` network because Docker cannot publish a port from an exclusively internal network. See `docs/production.md` and `docs/wireguard.md`. -->
 
@@ -71,7 +71,7 @@
 
 <!-- NOTE: Meal and bonus nutrition includes calories, macros, fibre, sugars, saturated fat, and salt; the four secondary nutrients are displayed and totaled but do not affect auto-compose targets. -->
 
-<!-- NOTE: `meal_images` stores one uploaded JPEG/PNG/WebP/GIF per recipe (5 MB maximum); `/meals/[id]/image` serves and manages it, and app containers set `BODY_SIZE_LIMIT=6M`. -->
+<!-- NOTE: Uploaded recipe images are resized to at most 1600x1200, converted to WebP, and stored in the shared `recipe-images` volume; `/meals/[id]/image` serves and manages them, and app containers set `BODY_SIZE_LIMIT=6M`. -->
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 

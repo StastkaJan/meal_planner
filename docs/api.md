@@ -9,7 +9,8 @@
   changing the original recipe.
 - `GET /meals/[id]/image` returns an uploaded recipe image. Recipe owners and
   admins use `PUT` to upload or replace it and `DELETE` to remove it; accepted
-  images are JPEG, PNG, WebP, or GIF up to 5 MB.
+  inputs are JPEG, PNG, WebP, or GIF up to 5 MB. Uploads are resized to fit
+  within 1600x1200 and stored as WebP outside PostgreSQL.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |

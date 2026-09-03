@@ -6,7 +6,7 @@ import {
   updateMeal,
 } from '../repositories/meals'
 import { monitorService } from '../observability'
-import { findMealImage } from '../repositories/meal-images'
+import { copyMealImage } from '../meal-images'
 import { parseLocale, type Locale } from '$lib/i18n'
 import type { Meal, MealTranslation } from '$lib/database/schema'
 
@@ -96,18 +96,18 @@ export async function duplicateGlobalMeal(userId: number, id: number) {
   return monitorService('meals', 'duplicate', async () => {
     const source = await findMeal(id, userId)
     if (!source || source.userId !== null) return null
-    const [ingredients, translations, image] = await Promise.all([
+    const [ingredients, translations] = await Promise.all([
       getMealIngredients(id),
       getMealTranslations(id),
-      findMealImage(id),
     ])
-    return createMeal({
+    const duplicate = await createMeal({
       ...pickMealFields(source),
       name: source.name,
       userId,
       ingredients,
       translations,
-      image: image ?? undefined,
     })
+    await copyMealImage(id, duplicate.id)
+    return duplicate
   })
 }
