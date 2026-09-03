@@ -7,6 +7,8 @@ const FETCH_TIMEOUT_MS = 8000
 const MAX_BODY_BYTES = 2_000_000
 const MAX_REDIRECTS = 3
 
+type PinnedAddress = { address: string; family: number }
+
 export class SafeFetchError extends Error {
   constructor(
     readonly status: number,
@@ -69,9 +71,24 @@ async function resolvePublicAddress(hostname: string) {
   return addresses[0]
 }
 
+export function createPinnedLookup(pinned: PinnedAddress) {
+  return (
+    _hostname: string,
+    options: { all?: boolean },
+    callback: (
+      error: NodeJS.ErrnoException | null,
+      address: string | PinnedAddress[],
+      family?: number,
+    ) => void,
+  ) => {
+    if (options.all) callback(null, [pinned])
+    else callback(null, pinned.address, pinned.family)
+  }
+}
+
 function readResponse(
   url: URL,
-  pinned: { address: string; family: number },
+  pinned: PinnedAddress,
 ): Promise<{ status: number; location?: string; body: string }> {
   const send = url.protocol === 'https:' ? httpsRequest : httpRequest
   return new Promise((resolve, reject) => {
@@ -80,8 +97,7 @@ function readResponse(
       {
         headers: { 'user-agent': 'meal-plan recipe import' },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        lookup: (_hostname, _options, callback) =>
-          callback(null, pinned.address, pinned.family),
+        lookup: createPinnedLookup(pinned),
       },
       (res) => {
         const status = res.statusCode ?? 502
