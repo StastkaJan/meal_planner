@@ -84,32 +84,29 @@ credentials and are not deployed.
 One-time host setup:
 
 1. Point the wildcard DNS record `*.papuplan.cz` at the VPS.
-2. Connect the portfolio Caddy to `public-web` and route the wildcard to the
-   shared preview router:
+2. Connect the portfolio Caddy to `public-web`, mount its persistent
+   `preview-routes` directory at `/etc/caddy/preview-routes`, and import the
+   generated route files from its Caddyfile:
 
    ```caddyfile
-   *.papuplan.cz {
-     tls {
-       dns <provider>
-     }
-     reverse_proxy meal-plan-preview-proxy:80
-   }
+   import preview-routes/*
    ```
 
-   Wildcard certificates require Caddy's ACME DNS challenge and the matching
-   DNS provider module. The preview router is created automatically by the
-   first preview deployment.
+   Each deployment writes an exact `pr-N.papuplan.cz` site block and reloads
+   the portfolio Caddy. Exact hostnames use the normal ACME HTTP challenge, so
+   the edge proxy does not need a DNS provider module or wildcard certificate.
 
-3. Create a GitHub `preview` environment with `PREVIEW_VPS_HOST` and
-   `PREVIEW_VPS_USER` variables, a `PREVIEW_VPS_SSH_KEY` secret, and
-   `PREVIEW_VPS_KNOWN_HOSTS` as a variable or secret. Use a dedicated deployment
-   user/key. Do not add a required-reviewer gate if teardown must stay automatic;
-   only same-repository pull requests deploy, but their branches build and run
-   their Dockerfile on this host.
+3. The workflow reuses the repository's production `VPS_HOST`, `VPS_USER`,
+   `VPS_SSH_KEY`, and `VPS_KNOWN_HOSTS` secrets on the same VPS. To use a
+   dedicated preview identity instead, configure the corresponding
+   `PREVIEW_VPS_*` values in the GitHub `preview` environment. Do not add a
+   required-reviewer gate if teardown must stay automatic; only same-repository
+   pull requests deploy, but their branches build and run their Dockerfile on
+   this host.
 
-Until all four values exist, preview deployment and cleanup succeed as no-ops
-instead of failing the pull request pipeline. Partially configured credentials
-still fail so the incomplete setup remains visible.
+Until either complete credential set exists, preview deployment and cleanup
+succeed as no-ops instead of failing the pull request pipeline. Partially
+configured credentials still fail so the incomplete setup remains visible.
 
 Preview databases start empty and are not backed up or connected to production
 monitoring. They exist only for reviewing the pull request.

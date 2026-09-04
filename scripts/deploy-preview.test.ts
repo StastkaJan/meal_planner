@@ -28,16 +28,19 @@ describe('pull request previews', () => {
     expect(previewJob).toContain('id: preview_config')
     expect(previewJob).toContain('echo "enabled=false" >> "$GITHUB_OUTPUT"')
     expect(previewJob).toContain('bash scripts/deploy-preview.sh deploy')
+    expect(previewJob).toContain(
+      'secrets.PREVIEW_VPS_SSH_KEY || secrets.VPS_SSH_KEY',
+    )
     expect(productionJob).not.toContain('id: preview_config')
   })
 
-  it('routes previews through one host-matching Caddy gateway', () => {
-    const caddy = readProjectFile('monitoring/caddy/PreviewCaddyfile')
+  it('writes an exact-host route for the portfolio Caddy', () => {
     const script = readProjectFile('scripts/deploy-preview.sh')
 
-    expect(caddy).toContain('import /etc/caddy/routes/*.caddy')
-    expect(script).toContain('@preview_$pr_number host $domain')
+    expect(script).toContain('PREVIEW_EDGE_ROOT')
+    expect(script).toContain('$domain {')
     expect(script).toContain('reverse_proxy $preview_id-app:3000')
+    expect(script).toContain('edge_compose exec -T caddy caddy reload')
   })
 
   it('publishes previews below the production base domain', () => {

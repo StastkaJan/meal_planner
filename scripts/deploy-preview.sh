@@ -26,6 +26,7 @@ if [[ ! "$deployment_version" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]]; then
   exit 2
 fi
 : "${PREVIEW_ROOT:?Set PREVIEW_ROOT to the persistent preview state directory}"
+: "${PREVIEW_EDGE_ROOT:?Set PREVIEW_EDGE_ROOT to the portfolio deployment directory}"
 
 mkdir -p "$PREVIEW_ROOT"
 preview_root="$(cd "$PREVIEW_ROOT" && pwd -P)"
@@ -33,10 +34,14 @@ if [[ "$preview_root" == / ]]; then
   echo "PREVIEW_ROOT cannot be /" >&2
   exit 2
 fi
+if [[ ! -f "$PREVIEW_EDGE_ROOT/docker-compose.yml" || ! -f "$PREVIEW_EDGE_ROOT/Caddyfile" ]]; then
+  echo "PREVIEW_EDGE_ROOT must contain the portfolio Caddy deployment" >&2
+  exit 1
+fi
+edge_root="$(cd "$PREVIEW_EDGE_ROOT" && pwd -P)"
 
-gateway_root="$preview_root/gateway"
-routes_dir="$gateway_root/routes"
-mkdir -p "$preview_root/env" "$routes_dir"
+edge_routes_dir="$edge_root/preview-routes"
+mkdir -p "$preview_root/env" "$edge_routes_dir"
 exec 9>"$preview_root/deploy.lock"
 if ! flock -w 900 9; then
   echo "timed out waiting for another preview deployment" >&2
@@ -46,8 +51,7 @@ fi
 preview_id="pr-$pr_number"
 project="meal-plan-$preview_id"
 env_file="$preview_root/env/$preview_id.env"
-route_file="$routes_dir/$preview_id.caddy"
-gateway="meal-plan-preview-proxy"
+route_file="$edge_routes_dir/$preview_id.caddy"
 
 export PREVIEW_ID="$preview_id"
 export PREVIEW_BUILD_CONTEXT="$(pwd -P)"
@@ -60,41 +64,21 @@ compose() {
     "$@"
 }
 
-write_gateway_config() {
-  install -m 644 monitoring/caddy/PreviewCaddyfile "$gateway_root/Caddyfile.tmp"
-  mv "$gateway_root/Caddyfile.tmp" "$gateway_root/Caddyfile"
+edge_compose() {
+  docker compose \
+    --project-directory "$edge_root" \
+    --file "$edge_root/docker-compose.yml" \
+    "$@"
 }
 
-ensure_gateway() {
-  docker network inspect public-web >/dev/null 2>&1 || docker network create public-web
-  write_gateway_config
-
-  if docker container inspect "$gateway" >/dev/null 2>&1; then
-    docker start "$gateway" >/dev/null
-  else
-    docker run -d \
-      --name "$gateway" \
-      --restart unless-stopped \
-      --network public-web \
-      --network-alias "$gateway" \
-      --volume "$gateway_root:/etc/caddy:ro" \
-      caddy:2.10.2-alpine >/dev/null
-  fi
-}
-
-reload_gateway() {
-  docker exec "$gateway" caddy validate --config /etc/caddy/Caddyfile
-  docker exec "$gateway" caddy reload --config /etc/caddy/Caddyfile
+reload_edge() {
+  edge_compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile
+  edge_compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 }
 
 if [[ "$action" == delete ]]; then
   rm -f "$route_file"
-  if compgen -G "$routes_dir/*.caddy" >/dev/null; then
-    ensure_gateway
-    reload_gateway
-  else
-    docker rm -f "$gateway" >/dev/null 2>&1 || true
-  fi
+  reload_edge
 
   if [[ -f "$env_file" ]]; then
     compose down --volumes --remove-orphans --rmi local
@@ -136,15 +120,13 @@ compose build app
 compose run --rm --no-deps app node scripts-dist/migrate.js
 compose up -d --no-deps --wait --wait-timeout 120 app
 
-ensure_gateway
 cat >"$route_file.tmp" <<EOF
-@preview_$pr_number host $domain
-handle @preview_$pr_number {
+$domain {
 	reverse_proxy $preview_id-app:3000
 }
 EOF
 mv "$route_file.tmp" "$route_file"
-reload_gateway
+reload_edge
 
 for _ in {1..20}; do
   if curl --fail --silent --show-error --output /dev/null --proto '=https' \

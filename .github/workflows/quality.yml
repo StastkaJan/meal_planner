@@ -119,10 +119,10 @@ jobs:
     env:
       PREVIEW_BASE_DOMAIN: papuplan.cz
       PR_NUMBER: ${{ github.event.pull_request.number }}
-      VPS_HOST: ${{ vars.PREVIEW_VPS_HOST || secrets.PREVIEW_VPS_HOST }}
-      VPS_USER: ${{ vars.PREVIEW_VPS_USER || secrets.PREVIEW_VPS_USER }}
-      VPS_SSH_KEY: ${{ secrets.PREVIEW_VPS_SSH_KEY }}
-      VPS_KNOWN_HOSTS: ${{ vars.PREVIEW_VPS_KNOWN_HOSTS || secrets.PREVIEW_VPS_KNOWN_HOSTS }}
+      VPS_HOST: ${{ vars.PREVIEW_VPS_HOST || secrets.PREVIEW_VPS_HOST || secrets.VPS_HOST }}
+      VPS_USER: ${{ vars.PREVIEW_VPS_USER || secrets.PREVIEW_VPS_USER || secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.PREVIEW_VPS_SSH_KEY || secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ vars.PREVIEW_VPS_KNOWN_HOSTS || secrets.PREVIEW_VPS_KNOWN_HOSTS || secrets.VPS_KNOWN_HOSTS }}
 
     steps:
       - name: Check preview configuration
@@ -130,7 +130,7 @@ jobs:
         run: |
           if [[ -z "$VPS_HOST$VPS_USER$VPS_SSH_KEY$VPS_KNOWN_HOSTS" ]]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Preview deployment skipped until PREVIEW_VPS_* is configured"
+            echo "::notice::Preview deployment skipped until VPS deployment credentials are configured"
             exit 0
           fi
           test -n "$VPS_HOST"
@@ -183,6 +183,7 @@ jobs:
           tar -xzf "$archive" -C "$release"
           cd "$release"
           PREVIEW_ROOT="$base/meal-plan-previews" \
+            PREVIEW_EDGE_ROOT="$base/portfolio" \
             PREVIEW_BASE_DOMAIN="$base_domain" \
             bash scripts/deploy-preview.sh deploy "$pr_number" "$version"
           REMOTE
