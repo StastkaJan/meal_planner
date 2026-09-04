@@ -39,7 +39,7 @@
 
 <!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates and seeds its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
-<!-- NOTE: Same-repository PRs deploy to isolated `pr-N.papuplan.cz` previews after CI using the existing VPS credentials; first deploy imports production data without session rows, then runs PR migrations. The portfolio Caddy imports generated exact-host routes, and cleanup deletes each preview's containers, image, volume, route, and secret state when its PR closes. -->
+<!-- NOTE: Same-repository PRs deploy to isolated `pr-N.papuplan.cz` previews after CI using the existing VPS credentials; first deploy imports production data without session rows, then runs PR migrations. Each preview keeps uploaded recipe images in its own volume. The portfolio Caddy imports generated exact-host routes, and cleanup deletes each preview's containers, image, volumes, route, and secret state when its PR closes. -->
 
 <!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
 
@@ -75,7 +75,7 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
-<!-- NOTE: `/profile/export` returns only caller-owned account data, including legal-document events; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
+<!-- NOTE: `/profile/export` returns only caller-owned account data, including uploaded recipe images and legal-document events; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
 
 <!-- NOTE: `legal_document_events` records each terms acceptance or privacy-notice acknowledgement by user, document, and version; missing current-version rows drive the signed-in legal notice. -->
 

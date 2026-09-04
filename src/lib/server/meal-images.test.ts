@@ -56,6 +56,36 @@ describe('recipe image storage', () => {
     await expect(hasMealImage(7)).resolves.toBe(false)
   })
 
+  it('atomically replaces an existing optimized image', async () => {
+    const first = await sharp({
+      create: {
+        width: 10,
+        height: 10,
+        channels: 3,
+        background: '#dc2626',
+      },
+    })
+      .png()
+      .toBuffer()
+    const replacement = await sharp({
+      create: {
+        width: 10,
+        height: 10,
+        channels: 3,
+        background: '#2563eb',
+      },
+    })
+      .png()
+      .toBuffer()
+
+    await saveMealImage(7, first)
+    const original = await readMealImage(7)
+    await saveMealImage(7, replacement)
+
+    expect(await readMealImage(7)).not.toEqual(original)
+    expect(await readdir(directory)).toEqual(['7.webp'])
+  })
+
   it('copies and deletes optimized files without database access', async () => {
     const input = await sharp({
       create: {

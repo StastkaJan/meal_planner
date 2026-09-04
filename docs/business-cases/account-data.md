@@ -10,9 +10,10 @@ closing an account must remove its sessions and personal records reliably.
 ## Solution
 
 The profile provides a machine-readable JSON download containing the signed-in
-user's account email, settings, personal recipes and ingredients, plans and
-their calendar data, favourites, recipe submissions, and legal-document events. It excludes password
-hashes, session tokens, admin state, global recipes, and every other user's data.
+user's account email, settings, personal recipes, ingredients and uploaded
+images, plans and their calendar data, favourites, recipe submissions, and
+legal-document events. It excludes password hashes, session tokens, admin
+state, global recipes, and every other user's data.
 
 Permanent deletion requires both the current password and the exact account
 email. One database transaction deletes the user; foreign-key cascades remove

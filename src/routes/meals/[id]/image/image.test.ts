@@ -40,6 +40,12 @@ describe('REST /meals/:id/image', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
 
+  it('returns 404 when a visible meal has no uploaded image', async () => {
+    readMealImage.mockResolvedValueOnce(null)
+
+    await expect(GET(event())).rejects.toMatchObject({ status: 404 })
+  })
+
   it('stores a valid image for an editable meal', async () => {
     const data = Buffer.from('89504e470d0a1a0a', 'hex')
     const request = new Request('http://localhost/meals/7/image', {
@@ -89,6 +95,18 @@ describe('REST /meals/:id/image', () => {
       },
       body: Buffer.from([0xff, 0xd8, 0xff]),
     })
+
+    await expect(PUT(event(request))).rejects.toMatchObject({ status: 413 })
+    expect(saveMealImage).not.toHaveBeenCalled()
+  })
+
+  it('rejects an oversized body when content-length is unavailable', async () => {
+    const request = new Request('http://localhost/meals/7/image', {
+      method: 'PUT',
+      headers: { 'content-type': 'image/jpeg' },
+      body: Buffer.alloc(_MAX_RECIPE_IMAGE_BYTES + 1),
+    })
+    request.headers.delete('content-length')
 
     await expect(PUT(event(request))).rejects.toMatchObject({ status: 413 })
     expect(saveMealImage).not.toHaveBeenCalled()

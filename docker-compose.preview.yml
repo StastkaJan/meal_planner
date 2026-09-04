@@ -19,6 +19,8 @@ services:
     environment:
       DATABASE_URL: postgresql://mealplan:${POSTGRES_PASSWORD}@db:5432/mealplan
       ORIGIN: https://${DOMAIN:?Set DOMAIN}
+      BODY_SIZE_LIMIT: 6M
+      RECIPE_IMAGE_DIR: /app/data/recipe-images
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:?Set DEPLOYMENT_VERSION}
     depends_on:
@@ -29,6 +31,8 @@ services:
       public-web:
         aliases:
           - ${PREVIEW_ID:?Set PREVIEW_ID}-app
+    volumes:
+      - recipe-images:/app/data/recipe-images
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/health >/dev/null']
       interval: 10s
@@ -46,3 +50,4 @@ networks:
 
 volumes:
   pgdata:
+  recipe-images:

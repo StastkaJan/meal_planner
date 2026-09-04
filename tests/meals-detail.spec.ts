@@ -52,6 +52,46 @@ test('edit meal from detail page', async ({ page }) => {
   await expect(page.getByText('1.0g salt')).toBeVisible()
 })
 
+test('@smoke uploads and removes a recipe image', async ({ page }) => {
+  const createResponse = await page.request.post('/meals', {
+    data: { name: `Image-${Date.now()}` },
+  })
+  expect(createResponse.ok()).toBe(true)
+  const meal = (await createResponse.json()) as { id: number }
+  await page.goto(`/meals/${meal.id}?edit=1`)
+
+  const image = await page.screenshot({ type: 'png' })
+  await page.getByLabel('Upload image').setInputFiles({
+    name: 'recipe.png',
+    mimeType: 'image/png',
+    buffer: image,
+  })
+  const uploadResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      new URL(response.url()).pathname === `/meals/${meal.id}/image`,
+  )
+  await page.getByRole('button', { name: 'Save' }).click()
+  expect((await uploadResponsePromise).ok()).toBe(true)
+  await expect(page.locator('img.hero')).toBeVisible()
+
+  const storedImage = await page.request.get(`/meals/${meal.id}/image`)
+  expect(storedImage.ok()).toBe(true)
+  expect(storedImage.headers()['content-type']).toBe('image/webp')
+
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByLabel('Remove uploaded image').check()
+  const deleteResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'DELETE' &&
+      new URL(response.url()).pathname === `/meals/${meal.id}/image`,
+  )
+  await page.getByRole('button', { name: 'Save' }).click()
+  expect((await deleteResponsePromise).ok()).toBe(true)
+  await expect(page.locator('img.hero')).toHaveCount(0)
+  expect((await page.request.get(`/meals/${meal.id}/image`)).status()).toBe(404)
+})
+
 test('delete meal from detail page', async ({ page }) => {
   const name = `Del-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
