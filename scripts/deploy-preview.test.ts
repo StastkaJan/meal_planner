@@ -53,6 +53,17 @@ describe('pull request previews', () => {
     expect(workflow).not.toContain('test.papuplan.cz')
   })
 
+  it('loads production data once without copying live sessions', () => {
+    const workflow = readProjectFile('.github/workflows/quality.yml')
+    const script = readProjectFile('scripts/deploy-preview.sh')
+
+    expect(workflow).toContain('PREVIEW_PRODUCTION_ROOT="$base/meal-plan"')
+    expect(script).toContain('production-snapshot')
+    expect(script).toContain('pg_dump')
+    expect(script).toContain('--exclude-table-data=public.sessions')
+    expect(script).toContain('DROP SCHEMA public CASCADE')
+  })
+
   it('removes the route, containers, image, and volume when a pull request closes', () => {
     const script = readProjectFile('scripts/deploy-preview.sh')
     const workflow = readProjectFile('.github/workflows/preview-cleanup.yml')

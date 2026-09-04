@@ -108,8 +108,12 @@ Until either complete credential set exists, preview deployment and cleanup
 succeed as no-ops instead of failing the pull request pipeline. Partially
 configured credentials still fail so the incomplete setup remains visible.
 
-Preview databases start empty and are not backed up or connected to production
-monitoring. They exist only for reviewing the pull request.
+On first deployment, each preview database receives a transactionally
+consistent production snapshot before the PR's migrations run. Production
+session rows are excluded, so testers sign in separately and live session
+tokens never enter a preview. Later pushes preserve that preview's data and
+apply only its new migrations. Preview databases are not backed up or connected
+to production monitoring; they exist only for reviewing the pull request.
 
 ## Grafana access
 

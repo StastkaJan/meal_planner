@@ -184,6 +184,7 @@ jobs:
           cd "$release"
           PREVIEW_ROOT="$base/meal-plan-previews" \
             PREVIEW_EDGE_ROOT="$base/portfolio" \
+            PREVIEW_PRODUCTION_ROOT="$base/meal-plan" \
             PREVIEW_BASE_DOMAIN="$base_domain" \
             bash scripts/deploy-preview.sh deploy "$pr_number" "$version"
           REMOTE
