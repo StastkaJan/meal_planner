@@ -1,6 +1,6 @@
 import { validDateStr } from '$lib/server/services/date'
 import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
-import { listMeals } from '$lib/server/repositories/meals'
+import { listMealPickerItems } from '$lib/server/repositories/meals'
 import { getSettings } from '$lib/server/repositories/accounts'
 import { resolveTargets } from '$lib/domain/nutrition'
 import { mondayOf } from '$lib/utils/date-time'
@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
   const [plans, meals, u] = await Promise.all([
     listPlans(userId),
-    listMeals(userId, locals.locale),
+    listMealPickerItems(userId, locals.locale),
     getSettings(userId),
   ])
   const targets = resolveTargets(u)

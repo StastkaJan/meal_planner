@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { load } from './+page.server'
+import { entries, load, prerender } from './+page.server'
 
 async function loadDocument(document: string) {
   return load({ params: { document } } as Parameters<typeof load>[0])
 }
 
 describe('legal document page', () => {
+  it('prerenders every supported legal document', () => {
+    expect(prerender).toBe(true)
+    expect(entries()).toEqual([{ document: 'terms' }, { document: 'privacy' }])
+  })
+
   it('renders the UTF-8 terms document as HTML', async () => {
     const result = await loadDocument('terms')
 

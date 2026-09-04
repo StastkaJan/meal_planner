@@ -1,61 +1,83 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const listMeals = vi.hoisted(() => vi.fn())
-const favoriteMealIds = vi.hoisted(() => vi.fn())
-vi.mock('$lib/server/repositories/meals', () => ({
-  listMeals,
-  favoriteMealIds,
-}))
+const queryMealLibrary = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/repositories/meals', () => ({ queryMealLibrary }))
 
 import { load } from './+page.server'
 
-const meal = (id: number, difficulty = 'easy') => ({
-  id,
-  userId: id === 14 ? 1 : null,
-  name: `Recipe ${id}`,
-  description: id === 12 ? 'Tomato soup' : null,
-  tags: id === 13 ? ['Italian'] : [],
-  difficulty,
-})
+const meals = [
+  {
+    id: 12,
+    userId: null,
+    name: 'Tomato soup',
+    difficulty: 'easy',
+    timeMinutes: 30,
+    isFavorite: true,
+  },
+]
 
 describe('recipe library load', () => {
   beforeEach(() => {
-    listMeals.mockResolvedValue(
-      Array.from({ length: 25 }, (_, i) => meal(i + 1)),
-    )
-    favoriteMealIds.mockResolvedValue(new Set([12]))
+    vi.clearAllMocks()
+    queryMealLibrary.mockResolvedValue({
+      meals,
+      page: 1,
+      totalPages: 1,
+      totalResults: 1,
+    })
   })
 
-  it('searches visible recipe text and applies filters', async () => {
+  it('delegates search, filters, and pagination to SQL', async () => {
     const result = await load({
-      locals: { user: { id: 1 } },
-      url: new URL('http://localhost/meals?q=tomato&favorites=1'),
+      locals: { user: { id: 7 }, locale: 'cs' },
+      url: new URL(
+        'http://localhost/meals?q=%20tomato%20&difficulty=easy&favorites=1&mine=1&page=3',
+      ),
     } as any)
+
+    expect(queryMealLibrary).toHaveBeenCalledWith(7, 'cs', {
+      query: 'tomato',
+      difficulty: 'easy',
+      favoritesOnly: true,
+      myRecipesOnly: true,
+      page: 3,
+      pageSize: 10,
+    })
     expect(result).toMatchObject({
+      meals,
       totalResults: 1,
       favoritesOnly: true,
+      myRecipesOnly: true,
       query: 'tomato',
     })
-    expect((result as any).meals[0].id).toBe(12)
   })
 
-  it('returns a bounded page of recipes', async () => {
+  it('uses the bounded page returned by the repository', async () => {
+    queryMealLibrary.mockResolvedValueOnce({
+      meals: [],
+      page: 3,
+      totalPages: 3,
+      totalResults: 25,
+    })
+
     const result = await load({
-      locals: { user: { id: 1 } },
-      url: new URL('http://localhost/meals?page=3'),
+      locals: { user: { id: 1 }, locale: 'en' },
+      url: new URL('http://localhost/meals?page=99'),
     } as any)
+
     expect(result).toMatchObject({ page: 3, totalPages: 3, totalResults: 25 })
-    expect((result as any).meals.map((item: any) => item.id)).toEqual([
-      21, 22, 23, 24, 25,
-    ])
   })
 
-  it('filters the library to recipes owned by the current user', async () => {
-    const result = await load({
-      locals: { user: { id: 1 } },
-      url: new URL('http://localhost/meals?mine=1'),
+  it('normalizes fractional requested pages before querying', async () => {
+    await load({
+      locals: { user: { id: 1 }, locale: 'en' },
+      url: new URL('http://localhost/meals?page=2.9'),
     } as any)
-    expect(result).toMatchObject({ totalResults: 1, myRecipesOnly: true })
-    expect((result as any).meals[0].id).toBe(14)
+
+    expect(queryMealLibrary).toHaveBeenCalledWith(
+      1,
+      'en',
+      expect.objectContaining({ page: 2 }),
+    )
   })
 })

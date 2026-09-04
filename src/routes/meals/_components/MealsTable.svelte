@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Meal } from '$lib/database/schema'
+  import type { MealLibraryItem } from '$lib/types'
   import { DIFF_LABEL } from '$lib/constants'
   import Button from '$lib/components/ui/Button.svelte'
   import Input from '$lib/components/ui/Input.svelte'
@@ -18,7 +18,7 @@
     onFavorite,
     isAdmin,
   }: {
-    meals: (Meal & { isFavorite: boolean })[]
+    meals: MealLibraryItem[]
     emptyMessage: string
     creating?: boolean
     onCreate: (
@@ -37,7 +37,7 @@
   }
 </script>
 
-{#snippet mealRow(meal: Meal & { isFavorite: boolean })}
+{#snippet mealRow(meal: MealLibraryItem)}
   <tr>
     <td class="meal-name">
       <a href="/meals/{meal.id}">{meal.name}</a>

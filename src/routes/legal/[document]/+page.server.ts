@@ -4,6 +4,10 @@ import privacy from '../../../../static/legal/privacy.md?raw'
 import terms from '../../../../static/legal/terms.md?raw'
 import type { PageServerLoad } from './$types'
 
+export const prerender = true
+
+export const entries = () => [{ document: 'terms' }, { document: 'privacy' }]
+
 const documents = {
   terms: { title: 'Podmínky používání', markdown: terms },
   privacy: {

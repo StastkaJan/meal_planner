@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { Meal } from '$lib/database/schema'
-  import type { SlotWithMeal } from '$lib/types'
+  import type { MealPickerItem, SlotWithMeal } from '$lib/types'
   import Dialog from '$lib/components/ui/Dialog.svelte'
   import MealPicker from './MealPicker.svelte'
   import { useI18n } from '$lib/i18n-context'
@@ -17,7 +16,7 @@
     onLeftover,
   }: {
     slot: SlotWithMeal | null
-    meals: Meal[]
+    meals: MealPickerItem[]
     mealType: string
     leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void

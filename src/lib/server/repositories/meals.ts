@@ -1,4 +1,13 @@
-import { and, or, isNull, eq, inArray, getTableColumns, sql } from 'drizzle-orm'
+import {
+  and,
+  or,
+  isNull,
+  isNotNull,
+  eq,
+  inArray,
+  getTableColumns,
+  sql,
+} from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   meals,
@@ -41,6 +50,100 @@ export async function listMeals(userId?: number, locale: Locale = 'en') {
       ),
     )
     .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
+}
+
+export async function listMealPickerItems(
+  userId: number,
+  locale: Locale = 'en',
+) {
+  return db
+    .select({
+      id: meals.id,
+      userId: meals.userId,
+      name: sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`,
+      calories: meals.calories,
+      allowedSlots: meals.allowedSlots,
+    })
+    .from(meals)
+    .leftJoin(
+      mealTranslations,
+      and(
+        eq(mealTranslations.mealId, meals.id),
+        eq(mealTranslations.locale, locale),
+      ),
+    )
+    .where(
+      and(
+        isNull(meals.archivedAt),
+        or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
+    .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`, meals.id)
+}
+
+type MealLibraryQuery = {
+  query: string
+  difficulty: string
+  favoritesOnly: boolean
+  myRecipesOnly: boolean
+  page: number
+  pageSize: number
+}
+
+export async function queryMealLibrary(
+  userId: number,
+  locale: Locale,
+  options: MealLibraryQuery,
+) {
+  const localizedName = sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`
+  const localizedDescription = sql<string>`coalesce(${mealTranslations.description}, ${meals.description}, '')`
+  const matchesQuery = options.query
+    ? sql<boolean>`position(lower(${options.query}) in lower(concat_ws(' ', ${localizedName}, ${localizedDescription}, array_to_string(${meals.tags}, ' ')))) > 0`
+    : undefined
+  const filters = and(
+    isNull(meals.archivedAt),
+    or(isNull(meals.userId), eq(meals.userId, userId)),
+    options.favoritesOnly ? isNotNull(mealFavorites.userId) : undefined,
+    options.myRecipesOnly ? eq(meals.userId, userId) : undefined,
+    options.difficulty ? eq(meals.difficulty, options.difficulty) : undefined,
+    matchesQuery,
+  )
+  const joinTranslation = and(
+    eq(mealTranslations.mealId, meals.id),
+    eq(mealTranslations.locale, locale),
+  )
+  const joinFavorite = and(
+    eq(mealFavorites.mealId, meals.id),
+    eq(mealFavorites.userId, userId),
+  )
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(meals)
+    .leftJoin(mealTranslations, joinTranslation)
+    .leftJoin(mealFavorites, joinFavorite)
+    .where(filters)
+
+  const totalPages = Math.max(1, Math.ceil(total / options.pageSize))
+  const page = Math.min(options.page, totalPages)
+  const rows = await db
+    .select({
+      id: meals.id,
+      userId: meals.userId,
+      name: localizedName,
+      difficulty: meals.difficulty,
+      timeMinutes: meals.timeMinutes,
+      isFavorite: sql<boolean>`${mealFavorites.userId} is not null`,
+    })
+    .from(meals)
+    .leftJoin(mealTranslations, joinTranslation)
+    .leftJoin(mealFavorites, joinFavorite)
+    .where(filters)
+    .orderBy(localizedName, meals.id)
+    .limit(options.pageSize)
+    .offset((page - 1) * options.pageSize)
+
+  return { meals: rows, page, totalPages, totalResults: total }
 }
 
 export async function listSharedMealSummaries(locale: Locale = 'en') {

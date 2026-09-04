@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Meal } from '$lib/database/schema'
+  import type { MealPickerItem } from '$lib/types'
   import { mealFitsSlot } from '$lib/domain/meals'
   import { useI18n } from '$lib/i18n-context'
 
@@ -11,7 +11,7 @@
     mealType,
     onSelect,
   }: {
-    meals: Meal[]
+    meals: MealPickerItem[]
     current: number | null
     mealType: string
     onSelect: (mealId: number | null) => void
