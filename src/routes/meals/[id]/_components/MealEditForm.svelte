@@ -33,6 +33,11 @@
   let imageDragDepth = $state(0)
   let imageDragging = $state(false)
   let removeUploadedImage = $state(false)
+  let currentImageUrl = $derived(
+    hasUploadedImage && !removeUploadedImage
+      ? `/meals/${meal.id}/image`
+      : meal.imageUrl,
+  )
   let saving = $state(false)
   let saveError = $state('')
 
@@ -162,6 +167,14 @@
   </div>
   <fieldset class="image-field">
     <legend>{t('Recipe image')}</legend>
+    {#if currentImageUrl}
+      <img
+        class="image-preview"
+        src={currentImageUrl}
+        alt={meal.name}
+        decoding="async"
+      />
+    {/if}
     <label
       class="image-drop-zone"
       class:dragging={imageDragging}
@@ -419,6 +432,14 @@
       font-size: 0.8rem;
       font-weight: 500;
       color: $color-text-muted;
+    }
+
+    .image-preview {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
     }
 
     .hint {

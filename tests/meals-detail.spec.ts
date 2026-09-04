@@ -94,7 +94,11 @@ test('@smoke uploads and removes a recipe image', async ({ page }) => {
   expect(storedImage.headers()['content-type']).toBe('image/webp')
 
   await page.getByRole('button', { name: 'Edit' }).click()
+  const editImage = page.locator('img.image-preview')
+  await expect(editImage).toBeVisible()
+  await expect(editImage).toHaveAttribute('src', `/meals/${meal.id}/image`)
   await page.getByLabel('Remove uploaded image').check()
+  await expect(editImage).toHaveCount(0)
   const deleteResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'DELETE' &&
