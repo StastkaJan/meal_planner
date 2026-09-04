@@ -30,6 +30,8 @@
   let tags = $derived(meal.tags ?? [])
   let allowedSlots = $derived(meal.allowedSlots ?? [])
   let imageFile = $state<File | null>(null)
+  let imageDragDepth = $state(0)
+  let imageDragging = $state(false)
   let removeUploadedImage = $state(false)
   let saving = $state(false)
   let saveError = $state('')
@@ -62,6 +64,36 @@
     allowedSlots = allowedSlots.includes(opt)
       ? allowedSlots.filter((t) => t !== opt)
       : [...allowedSlots, opt]
+  }
+
+  function selectImage(file: File | null) {
+    imageFile = file
+    if (file) removeUploadedImage = false
+  }
+
+  function handleImageDragEnter(event: DragEvent) {
+    event.preventDefault()
+    imageDragDepth += 1
+    imageDragging = true
+  }
+
+  function handleImageDragLeave(event: DragEvent) {
+    event.preventDefault()
+    imageDragDepth = Math.max(0, imageDragDepth - 1)
+    imageDragging = imageDragDepth > 0
+  }
+
+  function handleImageDragOver(event: DragEvent) {
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+  }
+
+  function handleImageDrop(event: DragEvent) {
+    event.preventDefault()
+    imageDragDepth = 0
+    imageDragging = false
+    const file = event.dataTransfer?.files[0]
+    if (file) selectImage(file)
   }
 
   async function handleSave(e: SubmitEvent) {
@@ -130,15 +162,28 @@
   <fieldset class="image-field">
     <legend>{t('Recipe image')}</legend>
     <label
-      >{t('Upload image')}<input
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        onchange={(event) => {
-          imageFile = event.currentTarget.files?.[0] ?? null
-          if (imageFile) removeUploadedImage = false
-        }}
-      /></label
+      class="image-drop-zone"
+      class:dragging={imageDragging}
+      ondragenter={handleImageDragEnter}
+      ondragleave={handleImageDragLeave}
+      ondragover={handleImageDragOver}
+      ondrop={handleImageDrop}
     >
+      <span>{t('Drop an image here or choose a file')}</span>
+      <input
+        class="image-input"
+        type="file"
+        aria-label={t('Upload image')}
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onchange={(event) =>
+          selectImage(event.currentTarget.files?.[0] ?? null)}
+      />
+    </label>
+    {#if imageFile}
+      <span class="selected-image" aria-live="polite">
+        {t('Selected: {name}', { name: imageFile.name })}
+      </span>
+    {/if}
     <span class="hint">{t('JPEG, PNG, WebP, or GIF. Maximum 5 MB.')}</span>
     {#if hasUploadedImage}
       <label class="remove-image">
@@ -378,6 +423,54 @@
     .hint {
       color: $color-text-muted;
       font-size: 0.75rem;
+    }
+
+    .image-drop-zone {
+      position: relative;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+      padding: 18px;
+      border: 2px dashed $color-border-strong;
+      border-radius: $radius-sm;
+      background: $color-surface-2;
+      color: $color-text-muted;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+
+      &:hover,
+      &:focus-within,
+      &.dragging {
+        border-color: $color-accent;
+        background: $color-accent-dim;
+        color: $color-text;
+      }
+
+      &:focus-within {
+        outline: 2px solid $color-accent;
+        outline-offset: 2px;
+      }
+
+      .image-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    .selected-image {
+      color: $color-text;
+      font-size: 0.8rem;
+      overflow-wrap: anywhere;
     }
 
     .remove-image {

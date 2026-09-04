@@ -61,11 +61,25 @@ test('@smoke uploads and removes a recipe image', async ({ page }) => {
   await page.goto(`/meals/${meal.id}?edit=1`)
 
   const image = await page.screenshot({ type: 'png' })
-  await page.getByLabel('Upload image').setInputFiles({
-    name: 'recipe.png',
-    mimeType: 'image/png',
-    buffer: image,
-  })
+  const dataTransfer = await page.evaluateHandle((base64) => {
+    const bytes = Uint8Array.from(atob(base64), (character) =>
+      character.charCodeAt(0),
+    )
+    const transfer = new DataTransfer()
+    transfer.items.add(new File([bytes], 'recipe.png', { type: 'image/png' }))
+    return transfer
+  }, image.toString('base64'))
+  const dropZone = page.locator('.image-drop-zone')
+  await dropZone.dispatchEvent('dragenter', { dataTransfer })
+  await expect(dropZone).toHaveClass(/dragging/)
+  await dropZone.dispatchEvent('drop', { dataTransfer })
+  await dataTransfer.dispose()
+  await expect(page.getByText('Selected: recipe.png')).toBeVisible()
+
+  await expect(page.getByLabel('Upload image')).toHaveAttribute(
+    'accept',
+    'image/jpeg,image/png,image/webp,image/gif',
+  )
   const uploadResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'PUT' &&

@@ -281,6 +281,9 @@ const CS_MESSAGES = {
   'Image URL': 'URL obrázku',
   'Recipe image': 'Obrázek receptu',
   'Upload image': 'Nahrát obrázek',
+  'Drop an image here or choose a file':
+    'Přetáhněte sem obrázek nebo vyberte soubor',
+  'Selected: {name}': 'Vybráno: {name}',
   'JPEG, PNG, WebP, or GIF. Maximum 5 MB.':
     'JPEG, PNG, WebP nebo GIF. Maximálně 5 MB.',
   'Remove uploaded image': 'Odebrat nahraný obrázek',
