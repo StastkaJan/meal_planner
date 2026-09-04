@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.ref }}
+  group: quality-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -106,3 +106,89 @@ jobs:
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
             "$VPS_USER@$VPS_HOST" \
             "mkdir -p meal-plan && tar -xzf meal-plan-release.tar.gz -C meal-plan && rm meal-plan-release.tar.gz && cd meal-plan && DOMAIN=$DOMAIN bash scripts/deploy-production.sh $GITHUB_SHA"
+
+  preview:
+    name: pull request preview
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: preview
+      url: https://pr-${{ github.event.pull_request.number }}.papuplan.cz
+    env:
+      PREVIEW_BASE_DOMAIN: papuplan.cz
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      VPS_HOST: ${{ vars.PREVIEW_VPS_HOST || secrets.PREVIEW_VPS_HOST || secrets.VPS_HOST }}
+      VPS_USER: ${{ vars.PREVIEW_VPS_USER || secrets.PREVIEW_VPS_USER || secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.PREVIEW_VPS_SSH_KEY || secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ vars.PREVIEW_VPS_KNOWN_HOSTS || secrets.PREVIEW_VPS_KNOWN_HOSTS || secrets.VPS_KNOWN_HOSTS }}
+
+    steps:
+      - name: Check preview configuration
+        id: preview_config
+        run: |
+          if [[ -z "$VPS_HOST$VPS_USER$VPS_SSH_KEY$VPS_KNOWN_HOSTS" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview deployment skipped until VPS deployment credentials are configured"
+            exit 0
+          fi
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$VPS_SSH_KEY"
+          test -n "$VPS_KNOWN_HOSTS"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.preview_config.outputs.enabled == 'true'
+
+      - name: Configure SSH
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Package source
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/meal-plan-preview.tar.gz" HEAD
+
+      - name: Upload source
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: |
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -P 22 \
+            "$RUNNER_TEMP/meal-plan-preview.tar.gz" \
+            "$VPS_USER@$VPS_HOST:meal-plan-preview-$GITHUB_RUN_ID.tar.gz"
+
+      - name: Deploy preview on VPS
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -p 22 \
+            "$VPS_USER@$VPS_HOST" bash -s -- \
+            "$PR_NUMBER" "$GITHUB_SHA" "$PREVIEW_BASE_DOMAIN" "$GITHUB_RUN_ID" <<'REMOTE'
+          set -Eeuo pipefail
+          pr_number="$1"
+          version="$2"
+          base_domain="$3"
+          run_id="$4"
+          [[ "$pr_number" =~ ^[1-9][0-9]*$ ]]
+          [[ "$run_id" =~ ^[1-9][0-9]*$ ]]
+          base="$(pwd -P)"
+          release="$base/meal-plan-preview-sources/pr-$pr_number"
+          archive="$base/meal-plan-preview-$run_id.tar.gz"
+          trap 'rm -rf -- "$release"; rm -f -- "$archive"' EXIT
+          rm -rf -- "$release"
+          mkdir -p "$release"
+          tar -xzf "$archive" -C "$release"
+          cd "$release"
+          PREVIEW_ROOT="$base/meal-plan-previews" \
+            PREVIEW_EDGE_ROOT="$base/portfolio" \
+            PREVIEW_PRODUCTION_ROOT="$base/meal-plan" \
+            PREVIEW_BASE_DOMAIN="$base_domain" \
+            bash scripts/deploy-preview.sh deploy "$pr_number" "$version"
+          REMOTE
+
+      - name: Add preview URL to summary
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: echo "Preview https://pr-$PR_NUMBER.$PREVIEW_BASE_DOMAIN" >> "$GITHUB_STEP_SUMMARY"

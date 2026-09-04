@@ -39,6 +39,8 @@
 
 <!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates and seeds its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
+<!-- NOTE: Same-repository PRs deploy to isolated `pr-N.papuplan.cz` previews after CI using the existing VPS credentials; first deploy imports production data without session rows, then runs PR migrations. The portfolio Caddy imports generated exact-host routes, and cleanup deletes each preview's containers, image, volume, route, and secret state when its PR closes. -->
+
 <!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
 
 <!-- NOTE: Prometheus alerts on sustained 5xx, `/health` failures, latency, and host disk; backup failures post to the same Alertmanager Slack-compatible route, sourced from production `ALERT_WEBHOOK_URL`. -->

@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mealplan
+      POSTGRES_USER: mealplan
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - database
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mealplan -d mealplan']
+      interval: 5s
+      retries: 10
+
+  app:
+    build: ${PREVIEW_BUILD_CONTEXT:?Set PREVIEW_BUILD_CONTEXT}
+    environment:
+      DATABASE_URL: postgresql://mealplan:${POSTGRES_PASSWORD}@db:5432/mealplan
+      ORIGIN: https://${DOMAIN:?Set DOMAIN}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:?Set DEPLOYMENT_VERSION}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      database:
+      public-web:
+        aliases:
+          - ${PREVIEW_ID:?Set PREVIEW_ID}-app
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/health >/dev/null']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+networks:
+  database:
+    internal: true
+  public-web:
+    name: public-web
+    external: true
+
+volumes:
+  pgdata:

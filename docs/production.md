@@ -105,6 +105,49 @@ application image. Follow [the rollback procedure](deployment.md) to switch back
 without rebuilding. Check migration compatibility first; application rollback
 does not revert the database.
 
+## Pull request previews
+
+Same-repository pull requests deploy after the quality job passes to
+`https://pr-N.papuplan.cz`. Each preview has its own application container,
+PostgreSQL container, and persistent database volume. A push rebuilds that PR's
+preview; closing or merging the PR removes its route, containers, image, volume,
+and generated database password. Fork pull requests never receive preview
+credentials and are not deployed.
+
+One-time host setup:
+
+1. Point the wildcard DNS record `*.papuplan.cz` at the VPS.
+2. Connect the portfolio Caddy to `public-web`, mount its persistent
+   `preview-routes` directory at `/etc/caddy/preview-routes`, and import the
+   generated route files from its Caddyfile:
+
+   ```caddyfile
+   import preview-routes/*
+   ```
+
+   Each deployment writes an exact `pr-N.papuplan.cz` site block and reloads
+   the portfolio Caddy. Exact hostnames use the normal ACME HTTP challenge, so
+   the edge proxy does not need a DNS provider module or wildcard certificate.
+
+3. The workflow reuses the repository's production `VPS_HOST`, `VPS_USER`,
+   `VPS_SSH_KEY`, and `VPS_KNOWN_HOSTS` secrets on the same VPS. To use a
+   dedicated preview identity instead, configure the corresponding
+   `PREVIEW_VPS_*` values in the GitHub `preview` environment. Do not add a
+   required-reviewer gate if teardown must stay automatic; only same-repository
+   pull requests deploy, but their branches build and run their Dockerfile on
+   this host.
+
+Until either complete credential set exists, preview deployment and cleanup
+succeed as no-ops instead of failing the pull request pipeline. Partially
+configured credentials still fail so the incomplete setup remains visible.
+
+On first deployment, each preview database receives a transactionally
+consistent production snapshot before the PR's migrations run. Production
+session rows are excluded, so testers sign in separately and live session
+tokens never enter a preview. Later pushes preserve that preview's data and
+apply only its new migrations. Preview databases are not backed up or connected
+to production monitoring; they exist only for reviewing the pull request.
+
 ## Grafana access
 
 Use the [WireGuard access runbook](wireguard.md), then open
