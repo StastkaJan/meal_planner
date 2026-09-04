@@ -138,7 +138,7 @@ imported_snapshot=false
 if [[ ! -f "$snapshot_marker" ]]; then
   echo "loading a production snapshot into $preview_id"
   compose exec -T db psql -v ON_ERROR_STOP=1 -U mealplan -d mealplan \
-    -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public AUTHORIZATION mealplan;'
+    -c 'DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public AUTHORIZATION mealplan;'
   production_compose exec -T db pg_dump \
     -U mealplan \
     -d mealplan \

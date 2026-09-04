@@ -61,7 +61,9 @@ describe('pull request previews', () => {
     expect(script).toContain('production-snapshot')
     expect(script).toContain('pg_dump')
     expect(script).toContain('--exclude-table-data=public.sessions')
-    expect(script).toContain('DROP SCHEMA public CASCADE')
+    expect(script).toContain(
+      'DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE',
+    )
   })
 
   it('removes the route, containers, image, and volume when a pull request closes', () => {
