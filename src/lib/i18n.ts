@@ -442,6 +442,13 @@ const CS_MESSAGES = {
   'Pro subscription required': 'Je vyžadováno předplatné Pro',
   'Plan not found': 'Jídelní plán nebyl nalezen',
   'Name is required': 'Název je povinný',
+  'Invalid meal numeric value': 'Neplatná číselná hodnota receptu',
+  'Ingredients must be a list': 'Suroviny musí být seznam',
+  'Invalid ingredient': 'Neplatná surovina',
+  'Ingredient name is required': 'Název suroviny je povinný',
+  'Invalid ingredient unit': 'Neplatná jednotka suroviny',
+  'Ingredient quantity is required when a unit is set':
+    'Při zadání jednotky je nutné uvést množství suroviny',
   'Only admins can create global recipes':
     'Globální recepty mohou vytvářet pouze správci',
   'Invalid scope': 'Neplatný rozsah',

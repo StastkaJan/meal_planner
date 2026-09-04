@@ -189,14 +189,9 @@ test('@smoke does not silently discard a partial ingredient row', async ({
   )
   await page.getByRole('button', { name: 'Save' }).click()
   const saveResponse = await saveResponsePromise
-  expect(saveResponse.ok()).toBe(true)
+  expect(saveResponse.status()).toBe(400)
 
-  const quantity = page.getByPlaceholder('Qty')
-  test.fail(
-    (await quantity.count()) === 0,
-    'Known gap: partial ingredient rows are silently discarded',
-  )
-  await expect(quantity).toHaveValue('2')
+  await expect(page.getByPlaceholder('Qty')).toHaveValue('2')
   await expect(page.getByRole('alert')).toContainText('Ingredient name')
 })
 

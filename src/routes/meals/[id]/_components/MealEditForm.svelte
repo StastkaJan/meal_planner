@@ -11,7 +11,7 @@
   import type { IngredientInput } from '$lib/types'
   import { useI18n } from '$lib/i18n-context'
 
-  const { t, label } = useI18n()
+  const { t, label, message } = useI18n()
 
   let {
     meal,
@@ -103,7 +103,7 @@
     body.tags = fd.getAll('tags')
     body.allowedSlots = fd.getAll('allowedSlots')
     body.ingredients = ingredientRows
-      .filter((r) => r.name.trim())
+      .filter((r) => r.name.trim() || r.qty !== '' || r.unit)
       .map((r) => ({
         name: r.name.trim(),
         qty: r.qty === '' ? null : Number(r.qty),
@@ -124,7 +124,8 @@
       }
       onSaved(updated, uploadedImage)
     } catch (cause) {
-      saveError = cause instanceof Error ? cause.message : t('Request failed')
+      saveError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
     } finally {
       saving = false
     }
