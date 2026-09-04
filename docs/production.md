@@ -75,7 +75,7 @@ does not revert the database.
 ## Pull request previews
 
 Same-repository pull requests deploy after the quality job passes to
-`https://pr-N.test.papuplan.cz`. Each preview has its own application container,
+`https://pr-N.papuplan.cz`. Each preview has its own application container,
 PostgreSQL container, and persistent database volume. A push rebuilds that PR's
 preview; closing or merging the PR removes its route, containers, image, volume,
 and generated database password. Fork pull requests never receive preview
@@ -83,12 +83,12 @@ credentials and are not deployed.
 
 One-time host setup:
 
-1. Point the wildcard DNS record `*.test.papuplan.cz` at the VPS.
+1. Point the wildcard DNS record `*.papuplan.cz` at the VPS.
 2. Connect the portfolio Caddy to `public-web` and route the wildcard to the
    shared preview router:
 
    ```caddyfile
-   *.test.papuplan.cz {
+   *.papuplan.cz {
      tls {
        dns <provider>
      }

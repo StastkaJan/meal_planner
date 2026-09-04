@@ -115,9 +115,9 @@ jobs:
     timeout-minutes: 30
     environment:
       name: preview
-      url: https://pr-${{ github.event.pull_request.number }}.test.papuplan.cz
+      url: https://pr-${{ github.event.pull_request.number }}.papuplan.cz
     env:
-      PREVIEW_BASE_DOMAIN: test.papuplan.cz
+      PREVIEW_BASE_DOMAIN: papuplan.cz
       PR_NUMBER: ${{ github.event.pull_request.number }}
       VPS_HOST: ${{ vars.PREVIEW_VPS_HOST || secrets.PREVIEW_VPS_HOST }}
       VPS_USER: ${{ vars.PREVIEW_VPS_USER || secrets.PREVIEW_VPS_USER }}

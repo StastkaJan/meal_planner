@@ -104,7 +104,7 @@ if [[ "$action" == delete ]]; then
   exit 0
 fi
 
-: "${PREVIEW_BASE_DOMAIN:?Set PREVIEW_BASE_DOMAIN, for example test.papuplan.cz}"
+: "${PREVIEW_BASE_DOMAIN:?Set PREVIEW_BASE_DOMAIN, for example papuplan.cz}"
 if [[ ! "$PREVIEW_BASE_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]]; then
   echo "invalid preview base domain: $PREVIEW_BASE_DOMAIN" >&2
   exit 2

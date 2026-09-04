@@ -40,6 +40,16 @@ describe('pull request previews', () => {
     expect(script).toContain('reverse_proxy $preview_id-app:3000')
   })
 
+  it('publishes previews below the production base domain', () => {
+    const workflow = readProjectFile('.github/workflows/quality.yml')
+
+    expect(workflow).toContain('PREVIEW_BASE_DOMAIN: papuplan.cz')
+    expect(workflow).toContain(
+      'url: https://pr-${{ github.event.pull_request.number }}.papuplan.cz',
+    )
+    expect(workflow).not.toContain('test.papuplan.cz')
+  })
+
   it('removes the route, containers, image, and volume when a pull request closes', () => {
     const script = readProjectFile('scripts/deploy-preview.sh')
     const workflow = readProjectFile('.github/workflows/preview-cleanup.yml')
