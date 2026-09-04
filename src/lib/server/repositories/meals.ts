@@ -1,5 +1,7 @@
 import {
   and,
+  arrayContains,
+  arrayOverlaps,
   or,
   isNull,
   isNotNull,
@@ -184,20 +186,16 @@ export async function findMeal(id: number, userId?: number) {
 }
 
 export async function getMealIngredients(mealId: number) {
-  const rows = await db
+  return db
     .select({
       name: ingredients.name,
-      qty: mealIngredients.qty,
+      qty: sql<number | null>`${mealIngredients.qty}::float`,
       unit: mealIngredients.unit,
     })
     .from(mealIngredients)
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
     .where(eq(mealIngredients.mealId, mealId))
     .orderBy(mealIngredients.position)
-  return rows.map((row) => ({
-    ...row,
-    qty: row.qty !== null ? Number(row.qty) : null,
-  }))
 }
 
 export async function getMealTranslations(mealId: number) {
@@ -277,23 +275,44 @@ export async function findEditableMeal(
   return meal ?? null
 }
 
-export async function listCandidateMeals(userId: number) {
+type CandidateMealQuery = {
+  favoritesOnly?: boolean
+  myRecipesOnly?: boolean
+  cuisinePrefs?: string[]
+  dietaryRestrictions?: string[]
+}
+
+export async function listCandidateMeals(
+  userId: number,
+  options: CandidateMealQuery = {},
+) {
   return db
     .select({
       id: meals.id,
-      userId: meals.userId,
       calories: meals.calories,
       tags: meals.tags,
       allowedSlots: meals.allowedSlots,
-      proteinG: meals.proteinG,
-      carbsG: meals.carbsG,
-      fatG: meals.fatG,
+      proteinG: sql<number>`coalesce(${meals.proteinG}, 0)::float`,
+      carbsG: sql<number>`coalesce(${meals.carbsG}, 0)::float`,
+      fatG: sql<number>`coalesce(${meals.fatG}, 0)::float`,
     })
     .from(meals)
+    .leftJoin(
+      mealFavorites,
+      and(eq(mealFavorites.mealId, meals.id), eq(mealFavorites.userId, userId)),
+    )
     .where(
       and(
         isNull(meals.archivedAt),
         or(isNull(meals.userId), eq(meals.userId, userId)),
+        options.favoritesOnly ? isNotNull(mealFavorites.userId) : undefined,
+        options.myRecipesOnly ? eq(meals.userId, userId) : undefined,
+        options.cuisinePrefs?.length
+          ? arrayOverlaps(meals.tags, options.cuisinePrefs)
+          : undefined,
+        options.dietaryRestrictions?.length
+          ? arrayContains(meals.tags, options.dietaryRestrictions)
+          : undefined,
       ),
     )
 }
@@ -324,15 +343,6 @@ export async function setMealFavorite(
     .where(
       and(eq(mealFavorites.userId, userId), eq(mealFavorites.mealId, mealId)),
     )
-}
-
-export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
-  if (userId == null) return new Set()
-  const rows = await db
-    .select({ mealId: mealFavorites.mealId })
-    .from(mealFavorites)
-    .where(eq(mealFavorites.userId, userId))
-  return new Set(rows.map((r) => r.mealId))
 }
 
 // ---- structured ingredient links (source of truth for a meal's ingredients) ----

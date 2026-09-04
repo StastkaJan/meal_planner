@@ -441,8 +441,8 @@ export async function getShoppingList(
       name: ingredients.name,
       unit: mealIngredients.unit,
       qty: sql<
-        string | null
-      >`case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty} * ${plans.portions} / greatest(${meals.servings}, 1)) end`,
+        number | null
+      >`(case when bool_or(${mealIngredients.qty} is null) then null else sum(${mealIngredients.qty} * ${plans.portions} / greatest(${meals.servings}, 1)) end)::float`,
       count: sql<number>`sum(${plans.portions}::numeric / greatest(${meals.servings}, 1))::float`,
     })
     .from(weekSlots)
@@ -473,10 +473,7 @@ export async function getShoppingList(
     .groupBy(ingredients.name, mealIngredients.unit)
     .orderBy(ingredients.name)
 
-  return rows.map((row) => ({
-    ...row,
-    qty: row.qty !== null ? Number(row.qty) : null,
-  }))
+  return rows
 }
 
 export async function getWeekSlotsWithNutrition(planId: number, week: string) {
@@ -485,10 +482,12 @@ export async function getWeekSlotsWithNutrition(planId: number, week: string) {
       date: weekSlots.date,
       mealType: weekSlots.mealType,
       mealId: weekSlots.mealId,
+      mealUserId: meals.userId,
       calories: meals.calories,
-      proteinG: meals.proteinG,
-      carbsG: meals.carbsG,
-      fatG: meals.fatG,
+      proteinG: sql<number | null>`${meals.proteinG}::float`,
+      carbsG: sql<number | null>`${meals.carbsG}::float`,
+      fatG: sql<number | null>`${meals.fatG}::float`,
+      archivedAt: meals.archivedAt,
     })
     .from(weekSlots)
     .leftJoin(meals, eq(weekSlots.mealId, meals.id))
@@ -502,9 +501,9 @@ export async function getDaySlotsWithNutrition(planId: number, date: string) {
       mealType: weekSlots.mealType,
       mealId: weekSlots.mealId,
       calories: meals.calories,
-      proteinG: meals.proteinG,
-      carbsG: meals.carbsG,
-      fatG: meals.fatG,
+      proteinG: sql<number | null>`${meals.proteinG}::float`,
+      carbsG: sql<number | null>`${meals.carbsG}::float`,
+      fatG: sql<number | null>`${meals.fatG}::float`,
     })
     .from(weekSlots)
     .leftJoin(meals, eq(weekSlots.mealId, meals.id))
@@ -516,9 +515,9 @@ export async function getWeekBonusNutrition(planId: number, week: string) {
     .select({
       date: bonusItems.date,
       calories: bonusItems.calories,
-      proteinG: bonusItems.proteinG,
-      carbsG: bonusItems.carbsG,
-      fatG: bonusItems.fatG,
+      proteinG: sql<number | null>`${bonusItems.proteinG}::float`,
+      carbsG: sql<number | null>`${bonusItems.carbsG}::float`,
+      fatG: sql<number | null>`${bonusItems.fatG}::float`,
     })
     .from(bonusItems)
     .where(bonusInWeek(planId, week))
@@ -528,9 +527,9 @@ export async function getDayBonusNutrition(planId: number, date: string) {
   return db
     .select({
       calories: bonusItems.calories,
-      proteinG: bonusItems.proteinG,
-      carbsG: bonusItems.carbsG,
-      fatG: bonusItems.fatG,
+      proteinG: sql<number | null>`${bonusItems.proteinG}::float`,
+      carbsG: sql<number | null>`${bonusItems.carbsG}::float`,
+      fatG: sql<number | null>`${bonusItems.fatG}::float`,
     })
     .from(bonusItems)
     .where(and(eq(bonusItems.planId, planId), eq(bonusItems.date, date)))
