@@ -170,10 +170,6 @@ test('@smoke allows an ingredient quantity without a unit', async ({
   await page.reload()
 
   const ingredient = page.getByRole('listitem')
-  test.fail(
-    (await ingredient.count()) === 0,
-    'Known gap: edited ingredients are not persisted',
-  )
   await expect(ingredient).toHaveText('2 Eggs')
 })
 
