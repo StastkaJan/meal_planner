@@ -1,4 +1,15 @@
-import { and, or, isNull, eq, inArray, getTableColumns, sql } from 'drizzle-orm'
+import {
+  and,
+  arrayContains,
+  arrayOverlaps,
+  or,
+  isNull,
+  isNotNull,
+  eq,
+  inArray,
+  getTableColumns,
+  sql,
+} from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   meals,
@@ -43,6 +54,100 @@ export async function listMeals(userId?: number, locale: Locale = 'en') {
     .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`)
 }
 
+export async function listMealPickerItems(
+  userId: number,
+  locale: Locale = 'en',
+) {
+  return db
+    .select({
+      id: meals.id,
+      userId: meals.userId,
+      name: sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`,
+      calories: meals.calories,
+      allowedSlots: meals.allowedSlots,
+    })
+    .from(meals)
+    .leftJoin(
+      mealTranslations,
+      and(
+        eq(mealTranslations.mealId, meals.id),
+        eq(mealTranslations.locale, locale),
+      ),
+    )
+    .where(
+      and(
+        isNull(meals.archivedAt),
+        or(isNull(meals.userId), eq(meals.userId, userId)),
+      ),
+    )
+    .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`, meals.id)
+}
+
+type MealLibraryQuery = {
+  query: string
+  difficulty: string
+  favoritesOnly: boolean
+  myRecipesOnly: boolean
+  page: number
+  pageSize: number
+}
+
+export async function queryMealLibrary(
+  userId: number,
+  locale: Locale,
+  options: MealLibraryQuery,
+) {
+  const localizedName = sql<string>`coalesce(${mealTranslations.name}, ${meals.name})`
+  const localizedDescription = sql<string>`coalesce(${mealTranslations.description}, ${meals.description}, '')`
+  const matchesQuery = options.query
+    ? sql<boolean>`position(lower(${options.query}) in lower(concat_ws(' ', ${localizedName}, ${localizedDescription}, array_to_string(${meals.tags}, ' ')))) > 0`
+    : undefined
+  const filters = and(
+    isNull(meals.archivedAt),
+    or(isNull(meals.userId), eq(meals.userId, userId)),
+    options.favoritesOnly ? isNotNull(mealFavorites.userId) : undefined,
+    options.myRecipesOnly ? eq(meals.userId, userId) : undefined,
+    options.difficulty ? eq(meals.difficulty, options.difficulty) : undefined,
+    matchesQuery,
+  )
+  const joinTranslation = and(
+    eq(mealTranslations.mealId, meals.id),
+    eq(mealTranslations.locale, locale),
+  )
+  const joinFavorite = and(
+    eq(mealFavorites.mealId, meals.id),
+    eq(mealFavorites.userId, userId),
+  )
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(meals)
+    .leftJoin(mealTranslations, joinTranslation)
+    .leftJoin(mealFavorites, joinFavorite)
+    .where(filters)
+
+  const totalPages = Math.max(1, Math.ceil(total / options.pageSize))
+  const page = Math.min(options.page, totalPages)
+  const rows = await db
+    .select({
+      id: meals.id,
+      userId: meals.userId,
+      name: localizedName,
+      difficulty: meals.difficulty,
+      timeMinutes: meals.timeMinutes,
+      isFavorite: sql<boolean>`${mealFavorites.userId} is not null`,
+    })
+    .from(meals)
+    .leftJoin(mealTranslations, joinTranslation)
+    .leftJoin(mealFavorites, joinFavorite)
+    .where(filters)
+    .orderBy(localizedName, meals.id)
+    .limit(options.pageSize)
+    .offset((page - 1) * options.pageSize)
+
+  return { meals: rows, page, totalPages, totalResults: total }
+}
+
 export async function listSharedMealSummaries(locale: Locale = 'en') {
   return db
     .select({
@@ -81,20 +186,16 @@ export async function findMeal(id: number, userId?: number) {
 }
 
 export async function getMealIngredients(mealId: number) {
-  const rows = await db
+  return db
     .select({
       name: ingredients.name,
-      qty: mealIngredients.qty,
+      qty: sql<number | null>`${mealIngredients.qty}::float`,
       unit: mealIngredients.unit,
     })
     .from(mealIngredients)
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
     .where(eq(mealIngredients.mealId, mealId))
     .orderBy(mealIngredients.position)
-  return rows.map((row) => ({
-    ...row,
-    qty: row.qty !== null ? Number(row.qty) : null,
-  }))
 }
 
 export async function getMealTranslations(mealId: number) {
@@ -174,23 +275,44 @@ export async function findEditableMeal(
   return meal ?? null
 }
 
-export async function listCandidateMeals(userId: number) {
+type CandidateMealQuery = {
+  favoritesOnly?: boolean
+  myRecipesOnly?: boolean
+  cuisinePrefs?: string[]
+  dietaryRestrictions?: string[]
+}
+
+export async function listCandidateMeals(
+  userId: number,
+  options: CandidateMealQuery = {},
+) {
   return db
     .select({
       id: meals.id,
-      userId: meals.userId,
       calories: meals.calories,
       tags: meals.tags,
       allowedSlots: meals.allowedSlots,
-      proteinG: meals.proteinG,
-      carbsG: meals.carbsG,
-      fatG: meals.fatG,
+      proteinG: sql<number>`coalesce(${meals.proteinG}, 0)::float`,
+      carbsG: sql<number>`coalesce(${meals.carbsG}, 0)::float`,
+      fatG: sql<number>`coalesce(${meals.fatG}, 0)::float`,
     })
     .from(meals)
+    .leftJoin(
+      mealFavorites,
+      and(eq(mealFavorites.mealId, meals.id), eq(mealFavorites.userId, userId)),
+    )
     .where(
       and(
         isNull(meals.archivedAt),
         or(isNull(meals.userId), eq(meals.userId, userId)),
+        options.favoritesOnly ? isNotNull(mealFavorites.userId) : undefined,
+        options.myRecipesOnly ? eq(meals.userId, userId) : undefined,
+        options.cuisinePrefs?.length
+          ? arrayOverlaps(meals.tags, options.cuisinePrefs)
+          : undefined,
+        options.dietaryRestrictions?.length
+          ? arrayContains(meals.tags, options.dietaryRestrictions)
+          : undefined,
       ),
     )
 }
@@ -221,15 +343,6 @@ export async function setMealFavorite(
     .where(
       and(eq(mealFavorites.userId, userId), eq(mealFavorites.mealId, mealId)),
     )
-}
-
-export async function favoriteMealIds(userId?: number): Promise<Set<number>> {
-  if (userId == null) return new Set()
-  const rows = await db
-    .select({ mealId: mealFavorites.mealId })
-    .from(mealFavorites)
-    .where(eq(mealFavorites.userId, userId))
-  return new Set(rows.map((r) => r.mealId))
 }
 
 // ---- structured ingredient links (source of truth for a meal's ingredients) ----

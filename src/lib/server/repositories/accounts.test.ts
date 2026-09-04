@@ -29,21 +29,23 @@ describe('getAccountExport', () => {
     const tx = makeTx([
       [{ email: 'cook@example.com' }],
       [],
-      [{ id: 7, userId: 42, name: 'Soup' }],
-      [],
       [
         {
-          mealId: 7,
-          locale: 'cs',
-          name: 'Polévka',
-          description: null,
-          instructions: null,
+          id: 7,
+          name: 'Soup',
+          ingredients: [],
+          translations: [
+            {
+              locale: 'cs',
+              name: 'Polévka',
+              description: null,
+              instructions: null,
+            },
+          ],
         },
       ],
       [],
-      [],
-      [],
-      [],
+      [{ mealIds: [] }],
       [],
       [],
     ])
@@ -54,12 +56,18 @@ describe('getAccountExport', () => {
     const result = await getAccountExport(42)
 
     expect(tx.select).toHaveBeenNthCalledWith(
-      8,
+      3,
       expect.objectContaining({
-        fiberG: expect.anything(),
-        sugarG: expect.anything(),
-        saturatedFatG: expect.anything(),
-        saltG: expect.anything(),
+        ingredients: expect.anything(),
+        translations: expect.anything(),
+      }),
+    )
+    expect(tx.select).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        slots: expect.anything(),
+        bonusItems: expect.anything(),
+        slotRepeats: expect.anything(),
       }),
     )
 

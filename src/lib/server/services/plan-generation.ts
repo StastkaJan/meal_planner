@@ -4,13 +4,12 @@ import type { Plan } from '$lib/database/schema'
 import type { NutritionTargets } from '$lib/types'
 import {
   fillDaySlots,
-  filterByPrefs,
   optimizeWeekSlots,
   sumNutrition,
 } from '$lib/domain/plan-generation'
 import type { CandidateMeal } from '$lib/domain/plan-generation'
 import { getSettings } from '../repositories/accounts'
-import { favoriteMealIds, listCandidateMeals } from '../repositories/meals'
+import { listCandidateMeals } from '../repositories/meals'
 import {
   getDayBonusNutrition,
   getDaySlotsWithNutrition,
@@ -37,14 +36,45 @@ export type PlanPopulationCommand = {
   myRecipesOnly: boolean
 }
 
-const toCandidate = (
-  meal: Awaited<ReturnType<typeof listCandidateMeals>>[number],
-): CandidateMeal => ({
-  ...meal,
-  proteinG: Number(meal.proteinG ?? 0) || 0,
-  carbsG: Number(meal.carbsG ?? 0) || 0,
-  fatG: Number(meal.fatG ?? 0) || 0,
-})
+type CandidateFilters = NonNullable<Parameters<typeof listCandidateMeals>[1]>
+
+async function listPreferredCandidateMeals(
+  userId: number,
+  filters: CandidateFilters,
+) {
+  const candidates = await listCandidateMeals(userId, filters)
+  if (
+    candidates.length ||
+    (!filters.cuisinePrefs?.length && !filters.dietaryRestrictions?.length)
+  )
+    return candidates
+
+  return listCandidateMeals(userId, {
+    favoritesOnly: filters.favoritesOnly,
+    myRecipesOnly: filters.myRecipesOnly,
+  })
+}
+
+function candidateFromExistingSlot(
+  slot: Awaited<ReturnType<typeof getWeekSlotsWithNutrition>>[number],
+  ownerId: number,
+): CandidateMeal | null {
+  if (
+    slot.mealId === null ||
+    slot.archivedAt !== null ||
+    (slot.mealUserId !== null && slot.mealUserId !== ownerId)
+  )
+    return null
+  return {
+    id: slot.mealId,
+    calories: slot.calories,
+    proteinG: slot.proteinG ?? 0,
+    carbsG: slot.carbsG ?? 0,
+    fatG: slot.fatG ?? 0,
+    tags: [],
+    allowedSlots: [],
+  }
+}
 
 async function autocomposeSlots(
   plan: PlanPrefs,
@@ -54,29 +84,28 @@ async function autocomposeSlots(
   favoritesOnly: boolean,
   myRecipesOnly: boolean,
 ) {
-  const [mealRows, existingSlots, favoriteIds, weekBonus, repeatRows] =
+  const [candidateMeals, existingSlots, weekBonus, repeatRows] =
     await Promise.all([
-      listCandidateMeals(ownerId),
+      listPreferredCandidateMeals(ownerId, {
+        favoritesOnly,
+        myRecipesOnly,
+        cuisinePrefs: plan.cuisinePrefs,
+        dietaryRestrictions: plan.dietaryRestrictions,
+      }),
       getWeekSlotsWithNutrition(plan.id, week),
-      favoritesOnly ? favoriteMealIds(ownerId) : Promise.resolve(null),
       getWeekBonusNutrition(plan.id, week),
       getSlotRepeats(plan.id),
     ])
-  if (!mealRows.length) return 0
-
-  const visibleMeals = mealRows.map(toCandidate)
-  let candidateMeals = myRecipesOnly
-    ? mealRows.filter((meal) => meal.userId === ownerId).map(toCandidate)
-    : visibleMeals
-  const visibleMealsById = new Map(visibleMeals.map((meal) => [meal.id, meal]))
-  if (favoriteIds)
-    candidateMeals = candidateMeals.filter((meal) => favoriteIds.has(meal.id))
-
-  const filteredMeals = filterByPrefs(
-    candidateMeals,
-    plan.cuisinePrefs,
-    plan.dietaryRestrictions,
+  const visibleMealsById = new Map<number, CandidateMeal>(
+    candidateMeals.map((meal) => [meal.id, meal] as const),
   )
+  for (const slot of existingSlots) {
+    const meal = candidateFromExistingSlot(slot, ownerId)
+    if (meal && !visibleMealsById.has(meal.id))
+      visibleMealsById.set(meal.id, meal)
+  }
+  const visibleMeals = [...visibleMealsById.values()]
+  if (!visibleMeals.length) return 0
   const filled = new Set(
     existingSlots.map((slot) => `${slot.date}-${slot.mealType}`),
   )
@@ -142,7 +171,7 @@ async function autocomposeSlots(
       plan.id,
       date,
       freshSlots,
-      filteredMeals,
+      candidateMeals,
       targets,
       consumed,
       usageCounts,
@@ -163,7 +192,7 @@ async function autocomposeSlots(
         locked: key ? lockedGroupKeys.has(key) : false,
       }
     }),
-    filteredMeals,
+    candidateMeals,
     visibleMeals,
     targets,
     [...existingSlots, ...weekBonus],
@@ -184,18 +213,15 @@ async function recalcDaySlots(
   const emptySlots = plan.mealSlots.filter((mealType) => !filled.has(mealType))
   if (!emptySlots.length) return 0
 
-  const [mealRows, dayBonus, weekMealIds] = await Promise.all([
-    listCandidateMeals(ownerId),
+  const [candidateMeals, dayBonus, weekMealIds] = await Promise.all([
+    listPreferredCandidateMeals(ownerId, {
+      cuisinePrefs: plan.cuisinePrefs,
+      dietaryRestrictions: plan.dietaryRestrictions,
+    }),
     getDayBonusNutrition(plan.id, date),
     getWeekMealIds(plan.id, mondayOf(date)),
   ])
-  if (!mealRows.length) return 0
-
-  const candidateMeals = filterByPrefs(
-    mealRows.map(toCandidate),
-    plan.cuisinePrefs,
-    plan.dietaryRestrictions,
-  )
+  if (!candidateMeals.length) return 0
   const usageCounts = new Map<number, number>()
   for (const { mealId } of weekMealIds) {
     if (mealId !== null)

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
-  import type { Meal } from '$lib/database/schema'
+  import type { MealPickerItem } from '$lib/types'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'
@@ -24,7 +24,7 @@
     onNextWeek,
   }: {
     plan: PlanDetail
-    meals: Meal[]
+    meals: MealPickerItem[]
     weekStart: string
     targets: NutritionTargets
     isPro: boolean

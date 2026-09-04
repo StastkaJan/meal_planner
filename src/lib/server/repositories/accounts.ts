@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm'
+import { asc, eq, getTableColumns, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   bonusItems,
@@ -18,6 +18,9 @@ import {
 import type { LegalNotice } from '$lib/legal'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+const { userId: _mealOwnerId, ...accountRecipeColumns } = getTableColumns(meals)
+const { userId: _planOwnerId, ...accountPlanColumns } = getTableColumns(plans)
 
 async function lockAdminIds(tx: Tx) {
   const admins = await tx
@@ -168,75 +171,103 @@ export async function getAccountExport(userId: number) {
       .from(userSettings)
       .where(eq(userSettings.userId, userId))
     const recipeRows = await tx
-      .select()
+      .select({
+        ...accountRecipeColumns,
+        ingredients: sql<
+          { name: string; qty: number | null; unit: string | null }[]
+        >`coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'name', ${ingredients.name},
+              'qty', ${mealIngredients.qty}::float,
+              'unit', ${mealIngredients.unit}
+            ) order by ${mealIngredients.position}
+          )
+          from ${mealIngredients}
+          inner join ${ingredients}
+            on ${ingredients.id} = ${mealIngredients.ingredientId}
+          where ${mealIngredients.mealId} = ${meals.id}
+        ), '[]'::jsonb)`,
+        translations: sql<
+          {
+            locale: string
+            name: string | null
+            description: string | null
+            instructions: string | null
+          }[]
+        >`coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'locale', ${mealTranslations.locale},
+              'name', ${mealTranslations.name},
+              'description', ${mealTranslations.description},
+              'instructions', ${mealTranslations.instructions}
+            ) order by ${mealTranslations.locale}
+          )
+          from ${mealTranslations}
+          where ${mealTranslations.mealId} = ${meals.id}
+        ), '[]'::jsonb)`,
+      })
       .from(meals)
       .where(eq(meals.userId, userId))
-    const ingredientRows = await tx
-      .select({
-        mealId: mealIngredients.mealId,
-        name: ingredients.name,
-        qty: mealIngredients.qty,
-        unit: mealIngredients.unit,
-      })
-      .from(mealIngredients)
-      .innerJoin(meals, eq(mealIngredients.mealId, meals.id))
-      .innerJoin(ingredients, eq(mealIngredients.ingredientId, ingredients.id))
-      .where(eq(meals.userId, userId))
-      .orderBy(mealIngredients.position)
-    const translationRows = await tx
-      .select({
-        mealId: mealTranslations.mealId,
-        locale: mealTranslations.locale,
-        name: mealTranslations.name,
-        description: mealTranslations.description,
-        instructions: mealTranslations.instructions,
-      })
-      .from(mealTranslations)
-      .innerJoin(meals, eq(mealTranslations.mealId, meals.id))
-      .where(eq(meals.userId, userId))
     const planRows = await tx
-      .select()
+      .select({
+        ...accountPlanColumns,
+        slots: sql<
+          { date: string; mealType: string; mealId: number }[]
+        >`coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'date', ${weekSlots.date},
+              'mealType', ${weekSlots.mealType},
+              'mealId', ${weekSlots.mealId}
+            ) order by ${weekSlots.date}, ${weekSlots.mealType}
+          )
+          from ${weekSlots}
+          where ${weekSlots.planId} = ${plans.id}
+        ), '[]'::jsonb)`,
+        bonusItems: sql<
+          Omit<typeof bonusItems.$inferSelect, 'planId'>[]
+        >`coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'id', ${bonusItems.id},
+              'date', ${bonusItems.date},
+              'name', ${bonusItems.name},
+              'calories', ${bonusItems.calories},
+              'proteinG', ${bonusItems.proteinG}::text,
+              'carbsG', ${bonusItems.carbsG}::text,
+              'fatG', ${bonusItems.fatG}::text,
+              'fiberG', ${bonusItems.fiberG}::text,
+              'sugarG', ${bonusItems.sugarG}::text,
+              'saturatedFatG', ${bonusItems.saturatedFatG}::text,
+              'saltG', ${bonusItems.saltG}::text
+            ) order by ${bonusItems.date}, ${bonusItems.id}
+          )
+          from ${bonusItems}
+          where ${bonusItems.planId} = ${plans.id}
+        ), '[]'::jsonb)`,
+        slotRepeats: sql<
+          Omit<typeof slotRepeats.$inferSelect, 'planId'>[]
+        >`coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'mealType', ${slotRepeats.mealType},
+              'groupBreaks', ${slotRepeats.groupBreaks}
+            ) order by ${slotRepeats.mealType}
+          )
+          from ${slotRepeats}
+          where ${slotRepeats.planId} = ${plans.id}
+        ), '[]'::jsonb)`,
+      })
       .from(plans)
       .where(eq(plans.userId, userId))
-    const slots = await tx
+    const [{ mealIds: favoriteMealIds }] = await tx
       .select({
-        planId: weekSlots.planId,
-        date: weekSlots.date,
-        mealType: weekSlots.mealType,
-        mealId: weekSlots.mealId,
+        mealIds: sql<
+          number[]
+        >`coalesce(array_agg(${mealFavorites.mealId} order by ${mealFavorites.mealId}), array[]::integer[])`,
       })
-      .from(weekSlots)
-      .innerJoin(plans, eq(weekSlots.planId, plans.id))
-      .where(eq(plans.userId, userId))
-    const bonuses = await tx
-      .select({
-        id: bonusItems.id,
-        planId: bonusItems.planId,
-        date: bonusItems.date,
-        name: bonusItems.name,
-        calories: bonusItems.calories,
-        proteinG: bonusItems.proteinG,
-        carbsG: bonusItems.carbsG,
-        fatG: bonusItems.fatG,
-        fiberG: bonusItems.fiberG,
-        sugarG: bonusItems.sugarG,
-        saturatedFatG: bonusItems.saturatedFatG,
-        saltG: bonusItems.saltG,
-      })
-      .from(bonusItems)
-      .innerJoin(plans, eq(bonusItems.planId, plans.id))
-      .where(eq(plans.userId, userId))
-    const repeats = await tx
-      .select({
-        planId: slotRepeats.planId,
-        mealType: slotRepeats.mealType,
-        groupBreaks: slotRepeats.groupBreaks,
-      })
-      .from(slotRepeats)
-      .innerJoin(plans, eq(slotRepeats.planId, plans.id))
-      .where(eq(plans.userId, userId))
-    const favorites = await tx
-      .select({ mealId: mealFavorites.mealId })
       .from(mealFavorites)
       .where(eq(mealFavorites.userId, userId))
     const imports = await tx
@@ -266,31 +297,9 @@ export async function getAccountExport(userId: number) {
     return {
       version: 1,
       account: { email: account?.email, isPro: account?.isPro, settings },
-      recipes: recipeRows.map(({ userId: _userId, ...recipe }) => ({
-        ...recipe,
-        ingredients: ingredientRows
-          .filter((item) => item.mealId === recipe.id)
-          .map(({ mealId: _mealId, ...item }) => ({
-            ...item,
-            qty: item.qty === null ? null : Number(item.qty),
-          })),
-        translations: translationRows
-          .filter((translation) => translation.mealId === recipe.id)
-          .map(({ mealId: _mealId, ...translation }) => translation),
-      })),
-      plans: planRows.map(({ userId: _userId, ...plan }) => ({
-        ...plan,
-        slots: slots
-          .filter((slot) => slot.planId === plan.id)
-          .map(({ planId: _planId, ...slot }) => slot),
-        bonusItems: bonuses
-          .filter((item) => item.planId === plan.id)
-          .map(({ planId: _planId, ...item }) => item),
-        slotRepeats: repeats
-          .filter((repeat) => repeat.planId === plan.id)
-          .map(({ planId: _planId, ...repeat }) => repeat),
-      })),
-      favoriteMealIds: favorites.map(({ mealId }) => mealId),
+      recipes: recipeRows,
+      plans: planRows,
+      favoriteMealIds,
       recipeImports: imports,
       legalDocumentEvents: legalEvents,
     }

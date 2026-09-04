@@ -29,6 +29,16 @@ export type PlanDetail = Plan & {
 
 export type MealWithFavorite = Meal & { isFavorite: boolean }
 
+export type MealLibraryItem = Pick<
+  Meal,
+  'id' | 'userId' | 'name' | 'difficulty' | 'timeMinutes'
+> & { isFavorite: boolean }
+
+export type MealPickerItem = Pick<
+  Meal,
+  'id' | 'userId' | 'name' | 'calories' | 'allowedSlots'
+>
+
 export type IngredientInput = {
   name: string
   qty: number | null
