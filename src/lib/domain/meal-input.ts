@@ -1,9 +1,11 @@
-import { UNIT_OPTIONS } from '$lib/constants'
+import { MEAL_TYPES, UNIT_OPTIONS } from '$lib/constants'
 import type { IngredientInput } from '$lib/types'
 
 export class InvalidMealInputError extends Error {}
 
 const units = new Set<string>(UNIT_OPTIONS)
+const mealTypes = new Set<string>(MEAL_TYPES)
+const difficulties = new Set(['easy', 'medium', 'hard'])
 
 const numericFields = [
   ['calories', 0, 2_147_483_647, true],
@@ -75,6 +77,21 @@ function ingredientsValue(value: unknown): IngredientInput[] {
   })
 }
 
+function stringArrayValue(
+  value: unknown,
+  message: string,
+  allowed?: Set<string>,
+) {
+  if (
+    !Array.isArray(value) ||
+    value.some(
+      (item) => typeof item !== 'string' || (allowed && !allowed.has(item)),
+    )
+  )
+    throw new InvalidMealInputError(message)
+  return value
+}
+
 export function validateMealFields(
   fields: Record<string, unknown>,
   requireName = false,
@@ -100,5 +117,30 @@ export function validateMealFields(
 
   if ('ingredients' in values)
     values.ingredients = ingredientsValue(values.ingredients)
+  if ('tags' in values)
+    values.tags = stringArrayValue(values.tags, 'Invalid tags')
+  if ('allowedSlots' in values)
+    values.allowedSlots = stringArrayValue(
+      values.allowedSlots,
+      'Invalid allowed slots',
+      mealTypes,
+    )
+  if ('difficulty' in values) {
+    if (values.difficulty === '' || values.difficulty === null)
+      values.difficulty = null
+    else if (
+      typeof values.difficulty !== 'string' ||
+      !difficulties.has(values.difficulty)
+    )
+      throw new InvalidMealInputError('Invalid difficulty')
+  }
+  for (const field of ['imageUrl', 'description', 'instructions']) {
+    if (
+      field in values &&
+      values[field] !== null &&
+      typeof values[field] !== 'string'
+    )
+      throw new InvalidMealInputError('Invalid meal text value')
+  }
   return values
 }

@@ -59,4 +59,23 @@ describe('validateMealFields', () => {
   ])('rejects invalid ingredient fields %#', (fields) => {
     expect(() => validateMealFields(fields)).toThrow(InvalidMealInputError)
   })
+
+  it.each([
+    { tags: 'Italian' },
+    { tags: ['Italian', 1] },
+    { allowedSlots: 'dinner' },
+    { allowedSlots: ['supper'] },
+    { difficulty: 'impossible' },
+    { imageUrl: { href: 'https://example.com/image.jpg' } },
+    { description: [] },
+    { instructions: 42 },
+  ])('rejects malformed non-numeric fields %#', (fields) => {
+    expect(() => validateMealFields(fields)).toThrow(InvalidMealInputError)
+  })
+
+  it('normalizes an empty difficulty from the edit form', () => {
+    expect(validateMealFields({ difficulty: '' })).toEqual({
+      difficulty: null,
+    })
+  })
 })

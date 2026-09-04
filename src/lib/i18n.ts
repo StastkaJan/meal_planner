@@ -449,6 +449,10 @@ const CS_MESSAGES = {
   'Invalid ingredient unit': 'Neplatná jednotka suroviny',
   'Ingredient quantity is required when a unit is set':
     'Při zadání jednotky je nutné uvést množství suroviny',
+  'Invalid tags': 'Neplatné štítky',
+  'Invalid allowed slots': 'Neplatné povolené chody',
+  'Invalid difficulty': 'Neplatná obtížnost',
+  'Invalid meal text value': 'Neplatná textová hodnota receptu',
   'Only admins can create global recipes':
     'Globální recepty mohou vytvářet pouze správci',
   'Invalid scope': 'Neplatný rozsah',
