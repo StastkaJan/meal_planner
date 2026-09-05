@@ -73,6 +73,36 @@ describe('validateMealFields', () => {
     expect(() => validateMealFields(fields)).toThrow(InvalidMealInputError)
   })
 
+  it.each([
+    [{}, true, 'Name is required'],
+    [{ calories: -1 }, false, 'Invalid meal numeric value'],
+    [{ ingredients: {} }, false, 'Ingredients must be a list'],
+    [
+      { ingredients: [{ qty: 1, unit: 'cup' }] },
+      false,
+      'Ingredient name is required',
+    ],
+    [
+      { ingredients: [{ name: 'Flour', qty: 1, unit: 'bucket' }] },
+      false,
+      'Invalid ingredient unit',
+    ],
+    [
+      { ingredients: [{ name: 'Flour', qty: null, unit: 'cup' }] },
+      false,
+      'Ingredient quantity is required when a unit is set',
+    ],
+    [{ tags: 'Italian' }, false, 'Invalid tags'],
+    [{ allowedSlots: ['supper'] }, false, 'Invalid allowed slots'],
+    [{ difficulty: 'impossible' }, false, 'Invalid difficulty'],
+    [{ instructions: 42 }, false, 'Invalid meal text value'],
+  ] as const)(
+    'preserves validation error messages %#',
+    (fields, requireName, message) => {
+      expect(() => validateMealFields(fields, requireName)).toThrow(message)
+    },
+  )
+
   it('normalizes an empty difficulty from the edit form', () => {
     expect(validateMealFields({ difficulty: '' })).toEqual({
       difficulty: null,

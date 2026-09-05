@@ -1,146 +1,116 @@
+import * as z from 'zod'
 import { MEAL_TYPES, UNIT_OPTIONS } from '$lib/constants'
-import type { IngredientInput } from '$lib/types'
 
 export class InvalidMealInputError extends Error {}
 
-const units = new Set<string>(UNIT_OPTIONS)
-const mealTypes = new Set<string>(MEAL_TYPES)
-const difficulties = new Set(['easy', 'medium', 'hard'])
+const numericError = 'Invalid meal numeric value'
 
-const numericFields = [
-  ['calories', 0, 2_147_483_647, true],
-  ['proteinG', 0, 99_999.9, false],
-  ['carbsG', 0, 99_999.9, false],
-  ['fatG', 0, 99_999.9, false],
-  ['fiberG', 0, 99_999.99, false],
-  ['sugarG', 0, 99_999.99, false],
-  ['saturatedFatG', 0, 99_999.99, false],
-  ['saltG', 0, 99_999.99, false],
-  ['timeMinutes', 0, 2_147_483_647, true],
-  ['servings', 1, 2_147_483_647, true],
-] as const
-
-function numberValue(
-  value: unknown,
-  min: number,
-  max: number,
-  integer: boolean,
-) {
-  if (
-    (typeof value !== 'number' && typeof value !== 'string') ||
-    (typeof value === 'string' && !value.trim())
+function numberValue(min: number, max: number, integer = false) {
+  let number = z
+    .number({ error: numericError })
+    .min(min, { error: numericError })
+    .max(max, { error: numericError })
+  if (integer) number = number.int({ error: numericError })
+  return z.preprocess(
+    (value) =>
+      typeof value === 'string' && value.trim() ? Number(value) : value,
+    number,
   )
-    throw new InvalidMealInputError('Invalid meal numeric value')
-
-  const number = Number(value)
-  if (
-    !Number.isFinite(number) ||
-    number < min ||
-    number > max ||
-    (integer && !Number.isInteger(number))
-  )
-    throw new InvalidMealInputError('Invalid meal numeric value')
-  return number
 }
 
-function ingredientsValue(value: unknown): IngredientInput[] {
-  if (!Array.isArray(value))
-    throw new InvalidMealInputError('Ingredients must be a list')
-
-  return value.map((candidate) => {
-    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate))
-      throw new InvalidMealInputError('Invalid ingredient')
-    const ingredient = candidate as Record<string, unknown>
-    if (typeof ingredient.name !== 'string' || !ingredient.name.trim())
-      throw new InvalidMealInputError('Ingredient name is required')
-
-    const quantityBlank =
-      ingredient.qty === null ||
-      ingredient.qty === undefined ||
-      (typeof ingredient.qty === 'string' && !ingredient.qty.trim())
-    const qty = quantityBlank
-      ? null
-      : numberValue(ingredient.qty, 0, 9_999_999.999, false)
-    const unitBlank =
-      ingredient.unit === null ||
-      ingredient.unit === undefined ||
-      ingredient.unit === ''
-    const unit = unitBlank ? null : ingredient.unit
-    if (unit !== null && (typeof unit !== 'string' || !units.has(unit)))
-      throw new InvalidMealInputError('Invalid ingredient unit')
-    if (unit !== null && qty === null)
-      throw new InvalidMealInputError(
-        'Ingredient quantity is required when a unit is set',
-      )
-
-    return { name: ingredient.name.trim(), qty, unit }
-  })
-}
-
-function stringArrayValue(
-  value: unknown,
-  message: string,
-  allowed?: Set<string>,
-) {
-  if (
-    !Array.isArray(value) ||
-    value.some(
-      (item) => typeof item !== 'string' || (allowed && !allowed.has(item)),
+const nullableNumber = (min: number, max: number, integer = false) =>
+  z
+    .preprocess(
+      (value) => (value === null || value === '' ? null : value),
+      numberValue(min, max, integer).nullable(),
     )
+    .optional()
+
+const name = z
+  .string({ error: 'Name is required' })
+  .trim()
+  .min(1, { error: 'Name is required' })
+
+const nullableText = z
+  .string({ error: 'Invalid meal text value' })
+  .nullable()
+  .optional()
+
+const ingredient = z
+  .object(
+    {
+      name: z
+        .string({ error: 'Ingredient name is required' })
+        .trim()
+        .min(1, { error: 'Ingredient name is required' }),
+      qty: z.preprocess(
+        (value) =>
+          value === null ||
+          value === undefined ||
+          (typeof value === 'string' && !value.trim())
+            ? null
+            : value,
+        numberValue(0, 9_999_999.999).nullable(),
+      ),
+      unit: z.preprocess(
+        (value) =>
+          value === null || value === undefined || value === '' ? null : value,
+        z.enum(UNIT_OPTIONS, { error: 'Invalid ingredient unit' }).nullable(),
+      ),
+    },
+    { error: 'Invalid ingredient' },
   )
-    throw new InvalidMealInputError(message)
-  return value
-}
+  .refine(({ qty, unit }) => unit === null || qty !== null, {
+    error: 'Ingredient quantity is required when a unit is set',
+    path: ['qty'],
+  })
+
+const mealFields = z.looseObject({
+  name: name.optional(),
+  calories: nullableNumber(0, 2_147_483_647, true),
+  proteinG: nullableNumber(0, 99_999.9),
+  carbsG: nullableNumber(0, 99_999.9),
+  fatG: nullableNumber(0, 99_999.9),
+  fiberG: nullableNumber(0, 99_999.99),
+  sugarG: nullableNumber(0, 99_999.99),
+  saturatedFatG: nullableNumber(0, 99_999.99),
+  saltG: nullableNumber(0, 99_999.99),
+  tags: z
+    .array(z.string({ error: 'Invalid tags' }), { error: 'Invalid tags' })
+    .optional(),
+  allowedSlots: z
+    .array(z.enum(MEAL_TYPES, { error: 'Invalid allowed slots' }), {
+      error: 'Invalid allowed slots',
+    })
+    .optional(),
+  imageUrl: nullableText,
+  description: nullableText,
+  ingredients: z
+    .array(ingredient, { error: 'Ingredients must be a list' })
+    .optional(),
+  instructions: nullableText,
+  timeMinutes: nullableNumber(0, 2_147_483_647, true),
+  difficulty: z
+    .preprocess(
+      (value) => (value === '' ? null : value),
+      z
+        .enum(['easy', 'medium', 'hard'], {
+          error: 'Invalid difficulty',
+        })
+        .nullable(),
+    )
+    .optional(),
+  servings: numberValue(1, 2_147_483_647, true).optional(),
+})
+
+const namedMealFields = mealFields.safeExtend({ name })
 
 export function validateMealFields(
   fields: Record<string, unknown>,
   requireName = false,
 ) {
-  const values = { ...fields }
-  if (requireName || 'name' in values) {
-    if (typeof values.name !== 'string' || !values.name.trim())
-      throw new InvalidMealInputError('Name is required')
-    values.name = values.name.trim()
-  }
-
-  for (const [field, min, max, integer] of numericFields) {
-    if (!(field in values)) continue
-    const value = values[field]
-    if (value === null || value === undefined || value === '') {
-      if (field === 'servings')
-        throw new InvalidMealInputError('Invalid meal numeric value')
-      values[field] = null
-    } else {
-      values[field] = numberValue(value, min, max, integer)
-    }
-  }
-
-  if ('ingredients' in values)
-    values.ingredients = ingredientsValue(values.ingredients)
-  if ('tags' in values)
-    values.tags = stringArrayValue(values.tags, 'Invalid tags')
-  if ('allowedSlots' in values)
-    values.allowedSlots = stringArrayValue(
-      values.allowedSlots,
-      'Invalid allowed slots',
-      mealTypes,
-    )
-  if ('difficulty' in values) {
-    if (values.difficulty === '' || values.difficulty === null)
-      values.difficulty = null
-    else if (
-      typeof values.difficulty !== 'string' ||
-      !difficulties.has(values.difficulty)
-    )
-      throw new InvalidMealInputError('Invalid difficulty')
-  }
-  for (const field of ['imageUrl', 'description', 'instructions']) {
-    if (
-      field in values &&
-      values[field] !== null &&
-      typeof values[field] !== 'string'
-    )
-      throw new InvalidMealInputError('Invalid meal text value')
-  }
-  return values
+  const result = (requireName ? namedMealFields : mealFields).safeParse(fields)
+  if (!result.success)
+    throw new InvalidMealInputError(result.error.issues[0].message)
+  return result.data
 }
