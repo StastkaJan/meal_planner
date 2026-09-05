@@ -105,7 +105,7 @@
         scope: 'personal',
         sourceLocale: importLocale,
       })
-      await goto(`/meals/${created.id}?edit=1`)
+      await goto(`/meals/${created.id}/edit`)
     } catch (error) {
       importError =
         error instanceof Error ? message(error.message) : t('Import failed')

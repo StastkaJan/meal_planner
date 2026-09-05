@@ -104,6 +104,8 @@ docker-compose.yml
 
 ## DB schema & API routes
 
+Recipe editing and translation use `/meals/[id]/edit` and `/meals/[id]/translate`; both require recipe edit access.
+
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
 
 Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/business-cases/meal-calendar.md), [docs/business-cases/recipes.md](docs/business-cases/recipes.md), [docs/business-cases/account-data.md](docs/business-cases/account-data.md).

@@ -8,7 +8,10 @@ import { hasMealImage } from '$lib/server/meal-images'
 import { localizeMeal } from '$lib/server/services/meals'
 import type { PageServerLoad } from './$types'
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load = (async ({
+  params,
+  locals,
+}: Pick<Parameters<PageServerLoad>[0], 'params' | 'locals'>) => {
   const mealId = Number(params.id)
   const meal = await findMeal(mealId, locals.user?.id)
   // hide another user's personal meal — indistinguishable from "not found"
@@ -30,4 +33,4 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     editable:
       meal.userId === locals.user?.id || (!meal.userId && locals.user?.isAdmin),
   }
-}
+}) satisfies PageServerLoad
