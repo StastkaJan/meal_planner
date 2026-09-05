@@ -10,6 +10,21 @@ export const createPlan = () => requestJson<Plan>('/plans', { method: 'POST' })
 export const deletePlan = (id: number) =>
   request(`/plans/${id}`, { method: 'DELETE' })
 
+export const clearPlan = (id: number, date?: string) =>
+  request(`/plans/${id}/clear`, { method: 'POST', body: jsonBody({ date }) })
+
+export const rerollMeal = (
+  id: number,
+  date: string,
+  mealType: string,
+  favoritesOnly: boolean,
+  myRecipesOnly: boolean,
+) =>
+  request(`/plans/${id}/reroll-meal`, {
+    method: 'POST',
+    body: jsonBody({ date, mealType, favoritesOnly, myRecipesOnly }),
+  })
+
 export const setPlanPortions = (id: number, portions: number) =>
   requestJson<Plan>(`/plans/${id}`, {
     method: 'PATCH',

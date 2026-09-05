@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit'
 import { resolveTargets } from '$lib/domain/nutrition'
 import { addDays, groupWindow, mondayOf } from '$lib/utils/date-time'
 import type { Plan } from '$lib/database/schema'
@@ -19,6 +20,7 @@ import {
   getWeekSlotsWithNutrition,
   insertSlots,
   ownedPlan,
+  replaceSingleSlot,
 } from '../repositories/plans'
 import { monitorService } from '../observability'
 
@@ -281,4 +283,52 @@ export async function recalculatePlanDay(
       userId,
     )
   })
+}
+
+export async function rerollPlanMeal(
+  plan: Plan & { userId: number },
+  date: string,
+  mealType: string,
+  filters: { favoritesOnly: boolean; myRecipesOnly: boolean },
+) {
+  const [settings, daySlots, dayBonus, weekMealIds] = await Promise.all([
+    getSettings(plan.userId),
+    getDaySlotsWithNutrition(plan.id, date),
+    getDayBonusNutrition(plan.id, date),
+    getWeekMealIds(plan.id, mondayOf(date)),
+  ])
+  const current = daySlots.find((slot) => slot.mealType === mealType)
+  if (current?.mealId == null) error(404, 'Slot not found')
+  const candidates = await listCandidateMeals(plan.userId, {
+    ...filters,
+    cuisinePrefs: settings?.cuisinePrefs ?? [],
+    dietaryRestrictions: settings?.dietaryRestrictions ?? [],
+  })
+  const usageCounts = new Map<number, number>()
+  for (const { mealId } of weekMealIds) {
+    if (mealId !== null)
+      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
+  }
+  const [replacement] = fillDaySlots(
+    plan.id,
+    date,
+    [mealType],
+    candidates.filter((meal) => meal.id !== current.mealId),
+    resolveTargets(settings),
+    sumNutrition([
+      ...daySlots.filter((slot) => slot.mealType !== mealType),
+      ...dayBonus,
+    ]),
+    usageCounts,
+  )
+  if (!replacement) return { changed: false }
+  const changed = await replaceSingleSlot(
+    plan.id,
+    date,
+    mealType,
+    current.mealId,
+    replacement.mealId,
+  )
+  if (!changed) error(409, 'Meal assignment changed. Please try again.')
+  return { changed: true }
 }
