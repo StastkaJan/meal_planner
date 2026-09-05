@@ -20,6 +20,9 @@
     onAddBonus,
     onDeleteBonus,
     onRecalcDay,
+    onRerollMeal,
+    onClearDay,
+    busy,
     onPrevWeek,
     onNextWeek,
   }: {
@@ -54,6 +57,9 @@
     ) => void
     onDeleteBonus: (id: number) => void
     onRecalcDay: (date: string) => void
+    onRerollMeal: (date: string, mealType: string) => Promise<void>
+    onClearDay: (date: string) => Promise<void>
+    busy: boolean
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
@@ -168,6 +174,13 @@
             <th class="day-head" class:today={isoDate(dt) === todayISO}>
               <span class="day-name">{fmtUTC(dt, { weekday: 'short' })}</span>
               <span class="day-num">{dt.getUTCDate()}</span>
+              <button
+                class="btn-recalc"
+                disabled={busy ||
+                  (!plan.slots.some((slot) => slot.date === isoDate(dt)) &&
+                    !plan.bonus.some((item) => item.date === isoDate(dt)))}
+                onclick={() => onClearDay(isoDate(dt))}>{t('Clear day')}</button
+              >
             </th>
           {/each}
         </tr>
@@ -187,6 +200,9 @@
                   leftoverSource={previousMatchingSlot(slot)}
                   onPick={(mealId) => onSlotChange(date, mt, mealId)}
                   onLeftover={(source) => onSlotLeftover(date, mt, source)}
+                  onReroll={() => onRerollMeal(date, mt)}
+                  {isPro}
+                  {busy}
                 />
               </td>
             {/each}

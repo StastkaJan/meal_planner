@@ -107,6 +107,123 @@ test('delete a plan', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Create plan' })).toBeVisible()
 })
 
+test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async ({
+  page,
+}) => {
+  grantPro(email)
+  await page.reload()
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
+  const planId = new URL(page.url()).searchParams.get('plan')!
+  const week = new URL(page.url()).searchParams.get('week')!
+  const nextDate = (days: number) => {
+    const date = new Date(week)
+    date.setUTCDate(date.getUTCDate() + days)
+    return date.toISOString().slice(0, 10)
+  }
+  const base = `/plans/${planId}`
+  const mealResponse = await page.request.get('/meals')
+  const meals = await mealResponse.json()
+  const meal = meals.find(
+    (item: { allowedSlots: string[] }) =>
+      !item.allowedSlots.length || item.allowedSlots.includes('lunch'),
+  )
+  expect(meal).toBeTruthy()
+  expect(
+    (
+      await page.request.put(`${base}/slot-repeats`, {
+        data: {
+          mealType: 'lunch',
+          groupBreaks: [false, true, true, true, true, true],
+        },
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(
+    (
+      await page.request.put(`${base}/slots`, {
+        data: { date: week, mealType: 'lunch', mealId: meal.id },
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(
+    (
+      await page.request.patch(`${base}/slots`, {
+        data: {
+          date: nextDate(1),
+          mealType: 'lunch',
+          source: { date: week, mealType: 'lunch' },
+        },
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(
+    (
+      await page.request.post(`${base}/bonus`, {
+        data: { date: week, name: 'Test extra', calories: 100 },
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(
+    (
+      await page.request.put(`${base}/slots`, {
+        data: { date: nextDate(7), mealType: 'lunch', mealId: meal.id },
+      })
+    ).ok(),
+  ).toBe(true)
+  await page.reload()
+  const cells = page
+    .locator('tbody tr')
+    .filter({
+      has: page.locator('.row-label', { hasText: 'lunch' }),
+    })
+    .locator('.slot-cell')
+  const before = await cells
+    .nth(0)
+    .getByRole('link', { name: 'Show recipe' })
+    .getAttribute('href')
+  await cells
+    .nth(0)
+    .getByRole('button', { name: 'Try a different recipe' })
+    .click()
+  await expect(
+    cells.nth(0).getByRole('link', { name: 'Show recipe' }),
+  ).not.toHaveAttribute('href', before!)
+  await expect(
+    cells.nth(1).getByRole('link', { name: 'Show recipe' }),
+  ).toHaveAttribute('href', before!)
+  await expect(cells.nth(1).locator('.leftover-label')).toHaveCount(0)
+
+  page.once('dialog', (dialog) => dialog.dismiss())
+  await page
+    .getByRole('button', { name: 'Clear day', exact: true })
+    .first()
+    .click()
+  await expect(cells.nth(0).locator('.name')).toHaveCount(1)
+  page.once('dialog', (dialog) => dialog.accept())
+  await page
+    .getByRole('button', { name: 'Clear day', exact: true })
+    .first()
+    .click()
+  await expect(cells.nth(0).locator('.name')).toHaveCount(0)
+  await expect(cells.nth(1).locator('.name')).toHaveCount(1)
+  await expect(page.locator('.bonus-item')).toHaveCount(0)
+  await page.reload()
+  await expect(cells.nth(0).locator('.name')).toHaveCount(0)
+  await expect(cells.nth(1).locator('.name')).toHaveCount(1)
+
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Clear plan', exact: true }).click()
+  await expect(page.locator('.cal .name')).toHaveCount(0)
+  const nextWeek = await (
+    await page.request.get(`${base}?week=${nextDate(7)}`)
+  ).json()
+  expect(nextWeek.slots).toEqual([])
+  expect(nextWeek.bonus).toEqual([])
+  expect(nextWeek.slotRepeats).toHaveLength(1)
+  await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
+})
+
 test('a joined repeat pattern propagates a slot pick to the rest of the group', async ({
   page,
 }) => {

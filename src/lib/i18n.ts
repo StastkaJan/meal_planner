@@ -10,6 +10,17 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'Clear plan': 'Vyprázdnit plán',
+  'Clear day': 'Vyprázdnit den',
+  'Clear all meals and extras for this day?':
+    'Vymazat všechna jídla a položky navíc pro tento den?',
+  'Clear all meals and extras across every week of this plan? Plan settings will be kept.':
+    'Vymazat všechna jídla a položky navíc ve všech týdnech tohoto plánu? Nastavení plánu zůstane zachováno.',
+  'Try a different recipe': 'Vybrat jiný recept',
+  'No different recipe matches this slot and your preferences.':
+    'Pro tento čas a vaše preference není k dispozici jiný recept.',
+  'Meal assignment changed. Please try again.':
+    'Přiřazení jídla se změnilo. Zkuste to prosím znovu.',
   'Meal Plan home': 'Domů – jídelní plán',
   'Main navigation': 'Hlavní navigace',
   Planner: 'Plánovač',
