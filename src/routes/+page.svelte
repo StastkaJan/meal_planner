@@ -180,8 +180,6 @@
         {t('Plan the week, balance nutrition, shop once.')}
       </p>
     </div>
-  </div>
-  <div class="plan-bar">
     <div class="plan-actions">
       {#if !plan}
         <button class="btn" onclick={createPlan}>{t('Create plan')}</button>
@@ -240,6 +238,8 @@
   }
   .page-heading {
     display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
     align-items: flex-end;
     justify-content: space-between;
   }
@@ -262,14 +262,6 @@
     margin-top: 8px;
     color: $color-text-muted;
     font-size: 0.95rem;
-  }
-  .plan-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding-bottom: 2px;
   }
   .plan-actions {
     display: flex;
@@ -317,17 +309,12 @@
     .page {
       gap: 14px;
     }
-    .plan-bar {
-      align-items: flex-start;
-    }
     .plan-actions {
       width: 100%;
-      overflow-x: auto;
-      flex-wrap: nowrap;
-      padding-bottom: 2px;
     }
     .btn {
       flex: 0 0 auto;
+      min-height: 44px;
     }
   }
 </style>

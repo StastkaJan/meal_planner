@@ -8,7 +8,7 @@
 
 ## Stack
 
-- **Frontend**: SvelteKit 5, Svelte 5, Vite 6, Sass
+- **Frontend**: SvelteKit 2, Svelte 5, Vite 8, Sass
 - **Backend**: Node.js adapter (SvelteKit API routes)
 - **DB**: PostgreSQL + Drizzle ORM
 - **Auth**: Session-based, scrypt hashed passwords, 30-day expiry cookie

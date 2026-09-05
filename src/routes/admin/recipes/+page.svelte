@@ -74,14 +74,16 @@
     <td><a class="recipe-link" href="/meals/{recipe.id}">{recipe.name}</a></td>
     <td>{recipe.sourceLocale.toUpperCase()}</td>
     <td>{recipe.difficulty ? label(recipe.difficulty) : '—'}</td>
-    <td class="actions">
-      <a class="edit-link" href="/meals/{recipe.id}?edit=1">{t('Edit')}</a>
-      <Button
-        size="sm"
-        variant="danger"
-        disabled={archiveBusy}
-        onclick={() => archive(recipe.id)}>{t('Archive')}</Button
-      >
+    <td class="action-cell">
+      <div class="actions">
+        <a class="edit-link" href="/meals/{recipe.id}?edit=1">{t('Edit')}</a>
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={archiveBusy}
+          onclick={() => archive(recipe.id)}>{t('Archive')}</Button
+        >
+      </div>
     </td>
   </tr>
 {/snippet}
@@ -199,6 +201,7 @@
   section,
   .queue {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
   }
   .eyebrow {
@@ -285,7 +288,7 @@
   .error {
     color: $color-danger;
   }
-  td.actions {
+  .action-cell {
     width: 11rem;
     min-width: 11rem;
     white-space: nowrap;
@@ -316,5 +319,13 @@
   }
   .instructions {
     white-space: pre-wrap;
+  }
+
+  @media (max-width: 640px) {
+    .section-heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
   }
 </style>

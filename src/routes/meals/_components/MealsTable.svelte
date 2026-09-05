@@ -47,28 +47,37 @@
       {meal.difficulty ? label(meal.difficulty) : '—'}
     </td>
     <td>{meal.timeMinutes ? `${meal.timeMinutes} min` : '—'}</td>
-    <td class="actions">
-      <Button
-        size="sm"
-        variant="secondary"
-        class={meal.isFavorite ? 'active' : ''}
-        aria-label={meal.isFavorite ? t('Unfavourite') : t('Mark as favourite')}
-        onclick={() => onFavorite(meal.id, !meal.isFavorite)}
-      >
-        {meal.isFavorite ? '★' : '☆'}
-      </Button>
-      {#if meal.userId}
-        <Button size="sm" variant="danger" onclick={() => onDelete(meal.id)}
-          >{t('Delete')}</Button
+    <td>
+      <div class="actions">
+        <Button
+          size="sm"
+          variant="secondary"
+          class={meal.isFavorite ? 'active' : ''}
+          aria-label={meal.isFavorite
+            ? t('Unfavourite')
+            : t('Mark as favourite')}
+          onclick={() => onFavorite(meal.id, !meal.isFavorite)}
         >
-      {/if}
+          {meal.isFavorite ? '★' : '☆'}
+        </Button>
+        {#if meal.userId}
+          <Button size="sm" variant="danger" onclick={() => onDelete(meal.id)}
+            >{t('Delete')}</Button
+          >
+        {/if}
+      </div>
     </td>
   </tr>
 {/snippet}
 
 <div class="table-wrap">
   {#if creating}
-    <form class="create-form" method="POST" onsubmit={submit}>
+    <form
+      class="create-form"
+      class:personal={!isAdmin}
+      method="POST"
+      onsubmit={submit}
+    >
       <Input type="text" name="name" placeholder={t('Meal name')} required />
       {#if isAdmin}
         <Select
@@ -112,6 +121,9 @@
     padding: 0.8rem;
     border-bottom: 1px solid $color-border;
   }
+  .create-form.personal {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
 
   .meal-name {
     font-weight: 500;
@@ -150,10 +162,12 @@
   }
 
   @media (max-width: 640px) {
-    .create-form {
-      grid-template-columns: 1fr 1fr;
+    .create-form,
+    .create-form.personal {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .create-form :global(.ui-input) {
+    .create-form :global(.ui-input),
+    .create-form :global(.ui-select) {
       grid-column: 1 / -1;
     }
   }
