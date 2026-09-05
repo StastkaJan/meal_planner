@@ -61,15 +61,22 @@
       <div class="main-links">
         <a
           href="/"
+          aria-current={$page.url.pathname === '/' ? 'page' : undefined}
           class:active={$page.url.pathname === '/' ||
             $page.url.pathname.startsWith('/plans/')}>{t('Planner')}</a
         >
-        <a href="/meals" class:active={$page.url.pathname.startsWith('/meals')}
+        <a
+          href="/meals"
+          aria-current={$page.url.pathname === '/meals' ? 'page' : undefined}
+          class:active={$page.url.pathname.startsWith('/meals')}
           >{t('Recipes')}</a
         >
         {#if data.user.isAdmin}
           <a
             href="/admin/recipes"
+            aria-current={$page.url.pathname === '/admin/recipes'
+              ? 'page'
+              : undefined}
             class:active={$page.url.pathname.startsWith('/admin')}
             >{t('Admin')}</a
           >
@@ -79,6 +86,8 @@
         <a
           class="profile"
           href="/profile"
+          aria-label={t('Profile')}
+          aria-current={$page.url.pathname === '/profile' ? 'page' : undefined}
           class:active={$page.url.pathname === '/profile'}
         >
           <span class="avatar">{data.user.email.slice(0, 1).toUpperCase()}</span
@@ -170,6 +179,7 @@
   }
   .brand {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 10px;
     padding: 0 12px 0 0;
@@ -191,6 +201,16 @@
   }
   .account-links {
     margin-left: auto;
+    min-width: 0;
+  }
+  .email {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .account-links form {
+    flex-shrink: 0;
   }
   a {
     padding: 8px 12px;
@@ -214,11 +234,13 @@
   }
   .profile {
     display: flex;
+    min-width: 0;
     align-items: center;
     gap: 8px;
   }
   .avatar {
     display: grid;
+    flex-shrink: 0;
     width: 28px;
     height: 28px;
     place-items: center;
@@ -298,7 +320,8 @@
   }
   .shell-footer {
     display: flex;
-    gap: 18px;
+    flex-wrap: wrap;
+    gap: 4px 18px;
     justify-content: center;
     padding: 0 32px 32px;
 
@@ -308,27 +331,45 @@
     }
   }
 
+  @media (max-width: 1050px) {
+    .email {
+      display: none;
+    }
+  }
+
   @media (max-width: 720px) {
     nav {
       min-height: 62px;
-      gap: 12px;
-      padding: 0 16px;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      padding: 10px 16px;
     }
     .brand img {
-      width: 38px;
-      height: 38px;
-      object-fit: cover;
-      object-position: left;
+      width: 120px;
+      height: auto;
     }
-    .email,
-    form {
-      display: none;
+    .brand {
+      padding: 0;
     }
     .account-links {
       margin-left: auto;
     }
+    .profile {
+      padding: 8px;
+    }
+    .main-links {
+      order: 1;
+      width: 100%;
+    }
     .main-links a {
-      padding-inline: 9px;
+      flex: 1;
+      min-height: 44px;
+      padding: 11px 8px;
+      text-align: center;
+    }
+    button {
+      min-height: 44px;
+      padding-inline: 8px;
     }
     main {
       padding: 24px 16px 48px;
@@ -339,6 +380,13 @@
     .legal-notice {
       align-items: flex-start;
       flex-direction: column;
+    }
+    .legal-actions {
+      flex-wrap: wrap;
+    }
+    .shell-footer {
+      padding-inline: 16px;
+      column-gap: 4px;
     }
   }
 </style>

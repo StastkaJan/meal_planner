@@ -32,16 +32,23 @@
   } = $props()
 
   const grams = (value: number) => Number(value.toFixed(1))
+  const calorieProgress = $derived(
+    nutritionProgress(calories, targets.calories),
+  )
+
+  function balance(value: number, target: number, unit: string) {
+    return t(
+      value > target
+        ? '{value} {unit} over target'
+        : '{value} {unit} remaining',
+      {
+        value: grams(Math.abs(target - value)),
+        unit,
+      },
+    )
+  }
 
   const rows = $derived([
-    {
-      key: 'calories',
-      label: t('Calories'),
-      value: calories,
-      target: targets.calories,
-      unit: 'kcal',
-      primary: true,
-    },
     {
       key: 'protein',
       label: t('Protein'),
@@ -101,95 +108,203 @@
   ])
 </script>
 
-<div class="bar-col">
-  {#each rows as row}
-    {@const progress = nutritionProgress(row.value, row.target)}
-    <div
-      class="bar-row"
-      class:secondary={!row.primary}
-      class:over={progress.wayOver}
-      title={`${row.label}: ${grams(row.value)}${row.unit} / ${row.target}${row.unit}`}
-    >
-      <div class="track">
-        <div class="fill {row.key}" style="width:{progress.percent}%"></div>
-      </div>
-      <span class="val"
-        >{grams(row.value)}{row.primary && row.key === 'calories'
-          ? ''
-          : 'g'}</span
+{#snippet nutrient(row: (typeof rows)[number])}
+  {@const progress = nutritionProgress(row.value, row.target)}
+  {@const status = row.primary
+    ? balance(row.value, row.target, row.unit)
+    : t(
+        row.value > row.target
+          ? '{value} g above reference'
+          : '{value} g below reference',
+        {
+          value: grams(Math.abs(row.target - row.value)),
+        },
+      )}
+  <div
+    class="nutrient {row.key}"
+    class:over={progress.wayOver}
+    role="meter"
+    aria-label={row.label}
+    aria-valuemin="0"
+    aria-valuemax={row.target}
+    aria-valuenow={Math.min(row.value, row.target)}
+    aria-valuetext={`${grams(row.value)} / ${row.target} g · ${status}`}
+  >
+    <svg class="ring" viewBox="0 0 40 40" aria-hidden="true">
+      <circle class="ring-track" cx="20" cy="20" r="16" />
+      <circle
+        class="ring-fill"
+        cx="20"
+        cy="20"
+        r="16"
+        pathLength="100"
+        stroke-dasharray={`${progress.percent} 100`}
+        transform="rotate(-90 20 20)"
+      />
+    </svg>
+    <div class="nutrient-copy">
+      <span class="nutrient-label">{row.label}</span>
+      <span class="amount"
+        ><strong>{grams(row.value)}</strong> / {row.target} g</span
       >
+      <span class="balance">{status}</span>
     </div>
+  </div>
+{/snippet}
+
+<div class="nutrition-summary">
+  <div class="calories" class:over={calorieProgress.wayOver}>
+    <span class="nutrient-label">{t('Calories')}</span>
+    <div class="calorie-total">
+      <strong>{grams(calories)}</strong> <span>kcal</span>
+    </div>
+    <span class="target"
+      >{t('Target: {value} kcal', { value: targets.calories })}</span
+    >
+    <div
+      class="calorie-track"
+      role="meter"
+      aria-label={t('Calories')}
+      aria-valuemin="0"
+      aria-valuemax={targets.calories}
+      aria-valuenow={Math.min(calories, targets.calories)}
+      aria-valuetext={`${t('Calories: {value} / {target} kcal', { value: grams(calories), target: targets.calories })} · ${balance(calories, targets.calories, 'kcal')}`}
+    >
+      <div
+        class="calorie-fill"
+        style:width={`${calorieProgress.percent}%`}
+      ></div>
+    </div>
+    <span class="balance">{balance(calories, targets.calories, 'kcal')}</span>
+  </div>
+  {#each rows.filter((row) => row.primary) as row}
+    {@render nutrient(row)}
   {/each}
+  <details>
+    <summary>{t('More nutrients')}</summary>
+    <p class="reference-note">{t('Daily reference amounts')}</p>
+    <div class="secondary-nutrients">
+      {#each rows.filter((row) => !row.primary) as row}
+        {@render nutrient(row)}
+      {/each}
+    </div>
+  </details>
 </div>
 
 <style lang="scss">
-  .bar-col {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    padding: 2px;
+  .nutrition-summary,
+  .secondary-nutrients {
+    display: grid;
+    gap: 12px;
+    font-variant-numeric: tabular-nums;
   }
-  .bar-row {
-    display: flex;
+  .nutrient {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
-  .bar-row.secondary {
-    gap: 3px;
-    margin-top: 1px;
+  .nutrient-copy,
+  .calories {
+    display: grid;
+    gap: 2px;
   }
-  .track {
-    flex: 1;
-    height: 4px;
-    background: #e7e1d6;
-    border-radius: 3px;
+  .nutrient-label {
+    color: $color-text;
+    font-size: 0.7rem;
+    font-weight: 650;
+  }
+  .amount,
+  .target,
+  .calorie-total span {
+    color: $color-text-muted;
+    font-size: 0.7rem;
+  }
+  .amount strong {
+    color: $color-text;
+  }
+  .balance,
+  .reference-note {
+    color: $color-text-muted;
+    font-size: 0.65rem;
+    line-height: 1.4;
+  }
+  .calorie-total {
+    line-height: 1.2;
+  }
+  .calorie-total strong {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+  .calorie-track {
+    height: 8px;
+    margin: 5px 0;
+    border-radius: 999px;
+    background: $color-surface-2;
     overflow: hidden;
   }
-  .fill {
+  .calorie-fill {
     height: 100%;
-    border-radius: 3px;
+    border-radius: inherit;
+    background: #b56b12;
     transition: width 0.3s;
-    &.calories {
-      background: #f59e0b;
-    }
-    &.protein {
-      background: #3b82f6;
-    }
-    &.carbs {
-      background: #22c55e;
-    }
-    &.fat {
-      background: #ec4899;
-    }
-    &.fiber {
-      background: #8b5cf6;
-    }
-    &.sugar {
-      background: #eab308;
-    }
-    &.saturates {
-      background: #f97316;
-    }
-    &.salt {
-      background: #64748b;
-    }
   }
-  .bar-row.over {
-    .fill {
-      background: $color-danger;
-    }
-    .track {
-      box-shadow: 0 0 0 1px rgb(184 59 50 / 35%);
-    }
-    .val {
-      color: $color-danger;
-      font-weight: 750;
-    }
+  .ring {
+    display: block;
+    width: 32px;
+    height: 32px;
+    fill: none;
+    stroke-width: 6px;
   }
-  .val {
-    font-size: 0.65rem;
+  .ring-track {
+    stroke: $color-surface-2;
+  }
+  .ring-fill {
+    stroke: currentColor;
+    transition: stroke-dasharray 0.3s;
+  }
+  .protein {
+    color: #4f6f8f;
+  }
+  .carbs {
+    color: #4d7c5a;
+  }
+  .fat {
+    color: #be5d7a;
+  }
+  .fiber {
+    color: #8266a3;
+  }
+  .sugar {
+    color: #9b7b16;
+  }
+  .saturates {
+    color: #b86d37;
+  }
+  .salt {
+    color: #64748b;
+  }
+  .over {
+    color: $color-danger;
+  }
+  .over .calorie-fill {
+    background: $color-danger;
+  }
+  .over .balance {
+    color: $color-danger;
+  }
+  details {
+    border-top: 1px solid $color-border;
+    padding-top: 8px;
+  }
+  summary {
+    padding: 4px 0;
     color: $color-text-muted;
-    min-width: 24px;
-    text-align: right;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+  .reference-note {
+    margin: 6px 0 12px;
   }
 </style>

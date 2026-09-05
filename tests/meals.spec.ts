@@ -78,6 +78,60 @@ test('create a meal', async ({ page }) => {
   await expect(page.getByText('Pasta Bolognese')).not.toBeVisible()
 })
 
+test('@smoke mobile recipe controls stay reachable and filters keep their state', async ({
+  page,
+}) => {
+  for (const width of [1280, 768, 320]) {
+    await page.setViewportSize({ width, height: 740 })
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true)
+  }
+  await page.setViewportSize({ width: 320, height: 740 })
+  const navigation = page.getByRole('navigation', { name: 'Main navigation' })
+  await expect(
+    navigation.getByRole('link', { name: 'Profile' }),
+  ).toBeInViewport()
+  await expect(
+    navigation.getByRole('button', { name: 'Sign out' }),
+  ).toBeInViewport()
+  await expect(
+    navigation.getByRole('link', { name: 'Recipes' }),
+  ).toHaveAttribute('aria-current', 'page')
+  await expect(
+    page.getByRole('button', { name: '+ Add meal' }),
+  ).toBeInViewport()
+  await expect(
+    page.getByRole('searchbox', { name: 'Search recipes…' }),
+  ).toBeInViewport()
+
+  const favourites = page.getByRole('button', { name: 'Favourites only' })
+  await expect(favourites).toBeInViewport()
+  await expect(favourites).toHaveAttribute('aria-pressed', 'false')
+  await favourites.click()
+  await expect(page).toHaveURL(/favorites=1/)
+  await expect(favourites).toHaveAttribute('aria-pressed', 'true')
+  await page.reload()
+  await expect(favourites).toHaveAttribute('aria-pressed', 'true')
+
+  await page.getByRole('button', { name: '+ Add meal' }).click()
+  const save = page
+    .locator('.create-form')
+    .getByRole('button', { name: 'Save' })
+  await save.scrollIntoViewIfNeeded()
+  await expect(save).toBeInViewport()
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true)
+
+  await navigation.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL('/auth/login')
+})
+
 test('preserves the recipe import panel in the URL', async ({ page }) => {
   await page.goto('/meals?tab=import')
   await expect(
