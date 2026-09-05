@@ -176,6 +176,13 @@
       "when": 1788274720042,
       "tag": "0024_medical_slapstick",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788602623381,
+      "tag": "0025_smart_lady_vermin",
+      "breakpoints": true
     }
   ]
 }

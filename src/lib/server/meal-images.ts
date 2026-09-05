@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import {
   access,
   mkdir,
+  open,
   readFile,
   rename,
   unlink,
@@ -84,6 +85,31 @@ export async function readMealImage(mealId: number) {
   } catch (cause) {
     if (isMissingFile(cause)) return null
     throw cause
+  }
+}
+
+export async function readConditionalMealImage(
+  mealId: number,
+  ifNoneMatch: string | null,
+) {
+  let file
+  try {
+    file = await open(imagePath(mealId), 'r')
+  } catch (cause) {
+    if (isMissingFile(cause)) return null
+    throw cause
+  }
+  try {
+    const stat = await file.stat({ bigint: true })
+    // Atomic replacements change file identity even when the size is unchanged.
+    const tag = `"${stat.ino}-${stat.size}-${stat.mtimeNs}-${stat.ctimeNs}"`
+    const unchanged = ifNoneMatch?.split(',').some((value) => {
+      const candidate = value.trim().replace(/^W\//, '')
+      return candidate === '*' || candidate === tag
+    })
+    return { etag: `W/${tag}`, image: unchanged ? null : await file.readFile() }
+  } finally {
+    await file.close()
   }
 }
 

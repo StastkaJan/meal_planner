@@ -8,7 +8,7 @@
 
 ## Stack
 
-- **Frontend**: SvelteKit 5, Svelte 5, Vite 6, Sass
+- **Frontend**: SvelteKit 2, Svelte 5, Vite 8, Sass
 - **Backend**: Node.js adapter (SvelteKit API routes)
 - **DB**: PostgreSQL + Drizzle ORM
 - **Auth**: Session-based, scrypt hashed passwords, 30-day expiry cookie
@@ -65,7 +65,11 @@
 
 <!-- NOTE: `/legal/terms` and `/legal/privacy` are prerendered from the versioned UTF-8 legal Markdown used by registration and account notices. -->
 
-<!-- NOTE: Auth rate limits remain in-process while Compose runs one app instance. Move them to shared storage before scaling out, or after 429s on auth routes persist for three 15-minute windows; Grafana shows the signal without storing IPs. -->
+<!-- NOTE: Auth rate limits remain in-process; expired entries are pruned every minute. New sessions trigger expired-session cleanup at most hourly. Move rate limits to shared storage before scaling out, or after 429s persist for three 15-minute windows. -->
+
+<!-- NOTE: The calendar fetches at most 30 picker recipes only while `pickDate`/`pickSlot` are in the URL; `pickQuery`, `pickMine`, and `pickPage` preserve picker filters and pagination across reloads. -->
+
+<!-- NOTE: HTTP/service duration histograms expose route p95; `/metrics` also reports database-pool queue depth and event-loop delay. HighHttpLatency uses route p95 with a minimum traffic guard. Uploaded images use private ETag revalidation after authorization. -->
 
 <!-- NOTE: `slot_leftovers` links a later slot to an earlier same-meal slot; linked consumers still count toward nutrition but not shopping ingredients. -->
 

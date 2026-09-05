@@ -10,6 +10,9 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  Pagination: 'Stránkování',
+  'Previous page': 'Předchozí strana',
+  'Next page': 'Další strana',
   'Meal Plan home': 'Domů – jídelní plán',
   'Main navigation': 'Hlavní navigace',
   Planner: 'Plánovač',

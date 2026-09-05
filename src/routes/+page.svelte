@@ -1,5 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { page } from '$app/state'
+  import Dialog from '$lib/components/ui/Dialog.svelte'
+  import MealPicker from './_components/MealPicker.svelte'
   import type { PageData } from './$types'
   import { addDays } from '$lib/utils/date-time'
   import * as planApi from '$lib/api/plans'
@@ -16,6 +19,42 @@
   let preferences = $derived(data.preferences)
   let favoritesOnly = $state(false)
   let myRecipesOnly = $state(false)
+
+  function openPicker(date: string, mealType: string) {
+    const url = new URL(page.url)
+    url.searchParams.set('pickDate', date)
+    url.searchParams.set('pickSlot', mealType)
+    return goto(url, { noScroll: true, keepFocus: true })
+  }
+
+  function closePicker() {
+    const url = new URL(page.url)
+    for (const key of [
+      'pickDate',
+      'pickSlot',
+      'pickQuery',
+      'pickMine',
+      'pickPage',
+    ])
+      url.searchParams.delete(key)
+    return goto(url, { noScroll: true, keepFocus: true, replaceState: true })
+  }
+
+  async function pickMeal(mealId: number | null) {
+    if (!data.picker || !plan) return
+    const { date, mealType } = data.picker
+    const current =
+      plan.slots.find(
+        (slot) => slot.date === date && slot.mealType === mealType,
+      )?.mealId ?? null
+    try {
+      if (mealId !== current)
+        await planApi.setSlot(plan.id, date, mealType, mealId)
+      await closePicker()
+    } catch {
+      alert(t('Something went wrong.'))
+    }
+  }
 
   async function refreshPlan() {
     if (!plan) return
@@ -213,7 +252,7 @@
     />
     <WeekTable
       {plan}
-      meals={data.meals}
+      onOpenPicker={openPicker}
       weekStart={data.viewWeek}
       targets={data.targets}
       isPro={data.user?.isPro ?? false}
@@ -231,6 +270,21 @@
     <p class="empty-state">{t('Loading…')}</p>
   {/if}
 </div>
+
+{#if data.picker}
+  <Dialog modal class="meal-dialog" onclose={closePicker}>
+    <MealPicker
+      {...data.picker}
+      current={plan?.slots.find(
+        (slot) =>
+          slot.date === data.picker?.date &&
+          slot.mealType === data.picker?.mealType,
+      )?.mealId ?? null}
+      onSelect={pickMeal}
+      onClose={closePicker}
+    />
+  </Dialog>
+{/if}
 
 <style lang="scss">
   .page {

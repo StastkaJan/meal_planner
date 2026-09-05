@@ -4,7 +4,7 @@ import {
   deleteMealImage,
   InvalidRecipeImageError,
   MAX_RECIPE_IMAGE_BYTES,
-  readMealImage,
+  readConditionalMealImage,
   saveMealImage,
 } from '$lib/server/meal-images'
 import type { RequestHandler } from './$types'
@@ -18,16 +18,22 @@ const ACCEPTED_CONTENT_TYPES = new Set([
   'image/gif',
 ])
 
-export const GET: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals, request }) => {
   const id = Number(params.id)
   await requireVisibleMeal(locals, id)
-  const image = await readMealImage(id)
-  if (!image) error(404, 'Image not found')
-  return new Response(new Uint8Array(image), {
+  const result = await readConditionalMealImage(
+    id,
+    request.headers.get('if-none-match'),
+  )
+  if (!result) error(404, 'Image not found')
+  const { image, etag } = result
+  return new Response(image ? new Uint8Array(image) : null, {
+    status: image ? 200 : 304,
     headers: {
       'content-type': 'image/webp',
-      'content-length': String(image.length),
-      'cache-control': 'private, no-store',
+      ...(image ? { 'content-length': String(image.length) } : {}),
+      'cache-control': 'private, no-cache',
+      etag,
       'x-content-type-options': 'nosniff',
     },
   })
