@@ -7,6 +7,10 @@ that network. Prometheus, Loki, and Alloy have no host ports. PostgreSQL and
 Grafana bind only to the private address configured by
 `GRAFANA_BIND_ADDRESS`.
 
+Uploaded recipe images live in the shared `recipe-images` Docker volume so
+both blue/green application slots see the same files. The Restic job includes
+that volume and the PostgreSQL dump in the same encrypted snapshot.
+
 ## First deployment
 
 1. Point the domain's A/AAAA records at the host. Connect the existing VPS

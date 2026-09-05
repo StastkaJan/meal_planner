@@ -9,6 +9,18 @@ export const createMeal = (body: object) =>
 export const updateMeal = (id: number, body: object) =>
   requestJson<Meal>(`/meals/${id}`, { method: 'PATCH', body: jsonBody(body) })
 
+export const uploadMealImage = (id: number, image: File) =>
+  requestJson<{ imageUrl: string }>(`/meals/${id}/image`, {
+    method: 'PUT',
+    headers: { 'content-type': image.type },
+    body: image,
+  })
+
+export const deleteMealImage = (id: number) =>
+  requestJson<{ hasUploadedImage: false }>(`/meals/${id}/image`, {
+    method: 'DELETE',
+  })
+
 export const updateMealTranslation = (
   id: number,
   locale: Locale,

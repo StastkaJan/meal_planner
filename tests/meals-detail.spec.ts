@@ -52,6 +52,64 @@ test('edit meal from detail page', async ({ page }) => {
   await expect(page.getByText('1.0g salt')).toBeVisible()
 })
 
+test('@smoke uploads and removes a recipe image', async ({ page }) => {
+  const createResponse = await page.request.post('/meals', {
+    data: { name: `Image-${Date.now()}` },
+  })
+  expect(createResponse.ok()).toBe(true)
+  const meal = (await createResponse.json()) as { id: number }
+  await page.goto(`/meals/${meal.id}?edit=1`)
+
+  const image = await page.screenshot({ type: 'png' })
+  const dataTransfer = await page.evaluateHandle((base64) => {
+    const bytes = Uint8Array.from(atob(base64), (character) =>
+      character.charCodeAt(0),
+    )
+    const transfer = new DataTransfer()
+    transfer.items.add(new File([bytes], 'recipe.png', { type: 'image/png' }))
+    return transfer
+  }, image.toString('base64'))
+  const dropZone = page.locator('.image-drop-zone')
+  await dropZone.dispatchEvent('dragenter', { dataTransfer })
+  await expect(dropZone).toHaveClass(/dragging/)
+  await dropZone.dispatchEvent('drop', { dataTransfer })
+  await dataTransfer.dispose()
+  await expect(page.getByText('Selected: recipe.png')).toBeVisible()
+
+  await expect(page.getByLabel('Upload image')).toHaveAttribute(
+    'accept',
+    'image/jpeg,image/png,image/webp,image/gif',
+  )
+  const uploadResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      new URL(response.url()).pathname === `/meals/${meal.id}/image`,
+  )
+  await page.getByRole('button', { name: 'Save' }).click()
+  expect((await uploadResponsePromise).ok()).toBe(true)
+  await expect(page.locator('img.hero')).toBeVisible()
+
+  const storedImage = await page.request.get(`/meals/${meal.id}/image`)
+  expect(storedImage.ok()).toBe(true)
+  expect(storedImage.headers()['content-type']).toBe('image/webp')
+
+  await page.getByRole('button', { name: 'Edit' }).click()
+  const editImage = page.locator('img.image-preview')
+  await expect(editImage).toBeVisible()
+  await expect(editImage).toHaveAttribute('src', `/meals/${meal.id}/image`)
+  await page.getByLabel('Remove uploaded image').check()
+  await expect(editImage).toHaveCount(0)
+  const deleteResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'DELETE' &&
+      new URL(response.url()).pathname === `/meals/${meal.id}/image`,
+  )
+  await page.getByRole('button', { name: 'Save' }).click()
+  expect((await deleteResponsePromise).ok()).toBe(true)
+  await expect(page.locator('img.hero')).toHaveCount(0)
+  expect((await page.request.get(`/meals/${meal.id}/image`)).status()).toBe(404)
+})
+
 test('delete meal from detail page', async ({ page }) => {
   const name = `Del-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
@@ -112,10 +170,6 @@ test('@smoke allows an ingredient quantity without a unit', async ({
   await page.reload()
 
   const ingredient = page.getByRole('listitem')
-  test.fail(
-    (await ingredient.count()) === 0,
-    'Known gap: edited ingredients are not persisted',
-  )
   await expect(ingredient).toHaveText('2 Eggs')
 })
 
@@ -135,14 +189,9 @@ test('@smoke does not silently discard a partial ingredient row', async ({
   )
   await page.getByRole('button', { name: 'Save' }).click()
   const saveResponse = await saveResponsePromise
-  expect(saveResponse.ok()).toBe(true)
+  expect(saveResponse.status()).toBe(400)
 
-  const quantity = page.getByPlaceholder('Qty')
-  test.fail(
-    (await quantity.count()) === 0,
-    'Known gap: partial ingredient rows are silently discarded',
-  )
-  await expect(quantity).toHaveValue('2')
+  await expect(page.getByPlaceholder('Qty')).toHaveValue('2')
   await expect(page.getByRole('alert')).toContainText('Ingredient name')
 })
 

@@ -314,3 +314,11 @@ export async function deleteAccount(userId: number) {
     return true
   })
 }
+
+export async function listUserMealIds(userId: number) {
+  const rows = await db
+    .select({ id: meals.id })
+    .from(meals)
+    .where(eq(meals.userId, userId))
+  return rows.map(({ id }) => id)
+}

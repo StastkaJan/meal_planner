@@ -67,9 +67,10 @@ connections, container memory, database disk, and slow service operations. See
 
 ## Backups
 
-The production Compose profile takes an encrypted PostgreSQL backup before each
-deployment and at 02:00 UTC daily, then applies weekly pruning to keep 7 daily,
-4 weekly, and 6 monthly snapshots in an off-host [Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
+The production Compose profile takes an encrypted PostgreSQL and recipe-image
+backup before each deployment and at 02:00 UTC daily, then applies weekly
+pruning to keep 7 daily, 4 weekly, and 6 monthly snapshots in an off-host
+[Restic repository](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
 Set the backup variables in `.env.production` from `.env.production.example`,
 including the operator-monitored Alertmanager webhook file, then start it with the secure
 production overlay:
@@ -82,18 +83,18 @@ Check the latest snapshot with `docker compose exec backup restic snapshots`.
 The Restic password is required to restore data; store a separate copy outside
 the server.
 
-The latest snapshot is restored at 03:00 UTC each day into a separate,
-tmpfs-backed PostgreSQL service, checked by querying the restored `users` table,
-and wiped immediately. Run the same restore check on demand with the single
-operator command:
+The latest snapshot is restored at 03:00 UTC each day, its recipe-image storage
+is checked, and its database is loaded into a separate tmpfs-backed PostgreSQL
+service and queried before the restored data is wiped. Run the same restore
+check on demand with the single operator command:
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.yml \
   -f docker-compose.production.yml --profile production exec backup restore
 ```
 
-A successful run logs `database_restore_verification_succeeded`; failures log
-`database_restore_verification_failed` and post to Alertmanager. The
+A successful run logs `application_restore_verification_succeeded`; failures log
+`application_restore_verification_failed` and post to Alertmanager. The
 daily schedule targets an RPO of 24 hours. During an incident, start timing
 before running the command and escalate if verification and recovery cannot be
 completed within the 2-hour RTO.

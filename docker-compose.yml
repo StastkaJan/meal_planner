@@ -21,6 +21,8 @@ services:
     environment:
       DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
       ORIGIN: http://localhost:3000
+      BODY_SIZE_LIMIT: 6M
+      RECIPE_IMAGE_DIR: /app/data/recipe-images
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-dev}
     depends_on:
@@ -30,6 +32,8 @@ services:
       - edge
       - database
       - monitoring
+    volumes:
+      - recipe-images:/app/data/recipe-images
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/health >/dev/null']
       interval: 10s
@@ -63,6 +67,8 @@ services:
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
       RESTORE_DATABASE_URL: postgresql://restorecheck:restorecheck@restore-db:5432/restorecheck
       ALERTMANAGER_URL: http://alertmanager:9093
+    volumes:
+      - recipe-images:/data/recipe-images:ro
     depends_on:
       db:
         condition: service_healthy
@@ -237,6 +243,7 @@ networks:
 
 volumes:
   pgdata:
+  recipe-images:
   prometheus-data:
   alertmanager-data:
   loki-data:

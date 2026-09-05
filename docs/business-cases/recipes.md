@@ -25,8 +25,9 @@ library. Each meal is created as either **global** (shared with everyone) or
 ## Value
 
 - **Structured, reusable meals** — captured once, usable in any plan, any week.
-- **Optional recipe detail** — images, ingredients, instructions, cooking time,
-  and difficulty turn a simple meal into a cookable recipe.
+- **Optional recipe detail** — uploaded or externally hosted images,
+  ingredients, instructions, cooking time, and difficulty turn a simple meal
+  into a cookable recipe.
 - **First-class nutrition fields** give the calendar the data it needs to plan
   against calorie and macro targets.
 - **Tags and allowed meal types** help auto-compose choose suitable recipes for
@@ -75,7 +76,8 @@ and [../api.md](../api.md) (`/meals/*`) for the fields and endpoints.
 ## Non-goals
 
 - No edit history or audit; the current values are the only version.
-- No image hosting — `imageUrl` points at an external image, nothing is uploaded.
+- No image galleries; each recipe has at most one upload. JPEG, PNG, WebP, and
+  GIF inputs are resized to fit within 1200x900 and stored as WebP.
 
 ## Known limitations
 

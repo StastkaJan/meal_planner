@@ -2,13 +2,13 @@
 set -eu
 
 notify_failure() {
-	message="Database restore verification failed: $1"
-	printf '{"level":"error","event":"database_restore_verification_failed","message":"%s"}\n' "$message" >&2
+	message="Application restore verification failed: $1"
+	printf '{"level":"error","event":"application_restore_verification_failed","message":"%s"}\n' "$message" >&2
 
 	if [ -n "${ALERTMANAGER_URL:-}" ]; then
 		curl --fail --silent --show-error --retry 3 --retry-all-errors \
 			-H 'Content-Type: application/json' \
-			-d "[{\"labels\":{\"alertname\":\"RestoreVerificationFailed\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"Database restore verification failed\",\"description\":\"$1\"}}]" \
+			-d "[{\"labels\":{\"alertname\":\"RestoreVerificationFailed\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"Application restore verification failed\",\"description\":\"$1\"}}]" \
 			"$ALERTMANAGER_URL/api/v2/alerts" || true
 	fi
 }
@@ -45,6 +45,12 @@ if [ -z "$dump_file" ]; then
 	exit 1
 fi
 
+image_dir="$(find "$restore_dir" -type d -path '*/data/recipe-images' -print -quit)"
+if [ -z "$image_dir" ]; then
+	notify_failure 'snapshot does not contain recipe image storage'
+	exit 1
+fi
+
 if ! reset_database; then
 	notify_failure 'disposable database cleanup failed'
 	exit 1
@@ -68,4 +74,4 @@ if ! reset_database; then
 	exit 1
 fi
 
-printf '{"level":"info","event":"database_restore_verification_succeeded"}\n'
+printf '{"level":"info","event":"application_restore_verification_succeeded"}\n'

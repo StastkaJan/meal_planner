@@ -47,7 +47,7 @@ No remaining P1 items.
 - GitHub Actions `quality` check for formatting, Svelte/type checks, unit tests,
   production builds, and focused E2E smoke tests. A repository admin must make
   it a required status check before GitHub enforces the gate.
-- Daily encrypted off-host PostgreSQL backups with retention and failure webhook.
+- Daily encrypted off-host PostgreSQL and recipe-image backups with retention and failure webhook.
 - Sustained 5xx, health, backup/restore, latency, and disk alerts routed through
   Alertmanager to one operator Slack channel; see the
   [alert runbook](operations-alerts.md).

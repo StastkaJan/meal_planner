@@ -7,9 +7,11 @@ const restore = readFileSync('monitoring/backup/restore.sh', 'utf8')
 const crontab = readFileSync('monitoring/backup/crontab', 'utf8')
 
 describe('database restore verification', () => {
-  it('creates a Restic snapshot that can be restored', () => {
-    expect(backup).toContain('mktemp /tmp/mealplan-dump-XXXXXX')
-    expect(backup).toContain('--stdin --stdin-filename mealplan.dump')
+  it('backs up the database and recipe images in one Restic snapshot', () => {
+    expect(backup).toContain('mktemp -d /tmp/mealplan-backup-XXXXXX')
+    expect(backup).toContain('"$dump_file" /data/recipe-images')
+    expect(compose).toContain('recipe-images:/data/recipe-images:ro')
+    expect(restore).toContain("-path '*/data/recipe-images'")
   })
 
   it('does no repository work merely because the scheduler restarted', () => {

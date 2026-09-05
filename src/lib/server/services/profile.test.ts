@@ -3,14 +3,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const deleteAccountRecord = vi.hoisted(() => vi.fn())
 const findUserById = vi.hoisted(() => vi.fn())
 const getAccountExport = vi.hoisted(() => vi.fn())
+const listUserMealIds = vi.hoisted(() => vi.fn())
 const verifyPassword = vi.hoisted(() => vi.fn())
+const deleteMealImages = vi.hoisted(() => vi.fn())
+const readMealImage = vi.hoisted(() => vi.fn())
 
 vi.mock('../repositories/accounts', () => ({
   deleteAccount: deleteAccountRecord,
   findUserById,
   getAccountExport,
+  listUserMealIds,
   saveSettings: vi.fn(),
   updatePassword: vi.fn(),
+}))
+vi.mock('$lib/server/meal-images', () => ({
+  deleteMealImages,
+  readMealImage,
 }))
 vi.mock('./auth', () => ({ hashPassword: vi.fn(), verifyPassword }))
 vi.mock('../observability', () => ({
@@ -20,7 +28,10 @@ vi.mock('../observability', () => ({
 
 import { deleteAccount, exportAccountData, toPantryStaples } from './profile'
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  listUserMealIds.mockResolvedValue([])
+})
 
 describe('toPantryStaples', () => {
   it('parses, trims, and deduplicates pantry ingredient names', () => {
@@ -32,11 +43,22 @@ describe('toPantryStaples', () => {
 })
 
 describe('exportAccountData', () => {
-  it('returns only the repository export for the authenticated user', async () => {
-    const data = { version: 1, recipes: [], plans: [] }
+  it('adds caller-owned recipe images from file storage', async () => {
+    const data = { version: 1, recipes: [{ id: 7, name: 'Soup' }], plans: [] }
     getAccountExport.mockResolvedValueOnce(data)
-    await expect(exportAccountData(42)).resolves.toBe(data)
+    readMealImage.mockResolvedValueOnce(Buffer.from('image'))
+    await expect(exportAccountData(42)).resolves.toEqual({
+      ...data,
+      recipes: [
+        {
+          id: 7,
+          name: 'Soup',
+          image: { contentType: 'image/webp', data: 'aW1hZ2U=' },
+        },
+      ],
+    })
     expect(getAccountExport).toHaveBeenCalledWith(42)
+    expect(readMealImage).toHaveBeenCalledWith(7)
   })
 })
 
@@ -71,11 +93,13 @@ describe('deleteAccount', () => {
       passwordHash: 'hash',
     })
     verifyPassword.mockResolvedValueOnce(true)
+    listUserMealIds.mockResolvedValueOnce([7, 8])
     deleteAccountRecord.mockResolvedValueOnce(true)
     await expect(deleteAccount(42, 'secret', 'cook@example.com')).resolves.toBe(
       'deleted',
     )
     expect(deleteAccountRecord).toHaveBeenCalledWith(42)
+    expect(deleteMealImages).toHaveBeenCalledWith([7, 8])
   })
 
   it('reports when the final administrator cannot be deleted', async () => {

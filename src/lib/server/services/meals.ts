@@ -6,7 +6,9 @@ import {
   updateMeal,
 } from '../repositories/meals'
 import { monitorService } from '../observability'
+import { copyMealImage } from '../meal-images'
 import { parseLocale, type Locale } from '$lib/i18n'
+import { validateMealFields } from '$lib/domain/meal-input'
 import type { Meal, MealTranslation } from '$lib/database/schema'
 
 const WRITABLE = [
@@ -62,8 +64,8 @@ export async function createUserMeal(
   body: Record<string, unknown>,
   locale: Locale = 'en',
 ) {
+  const values = validateMealFields(pickMealFields(body), true)
   return monitorService('meals', 'create', async () => {
-    const values = pickMealFields(body)
     values.sourceLocale ??= locale
     values.userId = body.scope === 'global' ? null : userId
     return createMeal(values as { name: string })
@@ -87,7 +89,9 @@ export async function updateUserMeal(
   id: number,
   body: Record<string, unknown>,
 ) {
-  const { sourceLocale: _sourceLocale, ...values } = pickMealFields(body)
+  const { sourceLocale: _sourceLocale, ...values } = validateMealFields(
+    pickMealFields(body),
+  )
   return monitorService('meals', 'update', () => updateMeal(id, values))
 }
 
@@ -95,12 +99,18 @@ export async function duplicateGlobalMeal(userId: number, id: number) {
   return monitorService('meals', 'duplicate', async () => {
     const source = await findMeal(id, userId)
     if (!source || source.userId !== null) return null
-    return createMeal({
+    const [ingredients, translations] = await Promise.all([
+      getMealIngredients(id),
+      getMealTranslations(id),
+    ])
+    const duplicate = await createMeal({
       ...pickMealFields(source),
       name: source.name,
       userId,
-      ingredients: await getMealIngredients(id),
-      translations: await getMealTranslations(id),
+      ingredients,
+      translations,
     })
+    await copyMealImage(id, duplicate.id)
+    return duplicate
   })
 }

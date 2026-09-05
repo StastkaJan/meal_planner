@@ -25,6 +25,9 @@ vi.mock('$lib/server/services/meals', async (importOriginal) => ({
   duplicateGlobalMeal,
 }))
 
+const deleteMealImage = vi.hoisted(() => vi.fn())
+vi.mock('$lib/server/meal-images', () => ({ deleteMealImage }))
+
 import { PATCH, DELETE } from './+server'
 import { POST as DUPLICATE } from './duplicate/+server'
 
@@ -120,6 +123,7 @@ describe('REST /meals/:id', () => {
       const res = await DELETE(makeEvent())
       expect(res.status).toBe(204)
       expect(mockDb.update).toHaveBeenCalled()
+      expect(deleteMealImage).toHaveBeenCalledWith(1)
     })
   })
 

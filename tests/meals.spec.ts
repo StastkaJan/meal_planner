@@ -20,10 +20,6 @@ test('@smoke rejects a whitespace-only meal name', async ({ page }) => {
     data: { name: '   ' },
   })
 
-  test.fail(
-    response.status() === 201,
-    'Known gap: meal names are not trimmed before validation',
-  )
   expect(response.status()).toBe(400)
 })
 
@@ -36,34 +32,22 @@ for (const [field, value] of [
       data: { name: 'Invalid meal', [field]: value },
     })
 
-    test.fail(
-      response.status() === 201,
-      'Known gap: meal numeric fields lack server validation',
-    )
     expect(response.status()).toBe(400)
   })
 }
 
-for (const [caseName, ingredient, currentStatus] of [
-  ['without a name field', { qty: 1, unit: 'cup' }, 500],
-  ['with a blank name', { name: '', qty: 1, unit: 'cup' }, 201],
-  ['with a negative quantity', { name: 'Flour', qty: -1, unit: 'cup' }, 201],
-  ['with an unsupported unit', { name: 'Flour', qty: 1, unit: 'bucket' }, 201],
-  [
-    'with a unit but no quantity',
-    { name: 'Flour', qty: null, unit: 'cup' },
-    201,
-  ],
+for (const [caseName, ingredient] of [
+  ['without a name field', { qty: 1, unit: 'cup' }],
+  ['with a blank name', { name: '', qty: 1, unit: 'cup' }],
+  ['with a negative quantity', { name: 'Flour', qty: -1, unit: 'cup' }],
+  ['with an unsupported unit', { name: 'Flour', qty: 1, unit: 'bucket' }],
+  ['with a unit but no quantity', { name: 'Flour', qty: null, unit: 'cup' }],
 ] as const) {
   test(`@smoke rejects an ingredient ${caseName}`, async ({ page }) => {
     const response = await page.request.post('/meals', {
       data: { name: 'Invalid ingredient', ingredients: [ingredient] },
     })
 
-    test.fail(
-      response.status() === currentStatus,
-      'Known gap: ingredient payloads lack server validation',
-    )
     expect(response.status()).toBe(400)
   })
 }
@@ -76,10 +60,6 @@ test('@smoke rejects a malformed ingredient collection', async ({ page }) => {
     },
   })
 
-  test.fail(
-    response.status() === 500,
-    'Known gap: malformed ingredient payloads return 500',
-  )
   expect(response.status()).toBe(400)
 })
 

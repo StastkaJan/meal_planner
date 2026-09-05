@@ -2,13 +2,13 @@
 set -eu
 
 notify_failure() {
-	message="Database backup failed: $1"
-	printf '{"level":"error","event":"database_backup_failed","message":"%s"}\n' "$message" >&2
+	message="Application backup failed: $1"
+	printf '{"level":"error","event":"application_backup_failed","message":"%s"}\n' "$message" >&2
 
 	if [ -n "${ALERTMANAGER_URL:-}" ]; then
 		curl --fail --silent --show-error --retry 3 --retry-all-errors \
 			-H 'Content-Type: application/json' \
-			-d "[{\"labels\":{\"alertname\":\"BackupFailed\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"Database backup failed\",\"description\":\"$1\"}}]" \
+			-d "[{\"labels\":{\"alertname\":\"BackupFailed\",\"severity\":\"critical\"},\"annotations\":{\"summary\":\"Application backup failed\",\"description\":\"$1\"}}]" \
 			"$ALERTMANAGER_URL/api/v2/alerts" || true
 	fi
 }
@@ -18,25 +18,26 @@ apply_retention() {
 }
 
 run_backup() {
-	if ! dump_file="$(mktemp /tmp/mealplan-dump-XXXXXX)"; then
-		notify_failure 'temporary dump creation failed'
+	if ! backup_dir="$(mktemp -d /tmp/mealplan-backup-XXXXXX)"; then
+		notify_failure 'temporary backup directory creation failed'
 		exit 1
 	fi
-	trap 'rm -f "$dump_file"' 0
+	trap 'rm -rf "$backup_dir"' 0
+	dump_file="$backup_dir/mealplan.dump"
 
 	if ! pg_dump --format=custom --file="$dump_file" "$DATABASE_URL"; then
 		notify_failure 'pg_dump failed'
 		exit 1
 	fi
 
-	if ! restic backup --tag meal-plan --stdin --stdin-filename mealplan.dump < "$dump_file"; then
+	if ! restic backup --tag meal-plan "$dump_file" /data/recipe-images; then
 		notify_failure 'upload failed'
 		exit 1
 	fi
-	rm -f "$dump_file"
+	rm -rf "$backup_dir"
 	trap - 0
 
-	printf '{"level":"info","event":"database_backup_succeeded"}\n'
+	printf '{"level":"info","event":"application_backup_succeeded"}\n'
 }
 
 mode="${1:-once}"
@@ -71,7 +72,7 @@ case "$mode" in
 			notify_failure 'retention cleanup failed'
 			exit 1
 		fi
-		printf '{"level":"info","event":"database_backup_retention_succeeded"}\n'
+		printf '{"level":"info","event":"application_backup_retention_succeeded"}\n'
 		;;
 	*)
 		echo "usage: backup [once|schedule|retention|init]" >&2

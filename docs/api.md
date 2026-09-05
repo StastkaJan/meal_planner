@@ -7,6 +7,10 @@
   recipe. Blank fields use the original recipe as fallback.
 - `DELETE /meals/[id]/translations/[locale]` deletes one translation without
   changing the original recipe.
+- `GET /meals/[id]/image` returns an uploaded recipe image. Recipe owners and
+  admins use `PUT` to upload or replace it and `DELETE` to remove it; accepted
+  inputs are JPEG, PNG, WebP, or GIF up to 5 MB. Uploads are resized to fit
+  within 1200x900 and stored as WebP outside PostgreSQL.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |
@@ -19,7 +23,10 @@
 | POST   | /meals                      | yes   | create meal (defaults personal; `scope: global` requires admin)                                                                                                                                                                              |
 | PATCH  | /meals/[id]                 | yes   | update meal                                                                                                                                                                                                                                  |
 | DELETE | /meals/[id]                 | yes   | delete meal                                                                                                                                                                                                                                  |
-| POST   | /meals/[id]/duplicate       | yes   | copy a global meal, including ingredients, into the caller's personal library                                                                                                                                                                |
+| POST   | /meals/[id]/duplicate       | yes   | copy a global meal, including ingredients, translations, and its uploaded image, into the caller's personal library                                                                                                                          |
+| GET    | /meals/[id]/image           | yes   | return the uploaded image for a visible meal as WebP                                                                                                                                                                                         |
+| PUT    | /meals/[id]/image           | yes   | upload or replace an editable meal's JPEG, PNG, WebP, or GIF image (maximum 5 MB)                                                                                                                                                            |
+| DELETE | /meals/[id]/image           | yes   | remove an editable meal's uploaded image                                                                                                                                                                                                     |
 | PUT    | /meals/[id]/favorite        | yes   | set/clear the caller's favourite on a meal (`{favorite: boolean}`)                                                                                                                                                                           |
 | POST   | /meals/import               | pro   | parse a recipe from `{url}` or `{text}` (JSON-LD, microdata, or common HTML markup) → structured fields, no insert                                                                                                                           |
 | POST   | /admin/recipes              | admin | validate and queue 1–300 recipes; deduplicate by content hash                                                                                                                                                                                |
@@ -40,7 +47,7 @@
 | POST   | /plans/[id]/recalc-day      | pro   | re-fill one date's empty slots to fit the remaining budget after that day's bonus items (`{date}`)                                                                                                                                           |
 | PATCH  | /profile                    | yes   | update auto-compose preferences, pantry staples, and nutrition targets                                                                                                                                                                       |
 | DELETE | /profile                    | yes   | permanently delete the account after current-password and exact-email confirmation; rejects deletion of the final administrator and otherwise clears the session cookie                                                                      |
-| GET    | /profile/export             | yes   | download a non-cacheable JSON export of the caller's profile settings, personal recipes, plans, favourites, and recipe submissions                                                                                                           |
+| GET    | /profile/export             | yes   | download a non-cacheable JSON export of the caller's profile settings, personal recipes and uploaded images, plans, favourites, and recipe submissions                                                                                       |
 | POST   | /auth/register              | no    | create account after terms acceptance and privacy acknowledgement (form action)                                                                                                                                                              |
 | POST   | /auth/login                 | no    | start session (form action)                                                                                                                                                                                                                  |
 | POST   | /auth/logout                | yes   | end session                                                                                                                                                                                                                                  |
