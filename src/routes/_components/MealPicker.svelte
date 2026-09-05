@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { MealPickerItem } from '$lib/types'
-  import { mealFitsSlot } from '$lib/domain/meals'
+  import { goto } from '$app/navigation'
+  import { page as currentPage } from '$app/state'
+  import { onDestroy } from 'svelte'
   import { useI18n } from '$lib/i18n-context'
 
   const { t } = useI18n()
@@ -8,26 +10,34 @@
   let {
     meals,
     current,
-    mealType,
+    query,
+    mine,
+    page,
+    hasMore,
     onSelect,
+    onClose,
   }: {
     meals: MealPickerItem[]
     current: number | null
-    mealType: string
+    query: string
+    mine: boolean
+    page: number
+    hasMore: boolean
     onSelect: (mealId: number | null) => void
+    onClose: () => void
   } = $props()
 
-  let search = $state('')
-  let myRecipesOnly = $state(false)
-
-  const filtered = $derived(
-    meals.filter(
-      (m) =>
-        m.name.toLowerCase().includes(search.toLowerCase()) &&
-        (!myRecipesOnly || m.userId !== null) &&
-        mealFitsSlot(m.allowedSlots, mealType),
-    ),
-  )
+  let search = $derived(query)
+  let timer: ReturnType<typeof setTimeout>
+  onDestroy(() => clearTimeout(timer))
+  function filter(nextPage = 1, nextMine = mine) {
+    clearTimeout(timer)
+    const url = new URL(currentPage.url)
+    url.searchParams.set('pickQuery', search)
+    url.searchParams.set('pickMine', nextMine ? '1' : '0')
+    url.searchParams.set('pickPage', String(nextPage))
+    return goto(url, { noScroll: true, keepFocus: true, replaceState: true })
+  }
 </script>
 
 <div class="picker">
@@ -37,15 +47,19 @@
       type="search"
       placeholder={t('Search meals…')}
       bind:value={search}
+      oninput={() => {
+        clearTimeout(timer)
+        timer = setTimeout(() => filter(), 250)
+      }}
     />
-    <button
-      class="close"
-      onclick={() => onSelect(current)}
-      aria-label={t('Cancel')}>✕</button
-    >
+    <button class="close" onclick={onClose} aria-label={t('Cancel')}>✕</button>
   </div>
   <label class="my-recipes">
-    <input type="checkbox" bind:checked={myRecipesOnly} />
+    <input
+      type="checkbox"
+      checked={mine}
+      onchange={(event) => filter(1, event.currentTarget.checked)}
+    />
     {t('My recipes only')}
   </label>
 
@@ -57,7 +71,7 @@
         </button>
       </li>
     {/if}
-    {#each filtered as meal (meal.id)}
+    {#each meals as meal (meal.id)}
       <li>
         <button
           class="item"
@@ -74,6 +88,15 @@
       <li class="no-results">{t('No meals found')}</li>
     {/each}
   </ul>
+  <nav class="picker-header" aria-label={t('Pagination')}>
+    <button disabled={page === 1} onclick={() => filter(page - 1)}
+      >{t('Previous page')}</button
+    >
+    <span>{page}</span>
+    <button disabled={!hasMore} onclick={() => filter(page + 1)}
+      >{t('Next page')}</button
+    >
+  </nav>
 </div>
 
 <style lang="scss">

@@ -57,6 +57,7 @@ export async function listMeals(userId?: number, locale: Locale = 'en') {
 export async function listMealPickerItems(
   userId: number,
   locale: Locale = 'en',
+  options: { mealType: string; query: string; mine: boolean; page: number },
 ) {
   return db
     .select({
@@ -78,9 +79,16 @@ export async function listMealPickerItems(
       and(
         isNull(meals.archivedAt),
         or(isNull(meals.userId), eq(meals.userId, userId)),
+        options.mine ? eq(meals.userId, userId) : undefined,
+        sql`(cardinality(${meals.allowedSlots}) = 0 or ${options.mealType} = any(${meals.allowedSlots}))`,
+        options.query
+          ? sql`position(lower(${options.query}) in lower(coalesce(${mealTranslations.name}, ${meals.name}))) > 0`
+          : undefined,
       ),
     )
     .orderBy(sql`coalesce(${mealTranslations.name}, ${meals.name})`, meals.id)
+    .limit(31)
+    .offset((options.page - 1) * 30)
 }
 
 type MealLibraryQuery = {

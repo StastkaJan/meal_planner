@@ -62,7 +62,19 @@ export function rankByNutrition(
   budget: MacroBudget,
   usageCounts = new Map<number, number>(),
 ): CandidateMeal[] {
-  const score = (meal: CandidateMeal) => {
+  const score = nutritionScore(calorieBudget, budget, usageCounts)
+  return candidates
+    .map((meal) => ({ meal, score: score(meal) }))
+    .sort((left, right) => left.score - right.score)
+    .map(({ meal }) => meal)
+}
+
+function nutritionScore(
+  calorieBudget: number,
+  budget: MacroBudget,
+  usageCounts: Map<number, number>,
+) {
+  return (meal: CandidateMeal) => {
     const calorieDistance =
       Math.abs((meal.calories ?? 0) - calorieBudget) /
       Math.max(calorieBudget, 1)
@@ -72,7 +84,6 @@ export function rankByNutrition(
       Math.log2((usageCounts.get(meal.id) ?? 0) + 1) * 0.4
     )
   }
-  return [...candidates].sort((left, right) => score(left) - score(right))
 }
 
 export function filterByPrefs(
@@ -134,12 +145,16 @@ export function fillDaySlots(
       carbsG: (targets.carbsG - consumed.carbsG) / remaining,
       fatG: (targets.fatG - consumed.fatG) / remaining,
     }
-    const [meal] = rankByNutrition(
-      slotMeals,
-      calorieBudget,
-      macroBudget,
-      usageCounts,
-    )
+    const score = nutritionScore(calorieBudget, macroBudget, usageCounts)
+    let meal = slotMeals[0]
+    let bestScore = score(meal)
+    for (let i = 1; i < slotMeals.length; i++) {
+      const candidateScore = score(slotMeals[i])
+      if (candidateScore < bestScore) {
+        meal = slotMeals[i]
+        bestScore = candidateScore
+      }
+    }
     usageCounts.set(meal.id, (usageCounts.get(meal.id) ?? 0) + 1)
     rows.push({ planId, date, mealType, mealId: meal.id })
     consumed.calories += meal.calories ?? 0
@@ -161,7 +176,23 @@ export function optimizeWeekSlots(
 ): OptimizableSlot[] {
   if (!slots.length || !candidates.length) return slots
   const mealsById = new Map(visibleMeals.map((meal) => [meal.id, meal]))
-  const score = (rows: OptimizableSlot[]) => {
+  const result = slots.map((slot) => ({ ...slot }))
+  const groups = Map.groupBy(result.keys(), (index) => result[index].group)
+  const allowedByType = new Map(
+    [...new Set(slots.map(({ mealType }) => mealType))].map((mealType) => [
+      mealType,
+      candidates.filter((meal) => mealFitsSlot(meal.allowedSlots, mealType)),
+    ]),
+  )
+
+  // Score only the dates and usage counts affected by the current group.
+  const groupScore = (indexes: number[]) => {
+    const excluded = new Set(indexes)
+    const dateCounts = new Map<string, number>()
+    for (const index of indexes) {
+      const date = result[index].date
+      dateCounts.set(date, (dateCounts.get(date) ?? 0) + 1)
+    }
     const byDate = new Map<string, Consumed>()
     const usage = new Map<number, number>()
     const add = (date: string, meal: NutritionRow, mealId?: number | null) => {
@@ -179,44 +210,59 @@ export function optimizeWeekSlots(
       if (mealId != null) usage.set(mealId, (usage.get(mealId) ?? 0) + 1)
     }
     for (const row of existing) add(row.date, row, row.mealId)
-    for (const row of rows) {
+    for (const [index, row] of result.entries()) {
+      if (excluded.has(index)) continue
       const meal = mealsById.get(row.mealId)
       if (meal) add(row.date, meal, meal.id)
     }
     const distance = (value: number, target: number) =>
       target > 0 ? Math.abs(value - target) / target : 0
-    let totalScore = 0
-    for (const total of byDate.values()) {
-      totalScore +=
-        distance(total.calories, targets.calories) * 5 +
-        (distance(total.proteinG, targets.proteinG) +
-          distance(total.carbsG, targets.carbsG) +
-          distance(total.fatG, targets.fatG)) /
-          3
+    return (mealId: number) => {
+      const meal = mealsById.get(mealId)
+      const count = usage.get(mealId) ?? 0
+      let totalScore = meal
+        ? (Math.max(0, count + indexes.length - 1) - Math.max(0, count - 1)) *
+          0.15
+        : 0
+      for (const [date, n] of dateCounts) {
+        const total = byDate.get(date)
+        totalScore +=
+          distance(
+            (total?.calories ?? 0) + (meal?.calories ?? 0) * n,
+            targets.calories,
+          ) *
+            5 +
+          (distance(
+            (total?.proteinG ?? 0) + toNumber(meal?.proteinG) * n,
+            targets.proteinG,
+          ) +
+            distance(
+              (total?.carbsG ?? 0) + toNumber(meal?.carbsG) * n,
+              targets.carbsG,
+            ) +
+            distance(
+              (total?.fatG ?? 0) + toNumber(meal?.fatG) * n,
+              targets.fatG,
+            )) /
+            3
+      }
+      return totalScore
     }
-    for (const count of usage.values())
-      totalScore += Math.max(0, count - 1) * 0.15
-    return totalScore
   }
-
-  const result = slots.map((slot) => ({ ...slot }))
-  const groups = Map.groupBy(result.keys(), (index) => result[index].group)
   // ponytail: two coordinate-descent passes; use beam search only if measured
   // plans get stuck in poor local optima.
   for (let pass = 0; pass < 2; pass++) {
     let changed = false
     for (const indexes of groups.values()) {
       if (indexes.some((index) => result[index].locked)) continue
-      const allowed = candidates.filter((meal) =>
-        mealFitsSlot(meal.allowedSlots, result[indexes[0]].mealType),
-      )
+      const allowed = allowedByType.get(result[indexes[0]].mealType)!
+      const score = groupScore(indexes)
       const currentId = result[indexes[0]].mealId
       let bestId = currentId
-      let bestScore = score(result)
+      let bestScore = score(currentId)
       for (const meal of allowed) {
-        for (const index of indexes) result[index].mealId = meal.id
-        const candidateScore = score(result)
-        if (candidateScore < bestScore) {
+        const candidateScore = score(meal.id)
+        if (candidateScore < bestScore - 1e-12) {
           bestId = meal.id
           bestScore = candidateScore
         }

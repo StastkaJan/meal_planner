@@ -1,7 +1,5 @@
 <script lang="ts">
-  import type { MealPickerItem, SlotWithMeal } from '$lib/types'
-  import Dialog from '$lib/components/ui/Dialog.svelte'
-  import MealPicker from './MealPicker.svelte'
+  import type { SlotWithMeal } from '$lib/types'
   import { useI18n } from '$lib/i18n-context'
   import { localeCode } from '$lib/i18n'
 
@@ -9,33 +7,19 @@
 
   let {
     slot,
-    meals,
+    onOpenPicker,
     mealType,
     leftoverSource,
     onPick,
     onLeftover,
   }: {
     slot: SlotWithMeal | null
-    meals: MealPickerItem[]
+    onOpenPicker: () => void
     mealType: string
     leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void
     onLeftover: (source: { date: string; mealType: string } | null) => void
   } = $props()
-
-  let dialogEl = $state<HTMLDialogElement>()
-  let open = $state(false)
-
-  function openPicker() {
-    open = true
-    dialogEl?.showModal()
-  }
-
-  function handlePick(mealId: number | null) {
-    if (mealId !== slot?.mealId) onPick(mealId)
-    dialogEl?.close()
-    open = false
-  }
 
   const usesLeftovers = $derived(slot?.leftoverSourceDate != null)
   const sourceLabel = $derived(
@@ -53,7 +37,7 @@
     <button
       type="button"
       class="meal-info"
-      onclick={openPicker}
+      onclick={onOpenPicker}
       title={t('Edit meal assignment')}
       aria-label={t('Edit meal assignment')}
     >
@@ -115,27 +99,12 @@
 {:else}
   <button
     class="cell {mealType}"
-    onclick={openPicker}
+    onclick={onOpenPicker}
     title={t('Click to assign meal')}
   >
     <span class="empty">—</span>
   </button>
 {/if}
-
-<Dialog
-  bind:element={dialogEl}
-  class="meal-dialog"
-  onclose={() => (open = false)}
->
-  {#if open}
-    <MealPicker
-      {meals}
-      current={slot?.mealId ?? null}
-      {mealType}
-      onSelect={handlePick}
-    />
-  {/if}
-</Dialog>
 
 <style lang="scss">
   .cell {

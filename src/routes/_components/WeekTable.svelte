@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
-  import type { MealPickerItem } from '$lib/types'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'
@@ -11,7 +10,7 @@
 
   let {
     plan,
-    meals,
+    onOpenPicker,
     weekStart,
     targets,
     isPro,
@@ -24,7 +23,7 @@
     onNextWeek,
   }: {
     plan: PlanDetail
-    meals: MealPickerItem[]
+    onOpenPicker: (date: string, mealType: string) => void
     weekStart: string
     targets: NutritionTargets
     isPro: boolean
@@ -182,7 +181,7 @@
               <td class="slot-cell">
                 <MealCell
                   {slot}
-                  {meals}
+                  onOpenPicker={() => onOpenPicker(date, mt)}
                   mealType={mt}
                   leftoverSource={previousMatchingSlot(slot)}
                   onPick={(mealId) => onSlotChange(date, mt, mealId)}

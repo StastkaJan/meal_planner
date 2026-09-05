@@ -10,7 +10,9 @@
 - `GET /meals/[id]/image` returns an uploaded recipe image. Recipe owners and
   admins use `PUT` to upload or replace it and `DELETE` to remove it; accepted
   inputs are JPEG, PNG, WebP, or GIF up to 5 MB. Uploads are resized to fit
-  within 1200x900 and stored as WebP outside PostgreSQL.
+  within 1200x900 and stored as WebP outside PostgreSQL. GET uses private
+  mandatory ETag revalidation; matching `If-None-Match` returns 304 only after
+  checking visibility, without reading the image body.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |

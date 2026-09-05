@@ -11,6 +11,7 @@ import {
   MAX_RECIPE_IMAGE_HEIGHT,
   MAX_RECIPE_IMAGE_WIDTH,
   readMealImage,
+  readConditionalMealImage,
   saveMealImage,
 } from './meal-images'
 
@@ -27,6 +28,25 @@ afterEach(async () => {
 })
 
 describe('recipe image storage', () => {
+  it('revalidates unchanged images and detects replacements and deletion', async () => {
+    const input = (background: string) =>
+      sharp({ create: { width: 10, height: 10, channels: 3, background } })
+        .png()
+        .toBuffer()
+    await saveMealImage(7, await input('#ff0000'))
+    const first = await readConditionalMealImage(7, null)
+    expect(first?.image).toBeInstanceOf(Buffer)
+    expect(
+      await readConditionalMealImage(7, `"other", ${first!.etag}`),
+    ).toEqual({ etag: first!.etag, image: null })
+    expect((await readConditionalMealImage(7, '*'))?.image).toBeNull()
+    await saveMealImage(7, await input('#0000ff'))
+    const replaced = await readConditionalMealImage(7, first!.etag)
+    expect(replaced?.etag).not.toBe(first?.etag)
+    expect(replaced?.image).toBeInstanceOf(Buffer)
+    await deleteMealImage(7)
+    expect(await readConditionalMealImage(7, first!.etag)).toBeNull()
+  })
   it('resizes an uploaded image and stores only WebP output', async () => {
     const input = await sharp({
       create: {
