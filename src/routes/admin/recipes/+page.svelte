@@ -75,7 +75,7 @@
     <td>{recipe.sourceLocale.toUpperCase()}</td>
     <td>{recipe.difficulty ? label(recipe.difficulty) : '—'}</td>
     <td class="actions">
-      <a class="edit-link" href="/meals/{recipe.id}?edit=1">{t('Edit')}</a>
+      <a class="edit-link" href="/meals/{recipe.id}/edit">{t('Edit')}</a>
       <Button
         size="sm"
         variant="danger"
