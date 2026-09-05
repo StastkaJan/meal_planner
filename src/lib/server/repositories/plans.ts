@@ -55,6 +55,70 @@ export async function deletePlan(id: number) {
   await db.delete(plans).where(eq(plans.id, id))
 }
 
+export async function clearPlan(planId: number, date?: string) {
+  await db.transaction(async (tx) => {
+    // Foreign keys also remove leftover links to and from deleted slots.
+    await tx
+      .delete(weekSlots)
+      .where(
+        and(
+          eq(weekSlots.planId, planId),
+          date ? eq(weekSlots.date, date) : undefined,
+        ),
+      )
+    await tx
+      .delete(bonusItems)
+      .where(
+        and(
+          eq(bonusItems.planId, planId),
+          date ? eq(bonusItems.date, date) : undefined,
+        ),
+      )
+  })
+}
+
+export async function replaceSingleSlot(
+  planId: number,
+  date: string,
+  mealType: string,
+  previousMealId: number,
+  mealId: number,
+) {
+  return db.transaction(async (tx) => {
+    const changed = await tx
+      .update(weekSlots)
+      .set({ mealId })
+      .where(
+        and(
+          eq(weekSlots.planId, planId),
+          eq(weekSlots.date, date),
+          eq(weekSlots.mealType, mealType),
+          eq(weekSlots.mealId, previousMealId),
+        ),
+      )
+      .returning()
+    if (!changed.length) return false
+    await tx
+      .delete(slotLeftovers)
+      .where(
+        and(
+          eq(slotLeftovers.planId, planId),
+          or(
+            and(
+              eq(slotLeftovers.date, date),
+              eq(slotLeftovers.mealType, mealType),
+            ),
+            and(
+              eq(slotLeftovers.sourceDate, date),
+              eq(slotLeftovers.sourceMealType, mealType),
+            ),
+          ),
+        ),
+      )
+    return true
+  })
+}
+
 export async function updatePlanPortions(id: number, portions: number) {
   const [plan] = await db
     .update(plans)

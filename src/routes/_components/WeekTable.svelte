@@ -19,6 +19,9 @@
     onAddBonus,
     onDeleteBonus,
     onRecalcDay,
+    onRerollMeal,
+    onClearDay,
+    busy,
     onPrevWeek,
     onNextWeek,
   }: {
@@ -53,6 +56,9 @@
     ) => void
     onDeleteBonus: (id: number) => void
     onRecalcDay: (date: string) => void
+    onRerollMeal: (date: string, mealType: string) => Promise<void>
+    onClearDay: (date: string) => Promise<void>
+    busy: boolean
     onPrevWeek: () => void
     onNextWeek: () => void
   } = $props()
@@ -186,6 +192,9 @@
                   leftoverSource={previousMatchingSlot(slot)}
                   onPick={(mealId) => onSlotChange(date, mt, mealId)}
                   onLeftover={(source) => onSlotLeftover(date, mt, source)}
+                  onReroll={() => onRerollMeal(date, mt)}
+                  {isPro}
+                  {busy}
                 />
               </td>
             {/each}
@@ -202,16 +211,6 @@
                   onAdd={onAddBonus}
                   onDelete={onDeleteBonus}
                 />
-                <button
-                  class="btn-recalc"
-                  disabled={!isPro}
-                  onclick={() => onRecalcDay(isoDate(dt))}
-                  title={t(
-                    "Re-fill this day's empty slots to fit the remaining budget",
-                  )}
-                  >{t('Recalculate')}{#if !isPro}
-                    · {t('Pro')}{/if}</button
-                >
               </div>
             </td>
           {/each}
@@ -221,6 +220,33 @@
           {#each dailyNutrition as dn}
             <td class="slot-cell nutrition-cell">
               <NutritionBar {...dn} {targets} />
+            </td>
+          {/each}
+        </tr>
+        <tr class="actions-row">
+          <th scope="row" class="row-label">{t('Actions')}</th>
+          {#each weekDates as dt}
+            <td class="slot-cell actions-cell">
+              <div class="day-actions">
+                <button
+                  class="btn-recalc"
+                  disabled={busy || !isPro}
+                  onclick={() => onRecalcDay(isoDate(dt))}
+                  title={t(
+                    "Re-fill this day's empty slots to fit the remaining budget",
+                  )}
+                  >{t('Recalculate')}{#if !isPro}
+                    · {t('Pro')}{/if}</button
+                >
+                <button
+                  class="btn-recalc"
+                  disabled={busy ||
+                    (!plan.slots.some((slot) => slot.date === isoDate(dt)) &&
+                      !plan.bonus.some((item) => item.date === isoDate(dt)))}
+                  onclick={() => onClearDay(isoDate(dt))}
+                  >{t('Clear day')}</button
+                >
+              </div>
             </td>
           {/each}
         </tr>
@@ -385,6 +411,16 @@
   }
 
   .extras-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .actions-cell {
+    padding: 8px;
+  }
+
+  .day-actions {
     display: flex;
     flex-direction: column;
     gap: 4px;
