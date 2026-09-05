@@ -67,7 +67,9 @@ test('prefill an extra item from a common preset', async ({ page }) => {
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
 
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Pizza')
-  await expect(page.getByLabel('Calories', { exact: true })).toHaveValue('800')
+  await expect(
+    page.getByRole('spinbutton', { name: 'Calories', exact: true }),
+  ).toHaveValue('800')
   await expect(page.getByLabel('Protein g', { exact: true })).toHaveValue('32')
   await expect(page.getByLabel('Carbs g', { exact: true })).toHaveValue('96')
   await expect(page.getByLabel('Fat g', { exact: true })).toHaveValue('32')
@@ -82,6 +84,100 @@ test('prefill an extra item from a common preset', async ({ page }) => {
   await expect(
     page.locator('.bonus-item').filter({ hasText: 'Pizza' }),
   ).toContainText('800')
+})
+
+test('@smoke nutrition meters show planned amounts, remaining targets, and overflow', async ({
+  page,
+}) => {
+  const profile = await page.request.patch('/profile', {
+    data: {
+      calorieTarget: 1000,
+      proteinTarget: 40,
+      carbsTarget: 200,
+      fatTarget: 70,
+    },
+  })
+  expect(profile.ok()).toBe(true)
+  await page.reload()
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  const nutrition = page.locator('.nutrition-cell').first()
+  const calories = nutrition.getByRole('meter', {
+    name: 'Calories',
+    exact: true,
+  })
+  const protein = nutrition.getByRole('meter', { name: 'Protein', exact: true })
+  await expect(calories).toHaveAttribute('aria-valuenow', '0')
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /1000 kcal remaining/,
+  )
+  await expect(protein.locator('.ring-fill')).toHaveAttribute(
+    'stroke-dasharray',
+    '0 100',
+  )
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(calories).toHaveAttribute('aria-valuenow', '800')
+  await expect(calories).toHaveAttribute('aria-valuetext', /200 kcal remaining/)
+  await expect(protein).toHaveAttribute(
+    'aria-valuetext',
+    '32 / 40 g · 8 g remaining',
+  )
+  await expect(protein.locator('.ring-fill')).toHaveAttribute(
+    'stroke-dasharray',
+    '80 100',
+  )
+  await nutrition.getByText('More nutrients', { exact: true }).click()
+  await expect(
+    nutrition.getByRole('meter', { name: 'Salt', exact: true }),
+  ).toHaveAttribute('aria-valuetext', '3.2 / 6 g · 2.8 g below reference')
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByLabel('Name', { exact: true }).fill('Remaining budget')
+  await page
+    .getByRole('spinbutton', { name: 'Calories', exact: true })
+    .fill('200')
+  await page.getByLabel('Protein g', { exact: true }).fill('8')
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(calories).toHaveAttribute('aria-valuenow', '1000')
+  await expect(calories).toHaveAttribute('aria-valuetext', /0 kcal remaining/)
+  await expect(protein.locator('.ring-fill')).toHaveAttribute(
+    'stroke-dasharray',
+    '100 100',
+  )
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /1800 \/ 1000 kcal · 800 kcal over target/,
+  )
+  await expect(calories).toHaveAttribute('aria-valuenow', '1000')
+  await expect(protein).toHaveAttribute(
+    'aria-valuetext',
+    '72 / 40 g · 32 g over target',
+  )
+  await expect(protein.locator('.ring-fill')).toHaveAttribute(
+    'stroke-dasharray',
+    '100 100',
+  )
+  await page.reload()
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /800 kcal over target/,
+  )
 })
 
 test('configure enabled and custom meal slots for auto-compose', async ({

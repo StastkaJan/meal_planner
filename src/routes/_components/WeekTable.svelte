@@ -296,7 +296,7 @@
 
   .cal {
     width: 100%;
-    min-width: 700px;
+    min-width: 1120px;
     border-collapse: collapse;
     table-layout: fixed;
   }
@@ -430,7 +430,7 @@
 
   .nutrition-cell {
     padding: 10px;
-    vertical-align: middle;
+    vertical-align: top;
   }
 
   .extras-cell {
@@ -515,9 +515,6 @@
       border-right: 0;
       border-left: 0;
       border-radius: 0;
-    }
-    .cal {
-      min-width: 780px;
     }
   }
 </style>

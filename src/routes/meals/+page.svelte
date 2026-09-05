@@ -127,20 +127,6 @@
     <div class="top-actions">
       <Button
         variant="secondary"
-        class={data.favoritesOnly ? 'active' : ''}
-        onclick={toggleFavoritesFilter}
-      >
-        {t('Favourites only')}
-      </Button>
-      <Button
-        variant="secondary"
-        class={data.myRecipesOnly ? 'active' : ''}
-        onclick={toggleMyRecipesFilter}
-      >
-        {t('My recipes only')}
-      </Button>
-      <Button
-        variant="secondary"
         disabled={!data.user?.isPro}
         onclick={() => {
           importError = ''
@@ -221,6 +207,7 @@
     <Input
       type="search"
       name="q"
+      aria-label={t('Search recipes…')}
       value={data.query}
       placeholder={t('Search recipes…')}
     />
@@ -228,6 +215,7 @@
       name="difficulty"
       value={data.difficulty}
       title={t('Filter by difficulty')}
+      aria-label={t('Filter by difficulty')}
       options={[
         { value: '', label: t('Any difficulty') },
         { value: 'easy', label: label('easy') },
@@ -241,13 +229,32 @@
         value="1"
       />{/if}
     {#if data.myRecipesOnly}<input type="hidden" name="mine" value="1" />{/if}
-    <Button type="submit" size="sm">{t('Apply')}</Button>
+    <Button type="submit">{t('Apply')}</Button>
     {#if data.query || data.difficulty}
       <a class="clear" href={recipeUrl({ clear: true, page: 1 })}
         >{t('Clear')}</a
       >
     {/if}
-    <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span>
+    <div class="filter-options">
+      <Button
+        variant="secondary"
+        size="sm"
+        aria-pressed={data.favoritesOnly}
+        onclick={toggleFavoritesFilter}
+      >
+        {t('Favourites only')}
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        aria-pressed={data.myRecipesOnly}
+        onclick={toggleMyRecipesFilter}
+      >
+        {t('My recipes only')}
+      </Button>
+      <span class="result-count">{namedCount(data.totalResults, 'recipe')}</span
+      >
+    </div>
   </form>
 
   {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
@@ -285,6 +292,7 @@
 <style lang="scss">
   .page {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.4rem;
   }
 
@@ -295,17 +303,42 @@
     gap: 0.4rem;
   }
   .filters {
-    display: grid;
-    grid-template-columns: minmax(12rem, 1fr) 11rem auto auto 1fr;
-    gap: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     align-items: center;
+    padding: 1rem;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    background: $color-surface;
+  }
+  .filters :global(.ui-input) {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+  .filters :global(.ui-select) {
+    flex: 0 1 11rem;
+  }
+  .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding-top: 0.75rem;
+    border-top: 1px solid $color-border;
+  }
+  .filter-options :global([aria-pressed='true']) {
+    border-color: $color-accent;
+    background: $color-accent-dim;
+    color: $color-accent;
   }
   .clear {
     color: $color-text-muted;
     font-size: 0.85rem;
   }
   .result-count {
-    justify-self: end;
+    margin-left: auto;
     color: $color-text-muted;
     font-size: 0.8rem;
   }
@@ -323,6 +356,8 @@
   }
 
   .top-bar {
+    flex-wrap: wrap;
+    gap: 20px;
     justify-content: space-between;
     align-items: flex-end;
   }
@@ -350,9 +385,8 @@
     font-size: 0.95rem;
   }
 
-  .top-actions :global(.active) {
-    border-color: $color-accent;
-    color: $color-accent;
+  .top-actions {
+    flex-wrap: wrap;
   }
 
   .import-panel {
@@ -403,8 +437,6 @@
     }
     .top-actions {
       width: 100%;
-      overflow-x: auto;
-      padding-bottom: 2px;
     }
     .top-actions :global(.ui-button) {
       flex: 0 0 auto;
@@ -413,13 +445,17 @@
       grid-template-columns: 1fr;
     }
     .filters {
-      grid-template-columns: 1fr 1fr;
+      padding: 0.75rem;
     }
     .filters :global(.ui-input) {
-      grid-column: 1 / -1;
+      flex-basis: 100%;
     }
-    .result-count {
-      justify-self: end;
+    .filters :global(.ui-select) {
+      flex-grow: 1;
+    }
+    .filters :global(.ui-button),
+    .top-actions :global(.ui-button) {
+      min-height: 44px;
     }
   }
 </style>
