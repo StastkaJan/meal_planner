@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { MealPickerItem } from '$lib/types'
-  import { goto } from '$app/navigation'
+  import { beforeNavigate, goto } from '$app/navigation'
   import { page as currentPage } from '$app/state'
   import { onDestroy } from 'svelte'
   import { useI18n } from '$lib/i18n-context'
@@ -27,16 +27,29 @@
     onClose: () => void
   } = $props()
 
-  let search = $derived(query)
+  let draft = $state<string | null>(null)
+  const search = $derived(draft ?? query)
   let timer: ReturnType<typeof setTimeout>
+  let latestFilter = 0
   onDestroy(() => clearTimeout(timer))
-  function filter(nextPage = 1, nextMine = mine) {
+  beforeNavigate(({ to }) => {
+    if (!to?.url.searchParams.has('pickDate')) clearTimeout(timer)
+  })
+  async function filter(nextPage = 1, nextMine = mine) {
     clearTimeout(timer)
+    const revision = ++latestFilter
+    const submittedQuery = search
     const url = new URL(currentPage.url)
-    url.searchParams.set('pickQuery', search)
+    url.searchParams.set('pickQuery', submittedQuery)
     url.searchParams.set('pickMine', nextMine ? '1' : '0')
     url.searchParams.set('pickPage', String(nextPage))
-    return goto(url, { noScroll: true, keepFocus: true, replaceState: true })
+    await goto(url, { noScroll: true, keepFocus: true, replaceState: true })
+    if (revision === latestFilter && draft === submittedQuery) draft = null
+  }
+
+  function selectMeal(mealId: number | null) {
+    clearTimeout(timer)
+    onSelect(mealId)
   }
 </script>
 
@@ -46,8 +59,9 @@
       class="search"
       type="search"
       placeholder={t('Search meals…')}
-      bind:value={search}
-      oninput={() => {
+      value={search}
+      oninput={(event) => {
+        draft = event.currentTarget.value
         clearTimeout(timer)
         timer = setTimeout(() => filter(), 250)
       }}
@@ -66,7 +80,7 @@
   <ul class="list">
     {#if current !== null}
       <li>
-        <button class="item clear-item" onclick={() => onSelect(null)}>
+        <button class="item clear-item" onclick={() => selectMeal(null)}>
           {t('Clear slot')}
         </button>
       </li>
@@ -76,7 +90,7 @@
         <button
           class="item"
           class:active={meal.id === current}
-          onclick={() => onSelect(meal.id)}
+          onclick={() => selectMeal(meal.id)}
         >
           <span class="meal-name">{meal.name}</span>
           {#if meal.calories}
