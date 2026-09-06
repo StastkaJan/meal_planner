@@ -84,6 +84,6 @@ jobs:
           tar -xzf "$archive" -C "$release"
           cd "$release"
           PREVIEW_ROOT="$base/meal-plan-previews" \
-            PREVIEW_EDGE_ROOT="$base/portfolio" \
+            PREVIEW_EDGE_ROOT="/home/github/portfolio" \
             bash scripts/deploy-preview.sh delete "$pr_number"
           REMOTE

@@ -51,7 +51,8 @@ fi
 preview_id="pr-$pr_number"
 project="meal-plan-$preview_id"
 env_file="$preview_root/env/$preview_id.env"
-snapshot_marker="$preview_root/env/$preview_id.production-snapshot"
+seed_marker="$preview_root/env/$preview_id.demo-seeded"
+legacy_snapshot_marker="$preview_root/env/$preview_id.production-snapshot"
 route_file="$edge_routes_dir/$preview_id.caddy"
 
 export PREVIEW_ID="$preview_id"
@@ -62,6 +63,7 @@ compose() {
     --env-file "$env_file" \
     --project-name "$project" \
     --file docker-compose.preview.yml \
+    --profile seed \
     "$@"
 }
 
@@ -84,26 +86,10 @@ if [[ "$action" == delete ]]; then
   if [[ -f "$env_file" ]]; then
     compose down --volumes --remove-orphans --rmi local
   fi
-  rm -f "$env_file" "$snapshot_marker"
+  rm -f "$env_file" "$seed_marker" "$legacy_snapshot_marker"
   echo "deleted preview $preview_id"
   exit 0
 fi
-
-: "${PREVIEW_PRODUCTION_ROOT:?Set PREVIEW_PRODUCTION_ROOT to the production deployment directory}"
-if [[ ! -f "$PREVIEW_PRODUCTION_ROOT/.env.production" ]]; then
-  echo "PREVIEW_PRODUCTION_ROOT must contain .env.production" >&2
-  exit 1
-fi
-production_root="$(cd "$PREVIEW_PRODUCTION_ROOT" && pwd -P)"
-
-production_compose() {
-  docker compose \
-    --project-directory "$production_root" \
-    --env-file "$production_root/.env.production" \
-    --file "$production_root/docker-compose.yml" \
-    --file "$production_root/docker-compose.production.yml" \
-    "$@"
-}
 
 : "${PREVIEW_BASE_DOMAIN:?Set PREVIEW_BASE_DOMAIN, for example papuplan.cz}"
 if [[ ! "$PREVIEW_BASE_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]]; then
@@ -132,28 +118,22 @@ mv "$env_file.tmp" "$env_file"
 
 docker network inspect public-web >/dev/null 2>&1 || docker network create public-web
 compose config --quiet
-compose up -d --wait --wait-timeout 120 db
+compose build app demo-seed
 
-imported_snapshot=false
-if [[ ! -f "$snapshot_marker" ]]; then
-  echo "loading a production snapshot into $preview_id"
-  compose exec -T db psql -v ON_ERROR_STOP=1 -U mealplan -d mealplan \
-    -c 'DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public AUTHORIZATION mealplan;'
-  production_compose exec -T db pg_dump \
-    -U mealplan \
-    -d mealplan \
-    --no-owner \
-    --no-privileges \
-    --exclude-table-data=public.sessions \
-    | compose exec -T db psql -v ON_ERROR_STOP=1 -U mealplan -d mealplan
-  imported_snapshot=true
+if [[ ! -f "$seed_marker" ]]; then
+  # Recreate only this preview, clearing any old production copy or partial seed.
+  rm -f "$route_file"
+  reload_edge
+  compose down --volumes --remove-orphans
+  rm -f "$legacy_snapshot_marker"
 fi
 
-compose build app
+compose up -d --wait --wait-timeout 120 db
 compose run --rm --no-deps app node scripts-dist/migrate.js
-if [[ "$imported_snapshot" == true ]]; then
-  printf '%s\n' "$deployment_version" >"$snapshot_marker.tmp"
-  mv "$snapshot_marker.tmp" "$snapshot_marker"
+compose run --rm --no-deps demo-seed
+if [[ ! -f "$seed_marker" ]]; then
+  printf '%s\n' "$deployment_version" >"$seed_marker.tmp"
+  mv "$seed_marker.tmp" "$seed_marker"
 fi
 compose up -d --no-deps --wait --wait-timeout 120 app
 
