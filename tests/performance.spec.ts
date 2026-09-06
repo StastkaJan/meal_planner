@@ -78,8 +78,11 @@ for (const closeWith of ['cancel', 'escape', 'select'] as const) {
     await dialog.getByRole('searchbox').fill('pending search')
     if (closeWith === 'cancel')
       await dialog.getByRole('button', { name: 'Cancel' }).click()
-    else if (closeWith === 'escape') await page.keyboard.press('Escape')
-    else await dialog.locator('.list .item').first().click()
+    else if (closeWith === 'escape') {
+      // A focused search input consumes Escape to clear its text first.
+      await dialog.getByRole('button', { name: 'Cancel' }).focus()
+      await page.keyboard.press('Escape')
+    } else await dialog.locator('.list .item').first().click()
     await closingRequest
     await page.clock.runFor(300)
     expect(searches).toEqual([])
