@@ -4,3 +4,4 @@ import { db } from '$lib/database'
 export async function checkDatabase() {
   await db.execute(sql`select 1`)
 }
+export { getPoolStats } from '$lib/database'

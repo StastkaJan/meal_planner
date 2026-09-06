@@ -1,5 +1,6 @@
 import {
   date,
+  index,
   integer,
   numeric,
   pgTable,
@@ -8,21 +9,25 @@ import {
 } from 'drizzle-orm/pg-core'
 import { plans } from './plans'
 
-export const bonusItems = pgTable('bonus_items', {
-  id: serial('id').primaryKey(),
-  planId: integer('plan_id')
-    .notNull()
-    .references(() => plans.id, { onDelete: 'cascade' }),
-  date: date('date').notNull(),
-  name: text('name').notNull(),
-  calories: integer('calories'),
-  proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
-  carbsG: numeric('carbs_g', { precision: 6, scale: 1 }),
-  fatG: numeric('fat_g', { precision: 6, scale: 1 }),
-  fiberG: numeric('fiber_g', { precision: 7, scale: 2 }),
-  sugarG: numeric('sugar_g', { precision: 7, scale: 2 }),
-  saturatedFatG: numeric('saturated_fat_g', { precision: 7, scale: 2 }),
-  saltG: numeric('salt_g', { precision: 7, scale: 2 }),
-})
+export const bonusItems = pgTable(
+  'bonus_items',
+  {
+    id: serial('id').primaryKey(),
+    planId: integer('plan_id')
+      .notNull()
+      .references(() => plans.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    name: text('name').notNull(),
+    calories: integer('calories'),
+    proteinG: numeric('protein_g', { precision: 6, scale: 1 }),
+    carbsG: numeric('carbs_g', { precision: 6, scale: 1 }),
+    fatG: numeric('fat_g', { precision: 6, scale: 1 }),
+    fiberG: numeric('fiber_g', { precision: 7, scale: 2 }),
+    sugarG: numeric('sugar_g', { precision: 7, scale: 2 }),
+    saturatedFatG: numeric('saturated_fat_g', { precision: 7, scale: 2 }),
+    saltG: numeric('salt_g', { precision: 7, scale: 2 }),
+  },
+  (table) => [index('bonus_items_plan_date_idx').on(table.planId, table.date)],
+)
 
 export type BonusItem = typeof bonusItems.$inferSelect

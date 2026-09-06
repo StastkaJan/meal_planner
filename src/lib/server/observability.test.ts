@@ -10,6 +10,39 @@ import {
 import { release } from './release'
 
 describe('request observability', () => {
+  it('exports cumulative latency buckets and pool pressure', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const timer = vi
+      .spyOn(performance, 'now')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(200)
+    try {
+      await observeRequests({
+        event: {
+          request: new Request('http://localhost/'),
+          route: { id: '/' },
+        } as any,
+        resolve: async () => new Response(),
+      })
+      const text = renderMetrics({ total: 10, idle: 0, waiting: 3 })
+      expect(text).toContain(
+        'http_request_duration_seconds_bucket{method="GET",route="/",status="200",le="0.1"} 0',
+      )
+      expect(text).toContain(
+        'http_request_duration_seconds_bucket{method="GET",route="/",status="200",le="0.25"} 1',
+      )
+      expect(text).toContain(
+        'http_request_duration_seconds_bucket{method="GET",route="/",status="200",le="+Inf"} 1',
+      )
+      expect(text).toContain(
+        'http_request_duration_seconds_count{method="GET",route="/",status="200"} 1',
+      )
+      expect(text).toContain('db_pool_waiting_requests 3')
+      expect(text).toContain('node_event_loop_delay_max_seconds ')
+    } finally {
+      timer.mockRestore()
+    }
+  })
   beforeEach(() => {
     resetMetrics()
     vi.restoreAllMocks()

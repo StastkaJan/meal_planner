@@ -94,6 +94,51 @@ describe('rankByNutrition', () => {
 describe('fillDaySlots', () => {
   const targets = { calories: 2000, proteinG: 100, carbsG: 200, fatG: 70 }
 
+  it('keeps ranking and first-candidate tie behavior when selecting without a sort', () => {
+    const candidates = Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      calories: (i * 37) % 1000,
+      proteinG: i % 30,
+      carbsG: i % 50,
+      fatG: i % 20,
+      tags: [],
+      allowedSlots: [],
+    }))
+    for (const calories of [0, 300, 700]) {
+      const budget = { ...targets, calories }
+      const usage = new Map([
+        [3, 4],
+        [7, 10],
+      ])
+      const best = rankByNutrition(candidates, calories, budget, usage)[0]
+      const result = fillDaySlots(
+        1,
+        '2026-09-07',
+        ['lunch'],
+        candidates,
+        budget,
+        { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+        usage,
+      )
+      expect(result[0].mealId).toBe(best.id)
+    }
+    const tied = [
+      { ...candidates[0], id: 9 },
+      { ...candidates[0], id: 1 },
+    ]
+    expect(
+      fillDaySlots(
+        1,
+        '2026-09-07',
+        ['lunch'],
+        tied,
+        targets,
+        { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+        new Map(),
+      )[0].mealId,
+    ).toBe(9)
+  })
+
   it('fills an empty slot and updates consumed nutrition and usage count', () => {
     const only = [
       {
@@ -236,6 +281,75 @@ describe('sumNutrition', () => {
 })
 
 describe('optimizeWeekSlots', () => {
+  it('scores repeated days, existing meals, and bonuses against a full-week oracle', () => {
+    const candidates = Array.from({ length: 12 }, (_, i) => ({
+      id: i + 1,
+      calories: 200 + i * 50,
+      proteinG: i * 3,
+      carbsG: i * 5,
+      fatG: i * 2,
+      tags: [],
+      allowedSlots: ['lunch'],
+    }))
+    const slots = ['2026-09-07', '2026-09-08'].map((date) => ({
+      planId: 1,
+      date,
+      mealType: 'lunch',
+      mealId: 1,
+      group: 'repeat',
+    }))
+    const existing = [
+      { ...candidates[4], date: '2026-09-07', mealId: 5 },
+      {
+        calories: 100,
+        proteinG: '10',
+        carbsG: null,
+        fatG: '3',
+        date: '2026-09-08',
+      },
+    ]
+    const targets = { calories: 900, proteinG: 50, carbsG: 80, fatG: 30 }
+    const objective = (meal: (typeof candidates)[number]) => {
+      const rows = [
+        ...existing,
+        ...slots.map(({ date }) => ({ ...meal, date, mealId: meal.id })),
+      ]
+      const usage = new Map<number, number>()
+      for (const row of rows)
+        if ('mealId' in row)
+          usage.set(row.mealId, (usage.get(row.mealId) ?? 0) + 1)
+      let score = [...usage.values()].reduce(
+        (sum, count) => sum + Math.max(0, count - 1) * 0.15,
+        0,
+      )
+      for (const date of slots.map((slot) => slot.date)) {
+        const total = sumNutrition(rows.filter((row) => row.date === date))
+        score +=
+          (Math.abs(total.calories - targets.calories) / targets.calories) * 5
+        score +=
+          (['proteinG', 'carbsG', 'fatG'] as const).reduce(
+            (sum, key) =>
+              sum + Math.abs(total[key] - targets[key]) / targets[key],
+            0,
+          ) / 3
+      }
+      return score
+    }
+    const optimized = optimizeWeekSlots(
+      slots,
+      candidates,
+      candidates,
+      targets,
+      existing,
+    )
+    const selected = candidates.find((meal) => meal.id === optimized[0].mealId)!
+    expect(objective(selected)).toBeCloseTo(
+      Math.min(...candidates.map(objective)),
+      10,
+    )
+    expect(optimized[0].mealId).toBe(optimized[1].mealId)
+    expect(slots.map((slot) => slot.mealId)).toEqual([1, 1])
+  })
   it('jointly fixes a choice that greedy slot order gets wrong', () => {
     const candidates = [
       { id: 1, calories: 500, tags: [], allowedSlots: ['breakfast'] },

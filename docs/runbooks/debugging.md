@@ -9,6 +9,24 @@ days.
 
 ## Start from an alert
 
+`HighHttpLatency` now measures each route's p95, sustained for ten minutes,
+with at least 20 requests per five-minute window. The Application Overview
+also shows database pool waiters and event-loop p99 delay (seconds since the
+previous scrape). Use these to distinguish queued database work from blocked
+JavaScript. Existing mean-latency panels remain available.
+
+```promql
+histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))
+```
+
+```promql
+db_pool_waiting_requests
+```
+
+```promql
+node_event_loop_delay_max_seconds
+```
+
 1. Record when the alert started, its service, and any `route`, `status`,
    `service`, or `operation` labels. Use the same time range in Grafana.
 2. Check the Application Overview panels for backend availability, 5xx rate,

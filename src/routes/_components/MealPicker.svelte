@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { MealPickerItem } from '$lib/types'
-  import { mealFitsSlot } from '$lib/domain/meals'
+  import { beforeNavigate, goto } from '$app/navigation'
+  import { page as currentPage } from '$app/state'
+  import { onDestroy } from 'svelte'
   import { useI18n } from '$lib/i18n-context'
 
   const { t } = useI18n()
@@ -8,61 +10,89 @@
   let {
     meals,
     current,
-    mealType,
+    query,
+    mine,
+    page,
+    hasMore,
+    disabled = false,
     onSelect,
+    onClose,
   }: {
     meals: MealPickerItem[]
     current: number | null
-    mealType: string
+    query: string
+    mine: boolean
+    page: number
+    hasMore: boolean
+    disabled?: boolean
     onSelect: (mealId: number | null) => void
+    onClose: () => void
   } = $props()
 
-  let search = $state('')
-  let myRecipesOnly = $state(false)
+  let draft = $state<string | null>(null)
+  const search = $derived(draft ?? query)
+  let timer: ReturnType<typeof setTimeout>
+  let latestFilter = 0
+  onDestroy(() => clearTimeout(timer))
+  beforeNavigate(({ to }) => {
+    if (!to?.url.searchParams.has('pickDate')) clearTimeout(timer)
+  })
+  async function filter(nextPage = 1, nextMine = mine) {
+    clearTimeout(timer)
+    const revision = ++latestFilter
+    const submittedQuery = search
+    const url = new URL(currentPage.url)
+    url.searchParams.set('pickQuery', submittedQuery)
+    url.searchParams.set('pickMine', nextMine ? '1' : '0')
+    url.searchParams.set('pickPage', String(nextPage))
+    await goto(url, { noScroll: true, keepFocus: true, replaceState: true })
+    if (revision === latestFilter && draft === submittedQuery) draft = null
+  }
 
-  const filtered = $derived(
-    meals.filter(
-      (m) =>
-        m.name.toLowerCase().includes(search.toLowerCase()) &&
-        (!myRecipesOnly || m.userId !== null) &&
-        mealFitsSlot(m.allowedSlots, mealType),
-    ),
-  )
+  function selectMeal(mealId: number | null) {
+    clearTimeout(timer)
+    onSelect(mealId)
+  }
 </script>
 
-<div class="picker">
+<fieldset class="picker" {disabled}>
   <div class="picker-header">
     <input
       class="search"
       type="search"
       placeholder={t('Search meals…')}
-      bind:value={search}
+      value={search}
+      oninput={(event) => {
+        draft = event.currentTarget.value
+        clearTimeout(timer)
+        timer = setTimeout(() => filter(), 250)
+      }}
     />
-    <button
-      class="close"
-      onclick={() => onSelect(current)}
-      aria-label={t('Cancel')}>✕</button
-    >
+    <button class="close" onclick={onClose} aria-label={t('Cancel')}>✕</button>
   </div>
   <label class="my-recipes">
-    <input type="checkbox" bind:checked={myRecipesOnly} />
+    <input
+      type="checkbox"
+      checked={mine}
+      onchange={(event) => filter(1, event.currentTarget.checked)}
+    />
     {t('My recipes only')}
   </label>
 
   <ul class="list">
     {#if current !== null}
       <li>
-        <button class="item clear-item" onclick={() => onSelect(null)}>
+        <button class="item clear-item" onclick={() => selectMeal(null)}>
           {t('Clear slot')}
         </button>
       </li>
     {/if}
-    {#each filtered as meal (meal.id)}
+    {#each meals as meal (meal.id)}
       <li>
         <button
           class="item"
           class:active={meal.id === current}
-          onclick={() => onSelect(meal.id)}
+          onclick={() => selectMeal(meal.id)}
         >
           <span class="meal-name">{meal.name}</span>
           {#if meal.calories}
@@ -74,10 +104,23 @@
       <li class="no-results">{t('No meals found')}</li>
     {/each}
   </ul>
-</div>
+  <nav class="picker-header" aria-label={t('Pagination')}>
+    <button disabled={page === 1} onclick={() => filter(page - 1)}
+      >{t('Previous page')}</button
+    >
+    <span>{page}</span>
+    <button disabled={!hasMore} onclick={() => filter(page + 1)}
+      >{t('Next page')}</button
+    >
+  </nav>
+</fieldset>
 
 <style lang="scss">
   .picker {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     max-height: 70vh;

@@ -12,6 +12,19 @@ const loginAttempts = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT = 10
 const RATE_WINDOW = 15 * 60 * 1000
 
+export function pruneLoginAttempts(now = Date.now()) {
+  let removed = 0
+  for (const [ip, entry] of loginAttempts) {
+    if (now >= entry.resetAt) {
+      loginAttempts.delete(ip)
+      removed++
+    }
+  }
+  return removed
+}
+
+setInterval(pruneLoginAttempts, 60_000).unref()
+
 export const MAX_PASSWORD = 128
 export const generateToken = () => randomBytes(32).toString('hex')
 
@@ -48,7 +61,7 @@ export async function verifyLogin(
 export function checkRateLimit(ip: string): boolean {
   const now = Date.now()
   const entry = loginAttempts.get(ip)
-  if (!entry || now > entry.resetAt) {
+  if (!entry || now >= entry.resetAt) {
     loginAttempts.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
     return true
   }

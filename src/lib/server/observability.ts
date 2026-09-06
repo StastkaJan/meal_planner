@@ -1,10 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { monitorEventLoopDelay } from 'node:perf_hooks'
 import type { Handle } from '@sveltejs/kit'
 import { release } from './release'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-type RequestMetric = { count: number; durationSeconds: number }
+type RequestMetric = {
+  count: number
+  durationSeconds: number
+  buckets: number[]
+}
 type RequestContext = { requestId: string; route: string }
 
 const levels: Record<LogLevel, number> = {
@@ -19,6 +24,39 @@ const slowServiceMetrics = new Map<string, number>()
 const clientErrorMetrics = new Map<string, number>()
 const requestContext = new AsyncLocalStorage<RequestContext>()
 let requestsInFlight = 0
+const durationBuckets = [
+  0.01,
+  0.025,
+  0.05,
+  0.1,
+  0.25,
+  0.5,
+  1,
+  2.5,
+  5,
+  10,
+  Infinity,
+]
+const eventLoopDelay = monitorEventLoopDelay({ resolution: 20 })
+eventLoopDelay.enable()
+
+function recordDuration(metric: RequestMetric, seconds: number) {
+  metric.count++
+  metric.durationSeconds += seconds
+  durationBuckets.forEach((bound, index) => {
+    if (seconds <= bound) metric.buckets[index]++
+  })
+}
+
+function histogramLines(name: string, labels: string, metric: RequestMetric) {
+  return [
+    `${name}_count{${labels}} ${metric.count}`,
+    ...durationBuckets.map(
+      (bound, index) =>
+        `${name}_bucket{${labels},le="${bound === Infinity ? '+Inf' : bound}"} ${metric.buckets[index]}`,
+    ),
+  ]
+}
 
 const stringFields: Record<string, number> = {
   requestId: 128,
@@ -120,9 +158,9 @@ export async function monitorService<T>(
     const metric = serviceMetrics.get(key) ?? {
       count: 0,
       durationSeconds: 0,
+      buckets: durationBuckets.map(() => 0),
     }
-    metric.count++
-    metric.durationSeconds += durationSeconds
+    recordDuration(metric, durationSeconds)
     serviceMetrics.set(key, metric)
 
     if (durationSeconds >= 1) {
@@ -183,9 +221,12 @@ export const observeRequests: Handle = async ({ event, resolve }) => {
       requestsInFlight--
       const durationSeconds = (performance.now() - startedAt) / 1000
       const key = JSON.stringify([event.request.method, route, status])
-      const metric = metrics.get(key) ?? { count: 0, durationSeconds: 0 }
-      metric.count++
-      metric.durationSeconds += durationSeconds
+      const metric = metrics.get(key) ?? {
+        count: 0,
+        durationSeconds: 0,
+        buckets: durationBuckets.map(() => 0),
+      }
+      recordDuration(metric, durationSeconds)
       metrics.set(key, metric)
 
       log(
@@ -209,7 +250,11 @@ function label(value: string) {
     .replaceAll('"', '\\"')
 }
 
-export function renderMetrics() {
+export function renderMetrics(pool?: {
+  total: number
+  idle: number
+  waiting: number
+}) {
   const lines = [
     '# HELP app_release_info Application release identity.',
     '# TYPE app_release_info gauge',
@@ -257,8 +302,8 @@ export function renderMetrics() {
   }
 
   lines.push(
-    '# HELP service_operation_duration_seconds_sum Total time spent in backend service operations.',
-    '# TYPE service_operation_duration_seconds_sum counter',
+    '# HELP service_operation_duration_seconds Backend service duration.',
+    '# TYPE service_operation_duration_seconds histogram',
   )
   for (const [key, metric] of serviceMetrics) {
     const [service, operation, outcome] = JSON.parse(key) as [
@@ -269,18 +314,20 @@ export function renderMetrics() {
     const labels = `service="${label(service)}",operation="${label(operation)}",outcome="${label(outcome)}"`
     lines.push(
       `service_operation_duration_seconds_sum{${labels}} ${metric.durationSeconds}`,
+      ...histogramLines('service_operation_duration_seconds', labels, metric),
     )
   }
 
   lines.push(
-    '# HELP http_request_duration_seconds_sum Total time spent serving HTTP requests.',
-    '# TYPE http_request_duration_seconds_sum counter',
+    '# HELP http_request_duration_seconds HTTP request duration.',
+    '# TYPE http_request_duration_seconds histogram',
   )
   for (const [key, metric] of metrics) {
     const [method, route, status] = JSON.parse(key) as [string, string, number]
     const labels = `method="${label(method)}",route="${label(route)}",status="${status}"`
     lines.push(
       `http_request_duration_seconds_sum{${labels}} ${metric.durationSeconds}`,
+      ...histogramLines('http_request_duration_seconds', labels, metric),
     )
   }
 
@@ -296,7 +343,22 @@ export function renderMetrics() {
     `process_resident_memory_bytes ${process.memoryUsage().rss}`,
     '',
   )
-  return lines.join('\n')
+  for (const [name, value] of Object.entries({
+    node_event_loop_delay_p99_seconds: eventLoopDelay.percentile(99) / 1e9,
+    node_event_loop_delay_max_seconds: eventLoopDelay.max / 1e9,
+    ...(pool && {
+      db_pool_connections: pool.total,
+      db_pool_idle_connections: pool.idle,
+      db_pool_waiting_requests: pool.waiting,
+    }),
+  })) {
+    lines.push(
+      `# TYPE ${name} gauge`,
+      `${name} ${Number.isFinite(value) ? value : 0}`,
+    )
+  }
+  eventLoopDelay.reset()
+  return lines.join('\n') + '\n'
 }
 
 export function resetMetrics() {

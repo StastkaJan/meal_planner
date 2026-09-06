@@ -10,6 +10,7 @@ import {
   verifyPassword,
   generateToken,
   checkRateLimit,
+  pruneLoginAttempts,
   register,
 } from './auth'
 import { CURRENT_LEGAL_DOCUMENTS } from '$lib/legal'
@@ -48,6 +49,25 @@ describe('generateToken', () => {
 })
 
 describe('checkRateLimit', () => {
+  it('prunes inactive addresses without resetting active limits', () => {
+    const clock = vi.spyOn(Date, 'now')
+    const start = 2_000_000_000_000
+    pruneLoginAttempts(start)
+    try {
+      clock.mockReturnValue(start)
+      checkRateLimit('expired-address')
+      clock.mockReturnValue(start + 60_000)
+      for (let i = 0; i < 10; i++) checkRateLimit('active-address')
+      clock.mockReturnValue(start + 15 * 60_000)
+      expect(pruneLoginAttempts()).toBe(1)
+      expect(pruneLoginAttempts()).toBe(0)
+      expect(checkRateLimit('active-address')).toBe(false)
+      expect(checkRateLimit('expired-address')).toBe(true)
+    } finally {
+      pruneLoginAttempts(Infinity)
+      clock.mockRestore()
+    }
+  })
   it('blocks after 10 requests', () => {
     const ip = `test-${Date.now()}`
     for (let i = 0; i < 10; i++) expect(checkRateLimit(ip)).toBe(true)

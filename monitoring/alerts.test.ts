@@ -11,6 +11,13 @@ function service(name: string) {
 }
 
 describe('alerting configuration', () => {
+  it('alerts on route p95 with a minimum traffic guard', () => {
+    const rules = read('./alerts.yml')
+    expect(rules).toContain('histogram_quantile(0.95, sum by (le, route)')
+    expect(rules).toContain(
+      'sum by (route) (increase(http_request_duration_seconds_count[5m])) >= 20',
+    )
+  })
   it.each([
     ['SustainedHttp5xxErrors', '5m'],
     ['HealthCheckFailed', '2m'],

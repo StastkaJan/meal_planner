@@ -6,11 +6,17 @@
     element = $bindable(),
     children,
     class: className = '',
+    modal = false,
     ...rest
   }: HTMLDialogAttributes & {
     element?: HTMLDialogElement
     children?: Snippet
+    modal?: boolean
   } = $props()
+
+  $effect(() => {
+    if (modal && element && !element.open) element.showModal()
+  })
 </script>
 
 <dialog {...rest} bind:this={element} class={`ui-dialog ${className}`}>
