@@ -8,7 +8,7 @@
 
 ## Stack
 
-- **Frontend**: SvelteKit 5, Svelte 5, Vite 6, Sass
+- **Frontend**: SvelteKit 2, Svelte 5, Vite 8, Sass
 - **Backend**: Node.js adapter (SvelteKit API routes)
 - **DB**: PostgreSQL + Drizzle ORM
 - **Auth**: Session-based, scrypt hashed passwords, 30-day expiry cookie
@@ -39,7 +39,7 @@
 
 <!-- NOTE: `.github/workflows/quality.yml` defines the release quality check, validates Prometheus capacity rules, explicitly migrates and seeds its test database before smoke tests, and deploys successful `main` pushes to the VPS. A repository admin must configure its hosted `quality` job as a required status check before GitHub enforces it for merges or deployment. -->
 
-<!-- NOTE: Same-repository PRs deploy to isolated `pr-N.papuplan.cz` previews after CI using the existing VPS credentials; first deploy imports production data without session rows, then runs PR migrations. Each preview keeps uploaded recipe images in its own volume. The portfolio Caddy imports generated exact-host routes, and cleanup deletes each preview's containers, image, volumes, route, and secret state when its PR closes. -->
+<!-- NOTE: Same-repository PRs deploy to `pr-N.papuplan.cz` after CI; both preview workflows use the outer Caddy in `/home/github/portfolio`, independently of the SSH user's home. `db:seed:preview` adds Free/Pro users and both admin variants, scoped recipes, plans, and review fixtures without production DB access. The first demo deployment clears legacy preview DB/image volumes; later seeds preserve existing accounts and edits. Demo logins are in `docs/production.md`. Exact-host Caddy routes and all preview state are removed when the PR closes. -->
 
 <!-- NOTE: PostgreSQL exporter and cAdvisor feed the Capacity Overview dashboard and `monitoring/capacity-alerts.yml`; thresholds and response steps live in `docs/capacity.md`. -->
 

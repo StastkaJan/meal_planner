@@ -10,6 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "check:migrations": "tsx scripts/check-migration-notes.ts",
     "db:seed": "npx tsx src/lib/database/seed.ts",
+    "db:seed:preview": "tsx src/lib/database/seed-preview.ts",
     "recipes:enrich": "tsx scripts/enrich-recipes.ts",
     "recipes:fetch": "tsx scripts/fetch-themealdb-recipes.ts",
     "test": "playwright test",

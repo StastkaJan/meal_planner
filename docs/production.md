@@ -121,7 +121,11 @@ credentials and are not deployed.
 One-time host setup:
 
 1. Point the wildcard DNS record `*.papuplan.cz` at the VPS.
-2. Connect the portfolio Caddy to `public-web`, mount its persistent
+2. The portfolio Caddy lives in `/home/github/portfolio`; both preview workflows
+   use that path even when SSH runs as `preview_github`. The preview user needs
+   traversal/read access to the Caddy deployment configuration and write access
+   to `/home/github/portfolio/preview-routes`.
+   Connect the portfolio Caddy to `public-web`, mount its persistent
    `preview-routes` directory at `/etc/caddy/preview-routes`, and import the
    generated route files from its Caddyfile:
 
@@ -145,12 +149,33 @@ Until either complete credential set exists, preview deployment and cleanup
 succeed as no-ops instead of failing the pull request pipeline. Partially
 configured credentials still fail so the incomplete setup remains visible.
 
-On first deployment, each preview database receives a transactionally
-consistent production snapshot before the PR's migrations run. Production
-session rows are excluded, so testers sign in separately and live session
-tokens never enter a preview. Later pushes preserve that preview's data and
-apply only its new migrations. Preview databases are not backed up or connected
-to production monitoring; they exist only for reviewing the pull request.
+Each preview runs migrations and `npm run db:seed:preview` from the build stage.
+It requires a `pr-N` preview identity and the preview Compose database. No
+production accounts, passwords, or personal data are copied, and seeds remain
+outside the production runtime image.
+
+All demo accounts start with password `DemoPapu2026!`:
+
+| Email                 | Admin | Plan | Language |
+| --------------------- | ----- | ---- | -------- |
+| `free@demo.test`      | No    | Free | English  |
+| `pro@demo.test`       | No    | Pro  | Czech    |
+| `admin@demo.test`     | Yes   | Free | English  |
+| `admin-pro@demo.test` | Yes   | Pro  | Czech    |
+
+The dataset includes 12 shared recipes. Each account has two active personal
+recipes, one archived personal recipe, a Czech recipe translation, favorites,
+nutrition targets, and pantry exclusions. Its own two-person plan contains the
+current and previous weeks, including leftovers, a repeat pattern, and shopping
+extras. Admin review has pending, approved, and rejected recipe imports.
+
+The first deployment without a `pr-N.demo-seeded` marker recreates that preview's
+database and recipe-image volumes, removing any previous production snapshot
+or partially seeded data. Later pushes run the seed again to create missing demo
+accounts, preserving existing passwords, roles, recipes, and plans. Previews
+no longer read `.env.production` or connect to the production
+database. Preview databases are not backed up or connected to production
+monitoring; they exist only for reviewing the pull request.
 
 ## Grafana access
 
