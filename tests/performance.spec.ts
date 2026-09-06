@@ -84,6 +84,18 @@ for (const closeWith of ['cancel', 'escape', 'select'] as const) {
       await page.keyboard.press('Escape')
     } else await dialog.locator('.list .item').first().click()
     await closingRequest
+    if (closeWith === 'select') {
+      await expect(
+        dialog.getByRole('button', { name: 'Cancel' }),
+      ).toBeDisabled()
+      await expect(dialog.locator('.list .item').first()).toBeDisabled()
+      await page.keyboard.press('Escape')
+      await expect(dialog).toBeVisible()
+      await expect(page).toHaveURL(/pickDate=/)
+      await page.goBack()
+      await expect(dialog).toBeVisible()
+      await expect(page).toHaveURL(/pickDate=/)
+    }
     await page.clock.runFor(300)
     expect(searches).toEqual([])
     releaseClose()

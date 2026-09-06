@@ -14,6 +14,7 @@
     mine,
     page,
     hasMore,
+    disabled = false,
     onSelect,
     onClose,
   }: {
@@ -23,6 +24,7 @@
     mine: boolean
     page: number
     hasMore: boolean
+    disabled?: boolean
     onSelect: (mealId: number | null) => void
     onClose: () => void
   } = $props()
@@ -53,7 +55,7 @@
   }
 </script>
 
-<div class="picker">
+<fieldset class="picker" {disabled}>
   <div class="picker-header">
     <input
       class="search"
@@ -111,10 +113,14 @@
       >{t('Next page')}</button
     >
   </nav>
-</div>
+</fieldset>
 
 <style lang="scss">
   .picker {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     max-height: 70vh;

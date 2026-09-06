@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation'
+  import { beforeNavigate, goto } from '$app/navigation'
   import { page } from '$app/state'
   import Dialog from '$lib/components/ui/Dialog.svelte'
   import MealPicker from './_components/MealPicker.svelte'
@@ -19,6 +19,11 @@
   let preferences = $derived(data.preferences)
   let favoritesOnly = $state(false)
   let myRecipesOnly = $state(false)
+  let savingMeal = $state(false)
+
+  beforeNavigate(({ type, cancel }) => {
+    if (savingMeal && type !== 'goto') cancel()
+  })
 
   function openPicker(date: string, mealType: string) {
     const url = new URL(page.url)
@@ -41,18 +46,21 @@
   }
 
   async function pickMeal(mealId: number | null) {
-    if (!data.picker || !plan) return
+    if (savingMeal || !data.picker || !plan) return
     const { date, mealType } = data.picker
     const current =
       plan.slots.find(
         (slot) => slot.date === date && slot.mealType === mealType,
       )?.mealId ?? null
+    savingMeal = true
     try {
       if (mealId !== current)
         await planApi.setSlot(plan.id, date, mealType, mealId)
       await closePicker()
     } catch {
       alert(t('Something went wrong.'))
+    } finally {
+      savingMeal = false
     }
   }
 
@@ -272,9 +280,18 @@
 </div>
 
 {#if data.picker}
-  <Dialog modal class="meal-dialog" onclose={closePicker}>
+  <Dialog
+    modal
+    class="meal-dialog"
+    aria-busy={savingMeal}
+    oncancel={(event) => {
+      if (savingMeal) event.preventDefault()
+    }}
+    onclose={closePicker}
+  >
     <MealPicker
       {...data.picker}
+      disabled={savingMeal}
       current={plan?.slots.find(
         (slot) =>
           slot.date === data.picker?.date &&
