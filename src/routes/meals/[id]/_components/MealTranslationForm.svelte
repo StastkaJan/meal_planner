@@ -5,7 +5,7 @@
   import type { Meal, MealTranslation } from '$lib/database/schema'
   import { useI18n } from '$lib/i18n-context'
 
-  const { t } = useI18n()
+  const { t, message } = useI18n()
 
   let {
     meal,
@@ -32,6 +32,7 @@
   const translation = $derived(
     translations.find((item) => item.locale === locale),
   )
+  let requestError = $state('')
 
   async function save(event: SubmitEvent) {
     event.preventDefault()
@@ -40,7 +41,13 @@
       ...Object.fromEntries(form),
       ingredients: form.getAll('ingredients'),
     }
-    onChanged(await updateMealTranslation(meal.id, locale, body), locale)
+    requestError = ''
+    try {
+      onChanged(await updateMealTranslation(meal.id, locale, body), locale)
+    } catch (cause) {
+      requestError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    }
   }
 
   async function remove() {
@@ -52,8 +59,14 @@
       )
     )
       return
-    await deleteMealTranslation(meal.id, locale)
-    onChanged(null, locale)
+    requestError = ''
+    try {
+      await deleteMealTranslation(meal.id, locale)
+      onChanged(null, locale)
+    } catch (cause) {
+      requestError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    }
   }
 </script>
 
@@ -131,9 +144,15 @@
       >
     {/if}
   </div>
+  {#if requestError}<p class="form-error" role="alert">{requestError}</p>{/if}
 </form>
 
 <style lang="scss">
+  .form-error {
+    color: $color-danger;
+    font-size: 0.8rem;
+  }
+
   .translation-form {
     display: grid;
     gap: 18px;

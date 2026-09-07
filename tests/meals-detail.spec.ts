@@ -258,6 +258,58 @@ test('@smoke translates recipe ingredient names', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveText('Mrkev')
 })
 
+test('@smoke translation failures preserve edits and allow retry', async ({
+  page,
+}) => {
+  const name = `Retry-${Date.now()}`
+  const response = await page.request.post('/meals', {
+    data: { name, sourceLocale: 'cs' },
+  })
+  expect(response.ok()).toBe(true)
+  const meal = await response.json()
+  const recipeUrl = `/meals/${meal.id}`
+  const translationUrl = `**${recipeUrl}/translations/en`
+  await page.goto(`${recipeUrl}/translate`)
+  const translatedName = `${name}-translated`
+  await page.getByLabel('Name', { exact: true }).fill(translatedName)
+  await page.route(
+    translationUrl,
+    (route) =>
+      route.fulfill({ status: 503, json: { message: 'Request failed' } }),
+    { times: 1 },
+  )
+  await page.getByRole('button', { name: 'Save translation' }).click()
+  await expect(page.getByRole('alert')).toHaveText('Request failed')
+  await expect(page).toHaveURL(`${recipeUrl}/translate`)
+  await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
+    translatedName,
+  )
+  await page.getByRole('button', { name: 'Save translation' }).click()
+  await expect(page).toHaveURL(recipeUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    translatedName,
+  )
+
+  await page.getByRole('link', { name: 'Translate', exact: true }).click()
+  await page.route(
+    translationUrl,
+    (route) =>
+      route.fulfill({ status: 503, json: { message: 'Request failed' } }),
+    { times: 1 },
+  )
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Delete translation' }).click()
+  await expect(page.getByRole('alert')).toHaveText('Request failed')
+  await expect(page).toHaveURL(`${recipeUrl}/translate`)
+  await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
+    translatedName,
+  )
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Delete translation' }).click()
+  await expect(page).toHaveURL(recipeUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
+})
+
 for (const route of ['edit', 'translate']) {
   test(`@smoke ${route} saves fresh details after hovering the recipe link`, async ({
     page,
