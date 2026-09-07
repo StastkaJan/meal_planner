@@ -14,7 +14,7 @@
 </svelte:head>
 
 <div class="page">
-  <a href={recipeUrl}>← {data.meal.name}</a>
+  <a href={recipeUrl} data-sveltekit-preload-data="off">← {data.meal.name}</a>
   <h1>{t('Edit')}</h1>
   {#key data.sourceMeal.id}
     <MealEditForm

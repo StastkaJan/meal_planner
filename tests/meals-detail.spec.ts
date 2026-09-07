@@ -258,6 +258,33 @@ test('@smoke translates recipe ingredient names', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveText('Mrkev')
 })
 
+for (const route of ['edit', 'translate']) {
+  test(`@smoke ${route} saves fresh details after hovering the recipe link`, async ({
+    page,
+  }) => {
+    const name = `Hover-${route}-${Date.now()}`
+    const response = await page.request.post('/meals', {
+      data: { name, sourceLocale: route === 'translate' ? 'cs' : 'en' },
+    })
+    expect(response.ok()).toBe(true)
+    const meal = await response.json()
+    await page.goto(`/meals/${meal.id}/${route}`)
+    await page.getByRole('link', { name: `← ${name}`, exact: true }).hover()
+    // Let SvelteKit's debounced hover preload finish before the mutation.
+    await page.waitForTimeout(200)
+    const updated = `${name}-saved`
+    await page.getByLabel('Name', { exact: true }).fill(updated)
+    await page
+      .getByRole('button', {
+        name: route === 'edit' ? 'Save' : 'Save translation',
+        exact: true,
+      })
+      .click()
+    await expect(page).toHaveURL(`/meals/${meal.id}`)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(updated)
+  })
+}
+
 test('@smoke edit and translate pages support back navigation and cancel without saving', async ({
   page,
 }) => {
