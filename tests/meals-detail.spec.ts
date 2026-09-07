@@ -173,6 +173,7 @@ test('@smoke allows an ingredient quantity without a unit', async ({
   await page.getByRole('button', { name: 'Save' }).click()
   const saveResponse = await saveResponsePromise
   expect(saveResponse.ok()).toBe(true)
+  await expect(page).toHaveURL(/\/meals\/\d+$/)
   await page.reload()
 
   const ingredient = page.getByRole('listitem')
