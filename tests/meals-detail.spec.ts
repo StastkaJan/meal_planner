@@ -23,7 +23,7 @@ test('meal name links to detail page', async ({ page }) => {
   await expect(page).not.toHaveURL('/meals')
 })
 
-test('edit meal from detail page', async ({ page }) => {
+test('@smoke edit meal from detail page', async ({ page }) => {
   const name = `Edit-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
@@ -36,7 +36,12 @@ test('edit meal from detail page', async ({ page }) => {
     page.getByRole('link', { name, exact: true }).click(),
   ])
 
-  await page.goto(`${page.url()}?edit=1`)
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
+  await expect(page).toHaveURL(/\/meals\/\d+\/edit$/)
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Edit', exact: true }),
+  ).toBeVisible()
   const updated = `Updated-${Date.now()}`
   await page.locator('input[type="text"]').first().fill(updated)
   await page.getByLabel('Fibre (g)').fill('4.5')
@@ -58,7 +63,7 @@ test('@smoke uploads and removes a recipe image', async ({ page }) => {
   })
   expect(createResponse.ok()).toBe(true)
   const meal = (await createResponse.json()) as { id: number }
-  await page.goto(`/meals/${meal.id}?edit=1`)
+  await page.goto(`/meals/${meal.id}/edit`)
 
   const image = await page.screenshot({ type: 'png' })
   const dataTransfer = await page.evaluateHandle((base64) => {
@@ -93,7 +98,7 @@ test('@smoke uploads and removes a recipe image', async ({ page }) => {
   expect(storedImage.ok()).toBe(true)
   expect(storedImage.headers()['content-type']).toBe('image/webp')
 
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   const editImage = page.locator('img.image-preview')
   await expect(editImage).toBeVisible()
   await expect(editImage).toHaveAttribute('src', `/meals/${meal.id}/image`)
@@ -137,9 +142,10 @@ test('warns when an ingredient cannot be scaled', async ({ page }) => {
     .getByRole('button', { name: 'Save' })
     .click()
   await page.getByRole('link', { name, exact: true }).click()
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByPlaceholder('Ingredient').fill('Salt to taste')
   await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page).toHaveURL(/\/meals\/\d+$/)
   await page.reload()
 
   await expect(page.getByRole('note')).toContainText('cannot be scaled')
@@ -156,7 +162,7 @@ test('@smoke allows an ingredient quantity without a unit', async ({
     .getByRole('button', { name: 'Save' })
     .click()
   await page.getByRole('link', { name, exact: true }).click()
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByPlaceholder('Ingredient').fill('Eggs')
   await page.getByPlaceholder('Qty').fill('2')
   const saveResponsePromise = page.waitForResponse(
@@ -167,6 +173,7 @@ test('@smoke allows an ingredient quantity without a unit', async ({
   await page.getByRole('button', { name: 'Save' }).click()
   const saveResponse = await saveResponsePromise
   expect(saveResponse.ok()).toBe(true)
+  await expect(page).toHaveURL(/\/meals\/\d+$/)
   await page.reload()
 
   const ingredient = page.getByRole('listitem')
@@ -180,7 +187,7 @@ test('@smoke does not silently discard a partial ingredient row', async ({
     data: { name: `Partial-${Date.now()}` },
   })
   const meal = await response.json()
-  await page.goto(`/meals/${meal.id}?edit=1`)
+  await page.goto(`/meals/${meal.id}/edit`)
   await page.getByPlaceholder('Qty').fill('2')
   const saveResponsePromise = page.waitForResponse(
     (response) =>
@@ -204,7 +211,7 @@ test('scales ingredient quantities with servings', async ({ page }) => {
     .getByRole('button', { name: 'Save' })
     .click()
   await page.getByRole('link', { name, exact: true }).click()
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
   await page.getByPlaceholder('Ingredient').fill('Flour')
   await page.getByPlaceholder('Qty').fill('1')
@@ -216,7 +223,7 @@ test('scales ingredient quantities with servings', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveText('1.5 cup Flour')
 })
 
-test('translates recipe ingredient names', async ({ page }) => {
+test('@smoke translates recipe ingredient names', async ({ page }) => {
   const name = `Translate-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
@@ -225,16 +232,23 @@ test('translates recipe ingredient names', async ({ page }) => {
     .getByRole('button', { name: 'Save' })
     .click()
   await page.getByRole('link', { name, exact: true }).click()
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByPlaceholder('Ingredient').fill('Carrot')
   await page.getByLabel('Instructions').fill('Chop the carrot.')
   await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page).toHaveURL(/\/meals\/\d+$/)
   await page.reload()
 
-  await page.getByRole('button', { name: 'Translate' }).click()
+  await page.getByRole('link', { name: 'Translate', exact: true }).click()
+  await expect(page).toHaveURL(/\/meals\/\d+\/translate$/)
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Translate', exact: true }),
+  ).toBeVisible()
   await page.getByLabel('Carrot').fill('Mrkev')
   await page.getByRole('button', { name: 'Save translation' }).click()
 
+  await expect(page).toHaveURL(/\/meals\/\d+$/)
   const recipeUrl = page.url()
   await page.goto('/profile')
   await page.locator('select[name="locale"]').selectOption('cs')
@@ -242,6 +256,164 @@ test('translates recipe ingredient names', async ({ page }) => {
   await page.waitForLoadState('networkidle')
   await page.goto(recipeUrl)
   await expect(page.getByRole('listitem')).toHaveText('Mrkev')
+})
+
+test('@smoke translation failures preserve edits and allow retry', async ({
+  page,
+}) => {
+  const name = `Retry-${Date.now()}`
+  const response = await page.request.post('/meals', {
+    data: { name, sourceLocale: 'cs' },
+  })
+  expect(response.ok()).toBe(true)
+  const meal = await response.json()
+  const recipeUrl = `/meals/${meal.id}`
+  const translationUrl = `**${recipeUrl}/translations/en`
+  await page.goto(`${recipeUrl}/translate`)
+  const translatedName = `${name}-translated`
+  await page.getByLabel('Name', { exact: true }).fill(translatedName)
+  await page.route(
+    translationUrl,
+    (route) =>
+      route.fulfill({ status: 503, json: { message: 'Request failed' } }),
+    { times: 1 },
+  )
+  await page.getByRole('button', { name: 'Save translation' }).click()
+  await expect(page.getByRole('alert')).toHaveText('Request failed')
+  await expect(page).toHaveURL(`${recipeUrl}/translate`)
+  await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
+    translatedName,
+  )
+  await page.getByRole('button', { name: 'Save translation' }).click()
+  await expect(page).toHaveURL(recipeUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    translatedName,
+  )
+
+  await page.getByRole('link', { name: 'Translate', exact: true }).click()
+  await page.route(
+    translationUrl,
+    (route) =>
+      route.fulfill({ status: 503, json: { message: 'Request failed' } }),
+    { times: 1 },
+  )
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Delete translation' }).click()
+  await expect(page.getByRole('alert')).toHaveText('Request failed')
+  await expect(page).toHaveURL(`${recipeUrl}/translate`)
+  await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
+    translatedName,
+  )
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Delete translation' }).click()
+  await expect(page).toHaveURL(recipeUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
+})
+
+for (const route of ['edit', 'translate']) {
+  test(`@smoke ${route} stays busy until save navigation completes`, async ({
+    page,
+  }) => {
+    const name = `Pending-${route}-${Date.now()}`
+    const response = await page.request.post('/meals', {
+      data: { name, sourceLocale: route === 'translate' ? 'cs' : 'en' },
+    })
+    expect(response.ok()).toBe(true)
+    const meal = await response.json()
+    const recipeUrl = `/meals/${meal.id}`
+    await page.goto(`${recipeUrl}/${route}`)
+    const updated = `${name}-saved`
+    await page.getByLabel('Name', { exact: true }).fill(updated)
+
+    let releaseLoad!: () => void
+    const holdLoad = new Promise<void>((resolve) => (releaseLoad = resolve))
+    let markRequested!: () => void
+    const loadRequested = new Promise<void>(
+      (resolve) => (markRequested = resolve),
+    )
+    await page.route(`**${recipeUrl}/__data.json*`, async (request) => {
+      markRequested()
+      await holdLoad
+      await request.continue()
+    })
+    const save = page.locator(
+      route === 'edit'
+        ? '.edit-form button[type="submit"]'
+        : '.translation-form button[type="submit"]',
+    )
+    try {
+      await save.click()
+      await loadRequested
+      await expect(save).toBeDisabled()
+      await expect(
+        page.getByRole('button', { name: 'Cancel', exact: true }),
+      ).toBeDisabled()
+    } finally {
+      releaseLoad()
+    }
+    await expect(page).toHaveURL(recipeUrl)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(updated)
+  })
+
+  test(`@smoke ${route} saves fresh details after hovering the recipe link`, async ({
+    page,
+  }) => {
+    const name = `Hover-${route}-${Date.now()}`
+    const response = await page.request.post('/meals', {
+      data: { name, sourceLocale: route === 'translate' ? 'cs' : 'en' },
+    })
+    expect(response.ok()).toBe(true)
+    const meal = await response.json()
+    await page.goto(`/meals/${meal.id}/${route}`)
+    await page.getByRole('link', { name: `← ${name}`, exact: true }).hover()
+    // Let SvelteKit's debounced hover preload finish before the mutation.
+    await page.waitForTimeout(200)
+    const updated = `${name}-saved`
+    await page.getByLabel('Name', { exact: true }).fill(updated)
+    await page
+      .getByRole('button', {
+        name: route === 'edit' ? 'Save' : 'Save translation',
+        exact: true,
+      })
+      .click()
+    await expect(page).toHaveURL(`/meals/${meal.id}`)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(updated)
+  })
+}
+
+test('@smoke edit and translate pages support back navigation and cancel without saving', async ({
+  page,
+}) => {
+  const name = `Cancel-${Date.now()}`
+  const response = await page.request.post('/meals', {
+    data: { name, sourceLocale: 'en' },
+  })
+  expect(response.ok()).toBe(true)
+  const meal = await response.json()
+  const recipeUrl = `/meals/${meal.id}`
+  await page.goto(recipeUrl)
+
+  for (const [action, route] of [
+    ['Edit', 'edit'],
+    ['Translate', 'translate'],
+  ]) {
+    await page.getByRole('link', { name: action, exact: true }).click()
+    await expect(page).toHaveURL(`${recipeUrl}/${route}`)
+    await page.goBack()
+    await expect(page).toHaveURL(recipeUrl)
+    await page.goForward()
+    await expect(page).toHaveURL(`${recipeUrl}/${route}`)
+    await page.getByLabel('Name', { exact: true }).fill('Unsaved name')
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+    await expect(page).toHaveURL(recipeUrl)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
+    await page.goto(`${recipeUrl}/${route}`)
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
+      route === 'edit' ? name : '',
+    )
+    await page.getByRole('link', { name: `← ${name}`, exact: true }).click()
+    await expect(page).toHaveURL(recipeUrl)
+  }
 })
 
 test('cooking mode scales ingredients, presents steps, and starts timers', async ({
@@ -255,7 +427,7 @@ test('cooking mode scales ingredients, presents steps, and starts timers', async
     .getByRole('button', { name: 'Save' })
     .click()
   await page.getByRole('link', { name, exact: true }).click()
-  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
   await page.getByPlaceholder('Ingredient').fill('Flour')
   await page.getByPlaceholder('Qty').fill('1')

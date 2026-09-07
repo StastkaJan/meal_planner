@@ -32,7 +32,7 @@ export const updateMealTranslation = (
   })
 
 export const deleteMealTranslation = (id: number, locale: Locale) =>
-  request(`/meals/${id}/translations/${locale}`, { method: 'DELETE' })
+  requestOk(`/meals/${id}/translations/${locale}`, { method: 'DELETE' })
 
 export const deleteMeal = (id: number) =>
   requestOk(`/meals/${id}`, { method: 'DELETE' })

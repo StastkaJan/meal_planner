@@ -24,7 +24,7 @@
     ingredients: IngredientInput[]
     hasUploadedImage: boolean
     onCancel: () => void
-    onSaved: (meal: Meal, hasUploadedImage: boolean) => void
+    onSaved: (meal: Meal, hasUploadedImage: boolean) => void | Promise<void>
   } = $props()
 
   let tags = $derived(meal.tags ?? [])
@@ -103,6 +103,7 @@
 
   async function handleSave(e: SubmitEvent) {
     e.preventDefault()
+    if (saving) return
     const fd = new FormData(e.target as HTMLFormElement)
     const body: Record<string, unknown> = Object.fromEntries(fd)
     body.tags = fd.getAll('tags')
@@ -127,7 +128,7 @@
         await uploadMealImage(meal.id, imageFile)
         uploadedImage = true
       }
-      onSaved(updated, uploadedImage)
+      await onSaved(updated, uploadedImage)
     } catch (cause) {
       saveError =
         cause instanceof Error ? message(cause.message) : t('Request failed')
@@ -395,7 +396,7 @@
     <button class="btn" type="submit" disabled={saving}
       >{saving ? t('Saving') : t('Save')}</button
     >
-    <button class="btn ghost" type="button" onclick={onCancel}
+    <button class="btn ghost" type="button" onclick={onCancel} disabled={saving}
       >{t('Cancel')}</button
     >
   </div>

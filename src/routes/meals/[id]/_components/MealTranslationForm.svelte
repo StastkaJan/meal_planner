@@ -5,7 +5,7 @@
   import type { Meal, MealTranslation } from '$lib/database/schema'
   import { useI18n } from '$lib/i18n-context'
 
-  const { t } = useI18n()
+  const { t, message } = useI18n()
 
   let {
     meal,
@@ -20,7 +20,10 @@
     translations: MealTranslation[]
     currentLocale: Locale
     onCancel: () => void
-    onChanged: (translation: MealTranslation | null, locale: Locale) => void
+    onChanged: (
+      translation: MealTranslation | null,
+      locale: Locale,
+    ) => void | Promise<void>
   } = $props()
 
   const targets = $derived(
@@ -32,18 +35,35 @@
   const translation = $derived(
     translations.find((item) => item.locale === locale),
   )
+  let name = $derived(translation?.name ?? '')
+  let requestError = $state('')
+  let pending = $state(false)
 
   async function save(event: SubmitEvent) {
     event.preventDefault()
+    if (pending) return
     const form = new FormData(event.currentTarget as HTMLFormElement)
     const body = {
       ...Object.fromEntries(form),
       ingredients: form.getAll('ingredients'),
     }
-    onChanged(await updateMealTranslation(meal.id, locale, body), locale)
+    requestError = ''
+    pending = true
+    try {
+      await onChanged(
+        await updateMealTranslation(meal.id, locale, body),
+        locale,
+      )
+    } catch (cause) {
+      requestError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    } finally {
+      pending = false
+    }
   }
 
   async function remove() {
+    if (pending) return
     if (
       !confirm(
         t('Delete the {language} translation?', {
@@ -52,8 +72,17 @@
       )
     )
       return
-    await deleteMealTranslation(meal.id, locale)
-    onChanged(null, locale)
+    requestError = ''
+    pending = true
+    try {
+      await deleteMealTranslation(meal.id, locale)
+      await onChanged(null, locale)
+    } catch (cause) {
+      requestError =
+        cause instanceof Error ? message(cause.message) : t('Request failed')
+    } finally {
+      pending = false
+    }
   }
 </script>
 
@@ -69,7 +98,7 @@
     </div>
     <label>
       {t('Language')}
-      <select bind:value={locale}>
+      <select bind:value={locale} disabled={pending}>
         {#each targets as option}
           <option value={option}>{LOCALE_LABELS[option]}</option>
         {/each}
@@ -79,11 +108,7 @@
 
   <label>
     {t('Name')}
-    <input
-      name="name"
-      value={translation?.name ?? ''}
-      placeholder={meal.name}
-    />
+    <input name="name" bind:value={name} placeholder={meal.name} />
   </label>
   <label>
     {t('Description')}
@@ -121,19 +146,33 @@
   <p class="hint">{t('Blank fields fall back to the original recipe.')}</p>
 
   <div class="actions">
-    <button class="btn" type="submit">{t('Save translation')}</button>
-    <button class="btn ghost" type="button" onclick={onCancel}
-      >{t('Cancel')}</button
+    <button class="btn" type="submit" disabled={pending}
+      >{t('Save translation')}</button
+    >
+    <button
+      class="btn ghost"
+      type="button"
+      onclick={onCancel}
+      disabled={pending}>{t('Cancel')}</button
     >
     {#if translation}
-      <button class="btn danger remove" type="button" onclick={remove}
-        >{t('Delete translation')}</button
+      <button
+        class="btn danger remove"
+        type="button"
+        onclick={remove}
+        disabled={pending}>{t('Delete translation')}</button
       >
     {/if}
   </div>
+  {#if requestError}<p class="form-error" role="alert">{requestError}</p>{/if}
 </form>
 
 <style lang="scss">
+  .form-error {
+    color: $color-danger;
+    font-size: 0.8rem;
+  }
+
   .translation-form {
     display: grid;
     gap: 18px;

@@ -3,8 +3,6 @@
   import { page } from '$app/stores'
   import { deleteMeal as removeMeal, duplicateMeal } from '$lib/api/meals'
   import CookingMode from './_components/CookingMode.svelte'
-  import MealEditForm from './_components/MealEditForm.svelte'
-  import MealTranslationForm from './_components/MealTranslationForm.svelte'
   import type { PageData } from './$types'
   import { useI18n } from '$lib/i18n-context'
 
@@ -30,8 +28,6 @@
       name: translation?.ingredients?.[index] || ingredient.name,
     })),
   )
-  let editing = $state($page.url.searchParams.get('edit') === '1')
-  let translating = $state(false)
   let deleteError = $state('')
   const cooking = $derived($page.url.searchParams.get('cook') === '1')
 
@@ -77,13 +73,6 @@
     const copy = await duplicateMeal(meal.id)
     await goto(`/meals/${copy.id}`)
   }
-
-  function closeEditor() {
-    editing = false
-    if ($page.url.searchParams.get('edit') === '1') {
-      void goto(`/meals/${meal.id}`, { replaceState: true, noScroll: true })
-    }
-  }
 </script>
 
 <div class="page">
@@ -97,206 +86,171 @@
       closeHref={`/meals/${meal.id}`}
     />
   {/if}
-  {#if editing}
-    <MealEditForm
-      meal={sourceMeal}
-      ingredients={data.ingredients}
-      {hasUploadedImage}
-      onCancel={closeEditor}
-      onSaved={(updated, uploadedImage) => {
-        sourceMeal = updated
-        hasUploadedImage = uploadedImage
-        closeEditor()
-      }}
-    />
-  {:else if translating}
-    <MealTranslationForm
-      meal={sourceMeal}
-      ingredients={data.ingredients}
-      {translations}
-      currentLocale={data.locale}
-      onCancel={() => (translating = false)}
-      onChanged={(translation, locale) => {
-        translations = translation
-          ? [
-              ...translations.filter((item) => item.locale !== locale),
-              translation,
-            ]
-          : translations.filter((item) => item.locale !== locale)
-        translating = false
-      }}
-    />
-  {:else}
-    <div class="top-bar">
-      <a class="back" href="/meals">{t('← Meals')}</a>
-      {#if meal.instructions}
-        <a class="btn cook sm" href={`?cook=1`}>{t('Start cooking')}</a>
-      {/if}
-      {#if data.editable}
-        <div class="actions">
-          <button class="btn ghost sm" onclick={() => (editing = true)}
-            >{t('Edit')}</button
-          >
-          <button class="btn ghost sm" onclick={() => (translating = true)}
-            >{t('Translate')}</button
-          >
-          <button class="btn danger sm" type="button" onclick={deleteMeal}
-            >{t('Delete')}</button
-          >
-        </div>
-      {:else}
-        <button class="btn ghost sm" type="button" onclick={duplicate}
-          >{t('Make a personal copy')}</button
+  <div class="top-bar">
+    <a class="back" href="/meals">{t('← Meals')}</a>
+    {#if meal.instructions}
+      <a class="btn cook sm" href={`?cook=1`}>{t('Start cooking')}</a>
+    {/if}
+    {#if data.editable}
+      <div class="actions">
+        <a class="btn ghost sm" href={`/meals/${meal.id}/edit`}>{t('Edit')}</a>
+        <a class="btn ghost sm" href={`/meals/${meal.id}/translate`}
+          >{t('Translate')}</a
         >
-      {/if}
+        <button class="btn danger sm" type="button" onclick={deleteMeal}
+          >{t('Delete')}</button
+        >
+      </div>
+    {:else}
+      <button class="btn ghost sm" type="button" onclick={duplicate}
+        >{t('Make a personal copy')}</button
+      >
+    {/if}
+  </div>
+
+  {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
+
+  <div class="detail">
+    {#if hasUploadedImage || meal.imageUrl}
+      <img
+        class="hero"
+        src={hasUploadedImage ? `/meals/${meal.id}/image` : meal.imageUrl}
+        alt={meal.name}
+      />
+    {/if}
+
+    <div class="header">
+      <div class="title">
+        <p class="eyebrow">{t('Recipe')}</p>
+        <h1 lang={translation?.name ? data.locale : sourceMeal.sourceLocale}>
+          {meal.name}
+        </h1>
+      </div>
+      <div class="meta">
+        {#if meal.timeMinutes}<span class="badge"
+            >{t('{minutes} min preparation', {
+              minutes: meal.timeMinutes,
+            })}</span
+          >{/if}
+        {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
+            >{label(meal.difficulty)}</span
+          >{/if}
+      </div>
     </div>
 
-    {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
-
-    <div class="detail">
-      {#if hasUploadedImage || meal.imageUrl}
-        <img
-          class="hero"
-          src={hasUploadedImage ? `/meals/${meal.id}/image` : meal.imageUrl}
-          alt={meal.name}
-        />
-      {/if}
-
-      <div class="header">
-        <div class="title">
-          <p class="eyebrow">{t('Recipe')}</p>
-          <h1 lang={translation?.name ? data.locale : sourceMeal.sourceLocale}>
-            {meal.name}
-          </h1>
-        </div>
-        <div class="meta">
-          {#if meal.timeMinutes}<span class="badge"
-              >{t('{minutes} min preparation', {
-                minutes: meal.timeMinutes,
-              })}</span
-            >{/if}
-          {#if meal.difficulty}<span class="badge diff-{meal.difficulty}"
-              >{label(meal.difficulty)}</span
-            >{/if}
-        </div>
+    {#if meal.tags?.length}
+      <div class="chips">
+        {#each meal.tags as tag}
+          <span class="chip">{label(tag)}</span>
+        {/each}
       </div>
+    {/if}
 
-      {#if meal.tags?.length}
-        <div class="chips">
-          {#each meal.tags as tag}
-            <span class="chip">{label(tag)}</span>
-          {/each}
+    {#if hasNutrition || data.ingredients.length}
+      <div class="nutrition-block">
+        <div class="servings-step">
+          <button
+            type="button"
+            aria-label={t('Fewer servings')}
+            onclick={() => (servings = Math.max(1, servings - 1))}>−</button
+          >
+          <span>{namedCount(servings, 'serving')}</span>
+          <button
+            type="button"
+            aria-label={t('More servings')}
+            onclick={() => (servings += 1)}>+</button
+          >
         </div>
-      {/if}
-
-      {#if hasNutrition || data.ingredients.length}
-        <div class="nutrition-block">
-          <div class="servings-step">
-            <button
-              type="button"
-              aria-label={t('Fewer servings')}
-              onclick={() => (servings = Math.max(1, servings - 1))}>−</button
-            >
-            <span>{namedCount(servings, 'serving')}</span>
-            <button
-              type="button"
-              aria-label={t('More servings')}
-              onclick={() => (servings += 1)}>+</button
-            >
+        {#if hasNutrition}
+          <div class="nutrition">
+            {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
+            {#if meal.proteinG}<span
+                >{t('{value}g protein', {
+                  value: scaleG(meal.proteinG) ?? '',
+                })}</span
+              >{/if}
+            {#if meal.carbsG}<span
+                >{t('{value}g carbs', {
+                  value: scaleG(meal.carbsG) ?? '',
+                })}</span
+              >{/if}
+            {#if meal.fatG}<span
+                >{t('{value}g fat', { value: scaleG(meal.fatG) ?? '' })}</span
+              >{/if}
+            {#if meal.fiberG}<span
+                >{t('{value}g fibre', {
+                  value: scaleG(meal.fiberG) ?? '',
+                })}</span
+              >{/if}
+            {#if meal.sugarG}<span
+                >{t('{value}g sugars', {
+                  value: scaleG(meal.sugarG) ?? '',
+                })}</span
+              >{/if}
+            {#if meal.saturatedFatG}<span
+                >{t('{value}g saturated fat', {
+                  value: scaleG(meal.saturatedFatG) ?? '',
+                })}</span
+              >{/if}
+            {#if meal.saltG}<span
+                >{t('{value}g salt', {
+                  value: scaleG(meal.saltG) ?? '',
+                })}</span
+              >{/if}
           </div>
-          {#if hasNutrition}
-            <div class="nutrition">
-              {#if meal.calories}<span>{scale(meal.calories)} kcal</span>{/if}
-              {#if meal.proteinG}<span
-                  >{t('{value}g protein', {
-                    value: scaleG(meal.proteinG) ?? '',
-                  })}</span
-                >{/if}
-              {#if meal.carbsG}<span
-                  >{t('{value}g carbs', {
-                    value: scaleG(meal.carbsG) ?? '',
-                  })}</span
-                >{/if}
-              {#if meal.fatG}<span
-                  >{t('{value}g fat', { value: scaleG(meal.fatG) ?? '' })}</span
-                >{/if}
-              {#if meal.fiberG}<span
-                  >{t('{value}g fibre', {
-                    value: scaleG(meal.fiberG) ?? '',
-                  })}</span
-                >{/if}
-              {#if meal.sugarG}<span
-                  >{t('{value}g sugars', {
-                    value: scaleG(meal.sugarG) ?? '',
-                  })}</span
-                >{/if}
-              {#if meal.saturatedFatG}<span
-                  >{t('{value}g saturated fat', {
-                    value: scaleG(meal.saturatedFatG) ?? '',
-                  })}</span
-                >{/if}
-              {#if meal.saltG}<span
-                  >{t('{value}g salt', {
-                    value: scaleG(meal.saltG) ?? '',
-                  })}</span
-                >{/if}
-            </div>
-          {/if}
-        </div>
-      {/if}
+        {/if}
+      </div>
+    {/if}
 
-      {#if meal.description}
+    {#if meal.description}
+      <p
+        class="description"
+        lang={translation?.description ? data.locale : sourceMeal.sourceLocale}
+      >
+        {meal.description}
+      </p>
+    {/if}
+
+    {#if data.ingredients.length}
+      <section>
+        <h2>{t('Ingredients')}</h2>
+        {#if hasUnscalableIngredients}
+          <p class="scale-notice" role="note">
+            {t(
+              'Ingredients without a numeric quantity cannot be scaled. Edit the recipe to add one.',
+            )}
+          </p>
+        {/if}
+        <ul>
+          {#each ingredients as ing, index}
+            <li>
+              {ing.qty !== null
+                ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + label(ing.unit) : ''} `
+                : ''}<span
+                lang={translation?.ingredients?.[index]
+                  ? data.locale
+                  : sourceMeal.sourceLocale}>{ing.name}</span
+              >
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+
+    {#if meal.instructions}
+      <section>
+        <h2>{t('Instructions')}</h2>
         <p
-          class="description"
-          lang={translation?.description
+          class="instructions"
+          lang={translation?.instructions
             ? data.locale
             : sourceMeal.sourceLocale}
         >
-          {meal.description}
+          {meal.instructions}
         </p>
-      {/if}
-
-      {#if data.ingredients.length}
-        <section>
-          <h2>{t('Ingredients')}</h2>
-          {#if hasUnscalableIngredients}
-            <p class="scale-notice" role="note">
-              {t(
-                'Ingredients without a numeric quantity cannot be scaled. Edit the recipe to add one.',
-              )}
-            </p>
-          {/if}
-          <ul>
-            {#each ingredients as ing, index}
-              <li>
-                {ing.qty !== null
-                  ? `${scaleQty(ing.qty)}${ing.unit ? ' ' + label(ing.unit) : ''} `
-                  : ''}<span
-                  lang={translation?.ingredients?.[index]
-                    ? data.locale
-                    : sourceMeal.sourceLocale}>{ing.name}</span
-                >
-              </li>
-            {/each}
-          </ul>
-        </section>
-      {/if}
-
-      {#if meal.instructions}
-        <section>
-          <h2>{t('Instructions')}</h2>
-          <p
-            class="instructions"
-            lang={translation?.instructions
-              ? data.locale
-              : sourceMeal.sourceLocale}
-          >
-            {meal.instructions}
-          </p>
-        </section>
-      {/if}
-    </div>
-  {/if}
+      </section>
+    {/if}
+  </div>
 </div>
 
 <style lang="scss">
