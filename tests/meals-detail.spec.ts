@@ -311,6 +311,50 @@ test('@smoke translation failures preserve edits and allow retry', async ({
 })
 
 for (const route of ['edit', 'translate']) {
+  test(`@smoke ${route} stays busy until save navigation completes`, async ({
+    page,
+  }) => {
+    const name = `Pending-${route}-${Date.now()}`
+    const response = await page.request.post('/meals', {
+      data: { name, sourceLocale: route === 'translate' ? 'cs' : 'en' },
+    })
+    expect(response.ok()).toBe(true)
+    const meal = await response.json()
+    const recipeUrl = `/meals/${meal.id}`
+    await page.goto(`${recipeUrl}/${route}`)
+    const updated = `${name}-saved`
+    await page.getByLabel('Name', { exact: true }).fill(updated)
+
+    let releaseLoad!: () => void
+    const holdLoad = new Promise<void>((resolve) => (releaseLoad = resolve))
+    let markRequested!: () => void
+    const loadRequested = new Promise<void>(
+      (resolve) => (markRequested = resolve),
+    )
+    await page.route(`**${recipeUrl}/__data.json*`, async (request) => {
+      markRequested()
+      await holdLoad
+      await request.continue()
+    })
+    const save = page.locator(
+      route === 'edit'
+        ? '.edit-form button[type="submit"]'
+        : '.translation-form button[type="submit"]',
+    )
+    try {
+      await save.click()
+      await loadRequested
+      await expect(save).toBeDisabled()
+      await expect(
+        page.getByRole('button', { name: 'Cancel', exact: true }),
+      ).toBeDisabled()
+    } finally {
+      releaseLoad()
+    }
+    await expect(page).toHaveURL(recipeUrl)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(updated)
+  })
+
   test(`@smoke ${route} saves fresh details after hovering the recipe link`, async ({
     page,
   }) => {
