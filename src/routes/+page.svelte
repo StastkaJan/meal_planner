@@ -64,6 +64,55 @@
     }
   }
 
+  let plannerBusy = $state(false)
+
+  async function handleClear(date?: string) {
+    if (!plan || plannerBusy) return
+    if (
+      !confirm(
+        date
+          ? t('Clear all meals and extras for this day?')
+          : t(
+              'Clear all meals and extras across every week of this plan? Plan settings will be kept.',
+            ),
+      )
+    )
+      return
+    plannerBusy = true
+    try {
+      const res = await planApi.clearPlan(plan.id, date)
+      if (await alertIfFailed(res)) return
+      await refreshPlan()
+    } catch {
+      alert(t('Something went wrong.'))
+    } finally {
+      plannerBusy = false
+    }
+  }
+
+  async function handleRerollMeal(date: string, mealType: string) {
+    if (!plan || plannerBusy) return
+    plannerBusy = true
+    try {
+      const res = await planApi.rerollMeal(
+        plan.id,
+        date,
+        mealType,
+        favoritesOnly,
+        myRecipesOnly,
+      )
+      if (await alertIfFailed(res)) return
+      const { changed } = await res.json()
+      if (!changed)
+        alert(t('No different recipe matches this slot and your preferences.'))
+      await refreshPlan()
+    } catch {
+      alert(t('Something went wrong.'))
+    } finally {
+      plannerBusy = false
+    }
+  }
+
   async function refreshPlan() {
     if (!plan) return
     plan = await planApi.getPlan(plan.id, data.viewWeek)
@@ -241,6 +290,11 @@
         <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
           >{t('Delete')}</button
         >
+        <button
+          class="btn danger"
+          disabled={plannerBusy}
+          onclick={() => handleClear()}>{t('Clear plan')}</button
+        >
       {/if}
     </div>
   </div>
@@ -269,6 +323,9 @@
       onAddBonus={handleAddBonus}
       onDeleteBonus={handleDeleteBonus}
       onRecalcDay={handleRecalcDay}
+      onRerollMeal={handleRerollMeal}
+      onClearDay={handleClear}
+      busy={plannerBusy}
       onPrevWeek={() => shiftWeek(-1)}
       onNextWeek={() => shiftWeek(1)}
     />

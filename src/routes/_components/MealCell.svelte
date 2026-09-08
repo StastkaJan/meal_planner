@@ -12,6 +12,9 @@
     leftoverSource,
     onPick,
     onLeftover,
+    onReroll,
+    isPro,
+    busy,
   }: {
     slot: SlotWithMeal | null
     onOpenPicker: () => void
@@ -19,6 +22,9 @@
     leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void
     onLeftover: (source: { date: string; mealType: string } | null) => void
+    onReroll: () => Promise<void>
+    isPro: boolean
+    busy: boolean
   } = $props()
 
   const usesLeftovers = $derived(slot?.leftoverSourceDate != null)
@@ -50,6 +56,19 @@
       {/if}
     </button>
     <div class="actions">
+      <button
+        type="button"
+        onclick={onReroll}
+        disabled={busy || !isPro}
+        title={isPro
+          ? t('Try a different recipe')
+          : `${t('Try a different recipe')} · ${t('Pro')}`}
+        aria-label={t('Try a different recipe')}
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M16 8a6 6 0 1 0 0 4M16 3v5h-5" />
+        </svg>
+      </button>
       <a
         href="/meals/{slot.mealId}"
         title={t('Show recipe')}
@@ -179,6 +198,11 @@
       &:hover {
         background: $color-surface-2;
         color: $color-text;
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
       }
 
       svg {

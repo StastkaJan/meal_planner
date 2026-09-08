@@ -55,7 +55,9 @@
 
 <!-- NOTE: `/admin/recipes` manages shared recipes and imports; `/admin/users` lets admins grant or revoke admin access for other users. -->
 
-<!-- NOTE: `users.is_pro` is the temporary billing entitlement switch. Pro gates recipe URL import, auto-compose, copy-week, and day recalculation; admins manage it in `/admin/users` until billing owns the flag. -->
+<!-- NOTE: `users.is_pro` is the temporary billing entitlement switch. Pro gates recipe URL import, auto-compose, copy-week, day recalculation, and single-meal reroll; admins manage it in `/admin/users` until billing owns the flag. -->
+
+<!-- NOTE: `POST /plans/[id]/reroll-meal` replaces only the requested slot with a different matching recipe; `POST /plans/[id]/clear` clears meals and extras for `{date}` or all weeks with `{}`, preserving settings and repeat patterns. -->
 
 <!-- NOTE: `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`. -->
 
