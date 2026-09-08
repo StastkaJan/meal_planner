@@ -48,6 +48,12 @@
     )
   }
 
+  // Equal sectors compare independent goals, not shares of a nutrient total.
+  function sector(radius: number) {
+    const angle = (2 * Math.PI) / 7
+    return `M 0 0 L 0 ${-radius} A ${radius} ${radius} 0 0 1 ${radius * Math.sin(angle)} ${-radius * Math.cos(angle)} Z`
+  }
+
   const rows = $derived([
     {
       key: 'protein',
@@ -109,7 +115,6 @@
 </script>
 
 {#snippet nutrient(row: (typeof rows)[number])}
-  {@const progress = nutritionProgress(row.value, row.target)}
   {@const status = row.primary
     ? balance(row.value, row.target, row.unit)
     : t(
@@ -122,7 +127,7 @@
       )}
   <div
     class="nutrient {row.key}"
-    class:over={progress.wayOver}
+    class:over={row.value > row.target}
     role="meter"
     aria-label={row.label}
     aria-valuemin="0"
@@ -130,18 +135,7 @@
     aria-valuenow={Math.min(row.value, row.target)}
     aria-valuetext={`${grams(row.value)} / ${row.target} g · ${status}`}
   >
-    <svg class="ring" viewBox="0 0 40 40" aria-hidden="true">
-      <circle class="ring-track" cx="20" cy="20" r="16" />
-      <circle
-        class="ring-fill"
-        cx="20"
-        cy="20"
-        r="16"
-        pathLength="100"
-        stroke-dasharray={`${progress.percent} 100`}
-        transform="rotate(-90 20 20)"
-      />
-    </svg>
+    <span class="swatch" aria-hidden="true"></span>
     <div class="nutrient-copy">
       <span class="nutrient-label">{row.label}</span>
       <span class="amount"
@@ -177,30 +171,71 @@
     </div>
     <span class="balance">{balance(calories, targets.calories, 'kcal')}</span>
   </div>
-  {#each rows.filter((row) => row.primary) as row}
-    {@render nutrient(row)}
-  {/each}
-  <details>
-    <summary>{t('More nutrients')}</summary>
+  <svg
+    class="nutrient-pie"
+    viewBox="-58 -58 116 116"
+    role="img"
+    aria-label={t('Nutrient goal progress')}
+  >
+    <title
+      >{t(
+        'Pale slices show goals; solid color shows planned amounts. Red edges mark excess.',
+      )}</title
+    >
+    {#each rows as row, index}
+      {@const fraction = Math.min(1, Math.max(0, row.value / row.target))}
+      <g
+        class={row.key}
+        transform={`rotate(${(index * 360) / rows.length})`}
+        aria-hidden="true"
+      >
+        <path class="pie-goal" d={sector(48)} />
+        <path
+          class="pie-value"
+          data-nutrient={row.key}
+          data-progress={fraction}
+          d={sector(48)}
+          transform={`scale(${Math.sqrt(fraction)})`}
+        />
+        {#if row.value > row.target}
+          <circle
+            class="pie-overflow"
+            data-nutrient={row.key}
+            cx="0"
+            cy="0"
+            r="53"
+            pathLength="360"
+            stroke-dasharray={`${360 / rows.length - 4} 360`}
+            transform="rotate(-88)"
+          />
+        {/if}
+      </g>
+    {/each}
+  </svg>
+  <p class="chart-key">
+    {t('Pale = goal · Solid = planned · Red edge = over')}
+  </p>
+  <div class="nutrient-legend">
+    {#each rows.filter((row) => row.primary) as row}
+      {@render nutrient(row)}
+    {/each}
     <p class="reference-note">{t('Daily reference amounts')}</p>
-    <div class="secondary-nutrients">
-      {#each rows.filter((row) => !row.primary) as row}
-        {@render nutrient(row)}
-      {/each}
-    </div>
-  </details>
+    {#each rows.filter((row) => !row.primary) as row}
+      {@render nutrient(row)}
+    {/each}
+  </div>
 </div>
 
 <style lang="scss">
   .nutrition-summary,
-  .secondary-nutrients {
+  .nutrient-legend {
     display: grid;
     gap: 12px;
     font-variant-numeric: tabular-nums;
   }
   .nutrient {
     display: grid;
-    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-columns: 8px minmax(0, 1fr);
     align-items: center;
     gap: 8px;
   }
@@ -250,19 +285,40 @@
     background: #b56b12;
     transition: width 0.3s;
   }
-  .ring {
+  .nutrient-pie {
     display: block;
-    width: 32px;
-    height: 32px;
+    width: 100%;
+    max-width: 180px;
+    margin: 0 auto;
+  }
+  .pie-goal {
+    fill: currentColor;
+    fill-opacity: 0.2;
+    stroke: $color-surface;
+    stroke-width: 1;
+  }
+  .pie-value {
+    fill: currentColor;
+    stroke: $color-surface;
+    stroke-width: 1;
+  }
+  .pie-overflow {
     fill: none;
-    stroke-width: 6px;
+    stroke: $color-danger;
+    stroke-width: 4;
+    stroke-linecap: round;
   }
-  .ring-track {
-    stroke: $color-surface-2;
+  .swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: currentColor;
   }
-  .ring-fill {
-    stroke: currentColor;
-    transition: stroke-dasharray 0.3s;
+  .chart-key {
+    margin: 0;
+    color: $color-text-muted;
+    font-size: 0.65rem;
+    line-height: 1.4;
   }
   .protein {
     color: #4f6f8f;
@@ -285,26 +341,15 @@
   .salt {
     color: #64748b;
   }
-  .over {
-    color: $color-danger;
-  }
   .over .calorie-fill {
     background: $color-danger;
   }
   .over .balance {
     color: $color-danger;
   }
-  details {
+  .reference-note {
+    margin: 0;
     border-top: 1px solid $color-border;
     padding-top: 8px;
-  }
-  summary {
-    padding: 4px 0;
-    color: $color-text-muted;
-    font-size: 0.7rem;
-    cursor: pointer;
-  }
-  .reference-note {
-    margin: 6px 0 12px;
   }
 </style>

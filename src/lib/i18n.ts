@@ -10,6 +10,11 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'Nutrient goal progress': 'Plnění nutričních cílů',
+  'Pale slices show goals; solid color shows planned amounts. Red edges mark excess.':
+    'Světlé výseče znázorňují cíle, syté barvy plánovaná množství. Červené okraje označují překročení.',
+  'Pale = goal · Solid = planned · Red edge = over':
+    'Světlá = cíl · Sytá = plán · Červený okraj = překročení',
   Pagination: 'Stránkování',
   'Previous page': 'Předchozí strana',
   'Next page': 'Další strana',

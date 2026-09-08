@@ -111,10 +111,9 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
     'aria-valuetext',
     /1000 kcal remaining/,
   )
-  await expect(protein.locator('.ring-fill')).toHaveAttribute(
-    'stroke-dasharray',
-    '0 100',
-  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '0')
 
   await page
     .getByRole('button', { name: '+ extra', exact: true })
@@ -128,11 +127,16 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
     'aria-valuetext',
     '32 / 40 g · 8 g remaining',
   )
-  await expect(protein.locator('.ring-fill')).toHaveAttribute(
-    'stroke-dasharray',
-    '80 100',
-  )
-  await nutrition.getByText('More nutrients', { exact: true }).click()
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '0.8')
+  await expect(nutrition.locator('.pie-goal')).toHaveCount(7)
+  await expect(
+    nutrition.getByRole('img', { name: 'Nutrient goal progress' }),
+  ).toBeVisible()
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toHaveCount(0)
   await expect(
     nutrition.getByRole('meter', { name: 'Salt', exact: true }),
   ).toHaveAttribute('aria-valuetext', '3.2 / 6 g · 2.8 g below reference')
@@ -149,10 +153,9 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(calories).toHaveAttribute('aria-valuenow', '1000')
   await expect(calories).toHaveAttribute('aria-valuetext', /0 kcal remaining/)
-  await expect(protein.locator('.ring-fill')).toHaveAttribute(
-    'stroke-dasharray',
-    '100 100',
-  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '1')
 
   await page
     .getByRole('button', { name: '+ extra', exact: true })
@@ -169,11 +172,16 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
     'aria-valuetext',
     '72 / 40 g · 32 g over target',
   )
-  await expect(protein.locator('.ring-fill')).toHaveAttribute(
-    'stroke-dasharray',
-    '100 100',
-  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '1')
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toBeVisible()
   await page.reload()
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toBeVisible()
   await expect(calories).toHaveAttribute(
     'aria-valuetext',
     /800 kcal over target/,
