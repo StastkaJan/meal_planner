@@ -68,6 +68,14 @@
 
   const isoDate = (d: Date) => d.toISOString().slice(0, 10) // extract YYYY-MM-DD from UTC ISO string
 
+  function positionDayActions(event: MouseEvent) {
+    const button = event.currentTarget as HTMLButtonElement
+    const menu = button.popoverTargetElement as HTMLElement
+    const rect = button.getBoundingClientRect()
+    menu.style.top = `${rect.bottom + 4}px`
+    menu.style.left = `${Math.max(8, Math.min(rect.right - 192, window.innerWidth - 200))}px`
+  }
+
   const weekDates = $derived(
     Array.from({ length: 7 }, (_, d) => {
       const dt = new Date(weekStart)
@@ -164,15 +172,57 @@
     </button>
   </div>
 
-  <div class="cal-scroll">
+  <div
+    class="cal-scroll"
+    onscroll={(event) => {
+      event.currentTarget
+        .querySelectorAll<HTMLElement>(':popover-open')
+        .forEach((menu) => menu.hidePopover())
+    }}
+  >
     <table class="cal">
       <thead>
         <tr>
           <th class="corner"></th>
-          {#each weekDates as dt, d}
+          {#each weekDates as dt (isoDate(dt))}
+            {@const menuId = `day-actions-${plan.id}-${isoDate(dt)}`}
             <th class="day-head" class:today={isoDate(dt) === todayISO}>
               <span class="day-name">{fmtUTC(dt, { weekday: 'short' })}</span>
-              <span class="day-num">{dt.getUTCDate()}</span>
+              <div class="day-heading">
+                <span class="day-num">{dt.getUTCDate()}</span>
+                <button
+                  class="day-menu-toggle"
+                  popovertarget={menuId}
+                  aria-label={t('Actions for {date}', {
+                    date: fmtUTC(dt, { dateStyle: 'full' }),
+                  })}
+                  onclick={positionDayActions}
+                  ><span aria-hidden="true">⋯</span></button
+                >
+              </div>
+              <div id={menuId} class="day-actions" popover="auto">
+                <button
+                  disabled={busy || !isPro}
+                  popovertarget={menuId}
+                  popovertargetaction="hide"
+                  onclick={() => onRecalcDay(isoDate(dt))}
+                  title={t(
+                    "Re-fill this day's empty slots to fit the remaining budget",
+                  )}
+                  >{t('Recalculate day')}{#if !isPro}
+                    · {t('Pro')}{/if}</button
+                >
+                <button
+                  class="clear-day"
+                  disabled={busy ||
+                    (!plan.slots.some((slot) => slot.date === isoDate(dt)) &&
+                      !plan.bonus.some((item) => item.date === isoDate(dt)))}
+                  popovertarget={menuId}
+                  popovertargetaction="hide"
+                  onclick={() => onClearDay(isoDate(dt))}
+                  >{t('Clear day')}</button
+                >
+              </div>
             </th>
           {/each}
         </tr>
@@ -220,33 +270,6 @@
           {#each dailyNutrition as dn}
             <td class="slot-cell nutrition-cell">
               <NutritionBar {...dn} {targets} />
-            </td>
-          {/each}
-        </tr>
-        <tr class="actions-row">
-          <th scope="row" class="row-label">{t('Actions')}</th>
-          {#each weekDates as dt}
-            <td class="slot-cell actions-cell">
-              <div class="day-actions">
-                <button
-                  class="btn-recalc"
-                  disabled={busy || !isPro}
-                  onclick={() => onRecalcDay(isoDate(dt))}
-                  title={t(
-                    "Re-fill this day's empty slots to fit the remaining budget",
-                  )}
-                  >{t('Recalculate')}{#if !isPro}
-                    · {t('Pro')}{/if}</button
-                >
-                <button
-                  class="btn-recalc"
-                  disabled={busy ||
-                    (!plan.slots.some((slot) => slot.date === isoDate(dt)) &&
-                      !plan.bonus.some((item) => item.date === isoDate(dt)))}
-                  onclick={() => onClearDay(isoDate(dt))}
-                  >{t('Clear day')}</button
-                >
-              </div>
             </td>
           {/each}
         </tr>
@@ -416,32 +439,66 @@
     gap: 4px;
   }
 
-  .actions-cell {
-    padding: 8px;
-  }
-
-  .day-actions {
+  .day-heading {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
   }
 
-  .btn-recalc {
-    align-self: flex-start;
-    padding: 4px 7px;
-    background: transparent;
-    border: 1px solid $color-border-strong;
+  .day-menu-toggle {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
     border-radius: $radius-sm;
+    background: transparent;
     color: $color-text-muted;
+    font-size: 1.2rem;
     cursor: pointer;
-    font-size: 0.65rem;
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-    }
     &:hover {
+      background: $color-surface-2;
       color: $color-text;
-      border-color: $color-accent-dim;
+    }
+  }
+
+  .day-actions {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: 192px;
+    padding: 4px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface;
+    box-shadow: 0 6px 20px rgb(41 39 33 / 12%);
+
+    button {
+      display: block;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $color-text;
+      text-align: left;
+      font-size: 0.8rem;
+      cursor: pointer;
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+      &:hover:not(:disabled) {
+        background: $color-surface-2;
+      }
+    }
+
+    .clear-day {
+      margin-top: 4px;
+      border-top: 1px solid $color-border;
+      border-radius: 0;
+      color: $color-danger;
     }
   }
 

@@ -33,19 +33,32 @@ test('@smoke create a plan', async ({ page }) => {
   ).toHaveCount(0)
   await expect(page.getByText('Repeat pattern')).toBeVisible()
   await expect(page).toHaveTitle('Planner · Papu Plan')
-  const actions = page.locator('.actions-row')
-  await expect(
-    actions.getByRole('rowheader', { name: 'Actions' }),
-  ).toBeVisible()
-  await expect(
-    actions.getByRole('button', { name: /Recalculate/ }),
-  ).toHaveCount(7)
+  const triggers = page.getByRole('button', { name: /^Actions for / })
+  await expect(triggers).toHaveCount(7)
+  await expect(page.locator('.actions-row')).toHaveCount(0)
+  const actions = page.locator('.day-actions').first()
+  await expect(actions).not.toBeVisible()
+  await triggers.first().focus()
+  await page.keyboard.press('Enter')
+  await expect(actions).toBeVisible()
   await expect(
     actions.getByRole('button', { name: /Recalculate/ }).first(),
   ).toBeDisabled()
   await expect(
     actions.getByRole('button', { name: 'Clear day', exact: true }).first(),
   ).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(actions).not.toBeVisible()
+  await expect(triggers.first()).toBeFocused()
+  await triggers.first().click()
+  await page.locator('.month-label').click()
+  await expect(actions).not.toBeVisible()
+  await triggers.first().click()
+  await triggers.last().click()
+  await expect(actions).not.toBeVisible()
+  await expect(page.locator('.day-actions').last()).toBeVisible()
+  await page.getByRole('button', { name: 'Next week' }).click()
+  await expect(page.locator('.day-actions:popover-open')).toHaveCount(0)
 })
 
 test('prefill an extra item from a common preset', async ({ page }) => {
@@ -207,13 +220,15 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   ).toHaveAttribute('href', before!)
   await expect(cells.nth(1).locator('.leftover-label')).toHaveCount(0)
 
-  const actions = page.locator('.actions-row')
+  const trigger = page.getByRole('button', { name: /^Actions for / }).first()
+  const actions = page.locator('.day-actions').first()
+  await trigger.click()
   await expect(
-    actions.getByRole('button', { name: 'Recalculate', exact: true }),
-  ).toHaveCount(7)
+    actions.getByRole('button', { name: 'Recalculate day', exact: true }),
+  ).toBeEnabled()
   await expect(
     actions.getByRole('button', { name: 'Clear day', exact: true }),
-  ).toHaveCount(7)
+  ).toBeEnabled()
 
   page.once('dialog', (dialog) => dialog.dismiss())
   await actions
@@ -221,6 +236,8 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
     .first()
     .click()
   await expect(cells.nth(0).locator('.name')).toHaveCount(1)
+  await expect(actions).not.toBeVisible()
+  await trigger.click()
   page.once('dialog', (dialog) => dialog.accept())
   await actions
     .getByRole('button', { name: 'Clear day', exact: true })
@@ -238,11 +255,13 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
       response.url().endsWith(`${base}/recalc-day`) &&
       response.request().method() === 'POST',
   )
+  await trigger.click()
   await actions
-    .getByRole('button', { name: 'Recalculate', exact: true })
+    .getByRole('button', { name: 'Recalculate day', exact: true })
     .first()
     .click()
   expect((await recalculated).ok()).toBe(true)
+  await expect(actions).not.toBeVisible()
   await expect(cells.nth(0).locator('.name')).toHaveCount(1)
 
   page.once('dialog', (dialog) => dialog.accept())

@@ -15,6 +15,8 @@ const CS_MESSAGES = {
   'Next page': 'Další strana',
   'Clear plan': 'Vyprázdnit plán',
   'Clear day': 'Vyprázdnit den',
+  'Recalculate day': 'Přepočítat den',
+  'Actions for {date}': 'Akce pro {date}',
   'Clear all meals and extras for this day?':
     'Vymazat všechna jídla a položky navíc pro tento den?',
   'Clear all meals and extras across every week of this plan? Plan settings will be kept.':
