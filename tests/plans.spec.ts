@@ -144,11 +144,22 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
   await page.locator('h1').hover()
   await expect(protein).not.toBeVisible()
   await proteinSlice.focus()
+  await page.keyboard.press('ArrowRight')
   await expect(protein).toBeVisible()
-  await expect(proteinSlice).toHaveCSS('outline-style', 'none')
+  await expect(proteinSlice).toHaveCSS('outline-style', 'solid')
   await proteinSlice.press('Enter')
   await page.locator('h1').hover()
   await expect(protein).toBeVisible()
+  await page.keyboard.press('Tab')
+  const carbsSlice = nutrition.getByRole('button', {
+    name: 'Carbs',
+    exact: true,
+  })
+  await expect(carbsSlice).toBeFocused()
+  await expect(carbsSlice).toHaveCSS('outline-style', 'solid')
+  await expect(
+    nutrition.getByRole('meter', { name: 'Carbs', exact: true }),
+  ).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(protein).not.toBeVisible()
   await expect(calories).toHaveAttribute('aria-valuenow', '0')

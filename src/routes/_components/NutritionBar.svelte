@@ -126,10 +126,15 @@
     if (!pinned) closeTimer = setTimeout(closeDetails, 150)
   }
 
-  function showDetails(index: number, target: EventTarget | null, pin = false) {
+  function showDetails(
+    index: number,
+    target: EventTarget | null,
+    pin = false,
+    focus = false,
+  ) {
     cancelClose()
     if (pin && pinned && active === index) return closeDetails()
-    if (!pin && pinned) return
+    if (!pin && pinned && !focus) return
     active = index
     pinned = pin
     const rect = (target as Element).getBoundingClientRect()
@@ -215,7 +220,8 @@
               showDetails(index, event.currentTarget)
           }}
           onpointerleave={leaveDetails}
-          onfocus={(event) => showDetails(index, event.currentTarget)}
+          onfocus={(event) =>
+            showDetails(index, event.currentTarget, false, true)}
           onblur={leaveDetails}
           onclick={(event) => showDetails(index, event.currentTarget, true)}
           onkeydown={(event) => {
@@ -346,7 +352,12 @@
   .pie-hit {
     fill: transparent;
     cursor: pointer;
-    outline: none;
+    &:focus-visible {
+      stroke: $color-text;
+      stroke-width: 2;
+      outline: 2px solid $color-accent;
+      outline-offset: 2px;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .pie-artwork {

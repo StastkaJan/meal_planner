@@ -187,15 +187,8 @@
     {
       "idx": 26,
       "version": "7",
-      "when": 1788877061686,
-      "tag": "0026_shocking_swordsman",
-      "breakpoints": true
-    },
-    {
-      "idx": 27,
-      "version": "7",
       "when": 1788892202558,
-      "tag": "0027_robust_ben_grimm",
+      "tag": "0026_shocking_swordsman",
       "breakpoints": true
     }
   ]

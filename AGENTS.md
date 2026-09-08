@@ -73,7 +73,7 @@
 
 <!-- NOTE: HTTP/service duration histograms expose route p95; `/metrics` also reports database-pool queue depth and event-loop delay. HighHttpLatency uses route p95 with a minimum traffic guard. Uploaded images use private ETag revalidation after authorization. -->
 
-<!-- NOTE: Leftovers UI/API/shopping exclusions are removed; every planned meal counts toward shopping. The retired `slot_leftovers` table is retained for deployment compatibility. -->
+<!-- NOTE: Leftovers UI/API/shopping exclusions are removed; every planned meal counts toward shopping. The retired `slot_leftovers` table is retained for deployment compatibility; slot replacement, reroll, and copy-week clear affected links atomically for rollback. -->
 
 <!-- NOTE: `saved_extras` stores private reusable extras, included in account exports and deleted with the account. `/extras` (POST) and `/extras/[id]` (DELETE) manage them; planner load supplies a searchable picker with common presets including latte/cappuccino; selecting a preset or saved extra adds it immediately. -->
 

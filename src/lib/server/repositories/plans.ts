@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lt, notInArray, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, lt, notInArray, or, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   plans,
@@ -8,6 +8,7 @@ import {
   mealIngredients,
   ingredients,
   slotRepeats,
+  slotLeftovers,
   mealTranslations,
 } from '$lib/database/schema'
 import type { Plan } from '$lib/database/schema'
@@ -65,6 +66,25 @@ export async function clearPlan(planId: number, date?: string) {
   })
 }
 
+// Keep the previous release's leftover links valid during the rollback window.
+function leftoverLinksForSlots(
+  planId: number,
+  slots: { date: string; mealType: string }[],
+) {
+  return and(
+    eq(slotLeftovers.planId, planId),
+    or(
+      ...slots.flatMap(({ date, mealType }) => [
+        and(eq(slotLeftovers.date, date), eq(slotLeftovers.mealType, mealType)),
+        and(
+          eq(slotLeftovers.sourceDate, date),
+          eq(slotLeftovers.sourceMealType, mealType),
+        ),
+      ]),
+    ),
+  )
+}
+
 export async function replaceSingleSlot(
   planId: number,
   date: string,
@@ -86,6 +106,9 @@ export async function replaceSingleSlot(
       )
       .returning()
     if (!changed.length) return false
+    await tx
+      .delete(slotLeftovers)
+      .where(leftoverLinksForSlots(planId, [{ date, mealType }]))
     return true
   })
 }
@@ -287,13 +310,17 @@ export async function upsertSlot(
     return
   }
 
-  await db
-    .insert(weekSlots)
-    .values(dates.map((date) => ({ planId, date, mealType, mealId })))
-    .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
-      set: { mealId },
-    })
+  const rows = dates.map((date) => ({ planId, date, mealType, mealId }))
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(weekSlots)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
+        set: { mealId },
+      })
+    await tx.delete(slotLeftovers).where(leftoverLinksForSlots(planId, rows))
+  })
 }
 
 export async function getSlotMeal(
@@ -326,20 +353,22 @@ export async function copyWeek(planId: number, from: string, to: string) {
     .where(inWeek(planId, from))
   if (!rows.length) return
   const shift = Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
-  await db
-    .insert(weekSlots)
-    .values(
-      rows.map((row) => ({
-        planId,
-        date: addDays(row.date, shift),
-        mealType: row.mealType,
-        mealId: row.mealId,
-      })),
-    )
-    .onConflictDoUpdate({
-      target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
-      set: { mealId: sql`excluded.meal_id` },
-    })
+  const copied = rows.map((row) => ({
+    planId,
+    date: addDays(row.date, shift),
+    mealType: row.mealType,
+    mealId: row.mealId,
+  }))
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(weekSlots)
+      .values(copied)
+      .onConflictDoUpdate({
+        target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
+        set: { mealId: sql`excluded.meal_id` },
+      })
+    await tx.delete(slotLeftovers).where(leftoverLinksForSlots(planId, copied))
+  })
 }
 
 export async function getShoppingList(
