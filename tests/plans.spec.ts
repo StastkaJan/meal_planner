@@ -139,11 +139,20 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
     exact: true,
   })
   await expect(protein).toHaveCount(0)
+  await expect(nutrition.getByText('Calories', { exact: true })).toBeVisible()
   await expect(
     nutrition.locator('.nutrient-legend, .chart-key, title'),
   ).toHaveCount(0)
+  const proteinGoal = nutrition.locator('.protein .pie-goal')
+  const restingSlice = (await proteinGoal.boundingBox())!
   await proteinSlice.hover()
   await expect(protein).toBeVisible()
+  await expect
+    .poll(async () => (await proteinGoal.boundingBox())!.width)
+    .toBeGreaterThan(restingSlice.width)
+  await expect
+    .poll(async () => (await proteinGoal.boundingBox())!.y)
+    .toBeLessThan(restingSlice.y)
   await page.locator('h1').hover()
   await expect(protein).not.toBeVisible()
   await proteinSlice.focus()

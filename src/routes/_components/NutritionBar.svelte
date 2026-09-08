@@ -145,6 +145,7 @@
 
 <div class="nutrition-summary">
   <div class="calories" class:over={calories > targets.calories}>
+    <span class="calorie-label">{t('Calories')}</span>
     <span class="calorie-total"
       ><strong>{grams(calories)}</strong> / {targets.calories} kcal</span
     >
@@ -172,28 +173,35 @@
     {#each rows as row, index}
       {@const fraction = Math.min(1, Math.max(0, row.value / row.target))}
       <g class={row.key} transform={`rotate(${(index * 360) / rows.length})`}>
-        <path class="pie-goal" d={sector(48)} aria-hidden="true" />
-        <path
-          class="pie-value"
-          data-nutrient={row.key}
-          data-progress={fraction}
-          d={sector(48)}
-          transform={`scale(${Math.sqrt(fraction)})`}
-          aria-hidden="true"
-        />
-        {#if row.value > row.target}
-          <circle
-            class="pie-overflow"
+        <g
+          class="pie-artwork"
+          transform={active === index
+            ? 'translate(2.6 -5.4) scale(1.08)'
+            : undefined}
+        >
+          <path class="pie-goal" d={sector(48)} aria-hidden="true" />
+          <path
+            class="pie-value"
             data-nutrient={row.key}
-            cx="0"
-            cy="0"
-            r="53"
-            pathLength="360"
-            stroke-dasharray={`${360 / rows.length - 4} 360`}
-            transform="rotate(-88)"
+            data-progress={fraction}
+            d={sector(48)}
+            transform={`scale(${Math.sqrt(fraction)})`}
             aria-hidden="true"
           />
-        {/if}
+          {#if row.value > row.target}
+            <circle
+              class="pie-overflow"
+              data-nutrient={row.key}
+              cx="0"
+              cy="0"
+              r="53"
+              pathLength="360"
+              stroke-dasharray={`${360 / rows.length - 4} 360`}
+              transform="rotate(-88)"
+              aria-hidden="true"
+            />
+          {/if}
+        </g>
         <path
           class="pie-hit"
           d={sector(55)}
@@ -281,6 +289,13 @@
     font-size: 0.65rem;
     text-align: center;
   }
+  .calorie-label {
+    display: block;
+    color: $color-text-muted;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+  }
   .calorie-total strong {
     font-weight: 600;
   }
@@ -304,6 +319,11 @@
     display: block;
     width: 100%;
     max-width: 104px;
+    overflow: visible;
+  }
+  .pie-artwork {
+    pointer-events: none;
+    transition: transform 150ms ease;
   }
   .pie-goal {
     fill: currentColor;
@@ -326,11 +346,13 @@
     fill: transparent;
     cursor: pointer;
   }
-  .pie-hit:hover,
   .pie-hit:focus-visible {
-    stroke: currentColor;
-    stroke-width: 2;
     outline: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pie-artwork {
+      transition: none;
+    }
   }
   .protein {
     color: #4f6f8f;
