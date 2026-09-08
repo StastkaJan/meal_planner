@@ -224,6 +224,14 @@
         </tr>
       </thead>
       <tbody>
+        <tr class="nutrition-row">
+          <td class="row-label nutrition-label">{t('nutrition')}</td>
+          {#each dailyNutrition as dn}
+            <td class="slot-cell nutrition-cell">
+              <NutritionBar {...dn} {targets} />
+            </td>
+          {/each}
+        </tr>
         {#each plan.mealSlots as mt}
           <tr>
             <td class="row-label">{label(mt)}</td>
@@ -259,14 +267,6 @@
                   onDelete={onDeleteBonus}
                 />
               </div>
-            </td>
-          {/each}
-        </tr>
-        <tr class="nutrition-row">
-          <td class="row-label nutrition-label">{t('nutrition')}</td>
-          {#each dailyNutrition as dn}
-            <td class="slot-cell nutrition-cell">
-              <NutritionBar {...dn} {targets} />
             </td>
           {/each}
         </tr>
