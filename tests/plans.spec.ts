@@ -157,6 +157,7 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
   await expect(protein).not.toBeVisible()
   await proteinSlice.focus()
   await expect(protein).toBeVisible()
+  await expect(proteinSlice).toHaveCSS('outline-style', 'none')
   await proteinSlice.press('Enter')
   await page.locator('h1').hover()
   await expect(protein).toBeVisible()
@@ -180,6 +181,7 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
   await expect(calories).toHaveAttribute('aria-valuenow', '800')
   await expect(calories).toHaveAttribute('aria-valuetext', /200 kcal remaining/)
   await proteinSlice.click()
+  await expect(proteinSlice).toHaveCSS('outline-style', 'none')
   await expect(protein).toHaveAttribute(
     'aria-valuetext',
     '32 / 40 g · 8 g remaining',

@@ -346,8 +346,6 @@
   .pie-hit {
     fill: transparent;
     cursor: pointer;
-  }
-  .pie-hit:focus-visible {
     outline: none;
   }
   @media (prefers-reduced-motion: reduce) {
