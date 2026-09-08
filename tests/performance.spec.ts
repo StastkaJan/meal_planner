@@ -8,8 +8,8 @@ test('@smoke picker preserves newer typing when an earlier search completes', as
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.getByTitle('Click to assign meal').first().click()
   const search = page.getByRole('dialog').getByRole('searchbox')
-  await page.clock.install()
-  await page.clock.pauseAt(new Date())
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+  await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
 
   let releaseSearch!: () => void
   const searchHeld = new Promise<void>((resolve) => {
@@ -47,8 +47,8 @@ for (const closeWith of ['cancel', 'escape', 'select'] as const) {
     await page.getByRole('button', { name: 'Create plan' }).click()
     await page.getByTitle('Click to assign meal').first().click()
     const dialog = page.getByRole('dialog')
-    await page.clock.install()
-    await page.clock.pauseAt(new Date())
+    await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+    await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
 
     let releaseClose!: () => void
     const closeHeld = new Promise<void>((resolve) => {
