@@ -176,7 +176,7 @@
         <g
           class="pie-artwork"
           transform={active === index
-            ? 'translate(2.6 -5.4) scale(1.08)'
+            ? 'translate(0.9 -1.8) scale(1.03)'
             : undefined}
         >
           <path class="pie-goal" d={sector(48)} aria-hidden="true" />
@@ -291,9 +291,9 @@
   }
   .calorie-label {
     display: block;
-    color: $color-text-muted;
-    font-size: 0.65rem;
-    font-weight: 600;
+    color: $color-text;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-align: center;
   }
   .calorie-total strong {
@@ -323,7 +323,7 @@
   }
   .pie-artwork {
     pointer-events: none;
-    transition: transform 150ms ease;
+    transition: transform 300ms ease-in-out;
   }
   .pie-goal {
     fill: currentColor;
