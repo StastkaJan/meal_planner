@@ -48,12 +48,16 @@ describe('getAccountExport', () => {
       [{ mealIds: [] }],
       [],
       [],
+      [{ id: 1, userId: 42, name: 'My coffee', calories: 10 }],
     ])
     db.transaction.mockImplementationOnce(
       (callback: (transaction: unknown) => unknown) => callback(tx),
     )
 
     const result = await getAccountExport(42)
+    expect(result.savedExtras).toEqual([
+      { id: 1, name: 'My coffee', calories: 10 },
+    ])
 
     expect(tx.select).toHaveBeenNthCalledWith(
       3,

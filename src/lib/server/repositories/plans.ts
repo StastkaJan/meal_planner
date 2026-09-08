@@ -1,14 +1,4 @@
-import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lt,
-  notInArray,
-  or,
-  sql,
-} from 'drizzle-orm'
+import { and, eq, gte, inArray, lt, notInArray, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   plans,
@@ -18,7 +8,6 @@ import {
   mealIngredients,
   ingredients,
   slotRepeats,
-  slotLeftovers,
   mealTranslations,
 } from '$lib/database/schema'
 import type { Plan } from '$lib/database/schema'
@@ -57,7 +46,6 @@ export async function deletePlan(id: number) {
 
 export async function clearPlan(planId: number, date?: string) {
   await db.transaction(async (tx) => {
-    // Foreign keys also remove leftover links to and from deleted slots.
     await tx
       .delete(weekSlots)
       .where(
@@ -98,23 +86,6 @@ export async function replaceSingleSlot(
       )
       .returning()
     if (!changed.length) return false
-    await tx
-      .delete(slotLeftovers)
-      .where(
-        and(
-          eq(slotLeftovers.planId, planId),
-          or(
-            and(
-              eq(slotLeftovers.date, date),
-              eq(slotLeftovers.mealType, mealType),
-            ),
-            and(
-              eq(slotLeftovers.sourceDate, date),
-              eq(slotLeftovers.sourceMealType, mealType),
-            ),
-          ),
-        ),
-      )
     return true
   })
 }
@@ -222,8 +193,6 @@ export async function getPlanDetail(
         sugarG: meals.sugarG,
         saturatedFatG: meals.saturatedFatG,
         saltG: meals.saltG,
-        leftoverSourceDate: slotLeftovers.sourceDate,
-        leftoverSourceMealType: slotLeftovers.sourceMealType,
       })
       .from(weekSlots)
       .leftJoin(meals, eq(weekSlots.mealId, meals.id))
@@ -232,14 +201,6 @@ export async function getPlanDetail(
         and(
           eq(mealTranslations.mealId, meals.id),
           eq(mealTranslations.locale, locale),
-        ),
-      )
-      .leftJoin(
-        slotLeftovers,
-        and(
-          eq(slotLeftovers.planId, weekSlots.planId),
-          eq(slotLeftovers.date, weekSlots.date),
-          eq(slotLeftovers.mealType, weekSlots.mealType),
         ),
       )
       .where(inWeek(plan.id, week)),
@@ -313,24 +274,6 @@ export async function upsertSlot(
   const groupBreaks = await getGroupBreaks(planId, mealType)
   const dates = groupBreaks ? groupWindow(date, groupBreaks) : [date]
 
-  await db
-    .delete(slotLeftovers)
-    .where(
-      and(
-        eq(slotLeftovers.planId, planId),
-        or(
-          and(
-            inArray(slotLeftovers.date, dates),
-            eq(slotLeftovers.mealType, mealType),
-          ),
-          and(
-            inArray(slotLeftovers.sourceDate, dates),
-            eq(slotLeftovers.sourceMealType, mealType),
-          ),
-        ),
-      ),
-    )
-
   if (mealId === null) {
     await db
       .delete(weekSlots)
@@ -372,89 +315,17 @@ export async function getSlotMeal(
   return slot ?? null
 }
 
-export async function setSlotLeftover(
-  planId: number,
-  date: string,
-  mealType: string,
-  source: { date: string; mealType: string } | null,
-) {
-  const target = and(
-    eq(slotLeftovers.planId, planId),
-    eq(slotLeftovers.date, date),
-    eq(slotLeftovers.mealType, mealType),
-  )
-  if (!source) {
-    await db.delete(slotLeftovers).where(target)
-    return
-  }
-  await db
-    .insert(slotLeftovers)
-    .values({
-      planId,
-      date,
-      mealType,
-      sourceDate: source.date,
-      sourceMealType: source.mealType,
-    })
-    .onConflictDoUpdate({
-      target: [
-        slotLeftovers.planId,
-        slotLeftovers.date,
-        slotLeftovers.mealType,
-      ],
-      set: {
-        sourceDate: source.date,
-        sourceMealType: source.mealType,
-      },
-    })
-}
-
 export async function copyWeek(planId: number, from: string, to: string) {
-  const [rows, leftovers] = await Promise.all([
-    db
-      .select({
-        date: weekSlots.date,
-        mealType: weekSlots.mealType,
-        mealId: weekSlots.mealId,
-      })
-      .from(weekSlots)
-      .where(inWeek(planId, from)),
-    db
-      .select({
-        date: slotLeftovers.date,
-        mealType: slotLeftovers.mealType,
-        sourceDate: slotLeftovers.sourceDate,
-        sourceMealType: slotLeftovers.sourceMealType,
-      })
-      .from(slotLeftovers)
-      .where(
-        and(
-          eq(slotLeftovers.planId, planId),
-          gte(slotLeftovers.date, from),
-          lt(slotLeftovers.date, addDays(from, 7)),
-        ),
-      ),
-  ])
+  const rows = await db
+    .select({
+      date: weekSlots.date,
+      mealType: weekSlots.mealType,
+      mealId: weekSlots.mealId,
+    })
+    .from(weekSlots)
+    .where(inWeek(planId, from))
   if (!rows.length) return
-
   const shift = Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
-  await db
-    .delete(slotLeftovers)
-    .where(
-      and(
-        eq(slotLeftovers.planId, planId),
-        or(
-          and(
-            gte(slotLeftovers.date, to),
-            lt(slotLeftovers.date, addDays(to, 7)),
-          ),
-          and(
-            gte(slotLeftovers.sourceDate, to),
-            lt(slotLeftovers.sourceDate, addDays(to, 7)),
-          ),
-        ),
-      ),
-    )
   await db
     .insert(weekSlots)
     .values(
@@ -469,30 +340,6 @@ export async function copyWeek(planId: number, from: string, to: string) {
       target: [weekSlots.planId, weekSlots.date, weekSlots.mealType],
       set: { mealId: sql`excluded.meal_id` },
     })
-
-  if (leftovers.length)
-    await db
-      .insert(slotLeftovers)
-      .values(
-        leftovers.map((row) => ({
-          planId,
-          date: addDays(row.date, shift),
-          mealType: row.mealType,
-          sourceDate: addDays(row.sourceDate, shift),
-          sourceMealType: row.sourceMealType,
-        })),
-      )
-      .onConflictDoUpdate({
-        target: [
-          slotLeftovers.planId,
-          slotLeftovers.date,
-          slotLeftovers.mealType,
-        ],
-        set: {
-          sourceDate: sql`excluded.source_date`,
-          sourceMealType: sql`excluded.source_meal_type`,
-        },
-      })
 }
 
 export async function getShoppingList(
@@ -514,18 +361,9 @@ export async function getShoppingList(
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
     .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
-    .leftJoin(
-      slotLeftovers,
-      and(
-        eq(slotLeftovers.planId, weekSlots.planId),
-        eq(slotLeftovers.date, weekSlots.date),
-        eq(slotLeftovers.mealType, weekSlots.mealType),
-      ),
-    )
     .where(
       and(
         inWeek(planId, week),
-        isNull(slotLeftovers.planId),
         pantryStaples.length
           ? notInArray(
               sql`lower(${ingredients.name})`,

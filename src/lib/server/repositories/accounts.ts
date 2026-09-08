@@ -11,6 +11,7 @@ import {
   plans,
   recipeImports,
   slotRepeats,
+  savedExtras,
   users,
   userSettings,
   weekSlots,
@@ -298,6 +299,10 @@ export async function getAccountExport(userId: number) {
     const settings = settingsRow
       ? (({ userId: _userId, ...value }) => value)(settingsRow)
       : null
+    const extras = await tx
+      .select()
+      .from(savedExtras)
+      .where(eq(savedExtras.userId, userId))
     return {
       version: 1,
       account: { email: account?.email, isPro: account?.isPro, settings },
@@ -306,6 +311,7 @@ export async function getAccountExport(userId: number) {
       favoriteMealIds,
       recipeImports: imports,
       legalDocumentEvents: legalEvents,
+      savedExtras: extras.map(({ userId: _userId, ...extra }) => extra),
     }
   })
 }

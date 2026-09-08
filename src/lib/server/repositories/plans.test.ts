@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import type { SQL } from 'drizzle-orm'
-import { bonusItems, slotLeftovers, weekSlots } from '$lib/database/schema'
+import { bonusItems, weekSlots } from '$lib/database/schema'
 
 const db = vi.hoisted(() => ({ transaction: vi.fn() }))
 vi.mock('$lib/database', () => ({ db }))
@@ -36,7 +36,7 @@ describe('planner clearing and replacement persistence', () => {
   )
 
   it.each([true, false])(
-    'replaces only an unchanged slot and cleans leftover links on success: %s',
+    'replaces only an unchanged slot: %s',
     async (changed) => {
       const returning = vi
         .fn()
@@ -60,14 +60,7 @@ describe('planner clearing and replacement persistence', () => {
         'dinner',
         11,
       ])
-      if (changed) {
-        expect(tx.delete).toHaveBeenCalledExactlyOnceWith(slotLeftovers)
-        expect(dialect.sqlToQuery(deleteWhere.mock.calls[0][0]).params).toEqual(
-          [4, '2026-09-01', 'dinner', '2026-09-01', 'dinner'],
-        )
-      } else {
-        expect(tx.delete).not.toHaveBeenCalled()
-      }
+      expect(tx.delete).not.toHaveBeenCalled()
     },
   )
 })

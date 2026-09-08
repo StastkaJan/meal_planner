@@ -3,12 +3,17 @@ import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
 import { listMealPickerItems } from '$lib/server/repositories/meals'
 import { getSettings } from '$lib/server/repositories/accounts'
 import { resolveTargets } from '$lib/domain/nutrition'
+import { listSavedExtras } from '$lib/server/repositories/extras'
 import { addDays, mondayOf } from '$lib/utils/date-time'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const userId = locals.user!.id
-  const [plans, u] = await Promise.all([listPlans(userId), getSettings(userId)])
+  const [plans, u, savedExtras] = await Promise.all([
+    listPlans(userId),
+    getSettings(userId),
+    listSavedExtras(userId),
+  ])
   const targets = resolveTargets(u)
   const preferences = {
     cuisinePrefs: u?.cuisinePrefs ?? [],
@@ -27,6 +32,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       viewWeek: '',
       targets,
       preferences,
+      savedExtras,
     }
   }
 
@@ -75,5 +81,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     viewWeek,
     targets,
     preferences,
+    savedExtras,
   }
 }

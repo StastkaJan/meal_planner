@@ -206,6 +206,7 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
     .getByRole('button', { name: '+ extra', exact: true })
     .first()
     .click()
+  await page.getByRole('button', { name: 'Custom extra', exact: true }).click()
   await page.getByLabel('Name', { exact: true }).fill('Remaining budget')
   await page
     .getByRole('spinbutton', { name: 'Calories', exact: true })
@@ -384,7 +385,6 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   await expect(
     cells.nth(1).getByRole('link', { name: 'Show recipe' }),
   ).toHaveAttribute('href', before!)
-  await expect(cells.nth(1).locator('.leftover-label')).toHaveCount(0)
 
   const trigger = page.getByRole('button', { name: /^Actions for / }).first()
   const actions = page.locator('.day-actions').first()

@@ -6,13 +6,13 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
-test('@smoke shopping list handles leftovers and ingredients with different units', async ({
+test('@smoke shopping list counts every planned meal and handles different ingredient units', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
 
   // Assign the seeded "Oatmeal with Berries" meal (1 tbsp honey) to two breakfast slots.
-  const breakfastCells = page.locator('button.cell.breakfast')
+  const breakfastCells = page.locator('.cell.breakfast')
   for (const i of [0, 1]) {
     await breakfastCells.nth(i).click()
     await page.getByPlaceholder('Search meals…').fill('Oatmeal')
@@ -27,13 +27,20 @@ test('@smoke shopping list handles leftovers and ingredients with different unit
     .locator('dialog .item', { hasText: 'Cottage Cheese with Fruit' })
     .click()
 
-  await page.getByRole('button', { name: /Use leftovers from/ }).click()
-  await expect(page.getByText('leftovers')).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: /Use leftovers from/ }),
+  ).toHaveCount(0)
+  await page.getByRole('heading', { level: 1 }).hover()
+  const mealActions = breakfastCells.first().locator('.actions')
+  await expect(mealActions).toHaveCSS('opacity', '1')
+  await expect(
+    mealActions.getByRole('button', { name: 'Remove meal' }),
+  ).toBeVisible()
 
   await page.getByRole('link', { name: 'Shopping list' }).click()
   await page.getByLabel('People served').fill('2')
   await page.getByLabel('People served').blur()
-  await expect(page.getByText('2 tbsp Honey')).toBeVisible()
+  await expect(page.getByText('4 tbsp Honey')).toBeVisible()
   await expect(page.getByText('2 tsp Honey')).toBeVisible()
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', {
@@ -47,7 +54,7 @@ test('@smoke shopping list handles leftovers and ingredients with different unit
   await page.getByRole('button', { name: 'Share list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('shared-shopping-list')),
-  ).toContain('☐ 2 tbsp Honey')
+  ).toContain('☐ 4 tbsp Honey')
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -63,7 +70,7 @@ test('@smoke shopping list handles leftovers and ingredients with different unit
   await page.getByRole('button', { name: 'Copy list' }).click()
   expect(
     await page.evaluate(() => sessionStorage.getItem('copied-shopping-list')),
-  ).toContain('☐ 2 tbsp Honey')
+  ).toContain('☐ 4 tbsp Honey')
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
 
   await page.goto('/profile')
@@ -72,5 +79,5 @@ test('@smoke shopping list handles leftovers and ingredients with different unit
   await expect(page.getByText('Pantry staples saved.')).toBeVisible()
   await page.goBack()
   await page.reload()
-  await expect(page.getByText('2 tbsp Honey')).toHaveCount(0)
+  await expect(page.getByText('4 tbsp Honey')).toHaveCount(0)
 })

@@ -2,11 +2,7 @@ import { error } from '@sveltejs/kit'
 import { requireOwnedPlan } from '$lib/server/guards'
 import { validDateStr } from '$lib/server/services/date'
 import { findAllowedMeal } from '$lib/server/repositories/meals'
-import {
-  getSlotMeal,
-  setSlotLeftover,
-  upsertSlot,
-} from '$lib/server/repositories/plans'
+import { upsertSlot } from '$lib/server/repositories/plans'
 import { mealFitsSlot } from '$lib/domain/meals'
 import type { RequestHandler } from './$types'
 
@@ -25,30 +21,5 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   }
 
   await upsertSlot(plan.id, date, mealType, mealId)
-  return new Response(null, { status: 204 })
-}
-
-export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-  const plan = await requireOwnedPlan(locals, params.id)
-  const { date, mealType, source } = await request.json()
-  validDateStr(date)
-  if (!plan.mealSlots.includes(mealType)) error(400, 'Invalid mealType')
-
-  const slot = await getSlotMeal(plan.id, date, mealType)
-  if (!slot?.mealId) error(404, 'Slot not found')
-
-  if (source !== null) {
-    if (!source || typeof source !== 'object') error(400, 'Invalid source')
-    validDateStr(source.date)
-    if (!plan.mealSlots.includes(source.mealType))
-      error(400, 'Invalid source mealType')
-    if (source.date >= date)
-      error(400, 'Leftovers must come from an earlier meal')
-    const sourceSlot = await getSlotMeal(plan.id, source.date, source.mealType)
-    if (!sourceSlot?.mealId || sourceSlot.mealId !== slot.mealId)
-      error(400, 'Leftover source must contain the same meal')
-  }
-
-  await setSlotLeftover(plan.id, date, mealType, source)
   return new Response(null, { status: 204 })
 }

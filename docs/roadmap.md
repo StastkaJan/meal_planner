@@ -33,7 +33,6 @@ No remaining P1 items.
 
 ## Already present
 
-- Leftover links between meal slots, with batch ingredients counted once.
 - Per-plan enabled and custom meal slots respected by manual planning and auto-compose.
 - Correlated JSON server logs and response `x-request-id` headers.
 - Sanitized server error evidence with stack frames, deployment version, route,

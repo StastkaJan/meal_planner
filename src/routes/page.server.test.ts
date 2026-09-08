@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 const repositories = vi.hoisted(() => ({
   listPlans: vi.fn(),
+  listSavedExtras: vi.fn().mockResolvedValue([]),
   getSettings: vi.fn(),
   listMealPickerItems: vi.fn(),
   getPlanDetail: vi.fn(async (plan, week) => ({
@@ -13,6 +14,7 @@ const repositories = vi.hoisted(() => ({
 vi.mock('$lib/server/repositories/plans', () => repositories)
 vi.mock('$lib/server/repositories/accounts', () => repositories)
 vi.mock('$lib/server/repositories/meals', () => repositories)
+vi.mock('$lib/server/repositories/extras', () => repositories)
 import { load as loadImpl } from './+page.server'
 const load = loadImpl as (event: unknown) => Promise<any>
 const plans = [

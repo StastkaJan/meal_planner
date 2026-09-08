@@ -171,22 +171,7 @@ describe('preview seed', () => {
       'approved',
       'rejected',
     ])
-    for (const leftover of rows.slot_leftovers) {
-      const consumer = rows.week_slots.find(
-        (slot) =>
-          slot.planId === leftover.planId &&
-          slot.date === leftover.date &&
-          slot.mealType === leftover.mealType,
-      )
-      const source = rows.week_slots.find(
-        (slot) =>
-          slot.planId === leftover.planId &&
-          slot.date === leftover.sourceDate &&
-          slot.mealType === leftover.sourceMealType,
-      )
-      expect(consumer.mealId).toBe(source.mealId)
-      expect(source.date < consumer.date).toBe(true)
-    }
+    expect(rows.slot_leftovers ?? []).toHaveLength(0)
   })
 
   it('preserves existing demo passwords, roles, and edits on repeated seeding', async () => {
