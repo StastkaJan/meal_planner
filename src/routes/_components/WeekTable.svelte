@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
+  import type {
+    SlotWithMeal,
+    PlanDetail,
+    DailyNutritionTargets,
+  } from '$lib/types'
   import MealCell from './MealCell.svelte'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'
@@ -28,7 +32,7 @@
     plan: PlanDetail
     onOpenPicker: (date: string, mealType: string) => void
     weekStart: string
-    targets: NutritionTargets
+    targets: DailyNutritionTargets
     isPro: boolean
     onSlotChange: (
       date: string,
@@ -425,7 +429,7 @@
   }
 
   .nutrition-row {
-    background: #faf8f2;
+    background: $color-surface;
   }
 
   .nutrition-cell {

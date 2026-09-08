@@ -18,8 +18,16 @@ const TARGET_FIELDS = [
   'fatTarget',
 ] as const
 
-function toTarget(value: unknown): number | null {
-  const target = Math.round(Number(value))
+const DISPLAY_TARGET_FIELDS = [
+  'fiberTarget',
+  'sugarTarget',
+  'saturatedFatTarget',
+  'saltTarget',
+] as const
+
+function toTarget(value: unknown, precision = 1): number | null {
+  if (typeof value !== 'number' && typeof value !== 'string') return null
+  const target = Math.round(Number(value) * precision) / precision
   return Number.isFinite(target) && target > 0 ? target : null
 }
 
@@ -58,6 +66,9 @@ export async function updateProfileSettings(
       patch.pantryStaples = toPantryStaples(body.pantryStaples)
     for (const field of TARGET_FIELDS) {
       if (body[field] !== undefined) patch[field] = toTarget(body[field])
+    }
+    for (const field of DISPLAY_TARGET_FIELDS) {
+      if (body[field] !== undefined) patch[field] = toTarget(body[field], 10)
     }
     return Object.keys(patch).length ? saveSettings(userId, patch) : {}
   })

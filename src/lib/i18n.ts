@@ -11,10 +11,6 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 
 const CS_MESSAGES = {
   'Nutrient goal progress': 'Plnění nutričních cílů',
-  'Pale slices show goals; solid color shows planned amounts. Red edges mark excess.':
-    'Světlé výseče znázorňují cíle, syté barvy plánovaná množství. Červené okraje označují překročení.',
-  'Pale = goal · Solid = planned · Red edge = over':
-    'Světlá = cíl · Sytá = plán · Červený okraj = překročení',
   Pagination: 'Stránkování',
   'Previous page': 'Předchozí strana',
   'Next page': 'Další strana',
@@ -407,8 +403,8 @@ const CS_MESSAGES = {
   'Always on hand': 'Vždy po ruce',
   'Save pantry staples': 'Uložit suroviny ve spíži',
   'Nutrition targets': 'Výživové cíle',
-  'Daily goals for nutrition bars and auto-compose. Blank uses the default.':
-    'Denní cíle pro výživové ukazatele a automatické sestavení. Prázdné pole použije výchozí hodnotu.',
+  'Daily goals. Blank uses the default. Auto-compose uses calories, protein, carbs and fat.':
+    'Denní cíle. Prázdné pole použije výchozí hodnotu. Automatické sestavení používá kalorie, bílkoviny, sacharidy a tuky.',
   'Targets saved.': 'Cíle byly uloženy.',
   'Save targets': 'Uložit cíle',
   'Change password': 'Změnit heslo',

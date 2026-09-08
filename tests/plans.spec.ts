@@ -9,6 +9,34 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
+test.describe('touch nutrition details', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } })
+
+  test('@smoke opens nutrient details by touch and closes them', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Create plan' }).click()
+    const nutrition = page.locator('.nutrition-cell').first()
+    const protein = nutrition.getByRole('button', {
+      name: 'Protein',
+      exact: true,
+    })
+    await protein.tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).toBeVisible()
+    await nutrition.getByRole('button', { name: 'Close', exact: true }).tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).toHaveCount(0)
+    await protein.tap()
+    await page.locator('h1').tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).not.toBeVisible()
+  })
+})
+
 test('@smoke create a plan', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
   await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
@@ -86,7 +114,7 @@ test('prefill an extra item from a common preset', async ({ page }) => {
   ).toContainText('800')
 })
 
-test('@smoke nutrition meters show planned amounts, remaining targets, and overflow', async ({
+test('@smoke nutrient slices show details on demand and mark overflow', async ({
   page,
 }) => {
   const profile = await page.request.patch('/profile', {
@@ -106,6 +134,25 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
     exact: true,
   })
   const protein = nutrition.getByRole('meter', { name: 'Protein', exact: true })
+  const proteinSlice = nutrition.getByRole('button', {
+    name: 'Protein',
+    exact: true,
+  })
+  await expect(protein).toHaveCount(0)
+  await expect(
+    nutrition.locator('.nutrient-legend, .chart-key, title'),
+  ).toHaveCount(0)
+  await proteinSlice.hover()
+  await expect(protein).toBeVisible()
+  await page.locator('h1').hover()
+  await expect(protein).not.toBeVisible()
+  await proteinSlice.focus()
+  await expect(protein).toBeVisible()
+  await proteinSlice.press('Enter')
+  await page.locator('h1').hover()
+  await expect(protein).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(protein).not.toBeVisible()
   await expect(calories).toHaveAttribute('aria-valuenow', '0')
   await expect(calories).toHaveAttribute(
     'aria-valuetext',
@@ -123,6 +170,7 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(calories).toHaveAttribute('aria-valuenow', '800')
   await expect(calories).toHaveAttribute('aria-valuetext', /200 kcal remaining/)
+  await proteinSlice.click()
   await expect(protein).toHaveAttribute(
     'aria-valuetext',
     '32 / 40 g · 8 g remaining',
@@ -132,14 +180,16 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
   ).toHaveAttribute('data-progress', '0.8')
   await expect(nutrition.locator('.pie-goal')).toHaveCount(7)
   await expect(
-    nutrition.getByRole('img', { name: 'Nutrient goal progress' }),
+    nutrition.getByRole('group', { name: 'Nutrient goal progress' }),
   ).toBeVisible()
   await expect(
     nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
   ).toHaveCount(0)
+  await nutrition.getByRole('button', { name: 'Salt', exact: true }).click()
   await expect(
     nutrition.getByRole('meter', { name: 'Salt', exact: true }),
-  ).toHaveAttribute('aria-valuetext', '3.2 / 6 g · 2.8 g below reference')
+  ).toHaveAttribute('aria-valuetext', '3.2 / 6 g · 2.8 g remaining')
+  await nutrition.getByRole('button', { name: 'Close', exact: true }).click()
 
   await page
     .getByRole('button', { name: '+ extra', exact: true })
@@ -168,6 +218,7 @@ test('@smoke nutrition meters show planned amounts, remaining targets, and overf
     /1800 \/ 1000 kcal · 800 kcal over target/,
   )
   await expect(calories).toHaveAttribute('aria-valuenow', '1000')
+  await proteinSlice.click()
   await expect(protein).toHaveAttribute(
     'aria-valuetext',
     '72 / 40 g · 32 g over target',

@@ -134,7 +134,7 @@
     gap: 2px;
     width: 100%;
     height: 100%;
-    min-height: 72px;
+    min-height: 88px;
     padding: 10px;
     background: transparent;
     border: none;
@@ -217,7 +217,7 @@
     }
   }
   .name {
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: $color-text;
     line-height: 1.3;

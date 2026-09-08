@@ -17,6 +17,7 @@
   mandatory ETag revalidation; matching `If-None-Match` returns 304 only after
   checking visibility, without reading the image body.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
+- `PATCH /profile` accepts `fiberTarget`, `sugarTarget`, `saturatedFatTarget`, and `saltTarget` as positive gram amounts rounded to one decimal; blank/null resets to the default. These are display goals, not auto-compose inputs.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |
 | ------ | --------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

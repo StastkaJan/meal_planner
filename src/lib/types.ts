@@ -54,6 +54,13 @@ export type NutritionTargets = {
   fatG: number
 }
 
+export type DailyNutritionTargets = NutritionTargets & {
+  fiberG: number
+  sugarG: number
+  saturatedFatG: number
+  saltG: number
+}
+
 export type ImportedRecipe = {
   name?: string
   description?: string

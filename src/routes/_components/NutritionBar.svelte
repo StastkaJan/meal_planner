@@ -1,10 +1,7 @@
 <script lang="ts">
-  import {
-    NUTRITION_DISPLAY_REFERENCES,
-    NUTRITION_TARGETS,
-    nutritionProgress,
-  } from '$lib/domain/nutrition'
-  import type { NutritionTargets } from '$lib/types'
+  import { NUTRITION_TARGETS, nutritionProgress } from '$lib/domain/nutrition'
+  import { onDestroy } from 'svelte'
+  import type { DailyNutritionTargets } from '$lib/types'
   import { useI18n } from '$lib/i18n-context'
 
   const { t } = useI18n()
@@ -28,7 +25,7 @@
     sugarG: number
     saturatedFatG: number
     saltG: number
-    targets?: NutritionTargets
+    targets?: DailyNutritionTargets
   } = $props()
 
   const grams = (value: number) => Number(value.toFixed(1))
@@ -61,7 +58,6 @@
       value: proteinG,
       target: targets.proteinG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'carbs',
@@ -69,7 +65,6 @@
       value: carbsG,
       target: targets.carbsG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'fat',
@@ -77,83 +72,81 @@
       value: fatG,
       target: targets.fatG,
       unit: 'g',
-      primary: true,
     },
     {
       key: 'fiber',
       label: t('Fibre'),
       value: fiberG,
-      target: NUTRITION_DISPLAY_REFERENCES.fiberG,
+      target: targets.fiberG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'sugar',
       label: t('Sugars'),
       value: sugarG,
-      target: NUTRITION_DISPLAY_REFERENCES.sugarG,
+      target: targets.sugarG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'saturates',
       label: t('Saturates'),
       value: saturatedFatG,
-      target: NUTRITION_DISPLAY_REFERENCES.saturatedFatG,
+      target: targets.saturatedFatG,
       unit: 'g',
-      primary: false,
     },
     {
       key: 'salt',
       label: t('Salt'),
       value: saltG,
-      target: NUTRITION_DISPLAY_REFERENCES.saltG,
+      target: targets.saltG,
       unit: 'g',
-      primary: false,
     },
   ])
+
+  const detailId = $props.id()
+  let details: HTMLDivElement
+  let active = $state<number | null>(null)
+  let pinned = $state(false)
+  let closeTimer: ReturnType<typeof setTimeout> | undefined
+  const selected = $derived(active === null ? null : rows[active])
+
+  function cancelClose() {
+    clearTimeout(closeTimer)
+  }
+
+  function closeDetails() {
+    cancelClose()
+    details?.hidePopover()
+    active = null
+    pinned = false
+  }
+
+  function leaveDetails() {
+    cancelClose()
+    if (!pinned) closeTimer = setTimeout(closeDetails, 150)
+  }
+
+  function showDetails(index: number, target: EventTarget | null, pin = false) {
+    cancelClose()
+    if (pin && pinned && active === index) return closeDetails()
+    if (!pin && pinned) return
+    active = index
+    pinned = pin
+    const rect = (target as Element).getBoundingClientRect()
+    details.style.left = `${Math.max(8, Math.min(rect.left + rect.width / 2 - 105, window.innerWidth - 218))}px`
+    details.style.top = `${Math.max(8, Math.min(rect.top - 110, window.innerHeight - 118))}px`
+    details.showPopover()
+  }
+
+  onDestroy(cancelClose)
 </script>
 
-{#snippet nutrient(row: (typeof rows)[number])}
-  {@const status = row.primary
-    ? balance(row.value, row.target, row.unit)
-    : t(
-        row.value > row.target
-          ? '{value} g above reference'
-          : '{value} g below reference',
-        {
-          value: grams(Math.abs(row.target - row.value)),
-        },
-      )}
-  <div
-    class="nutrient {row.key}"
-    class:over={row.value > row.target}
-    role="meter"
-    aria-label={row.label}
-    aria-valuemin="0"
-    aria-valuemax={row.target}
-    aria-valuenow={Math.min(row.value, row.target)}
-    aria-valuetext={`${grams(row.value)} / ${row.target} g · ${status}`}
-  >
-    <span class="swatch" aria-hidden="true"></span>
-    <div class="nutrient-copy">
-      <span class="nutrient-label">{row.label}</span>
-      <span class="amount"
-        ><strong>{grams(row.value)}</strong> / {row.target} g</span
-      >
-      <span class="balance">{status}</span>
-    </div>
-  </div>
-{/snippet}
+<svelte:window onresize={closeDetails} />
 
 <div class="nutrition-summary">
-  <div class="calories" class:over={calorieProgress.wayOver}>
-    <span class="nutrient-label">{t('Calories')}</span>
-    <div class="calorie-total">
-      <strong>{grams(calories)}</strong> <span>kcal</span>
-    </div>
-    <span class="target"
-      >{t('Target: {value} kcal', { value: targets.calories })}</span
+  <div class="calories" class:over={calories > targets.calories}>
+    <span class="calorie-total"
+      ><strong>{grams(calories)}</strong> / {targets.calories} kcal</span
     >
     <div
       class="calorie-track"
@@ -169,33 +162,24 @@
         style:width={`${calorieProgress.percent}%`}
       ></div>
     </div>
-    <span class="balance">{balance(calories, targets.calories, 'kcal')}</span>
   </div>
   <svg
     class="nutrient-pie"
     viewBox="-58 -58 116 116"
-    role="img"
+    role="group"
     aria-label={t('Nutrient goal progress')}
   >
-    <title
-      >{t(
-        'Pale slices show goals; solid color shows planned amounts. Red edges mark excess.',
-      )}</title
-    >
     {#each rows as row, index}
       {@const fraction = Math.min(1, Math.max(0, row.value / row.target))}
-      <g
-        class={row.key}
-        transform={`rotate(${(index * 360) / rows.length})`}
-        aria-hidden="true"
-      >
-        <path class="pie-goal" d={sector(48)} />
+      <g class={row.key} transform={`rotate(${(index * 360) / rows.length})`}>
+        <path class="pie-goal" d={sector(48)} aria-hidden="true" />
         <path
           class="pie-value"
           data-nutrient={row.key}
           data-progress={fraction}
           d={sector(48)}
           transform={`scale(${Math.sqrt(fraction)})`}
+          aria-hidden="true"
         />
         {#if row.value > row.target}
           <circle
@@ -207,74 +191,102 @@
             pathLength="360"
             stroke-dasharray={`${360 / rows.length - 4} 360`}
             transform="rotate(-88)"
+            aria-hidden="true"
           />
         {/if}
+        <path
+          class="pie-hit"
+          d={sector(55)}
+          role="button"
+          tabindex="0"
+          aria-label={row.label}
+          aria-expanded={active === index}
+          aria-controls={detailId}
+          onpointerenter={(event) => {
+            if (event.pointerType !== 'touch')
+              showDetails(index, event.currentTarget)
+          }}
+          onpointerleave={leaveDetails}
+          onfocus={(event) => showDetails(index, event.currentTarget)}
+          onblur={leaveDetails}
+          onclick={(event) => showDetails(index, event.currentTarget, true)}
+          onkeydown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              showDetails(index, event.currentTarget, true)
+            }
+          }}
+        />
       </g>
     {/each}
   </svg>
-  <p class="chart-key">
-    {t('Pale = goal · Solid = planned · Red edge = over')}
-  </p>
-  <div class="nutrient-legend">
-    {#each rows.filter((row) => row.primary) as row}
-      {@render nutrient(row)}
-    {/each}
-    <p class="reference-note">{t('Daily reference amounts')}</p>
-    {#each rows.filter((row) => !row.primary) as row}
-      {@render nutrient(row)}
-    {/each}
-  </div>
+</div>
+
+<div
+  bind:this={details}
+  id={detailId}
+  class="nutrient-detail"
+  role="group"
+  aria-label={selected?.label}
+  popover="auto"
+  onpointerenter={cancelClose}
+  onpointerleave={leaveDetails}
+  onfocusin={cancelClose}
+  onfocusout={leaveDetails}
+  ontoggle={(event) => {
+    if (event.newState === 'closed' && !details.matches(':popover-open')) {
+      active = null
+      pinned = false
+    }
+  }}
+>
+  {#if selected}
+    <div
+      class:over={selected.value > selected.target}
+      role="meter"
+      aria-label={selected.label}
+      aria-valuemin="0"
+      aria-valuemax={selected.target}
+      aria-valuenow={Math.min(selected.value, selected.target)}
+      aria-valuetext={`${grams(selected.value)} / ${selected.target} g · ${balance(selected.value, selected.target, 'g')}`}
+    >
+      <strong>{selected.label}</strong>
+      <p>{grams(selected.value)} / {selected.target} g</p>
+      <span class="balance"
+        >{balance(selected.value, selected.target, 'g')}</span
+      >
+    </div>
+    <button
+      type="button"
+      class="close-detail"
+      aria-label={t('Close')}
+      onclick={closeDetails}>×</button
+    >
+  {/if}
 </div>
 
 <style lang="scss">
-  .nutrition-summary,
-  .nutrient-legend {
+  .nutrition-summary {
     display: grid;
-    gap: 12px;
+    justify-items: center;
+    gap: 4px;
     font-variant-numeric: tabular-nums;
   }
-  .nutrient {
-    display: grid;
-    grid-template-columns: 8px minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-  }
-  .nutrient-copy,
   .calories {
-    display: grid;
-    gap: 2px;
-  }
-  .nutrient-label {
-    color: $color-text;
-    font-size: 0.7rem;
-    font-weight: 650;
-  }
-  .amount,
-  .target,
-  .calorie-total span {
-    color: $color-text-muted;
-    font-size: 0.7rem;
-  }
-  .amount strong {
-    color: $color-text;
-  }
-  .balance,
-  .reference-note {
-    color: $color-text-muted;
-    font-size: 0.65rem;
-    line-height: 1.4;
+    width: 100%;
   }
   .calorie-total {
-    line-height: 1.2;
+    display: block;
+    color: $color-text-muted;
+    font-size: 0.65rem;
+    text-align: center;
   }
   .calorie-total strong {
-    font-size: 1.45rem;
-    font-weight: 700;
-    letter-spacing: -0.04em;
+    font-weight: 600;
   }
   .calorie-track {
-    height: 8px;
-    margin: 5px 0;
+    height: 4px;
+    margin-top: 4px;
     border-radius: 999px;
     background: $color-surface-2;
     overflow: hidden;
@@ -285,11 +297,13 @@
     background: #b56b12;
     transition: width 0.3s;
   }
+  .over .calorie-fill {
+    background: $color-danger;
+  }
   .nutrient-pie {
     display: block;
     width: 100%;
-    max-width: 180px;
-    margin: 0 auto;
+    max-width: 104px;
   }
   .pie-goal {
     fill: currentColor;
@@ -308,17 +322,15 @@
     stroke-width: 4;
     stroke-linecap: round;
   }
-  .swatch {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
-    background: currentColor;
+  .pie-hit {
+    fill: transparent;
+    cursor: pointer;
   }
-  .chart-key {
-    margin: 0;
-    color: $color-text-muted;
-    font-size: 0.65rem;
-    line-height: 1.4;
+  .pie-hit:hover,
+  .pie-hit:focus-visible {
+    stroke: currentColor;
+    stroke-width: 2;
+    outline: none;
   }
   .protein {
     color: #4f6f8f;
@@ -341,15 +353,40 @@
   .salt {
     color: #64748b;
   }
-  .over .calorie-fill {
-    background: $color-danger;
+  .nutrient-detail {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    box-sizing: border-box;
+    width: 210px;
+    padding: 12px 32px 12px 12px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface;
+    color: $color-text;
+    box-shadow: 0 6px 20px rgb(41 39 33 / 12%);
+    font-size: 0.8rem;
+    p {
+      margin: 6px 0;
+    }
+  }
+  .balance {
+    color: $color-text-muted;
+    font-size: 0.7rem;
   }
   .over .balance {
     color: $color-danger;
   }
-  .reference-note {
-    margin: 0;
-    border-top: 1px solid $color-border;
-    padding-top: 8px;
+  .close-detail {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    background: transparent;
+    color: $color-text-muted;
+    cursor: pointer;
+    font-size: 1.1rem;
   }
 </style>

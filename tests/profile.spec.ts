@@ -9,6 +9,49 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/profile')
 })
 
+test('@smoke saves all nutrient goals and restores defaults when cleared', async ({
+  page,
+}) => {
+  const fields = [
+    ['Fibre (g)', '25.5'],
+    ['Sugars (g)', '60'],
+    ['Saturates (g)', '15'],
+    ['Salt (g)', '5.5'],
+  ] as const
+  for (const [label, value] of fields)
+    await page.getByLabel(label, { exact: true }).fill(value)
+  await page.getByRole('button', { name: 'Save targets' }).click()
+  await expect(page.getByText('Targets saved.')).toBeVisible()
+  await page.reload()
+  for (const [label, value] of fields)
+    await expect(page.getByLabel(label, { exact: true })).toHaveValue(value)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  const nutrition = page.locator('.nutrition-cell').first()
+  for (const [label, value] of fields) {
+    const name = label.replace(' (g)', '')
+    await nutrition.getByRole('button', { name, exact: true }).click()
+    await expect(
+      nutrition.getByRole('meter', { name, exact: true }),
+    ).toHaveAttribute('aria-valuemax', value)
+    await nutrition.getByRole('button', { name: 'Close', exact: true }).click()
+  }
+  await page.goto('/profile')
+  await page.getByLabel('Salt (g)', { exact: true }).fill('')
+  await page.getByRole('button', { name: 'Save targets' }).click()
+  await expect(page.getByText('Targets saved.')).toBeVisible()
+  await page.reload()
+  await expect(page.getByLabel('Salt (g)', { exact: true })).toHaveValue('')
+  await expect(page.getByLabel('Fibre (g)', { exact: true })).toHaveValue(
+    '25.5',
+  )
+  await page.goto('/')
+  await nutrition.getByRole('button', { name: 'Salt', exact: true }).click()
+  await expect(
+    nutrition.getByRole('meter', { name: 'Salt', exact: true }),
+  ).toHaveAttribute('aria-valuemax', '6')
+})
+
 test('profile controls stay visible and save settings', async ({ page }) => {
   const calories = page.getByLabel('Calories (kcal)')
   await expect(calories).toBeVisible()

@@ -14,11 +14,19 @@ describe('resolveTargets', () => {
         proteinTarget: null,
         carbsTarget: 200,
         fatTarget: null,
+        fiberTarget: 25,
+        sugarTarget: 60,
+        saturatedFatTarget: 15,
+        saltTarget: 5.5,
       }),
     ).toEqual({
       ...NUTRITION_TARGETS,
       calories: 1800,
       carbsG: 200,
+      fiberG: 25,
+      sugarG: 60,
+      saturatedFatG: 15,
+      saltG: 5.5,
     })
   })
 })

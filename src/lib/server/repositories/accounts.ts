@@ -141,6 +141,10 @@ export async function getSettings(userId: number) {
       proteinTarget: userSettings.proteinTarget,
       carbsTarget: userSettings.carbsTarget,
       fatTarget: userSettings.fatTarget,
+      fiberTarget: userSettings.fiberTarget,
+      sugarTarget: userSettings.sugarTarget,
+      saturatedFatTarget: userSettings.saturatedFatTarget,
+      saltTarget: userSettings.saltTarget,
     })
     .from(userSettings)
     .where(eq(userSettings.userId, userId))

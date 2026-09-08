@@ -21,6 +21,21 @@
   )
 
   let targetsSaved = $state(false)
+  let targetsError = $state('')
+  const extraTargets = [
+    { name: 'fiberTarget', label: 'Fibre', fallback: NUTRITION_TARGETS.fiberG },
+    {
+      name: 'sugarTarget',
+      label: 'Sugars',
+      fallback: NUTRITION_TARGETS.sugarG,
+    },
+    {
+      name: 'saturatedFatTarget',
+      label: 'Saturates',
+      fallback: NUTRITION_TARGETS.saturatedFatG,
+    },
+    { name: 'saltTarget', label: 'Salt', fallback: NUTRITION_TARGETS.saltG },
+  ] as const
   let pantrySaved = $state(false)
   let pantryError = $state('')
   let passwordError = $state('')
@@ -29,10 +44,18 @@
 
   async function saveTargets(e: SubmitEvent) {
     e.preventDefault()
+    targetsSaved = false
+    targetsError = ''
     const fd = new FormData(e.target as HTMLFormElement)
     const body = Object.fromEntries(fd)
-    await updateProfile(body)
-    targetsSaved = true
+    try {
+      await updateProfile(body)
+      targetsSaved = true
+    } catch (error) {
+      targetsError = message(
+        error instanceof Error ? error.message : 'Request failed',
+      )
+    }
   }
 
   async function saveLanguage(e: SubmitEvent) {
@@ -167,10 +190,13 @@
         <h2>{t('Nutrition targets')}</h2>
         <p class="hint">
           {t(
-            'Daily goals for nutrition bars and auto-compose. Blank uses the default.',
+            'Daily goals. Blank uses the default. Auto-compose uses calories, protein, carbs and fat.',
           )}
         </p>
         <form class="nutrition-form" method="POST" onsubmit={saveTargets}>
+          {#if targetsError}<p class="error" role="alert">
+              {targetsError}
+            </p>{/if}
           {#if targetsSaved}<p class="success">{t('Targets saved.')}</p>{/if}
           <div class="target-grid">
             <label
@@ -213,6 +239,19 @@
                 placeholder={String(NUTRITION_TARGETS.fatG)}
               /></label
             >
+            {#each extraTargets as target}
+              <label>
+                {t(target.label)} (g)
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  name={target.name}
+                  value={data[target.name] ?? ''}
+                  placeholder={String(target.fallback)}
+                />
+              </label>
+            {/each}
           </div>
           <button type="submit">{t('Save targets')}</button>
         </form>
