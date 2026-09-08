@@ -292,8 +292,9 @@
   .calorie-label {
     display: block;
     color: $color-text;
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
     text-align: center;
   }
   .calorie-total strong {
