@@ -133,7 +133,10 @@ test('@smoke picker pagination, search, and reload preserve the selected slot', 
     .getByRole('button', { name: 'Performance recipe 34', exact: true })
     .click()
   await expect(dialog).not.toBeVisible()
-  await expect(page.locator('.slot-cell').first()).toContainText(
+  const breakfast = page.getByRole('row').filter({
+    has: page.getByRole('cell', { name: /^breakfast$/i }),
+  })
+  await expect(breakfast.locator('.slot-cell').first()).toContainText(
     'Performance recipe 34',
   )
   expect(new URL(page.url()).searchParams.has('pickDate')).toBe(false)

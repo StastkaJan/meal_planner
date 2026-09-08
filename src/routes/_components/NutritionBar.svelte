@@ -352,6 +352,7 @@
   .pie-hit {
     fill: transparent;
     cursor: pointer;
+    outline: none;
     &:focus-visible {
       stroke: $color-text;
       stroke-width: 2;
