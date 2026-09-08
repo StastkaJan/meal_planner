@@ -1,5 +1,6 @@
 import { asc, eq, getTableColumns, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
+import type { PgColumn } from 'drizzle-orm/pg-core'
 import {
   bonusItems,
   ingredients,
@@ -165,6 +166,11 @@ export async function saveSettings(
   return settings
 }
 
+// Single-table selects otherwise strip qualifiers even inside correlated SQL.
+function qualifiedColumn(column: PgColumn) {
+  return sql`${column.table}.${sql.identifier(column.name)}`
+}
+
 export async function getAccountExport(userId: number) {
   return db.transaction(async (tx) => {
     const [account] = await tx
@@ -183,15 +189,15 @@ export async function getAccountExport(userId: number) {
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'name', ${ingredients.name},
-              'qty', ${mealIngredients.qty}::float,
-              'unit', ${mealIngredients.unit}
-            ) order by ${mealIngredients.position}
+              'name', ${qualifiedColumn(ingredients.name)},
+              'qty', ${qualifiedColumn(mealIngredients.qty)}::float,
+              'unit', ${qualifiedColumn(mealIngredients.unit)}
+            ) order by ${qualifiedColumn(mealIngredients.position)}
           )
           from ${mealIngredients}
           inner join ${ingredients}
-            on ${ingredients.id} = ${mealIngredients.ingredientId}
-          where ${mealIngredients.mealId} = ${meals.id}
+            on ${qualifiedColumn(ingredients.id)} = ${qualifiedColumn(mealIngredients.ingredientId)}
+          where ${qualifiedColumn(mealIngredients.mealId)} = ${qualifiedColumn(meals.id)}
         ), '[]'::jsonb)`,
         translations: sql<
           {
@@ -203,14 +209,14 @@ export async function getAccountExport(userId: number) {
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'locale', ${mealTranslations.locale},
-              'name', ${mealTranslations.name},
-              'description', ${mealTranslations.description},
-              'instructions', ${mealTranslations.instructions}
-            ) order by ${mealTranslations.locale}
+              'locale', ${qualifiedColumn(mealTranslations.locale)},
+              'name', ${qualifiedColumn(mealTranslations.name)},
+              'description', ${qualifiedColumn(mealTranslations.description)},
+              'instructions', ${qualifiedColumn(mealTranslations.instructions)}
+            ) order by ${qualifiedColumn(mealTranslations.locale)}
           )
           from ${mealTranslations}
-          where ${mealTranslations.mealId} = ${meals.id}
+          where ${qualifiedColumn(mealTranslations.mealId)} = ${qualifiedColumn(meals.id)}
         ), '[]'::jsonb)`,
       })
       .from(meals)
@@ -223,46 +229,46 @@ export async function getAccountExport(userId: number) {
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'date', ${weekSlots.date},
-              'mealType', ${weekSlots.mealType},
-              'mealId', ${weekSlots.mealId}
-            ) order by ${weekSlots.date}, ${weekSlots.mealType}
+              'date', ${qualifiedColumn(weekSlots.date)},
+              'mealType', ${qualifiedColumn(weekSlots.mealType)},
+              'mealId', ${qualifiedColumn(weekSlots.mealId)}
+            ) order by ${qualifiedColumn(weekSlots.date)}, ${qualifiedColumn(weekSlots.mealType)}
           )
           from ${weekSlots}
-          where ${weekSlots.planId} = ${plans.id}
+          where ${qualifiedColumn(weekSlots.planId)} = ${qualifiedColumn(plans.id)}
         ), '[]'::jsonb)`,
         bonusItems: sql<
           Omit<typeof bonusItems.$inferSelect, 'planId'>[]
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'id', ${bonusItems.id},
-              'date', ${bonusItems.date},
-              'name', ${bonusItems.name},
-              'calories', ${bonusItems.calories},
-              'proteinG', ${bonusItems.proteinG}::text,
-              'carbsG', ${bonusItems.carbsG}::text,
-              'fatG', ${bonusItems.fatG}::text,
-              'fiberG', ${bonusItems.fiberG}::text,
-              'sugarG', ${bonusItems.sugarG}::text,
-              'saturatedFatG', ${bonusItems.saturatedFatG}::text,
-              'saltG', ${bonusItems.saltG}::text
-            ) order by ${bonusItems.date}, ${bonusItems.id}
+              'id', ${qualifiedColumn(bonusItems.id)},
+              'date', ${qualifiedColumn(bonusItems.date)},
+              'name', ${qualifiedColumn(bonusItems.name)},
+              'calories', ${qualifiedColumn(bonusItems.calories)},
+              'proteinG', ${qualifiedColumn(bonusItems.proteinG)}::text,
+              'carbsG', ${qualifiedColumn(bonusItems.carbsG)}::text,
+              'fatG', ${qualifiedColumn(bonusItems.fatG)}::text,
+              'fiberG', ${qualifiedColumn(bonusItems.fiberG)}::text,
+              'sugarG', ${qualifiedColumn(bonusItems.sugarG)}::text,
+              'saturatedFatG', ${qualifiedColumn(bonusItems.saturatedFatG)}::text,
+              'saltG', ${qualifiedColumn(bonusItems.saltG)}::text
+            ) order by ${qualifiedColumn(bonusItems.date)}, ${qualifiedColumn(bonusItems.id)}
           )
           from ${bonusItems}
-          where ${bonusItems.planId} = ${plans.id}
+          where ${qualifiedColumn(bonusItems.planId)} = ${qualifiedColumn(plans.id)}
         ), '[]'::jsonb)`,
         slotRepeats: sql<
           Omit<typeof slotRepeats.$inferSelect, 'planId'>[]
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'mealType', ${slotRepeats.mealType},
-              'groupBreaks', ${slotRepeats.groupBreaks}
-            ) order by ${slotRepeats.mealType}
+              'mealType', ${qualifiedColumn(slotRepeats.mealType)},
+              'groupBreaks', ${qualifiedColumn(slotRepeats.groupBreaks)}
+            ) order by ${qualifiedColumn(slotRepeats.mealType)}
           )
           from ${slotRepeats}
-          where ${slotRepeats.planId} = ${plans.id}
+          where ${qualifiedColumn(slotRepeats.planId)} = ${qualifiedColumn(plans.id)}
         ), '[]'::jsonb)`,
       })
       .from(plans)
@@ -271,7 +277,7 @@ export async function getAccountExport(userId: number) {
       .select({
         mealIds: sql<
           number[]
-        >`coalesce(array_agg(${mealFavorites.mealId} order by ${mealFavorites.mealId}), array[]::integer[])`,
+        >`coalesce(array_agg(${qualifiedColumn(mealFavorites.mealId)} order by ${qualifiedColumn(mealFavorites.mealId)}), array[]::integer[])`,
       })
       .from(mealFavorites)
       .where(eq(mealFavorites.userId, userId))

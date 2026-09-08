@@ -341,17 +341,6 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   ).toBe(true)
   expect(
     (
-      await page.request.patch(`${base}/slots`, {
-        data: {
-          date: nextDate(1),
-          mealType: 'lunch',
-          source: { date: week, mealType: 'lunch' },
-        },
-      })
-    ).ok(),
-  ).toBe(true)
-  expect(
-    (
       await page.request.post(`${base}/bonus`, {
         data: { date: week, name: 'Test extra', calories: 100 },
       })

@@ -57,7 +57,9 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
     page.locator('.bonus-item').filter({ hasText: 'My latte' }),
   ).toHaveCount(2)
 
-  const exported = await (await page.request.get('/profile/export')).json()
+  const exportResponse = await page.request.get('/profile/export')
+  expect(exportResponse.status()).toBe(200)
+  const exported = await exportResponse.json()
   const saved = exported.savedExtras.find(
     (extra: { name: string }) => extra.name === 'My latte',
   )
