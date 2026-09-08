@@ -10,7 +10,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
-  Coffee: 'Káva',
+  'Latte / cappuccino': 'Latte / cappuccino',
   'Search extras': 'Hledat položky navíc',
   'Custom extra': 'Vlastní položka',
   'Saved extras': 'Uložené položky',

@@ -79,10 +79,15 @@
       saturatedFatG,
       saltG,
     }
+    await addExtra(fields)
+  }
+
+  async function addExtra(fields: ExtraFields) {
+    if (busy) return
     busy = true
     error = ''
     try {
-      if (saveForLater) {
+      if (editing && saveForLater) {
         await onSave(fields)
         saveForLater = false
       }
@@ -96,19 +101,6 @@
     }
   }
 
-  function usePreset(preset: ExtraFields) {
-    editing = true
-    saveForLater = false
-    name = preset.name
-    calories = preset.calories
-    proteinG = preset.proteinG
-    carbsG = preset.carbsG
-    fatG = preset.fatG
-    fiberG = preset.fiberG
-    sugarG = preset.sugarG
-    saturatedFatG = preset.saturatedFatG
-    saltG = preset.saltG
-  }
   async function removeSaved(id: number) {
     if (busy) return
     busy = true
@@ -168,6 +160,7 @@
         <button
           type="button"
           class="custom-extra"
+          disabled={busy}
           onclick={() => {
             name = ''
             calories = proteinG = carbsG = fatG = null
@@ -184,7 +177,8 @@
                 type="button"
                 class="extra-choice"
                 aria-label={extra.name}
-                onclick={() => usePreset(extra)}
+                disabled={busy}
+                onclick={() => addExtra(extra)}
               >
                 <span
                   >{extra.name}<small

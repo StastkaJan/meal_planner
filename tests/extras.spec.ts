@@ -13,15 +13,13 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
     exact: true,
   })
   await addExtra.first().click()
-  await dialog.getByRole('button', { name: 'Coffee', exact: true }).click()
-  await expect(
-    dialog.getByRole('spinbutton', { name: 'Calories', exact: true }),
-  ).toHaveValue('2')
-  await dialog.getByRole('button', { name: 'Add', exact: true }).click()
+  await dialog
+    .getByRole('button', { name: 'Latte / cappuccino', exact: true })
+    .click()
   await expect(dialog).not.toBeVisible()
   await expect(
-    page.locator('.bonus-item').filter({ hasText: 'Coffee' }),
-  ).toBeVisible()
+    page.locator('.bonus-item').filter({ hasText: 'Latte / cappuccino' }),
+  ).toContainText('120')
 
   await addExtra.first().click()
   await dialog.getByRole('button', { name: 'Custom extra' }).click()
@@ -46,13 +44,12 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
   expect(
     (await dialog.locator('.extra-list').boundingBox())!.height,
   ).toBeLessThanOrEqual(321)
-  await dialog.getByRole('searchbox', { name: 'Search extras' }).fill('latte')
+  await dialog
+    .getByRole('searchbox', { name: 'Search extras' })
+    .fill('My latte')
   await expect(dialog.locator('.extra-choice')).toHaveCount(1)
   await dialog.getByRole('button', { name: 'My latte', exact: true }).click()
-  await expect(
-    dialog.getByRole('spinbutton', { name: 'Calories', exact: true }),
-  ).toHaveValue('120')
-  await dialog.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(dialog).not.toBeVisible()
   await expect(
     page.locator('.bonus-item').filter({ hasText: 'My latte' }),
   ).toHaveCount(2)
@@ -82,7 +79,9 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
   }
 
   await addExtra.first().click()
-  await dialog.getByRole('searchbox', { name: 'Search extras' }).fill('latte')
+  await dialog
+    .getByRole('searchbox', { name: 'Search extras' })
+    .fill('My latte')
   await dialog
     .getByRole('button', { name: 'Delete saved extra My latte', exact: true })
     .click()

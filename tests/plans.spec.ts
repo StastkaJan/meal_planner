@@ -89,26 +89,14 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(page.locator('.day-actions:popover-open')).toHaveCount(0)
 })
 
-test('prefill an extra item from a common preset', async ({ page }) => {
+test('add an extra item immediately from a common preset', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.getByRole('button', { name: '+ extra' }).first().click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
 
-  await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Pizza')
   await expect(
-    page.getByRole('spinbutton', { name: 'Calories', exact: true }),
-  ).toHaveValue('800')
-  await expect(page.getByLabel('Protein g', { exact: true })).toHaveValue('32')
-  await expect(page.getByLabel('Carbs g', { exact: true })).toHaveValue('96')
-  await expect(page.getByLabel('Fat g', { exact: true })).toHaveValue('32')
-  await expect(page.getByLabel('Fibre g', { exact: true })).toHaveValue('6')
-  await expect(page.getByLabel('Sugars g', { exact: true })).toHaveValue('8')
-  await expect(page.getByLabel('Saturated fat g', { exact: true })).toHaveValue(
-    '14',
-  )
-  await expect(page.getByLabel('Salt g', { exact: true })).toHaveValue('3.2')
-
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
+    page.getByRole('dialog', { name: 'Add off-plan item', exact: true }),
+  ).not.toBeVisible()
   await expect(
     page.locator('.bonus-item').filter({ hasText: 'Pizza' }),
   ).toContainText('800')
@@ -177,7 +165,6 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
     .first()
     .click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(calories).toHaveAttribute('aria-valuenow', '800')
   await expect(calories).toHaveAttribute('aria-valuetext', /200 kcal remaining/)
   await proteinSlice.click()
@@ -224,7 +211,6 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
     .first()
     .click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(calories).toHaveAttribute(
     'aria-valuetext',
     /1800 \/ 1000 kcal · 800 kcal over target/,

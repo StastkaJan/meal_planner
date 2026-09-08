@@ -32,6 +32,8 @@ test('@smoke shopping list counts every planned meal and handles different ingre
   ).toHaveCount(0)
   await page.getByRole('heading', { level: 1 }).hover()
   const mealActions = breakfastCells.first().locator('.actions')
+  await expect(mealActions).toHaveCSS('opacity', '0')
+  await breakfastCells.first().hover()
   await expect(mealActions).toHaveCSS('opacity', '1')
   await expect(
     mealActions.getByRole('button', { name: 'Remove meal' }),

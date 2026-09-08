@@ -75,7 +75,7 @@
 
 <!-- NOTE: Leftovers UI/API/shopping exclusions are removed; every planned meal counts toward shopping. The retired `slot_leftovers` table is retained for deployment compatibility. -->
 
-<!-- NOTE: `saved_extras` stores private reusable extras, included in account exports and deleted with the account. `/extras` (POST) and `/extras/[id]` (DELETE) manage them; planner load supplies a searchable picker with common presets including black coffee. -->
+<!-- NOTE: `saved_extras` stores private reusable extras, included in account exports and deleted with the account. `/extras` (POST) and `/extras/[id]` (DELETE) manage them; planner load supplies a searchable picker with common presets including latte/cappuccino; selecting a preset or saved extra adds it immediately. -->
 
 <!-- NOTE: Account-export subqueries use `qualifiedColumn` because Drizzle strips plain column qualifiers in single-table selections, including nested SQL. -->
 

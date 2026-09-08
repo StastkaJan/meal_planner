@@ -177,6 +177,16 @@
       }
     }
   }
+  @media (hover: hover) {
+    .actions {
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .cell:hover .actions,
+    .cell:focus-within .actions {
+      opacity: 1;
+    }
+  }
   .name {
     font-size: 0.9rem;
     font-weight: 600;
