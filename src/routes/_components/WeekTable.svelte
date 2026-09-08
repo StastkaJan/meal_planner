@@ -188,18 +188,21 @@
             {@const menuId = `day-actions-${plan.id}-${isoDate(dt)}`}
             <th class="day-head" class:today={isoDate(dt) === todayISO}>
               <span class="day-name">{fmtUTC(dt, { weekday: 'short' })}</span>
-              <div class="day-heading">
-                <span class="day-num">{dt.getUTCDate()}</span>
-                <button
-                  class="day-menu-toggle"
-                  popovertarget={menuId}
-                  aria-label={t('Actions for {date}', {
-                    date: fmtUTC(dt, { dateStyle: 'full' }),
-                  })}
-                  onclick={positionDayActions}
-                  ><span aria-hidden="true">⋯</span></button
-                >
-              </div>
+              <span class="day-num">{dt.getUTCDate()}</span>
+              <button
+                class="day-menu-toggle"
+                popovertarget={menuId}
+                aria-label={t('Actions for {date}', {
+                  date: fmtUTC(dt, { dateStyle: 'full' }),
+                })}
+                onclick={positionDayActions}
+              >
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <circle cx="4" cy="10" r="1.5" />
+                  <circle cx="10" cy="10" r="1.5" />
+                  <circle cx="16" cy="10" r="1.5" />
+                </svg>
+              </button>
               <div id={menuId} class="day-actions" popover="auto">
                 <button
                   disabled={busy || !isPro}
@@ -356,6 +359,7 @@
   }
 
   .day-head {
+    position: relative;
     padding: 12px 6px;
     text-align: center;
     border-left: 1px solid $color-border;
@@ -439,23 +443,25 @@
     gap: 4px;
   }
 
-  .day-heading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-  }
-
   .day-menu-toggle {
-    width: 30px;
-    height: 30px;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: 0;
     border-radius: $radius-sm;
     background: transparent;
     color: $color-text-muted;
-    font-size: 1.2rem;
     cursor: pointer;
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
     &:hover {
       background: $color-surface-2;
       color: $color-text;
