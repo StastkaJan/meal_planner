@@ -10,6 +10,18 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'Latte / cappuccino': 'Latte / cappuccino',
+  'Search extras': 'Hledat položky navíc',
+  'Custom extra': 'Vlastní položka',
+  'Saved extras': 'Uložené položky',
+  'No extras found': 'Žádné položky nenalezeny',
+  'Back to extras': 'Zpět na položky',
+  'Save for later': 'Uložit pro příště',
+  'Delete saved extra {name}': 'Smazat uloženou položku {name}',
+  'Extra not found': 'Položka nenalezena',
+  'Invalid extra': 'Neplatná položka',
+  'Name is too long': 'Název je příliš dlouhý',
+  'Nutrient goal progress': 'Plnění nutričních cílů',
   Pagination: 'Stránkování',
   'Previous page': 'Předchozí strana',
   'Next page': 'Další strana',
@@ -102,6 +114,13 @@ const CS_MESSAGES = {
     'Výživové hodnoty jsou orientační — podle potřeby je upravte.',
   'Name (e.g. Pizza, Beer)': 'Název (např. pizza, pivo)',
   Calories: 'Kalorie',
+  'Target: {value} kcal': 'Cíl: {value} kcal',
+  '{value} {unit} remaining': 'Zbývá {value} {unit}',
+  '{value} {unit} over target': '{value} {unit} nad cílem',
+  '{value} g above reference': '{value} g nad referenční hodnotou',
+  '{value} g below reference': '{value} g pod referenční hodnotou',
+  'More nutrients': 'Další živiny',
+  'Daily reference amounts': 'Denní referenční hodnoty',
   Protein: 'Bílkoviny',
   Carbs: 'Sacharidy',
   Fat: 'Tuky',
@@ -114,11 +133,8 @@ const CS_MESSAGES = {
   'Salt g': 'Sůl g',
   Cancel: 'Zrušit',
   Add: 'Přidat',
-  leftovers: 'zbytky',
   'Edit meal assignment': 'Upravit přiřazení jídla',
   'Show recipe': 'Zobrazit recept',
-  'Prepare separately': 'Připravit zvlášť',
-  'Use leftovers from {source}': 'Použít zbytky z {source}',
   'Remove meal': 'Odebrat jídlo',
   'Click to assign meal': 'Kliknutím přiřadíte jídlo',
   'Search meals…': 'Hledat jídla…',
@@ -395,8 +411,8 @@ const CS_MESSAGES = {
   'Always on hand': 'Vždy po ruce',
   'Save pantry staples': 'Uložit suroviny ve spíži',
   'Nutrition targets': 'Výživové cíle',
-  'Daily goals for nutrition bars and auto-compose. Blank uses the default.':
-    'Denní cíle pro výživové ukazatele a automatické sestavení. Prázdné pole použije výchozí hodnotu.',
+  'Daily goals. Blank uses the default. Auto-compose uses calories, protein, carbs and fat.':
+    'Denní cíle. Prázdné pole použije výchozí hodnotu. Automatické sestavení používá kalorie, bílkoviny, sacharidy a tuky.',
   'Targets saved.': 'Cíle byly uloženy.',
   'Save targets': 'Uložit cíle',
   'Change password': 'Změnit heslo',
@@ -499,10 +515,6 @@ const CS_MESSAGES = {
   'Slot not found': 'Čas nebyl nalezen',
   'Invalid source': 'Neplatný zdroj',
   'Invalid source mealType': 'Neplatný typ zdrojového jídla',
-  'Leftovers must come from an earlier meal':
-    'Zbytky musí pocházet z dřívějšího jídla',
-  'Leftover source must contain the same meal':
-    'Zdroj zbytků musí obsahovat stejné jídlo',
   'URL must be a public http(s) address': 'URL musí být veřejná adresa HTTP(S)',
   'URL must resolve only to public addresses':
     'URL musí odkazovat pouze na veřejné adresy',

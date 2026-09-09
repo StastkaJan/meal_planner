@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { meals, plans } from '$lib/database/schema'
 
 const db = vi.hoisted(() => ({ transaction: vi.fn() }))
 
@@ -48,12 +50,31 @@ describe('getAccountExport', () => {
       [{ mealIds: [] }],
       [],
       [],
+      [{ id: 1, userId: 42, name: 'My coffee', calories: 10 }],
     ])
     db.transaction.mockImplementationOnce(
       (callback: (transaction: unknown) => unknown) => callback(tx),
     )
 
     const result = await getAccountExport(42)
+    const queryBuilder = drizzle.mock()
+    const recipeSql = queryBuilder
+      .select(tx.select.mock.calls[2][0])
+      .from(meals)
+      .toSQL().sql
+    expect(recipeSql).toContain(
+      '"ingredients"."id" = "meal_ingredients"."ingredient_id"',
+    )
+    expect(recipeSql).toContain('"meal_ingredients"."meal_id" = "meals"."id"')
+    const planSql = queryBuilder
+      .select(tx.select.mock.calls[3][0])
+      .from(plans)
+      .toSQL().sql
+    expect(planSql).toContain('"week_slots"."plan_id" = "plans"."id"')
+    expect(planSql).toContain('"bonus_items"."plan_id" = "plans"."id"')
+    expect(result.savedExtras).toEqual([
+      { id: 1, name: 'My coffee', calories: 10 },
+    ])
 
     expect(tx.select).toHaveBeenNthCalledWith(
       3,

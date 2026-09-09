@@ -17,8 +17,6 @@ export type SlotWithMeal = WeekSlot & {
   sugarG: string | null
   saturatedFatG: string | null
   saltG: string | null
-  leftoverSourceDate: string | null
-  leftoverSourceMealType: string | null
 }
 
 export type PlanDetail = Plan & {
@@ -52,6 +50,13 @@ export type NutritionTargets = {
   proteinG: number
   carbsG: number
   fatG: number
+}
+
+export type DailyNutritionTargets = NutritionTargets & {
+  fiberG: number
+  sugarG: number
+  saturatedFatG: number
+  saltG: number
 }
 
 export type ImportedRecipe = {

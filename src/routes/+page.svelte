@@ -6,6 +6,8 @@
   import type { PageData } from './$types'
   import { addDays } from '$lib/utils/date-time'
   import * as planApi from '$lib/api/plans'
+  import * as extrasApi from '$lib/api/extras'
+  import type { ExtraFields } from '$lib/domain/extras'
   import { updateProfile } from '$lib/api/profile'
   import WeekTable from './_components/WeekTable.svelte'
   import PlanSettings from './_components/PlanSettings.svelte'
@@ -16,6 +18,15 @@
 
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
   let plan = $derived(data.plan)
+  let savedExtras = $derived(data.savedExtras)
+  async function saveExtra(fields: ExtraFields) {
+    const extra = await extrasApi.saveExtra(fields)
+    savedExtras = [...savedExtras, extra]
+  }
+  async function deleteSavedExtra(id: number) {
+    await extrasApi.deleteSavedExtra(id)
+    savedExtras = savedExtras.filter((extra) => extra.id !== id)
+  }
   let preferences = $derived(data.preferences)
   let favoritesOnly = $state(false)
   let myRecipesOnly = $state(false)
@@ -152,16 +163,6 @@
     await refreshPlan()
   }
 
-  async function handleSlotLeftover(
-    date: string,
-    mealType: string,
-    source: { date: string; mealType: string } | null,
-  ) {
-    if (!plan) return
-    await planApi.setSlotLeftover(plan.id, date, mealType, source)
-    await refreshPlan()
-  }
-
   async function handleAutoCompose(
     favoritesOnly: boolean,
     myRecipesOnly: boolean,
@@ -220,9 +221,14 @@
     },
   ) {
     if (!plan) return
-    const res = await planApi.addBonus(plan.id, { date, ...fields })
-    if (await alertIfFailed(res)) return
-    await refreshPlan()
+    const planId = plan.id
+    const res = await planApi.addBonus(planId, { date, ...fields })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.message ?? 'Request failed')
+    }
+    const item = await res.json()
+    if (plan?.id === planId) plan = { ...plan, bonus: [...plan.bonus, item] }
   }
 
   async function handleDeleteBonus(id: number) {
@@ -276,8 +282,6 @@
         {t('Plan the week, balance nutrition, shop once.')}
       </p>
     </div>
-  </div>
-  <div class="plan-bar">
     <div class="plan-actions">
       {#if !plan}
         <button class="btn" onclick={createPlan}>{t('Create plan')}</button>
@@ -313,13 +317,15 @@
       onCopyWeek={handleCopyWeek}
     />
     <WeekTable
+      {savedExtras}
+      onSaveExtra={saveExtra}
+      onDeleteSavedExtra={deleteSavedExtra}
       {plan}
       onOpenPicker={openPicker}
       weekStart={data.viewWeek}
       targets={data.targets}
       isPro={data.user?.isPro ?? false}
       onSlotChange={handleSlotChange}
-      onSlotLeftover={handleSlotLeftover}
       onAddBonus={handleAddBonus}
       onDeleteBonus={handleDeleteBonus}
       onRecalcDay={handleRecalcDay}
@@ -368,6 +374,8 @@
   }
   .page-heading {
     display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
     align-items: flex-end;
     justify-content: space-between;
   }
@@ -390,14 +398,6 @@
     margin-top: 8px;
     color: $color-text-muted;
     font-size: 0.95rem;
-  }
-  .plan-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding-bottom: 2px;
   }
   .plan-actions {
     display: flex;
@@ -445,17 +445,12 @@
     .page {
       gap: 14px;
     }
-    .plan-bar {
-      align-items: flex-start;
-    }
     .plan-actions {
       width: 100%;
-      overflow-x: auto;
-      flex-wrap: nowrap;
-      padding-bottom: 2px;
     }
     .btn {
       flex: 0 0 auto;
+      min-height: 44px;
     }
   }
 </style>

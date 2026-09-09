@@ -73,9 +73,13 @@
 
 <!-- NOTE: HTTP/service duration histograms expose route p95; `/metrics` also reports database-pool queue depth and event-loop delay. HighHttpLatency uses route p95 with a minimum traffic guard. Uploaded images use private ETag revalidation after authorization. -->
 
-<!-- NOTE: `slot_leftovers` links a later slot to an earlier same-meal slot; linked consumers still count toward nutrition but not shopping ingredients. -->
+<!-- NOTE: Leftovers UI/API/shopping exclusions are removed; every planned meal counts toward shopping. The retired `slot_leftovers` table is retained for deployment compatibility; slot replacement, reroll, and copy-week clear affected links atomically for rollback. -->
 
-<!-- NOTE: Meal and bonus nutrition includes calories, macros, fibre, sugars, saturated fat, and salt; the four secondary nutrients are displayed and totaled but do not affect auto-compose targets. -->
+<!-- NOTE: `saved_extras` stores private reusable extras, included in account exports and deleted with the account. `/extras` (POST) and `/extras/[id]` (DELETE) manage them; planner load supplies a searchable picker with common presets including latte/cappuccino; selecting a preset or saved extra adds it immediately. -->
+
+<!-- NOTE: Account-export subqueries use `qualifiedColumn` because Drizzle strips plain column qualifiers in single-table selections, including nested SQL. -->
+
+<!-- NOTE: Profile nutrition goals include nullable decimal `fiber_target`, `sugar_target`, `saturated_fat_target`, and `salt_target` in `user_settings`; blank uses defaults. These four goals affect chart progress only; auto-compose uses calories and macros. Nutrient slices reveal values on hover, focus, or click. -->
 
 <!-- NOTE: Uploaded recipe images are resized to at most 1200x900, converted to WebP, and stored in the shared `recipe-images` volume; `/meals/[id]/image` serves and manages them, and app containers set `BODY_SIZE_LIMIT=6M`. -->
 

@@ -1,7 +1,7 @@
 # API Routes
 
-- `POST /plans/[id]/reroll-meal` (Pro): `{date, mealType, favoritesOnly?, myRecipesOnly?}` replaces only that slot with a different visible, unarchived recipe matching its allowed slots and the user's preferences. Returns `{changed: false}` without changing the meal when no alternative matches; removes affected leftover links on success. Repeat groups are not propagated.
-- `POST /plans/[id]/clear` (owner): `{date}` clears that day's meals and extras; `{}` clears all weeks. Both preserve plan settings and repeat patterns, and remove affected leftover links.
+- `POST /plans/[id]/reroll-meal` (Pro): `{date, mealType, favoritesOnly?, myRecipesOnly?}` replaces only that slot with a different visible, unarchived recipe matching its allowed slots and the user's preferences. Returns `{changed: false}` without changing the meal when no alternative matches. Repeat groups are not propagated.
+- `POST /plans/[id]/clear` (owner): `{date}` clears that day's meals and extras; `{}` clears all weeks. Both preserve plan settings and repeat patterns.
 
 ## Localization
 
@@ -17,6 +17,9 @@
   mandatory ETag revalidation; matching `If-None-Match` returns 304 only after
   checking visibility, without reading the image body.
 - `PATCH /profile` accepts `locale` in addition to the existing settings.
+- `POST /extras` saves a private extra from its name and optional nutrition fields; `DELETE /extras/[id]` removes only the caller's saved extra. Planner load supplies saved extras. Deletion preserves extras already added to plans.
+- `PATCH /plans/[id]/slots` (leftovers) is removed; all planned meals contribute ingredients to shopping lists.
+- `PATCH /profile` accepts `fiberTarget`, `sugarTarget`, `saturatedFatTarget`, and `saltTarget` as positive gram amounts rounded to one decimal; blank/null resets to the default. These are display goals, not auto-compose inputs.
 
 | Method | Path                        | Auth  | Purpose                                                                                                                                                                                                                                      |
 | ------ | --------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,7 +46,6 @@
 | PATCH  | /plans/[id]                 | yes   | update portions (`{portions}`; integer 1–100) or enabled slots (`{mealSlots}`; 1–10 built-in/custom names); disabling a slot clears its assignments and repeat pattern                                                                       |
 | DELETE | /plans/[id]                 | yes   | delete plan                                                                                                                                                                                                                                  |
 | PUT    | /plans/[id]/slots           | yes   | upsert/clear one slot (`{date, mealType, mealId}`); if the slot's meal type has a repeat pattern set, applies to every date in that day's group; 400 if the meal's `allowedSlots` excludes `mealType`                                        |
-| PATCH  | /plans/[id]/slots           | yes   | mark/clear a slot as leftovers (`{date, mealType, source: {date, mealType} \| null}`); the source must be an earlier slot containing the same meal                                                                                           |
 | PUT    | /plans/[id]/slot-repeats    | yes   | set/clear a meal type's weekly repeat pattern (`{mealType, groupBreaks}` — `groupBreaks` is 6 booleans for the gaps Mon\|Tue..Sat\|Sun, or `null` to clear)                                                                                  |
 | POST   | /plans/[id]/autocompose     | pro   | auto-fill enabled empty week slots (`{week?, favoritesOnly?, myRecipesOnly?}` — optional filters restrict candidates to the caller's favourited and/or personal meals; respects each meal type's repeat pattern, picking one meal per group) |
 | POST   | /plans/[id]/copy-week       | pro   | copy one week's slots to another (`{from, to}`)                                                                                                                                                                                              |

@@ -3,14 +3,14 @@ import { PgDialect } from 'drizzle-orm/pg-core'
 import type { SQL } from 'drizzle-orm'
 import { bonusItems, slotLeftovers, weekSlots } from '$lib/database/schema'
 
-const db = vi.hoisted(() => ({ transaction: vi.fn() }))
+const db = vi.hoisted(() => ({ transaction: vi.fn(), select: vi.fn() }))
 vi.mock('$lib/database', () => ({ db }))
-import { clearPlan, replaceSingleSlot } from './plans'
+import { clearPlan, replaceSingleSlot, upsertSlot, copyWeek } from './plans'
 
 const dialect = new PgDialect()
 
 describe('planner clearing and replacement persistence', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it.each([undefined, '2026-09-01'])(
     'clears slots and extras atomically with scope %s',
@@ -36,7 +36,7 @@ describe('planner clearing and replacement persistence', () => {
   )
 
   it.each([true, false])(
-    'replaces only an unchanged slot and cleans leftover links on success: %s',
+    'replaces only an unchanged slot: %s',
     async (changed) => {
       const returning = vi
         .fn()
@@ -61,13 +61,68 @@ describe('planner clearing and replacement persistence', () => {
         11,
       ])
       if (changed) {
-        expect(tx.delete).toHaveBeenCalledExactlyOnceWith(slotLeftovers)
-        expect(dialect.sqlToQuery(deleteWhere.mock.calls[0][0]).params).toEqual(
-          [4, '2026-09-01', 'dinner', '2026-09-01', 'dinner'],
-        )
+        expect(tx.delete).toHaveBeenCalledWith(slotLeftovers)
+        const query = dialect.sqlToQuery(deleteWhere.mock.calls[0][0])
+        expect(query.params).toEqual([
+          4,
+          '2026-09-01',
+          'dinner',
+          '2026-09-01',
+          'dinner',
+        ])
+        expect(query.sql).toContain('"source_date"')
+        expect(query.sql).toContain('"source_meal_type"')
+        expect(query.sql).toContain(' or ')
       } else {
         expect(tx.delete).not.toHaveBeenCalled()
       }
+    },
+  )
+
+  it.each(['repeat', 'copy'] as const)(
+    'clears both ends of links for exactly the %s destinations in the write transaction',
+    async (operation) => {
+      const source = [{ date: '2026-08-31', mealType: 'dinner', mealId: 12 }]
+      const where = vi.fn(() =>
+        operation === 'copy'
+          ? Promise.resolve(source)
+          : {
+              limit: () =>
+                Promise.resolve([
+                  { groupBreaks: [false, true, true, true, true, true] },
+                ]),
+            },
+      )
+      db.select.mockReturnValue({ from: () => ({ where }) })
+      const conflict = vi.fn().mockResolvedValue(undefined)
+      const values = vi.fn(() => ({ onConflictDoUpdate: conflict }))
+      const deleteWhere = vi.fn((_condition: SQL) => Promise.resolve())
+      const tx = {
+        insert: vi.fn(() => ({ values })),
+        delete: vi.fn(() => ({ where: deleteWhere })),
+      }
+      db.transaction.mockImplementationOnce((run) => run(tx))
+      if (operation === 'copy') await copyWeek(4, '2026-08-31', '2026-09-07')
+      else await upsertSlot(4, '2026-08-31', 'dinner', 12)
+      const dates =
+        operation === 'copy' ? ['2026-09-07'] : ['2026-08-31', '2026-09-01']
+      expect(values).toHaveBeenCalledWith(
+        dates.map((date) => ({
+          planId: 4,
+          date,
+          mealType: 'dinner',
+          mealId: 12,
+        })),
+      )
+      expect(tx.delete).toHaveBeenCalledWith(slotLeftovers)
+      const query = dialect.sqlToQuery(deleteWhere.mock.calls[0][0])
+      expect(query.params).toEqual([
+        4,
+        ...dates.flatMap((date) => [date, 'dinner', date, 'dinner']),
+      ])
+      expect(query.sql).toContain('"source_date"')
+      expect(query.sql).toContain('"source_meal_type"')
+      expect(db.transaction).toHaveBeenCalledTimes(1)
     },
   )
 })

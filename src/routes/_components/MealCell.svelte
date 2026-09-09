@@ -1,17 +1,14 @@
 <script lang="ts">
   import type { SlotWithMeal } from '$lib/types'
   import { useI18n } from '$lib/i18n-context'
-  import { localeCode } from '$lib/i18n'
 
-  const { t, label, locale } = useI18n()
+  const { t } = useI18n()
 
   let {
     slot,
     onOpenPicker,
     mealType,
-    leftoverSource,
     onPick,
-    onLeftover,
     onReroll,
     isPro,
     busy,
@@ -19,23 +16,11 @@
     slot: SlotWithMeal | null
     onOpenPicker: () => void
     mealType: string
-    leftoverSource: SlotWithMeal | null
     onPick: (mealId: number | null) => void
-    onLeftover: (source: { date: string; mealType: string } | null) => void
     onReroll: () => Promise<void>
     isPro: boolean
     busy: boolean
   } = $props()
-
-  const usesLeftovers = $derived(slot?.leftoverSourceDate != null)
-  const sourceLabel = $derived(
-    leftoverSource
-      ? `${new Date(`${leftoverSource.date}T00:00:00Z`).toLocaleDateString(
-          localeCode(locale()),
-          { dateStyle: 'medium', timeZone: 'UTC' },
-        )} ${label(leftoverSource.mealType)}`
-      : '',
-  )
 </script>
 
 {#if slot?.mealName}
@@ -43,6 +28,7 @@
     <button
       type="button"
       class="meal-info"
+      disabled={busy}
       onclick={onOpenPicker}
       title={t('Edit meal assignment')}
       aria-label={t('Edit meal assignment')}
@@ -50,9 +36,6 @@
       <span class="name">{slot.mealName}</span>
       {#if slot.calories}
         <span class="kcal">{slot.calories} kcal</span>
-      {/if}
-      {#if usesLeftovers}
-        <span class="leftover-label">{t('leftovers')}</span>
       {/if}
     </button>
     <div class="actions">
@@ -78,34 +61,10 @@
           <path d="M7 4h9v9M16 4 8 12M13 10v5H4V6h5" />
         </svg></a
       >
-      {#if leftoverSource || usesLeftovers}
-        <button
-          type="button"
-          class:active={usesLeftovers}
-          onclick={() =>
-            onLeftover(
-              usesLeftovers || !leftoverSource
-                ? null
-                : {
-                    date: leftoverSource.date,
-                    mealType: leftoverSource.mealType,
-                  },
-            )}
-          title={usesLeftovers
-            ? t('Prepare separately')
-            : t('Use leftovers from {source}', { source: sourceLabel })}
-          aria-label={usesLeftovers
-            ? t('Prepare separately')
-            : t('Use leftovers from {source}', { source: sourceLabel })}
-        >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M7 6 3 10l4 4M4 10h7a5 5 0 0 1 5 5" />
-          </svg></button
-        >
-      {/if}
       <button
         type="button"
         onclick={() => onPick(null)}
+        disabled={busy}
         title={t('Remove meal')}
         aria-label={t('Remove meal')}
       >
@@ -134,7 +93,7 @@
     gap: 2px;
     width: 100%;
     height: 100%;
-    min-height: 72px;
+    min-height: 88px;
     padding: 10px;
     background: transparent;
     border: none;
@@ -177,18 +136,20 @@
   }
   .actions {
     display: flex;
-    gap: 2px;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 6px;
 
     button,
     a {
       display: grid;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       place-items: center;
-      border: 0;
+      border: 1px solid $color-border;
       border-radius: $radius-sm;
-      background: transparent;
+      background: $color-surface;
       color: $color-text-muted;
       cursor: pointer;
       font-size: 0.9rem;
@@ -216,8 +177,18 @@
       }
     }
   }
+  @media (hover: hover) {
+    .actions {
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .cell:hover .actions,
+    .cell:focus-within .actions {
+      opacity: 1;
+    }
+  }
   .name {
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: $color-text;
     line-height: 1.3;
@@ -226,29 +197,7 @@
     font-size: 0.7rem;
     color: $color-text-muted;
   }
-  .leftover-label {
-    color: $color-accent;
-    font-size: 0.66rem;
-    font-weight: 650;
-  }
-  .actions button.active {
-    background: $color-accent-dim;
-    color: $color-accent;
-  }
-  @media (hover: hover) {
-    .actions {
-      opacity: 0;
-      transform: translateY(3px);
-      transition:
-        opacity 0.15s,
-        transform 0.15s;
-    }
-    .cell:hover .actions,
-    .cell:focus-within .actions {
-      opacity: 1;
-      transform: none;
-    }
-  }
+
   .empty {
     font-size: 0.8rem;
     color: $color-text-muted;

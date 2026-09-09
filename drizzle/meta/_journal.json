@@ -183,6 +183,13 @@
       "when": 1788602623381,
       "tag": "0025_smart_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788892202558,
+      "tag": "0026_shocking_swordsman",
+      "breakpoints": true
     }
   ]
 }

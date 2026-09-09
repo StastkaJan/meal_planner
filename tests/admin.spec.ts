@@ -34,7 +34,7 @@ function userId(email: string) {
   return Number(sql(`select id from users where email = '${email}'`))
 }
 
-test('admin manages users and shared recipes through the UI', async ({
+test('@smoke admin manages users and shared recipes through the UI', async ({
   browser,
 }) => {
   const emailA = uniqueEmail()
@@ -52,6 +52,13 @@ test('admin manages users and shared recipes through the UI', async ({
     ids = [adminId(emailA), userId(emailB)]
 
     await pageA.goto('/admin/users')
+    await pageA.setViewportSize({ width: 320, height: 740 })
+    expect(
+      await pageA.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true)
+    await pageA.setViewportSize({ width: 1280, height: 740 })
     const userRow = pageA.locator('tr').filter({ hasText: emailB })
     await userRow.getByRole('button', { name: 'Make admin' }).click()
     await expect(
@@ -79,6 +86,23 @@ test('admin manages users and shared recipes through the UI', async ({
 
     const recipeRow = pageA.locator('tr').filter({ hasText: recipeName })
     await expect(recipeRow).toBeVisible()
+    for (const width of [1280, 320]) {
+      await pageA.setViewportSize({ width, height: 740 })
+      expect(
+        await pageA.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true)
+      const cellHeights = await recipeRow
+        .locator('td')
+        .evaluateAll((cells) =>
+          cells.map((cell) => cell.getBoundingClientRect().height),
+        )
+      expect(Math.max(...cellHeights) - Math.min(...cellHeights)).toBeLessThan(
+        1,
+      )
+    }
+    await pageA.setViewportSize({ width: 1280, height: 740 })
     pageA.once('dialog', (dialog) => dialog.accept())
     await recipeRow.getByRole('button', { name: 'Archive' }).click()
     await expect(recipeRow).toHaveCount(0)

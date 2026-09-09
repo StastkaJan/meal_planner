@@ -1,6 +1,12 @@
 <script lang="ts">
-  import type { SlotWithMeal, PlanDetail, NutritionTargets } from '$lib/types'
+  import type {
+    SlotWithMeal,
+    PlanDetail,
+    DailyNutritionTargets,
+  } from '$lib/types'
   import MealCell from './MealCell.svelte'
+  import type { SavedExtra } from '$lib/database/schema'
+  import type { ExtraFields } from '$lib/domain/extras'
   import NutritionBar from './NutritionBar.svelte'
   import BonusItems from './BonusItems.svelte'
   import { localeCode } from '$lib/i18n'
@@ -9,13 +15,15 @@
   const { t, label, locale } = useI18n()
 
   let {
+    savedExtras,
+    onSaveExtra,
+    onDeleteSavedExtra,
     plan,
     onOpenPicker,
     weekStart,
     targets,
     isPro,
     onSlotChange,
-    onSlotLeftover,
     onAddBonus,
     onDeleteBonus,
     onRecalcDay,
@@ -25,20 +33,18 @@
     onPrevWeek,
     onNextWeek,
   }: {
+    savedExtras: SavedExtra[]
+    onSaveExtra: (fields: ExtraFields) => Promise<void>
+    onDeleteSavedExtra: (id: number) => Promise<void>
     plan: PlanDetail
     onOpenPicker: (date: string, mealType: string) => void
     weekStart: string
-    targets: NutritionTargets
+    targets: DailyNutritionTargets
     isPro: boolean
     onSlotChange: (
       date: string,
       mealType: string,
       mealId: number | null,
-    ) => void
-    onSlotLeftover: (
-      date: string,
-      mealType: string,
-      source: { date: string; mealType: string } | null,
     ) => void
     onAddBonus: (
       date: string,
@@ -53,7 +59,7 @@
         saturatedFatG?: number | null
         saltG?: number | null
       },
-    ) => void
+    ) => Promise<void>
     onDeleteBonus: (id: number) => void
     onRecalcDay: (date: string) => void
     onRerollMeal: (date: string, mealType: string) => Promise<void>
@@ -100,19 +106,6 @@
   const slotMap = $derived(
     new Map(plan.slots.map((s) => [`${s.date}-${s.mealType}`, s])),
   )
-
-  function previousMatchingSlot(slot: SlotWithMeal | null) {
-    if (!slot?.mealId) return null
-    return (
-      plan.slots
-        .filter(
-          (candidate) =>
-            candidate.mealId === slot.mealId && candidate.date < slot.date,
-        )
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .at(-1) ?? null
-    )
-  }
 
   const dailyNutrition = $derived(
     weekDates.map((dt) => {
@@ -231,6 +224,14 @@
         </tr>
       </thead>
       <tbody>
+        <tr class="nutrition-row">
+          <td class="row-label nutrition-label">{t('nutrition')}</td>
+          {#each dailyNutrition as dn}
+            <td class="slot-cell nutrition-cell">
+              <NutritionBar {...dn} {targets} />
+            </td>
+          {/each}
+        </tr>
         {#each plan.mealSlots as mt}
           <tr>
             <td class="row-label">{label(mt)}</td>
@@ -242,9 +243,7 @@
                   {slot}
                   onOpenPicker={() => onOpenPicker(date, mt)}
                   mealType={mt}
-                  leftoverSource={previousMatchingSlot(slot)}
                   onPick={(mealId) => onSlotChange(date, mt, mealId)}
-                  onLeftover={(source) => onSlotLeftover(date, mt, source)}
                   onReroll={() => onRerollMeal(date, mt)}
                   {isPro}
                   {busy}
@@ -259,20 +258,15 @@
             <td class="slot-cell extras-cell">
               <div class="extras-inner">
                 <BonusItems
+                  {savedExtras}
+                  onSave={onSaveExtra}
+                  onDeleteSaved={onDeleteSavedExtra}
                   date={isoDate(dt)}
                   items={plan.bonus.filter((b) => b.date === isoDate(dt))}
                   onAdd={onAddBonus}
                   onDelete={onDeleteBonus}
                 />
               </div>
-            </td>
-          {/each}
-        </tr>
-        <tr class="nutrition-row">
-          <td class="row-label nutrition-label">{t('nutrition')}</td>
-          {#each dailyNutrition as dn}
-            <td class="slot-cell nutrition-cell">
-              <NutritionBar {...dn} {targets} />
             </td>
           {/each}
         </tr>
@@ -296,7 +290,7 @@
 
   .cal {
     width: 100%;
-    min-width: 700px;
+    min-width: 1120px;
     border-collapse: collapse;
     table-layout: fixed;
   }
@@ -425,12 +419,12 @@
   }
 
   .nutrition-row {
-    background: #faf8f2;
+    background: $color-surface;
   }
 
   .nutrition-cell {
     padding: 10px;
-    vertical-align: middle;
+    vertical-align: top;
   }
 
   .extras-cell {
@@ -515,9 +509,6 @@
       border-right: 0;
       border-left: 0;
       border-radius: 0;
-    }
-    .cal {
-      min-width: 780px;
     }
   }
 </style>

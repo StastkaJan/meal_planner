@@ -8,6 +8,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { weekSlots } from './week-slots'
 
+// Retired: retained for compatibility with the previous release during deployment.
 export const slotLeftovers = pgTable(
   'slot_leftovers',
   {

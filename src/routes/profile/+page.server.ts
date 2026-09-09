@@ -14,5 +14,9 @@ export const load: PageServerLoad = async ({ locals }) => {
     proteinTarget: s?.proteinTarget ?? null,
     carbsTarget: s?.carbsTarget ?? null,
     fatTarget: s?.fatTarget ?? null,
+    fiberTarget: s?.fiberTarget ?? null,
+    sugarTarget: s?.sugarTarget ?? null,
+    saturatedFatTarget: s?.saturatedFatTarget ?? null,
+    saltTarget: s?.saltTarget ?? null,
   }
 }

@@ -166,7 +166,7 @@ All demo accounts start with password `DemoPapu2026!`:
 The dataset includes 12 shared recipes. Each account has two active personal
 recipes, one archived personal recipe, a Czech recipe translation, favorites,
 nutrition targets, and pantry exclusions. Its own two-person plan contains the
-current and previous weeks, including leftovers, a repeat pattern, and shopping
+current and previous weeks, including a repeat pattern and shopping
 extras. Admin review has pending, approved, and rejected recipe imports.
 
 The first deployment without a `pr-N.demo-seeded` marker recreates that preview's

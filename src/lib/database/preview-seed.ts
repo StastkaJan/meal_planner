@@ -164,13 +164,6 @@ export async function seedPreviewAccounts(
             })
         }
         await tx.insert(schema.weekSlots).values(slots)
-        await tx.insert(schema.slotLeftovers).values({
-          planId: plan.id,
-          date: addDays(monday, 1),
-          mealType: 'dinner',
-          sourceDate: monday,
-          sourceMealType: 'dinner',
-        })
         await tx.insert(schema.bonusItems).values({
           planId: plan.id,
           date: monday,

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { integer, pgTable, text } from 'drizzle-orm/pg-core'
+import { doublePrecision, integer, pgTable, text } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
 export const userSettings = pgTable('user_settings', {
@@ -23,6 +23,10 @@ export const userSettings = pgTable('user_settings', {
   proteinTarget: integer('protein_target'),
   carbsTarget: integer('carbs_target'),
   fatTarget: integer('fat_target'),
+  fiberTarget: doublePrecision('fiber_target'),
+  sugarTarget: doublePrecision('sugar_target'),
+  saturatedFatTarget: doublePrecision('saturated_fat_target'),
+  saltTarget: doublePrecision('salt_target'),
 })
 
 export type UserSettings = typeof userSettings.$inferSelect

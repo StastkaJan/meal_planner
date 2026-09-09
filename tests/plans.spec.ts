@@ -9,6 +9,34 @@ test.beforeEach(async ({ page }) => {
   await page.waitForLoadState('networkidle')
 })
 
+test.describe('touch nutrition details', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } })
+
+  test('@smoke opens nutrient details by touch and closes them', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Create plan' }).click()
+    const nutrition = page.locator('.nutrition-cell').first()
+    const protein = nutrition.getByRole('button', {
+      name: 'Protein',
+      exact: true,
+    })
+    await protein.tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).toBeVisible()
+    await nutrition.getByRole('button', { name: 'Close', exact: true }).tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).toHaveCount(0)
+    await protein.tap()
+    await page.locator('h1').tap()
+    await expect(
+      nutrition.getByRole('meter', { name: 'Protein', exact: true }),
+    ).not.toBeVisible()
+  })
+})
+
 test('@smoke create a plan', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
   await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
@@ -61,27 +89,169 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(page.locator('.day-actions:popover-open')).toHaveCount(0)
 })
 
-test('prefill an extra item from a common preset', async ({ page }) => {
+test('add an extra item immediately from a common preset', async ({ page }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.getByRole('button', { name: '+ extra' }).first().click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
 
-  await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Pizza')
-  await expect(page.getByLabel('Calories', { exact: true })).toHaveValue('800')
-  await expect(page.getByLabel('Protein g', { exact: true })).toHaveValue('32')
-  await expect(page.getByLabel('Carbs g', { exact: true })).toHaveValue('96')
-  await expect(page.getByLabel('Fat g', { exact: true })).toHaveValue('32')
-  await expect(page.getByLabel('Fibre g', { exact: true })).toHaveValue('6')
-  await expect(page.getByLabel('Sugars g', { exact: true })).toHaveValue('8')
-  await expect(page.getByLabel('Saturated fat g', { exact: true })).toHaveValue(
-    '14',
-  )
-  await expect(page.getByLabel('Salt g', { exact: true })).toHaveValue('3.2')
-
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(
+    page.getByRole('dialog', { name: 'Add off-plan item', exact: true }),
+  ).not.toBeVisible()
   await expect(
     page.locator('.bonus-item').filter({ hasText: 'Pizza' }),
   ).toContainText('800')
+})
+
+test('@smoke nutrient slices show details on demand and mark overflow', async ({
+  page,
+}) => {
+  const profile = await page.request.patch('/profile', {
+    data: {
+      calorieTarget: 1000,
+      proteinTarget: 40,
+      carbsTarget: 200,
+      fatTarget: 70,
+    },
+  })
+  expect(profile.ok()).toBe(true)
+  await page.reload()
+  await page.getByRole('button', { name: 'Create plan' }).click()
+  const nutrition = page.locator('.nutrition-cell').first()
+  const calories = nutrition.getByRole('meter', {
+    name: 'Calories',
+    exact: true,
+  })
+  const protein = nutrition.getByRole('meter', { name: 'Protein', exact: true })
+  const proteinSlice = nutrition.getByRole('button', {
+    name: 'Protein',
+    exact: true,
+  })
+  await expect(protein).toHaveCount(0)
+  await expect(nutrition.getByText('Calories', { exact: true })).toBeVisible()
+  await expect(
+    nutrition.locator('.nutrient-legend, .chart-key, title'),
+  ).toHaveCount(0)
+  const proteinGoal = nutrition.locator('.protein .pie-goal')
+  const restingSlice = (await proteinGoal.boundingBox())!
+  await proteinSlice.hover()
+  await expect(protein).toBeVisible()
+  await expect
+    .poll(async () => (await proteinGoal.boundingBox())!.width)
+    .toBeGreaterThan(restingSlice.width)
+  await expect
+    .poll(async () => (await proteinGoal.boundingBox())!.y)
+    .toBeLessThan(restingSlice.y)
+  await page.locator('h1').hover()
+  await expect(protein).not.toBeVisible()
+  await proteinSlice.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(protein).toBeVisible()
+  await expect(proteinSlice).toHaveCSS('outline-style', 'solid')
+  await proteinSlice.hover()
+  await page.locator('h1').hover()
+  // Outlast the hover-dismiss timer while the slice retains keyboard focus.
+  await page.waitForTimeout(250)
+  await expect(proteinSlice).toBeFocused()
+  await expect(protein).toBeVisible()
+  await proteinSlice.press('Enter')
+  await page.locator('h1').hover()
+  await expect(protein).toBeVisible()
+  await page.keyboard.press('Tab')
+  const carbsSlice = nutrition.getByRole('button', {
+    name: 'Carbs',
+    exact: true,
+  })
+  await expect(carbsSlice).toBeFocused()
+  await expect(carbsSlice).toHaveCSS('outline-style', 'solid')
+  await expect(
+    nutrition.getByRole('meter', { name: 'Carbs', exact: true }),
+  ).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(protein).not.toBeVisible()
+  await expect(calories).toHaveAttribute('aria-valuenow', '0')
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /1000 kcal remaining/,
+  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '0')
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+  await expect(calories).toHaveAttribute('aria-valuenow', '800')
+  await expect(calories).toHaveAttribute('aria-valuetext', /200 kcal remaining/)
+  await proteinSlice.click()
+  await expect(proteinSlice).toHaveCSS('outline-style', 'none')
+  await expect(protein).toHaveAttribute(
+    'aria-valuetext',
+    '32 / 40 g · 8 g remaining',
+  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '0.8')
+  await expect(nutrition.locator('.pie-goal')).toHaveCount(7)
+  await expect(
+    nutrition.getByRole('group', { name: 'Nutrient goal progress' }),
+  ).toBeVisible()
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toHaveCount(0)
+  await nutrition.getByRole('button', { name: 'Salt', exact: true }).click()
+  await expect(
+    nutrition.getByRole('meter', { name: 'Salt', exact: true }),
+  ).toHaveAttribute('aria-valuetext', '3.2 / 6 g · 2.8 g remaining')
+  await nutrition.getByRole('button', { name: 'Close', exact: true }).click()
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Custom extra', exact: true }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Remaining budget')
+  await page
+    .getByRole('spinbutton', { name: 'Calories', exact: true })
+    .fill('200')
+  await page.getByLabel('Protein g', { exact: true }).fill('8')
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(calories).toHaveAttribute('aria-valuenow', '1000')
+  await expect(calories).toHaveAttribute('aria-valuetext', /0 kcal remaining/)
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '1')
+
+  await page
+    .getByRole('button', { name: '+ extra', exact: true })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /1800 \/ 1000 kcal · 800 kcal over target/,
+  )
+  await expect(calories).toHaveAttribute('aria-valuenow', '1000')
+  await proteinSlice.click()
+  await expect(protein).toHaveAttribute(
+    'aria-valuetext',
+    '72 / 40 g · 32 g over target',
+  )
+  await expect(
+    nutrition.locator('.pie-value[data-nutrient="protein"]'),
+  ).toHaveAttribute('data-progress', '1')
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toBeVisible()
+  await page.reload()
+  await expect(
+    nutrition.locator('.pie-overflow[data-nutrient="protein"]'),
+  ).toBeVisible()
+  await expect(calories).toHaveAttribute(
+    'aria-valuetext',
+    /800 kcal over target/,
+  )
 })
 
 test('configure enabled and custom meal slots for auto-compose', async ({
@@ -174,17 +344,6 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   ).toBe(true)
   expect(
     (
-      await page.request.patch(`${base}/slots`, {
-        data: {
-          date: nextDate(1),
-          mealType: 'lunch',
-          source: { date: week, mealType: 'lunch' },
-        },
-      })
-    ).ok(),
-  ).toBe(true)
-  expect(
-    (
       await page.request.post(`${base}/bonus`, {
         data: { date: week, name: 'Test extra', calories: 100 },
       })
@@ -218,7 +377,6 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   await expect(
     cells.nth(1).getByRole('link', { name: 'Show recipe' }),
   ).toHaveAttribute('href', before!)
-  await expect(cells.nth(1).locator('.leftover-label')).toHaveCount(0)
 
   const trigger = page.getByRole('button', { name: /^Actions for / }).first()
   const actions = page.locator('.day-actions').first()

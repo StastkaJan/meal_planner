@@ -8,8 +8,8 @@ test('@smoke picker preserves newer typing when an earlier search completes', as
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.getByTitle('Click to assign meal').first().click()
   const search = page.getByRole('dialog').getByRole('searchbox')
-  await page.clock.install()
-  await page.clock.pauseAt(new Date())
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+  await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
 
   let releaseSearch!: () => void
   const searchHeld = new Promise<void>((resolve) => {
@@ -47,8 +47,8 @@ for (const closeWith of ['cancel', 'escape', 'select'] as const) {
     await page.getByRole('button', { name: 'Create plan' }).click()
     await page.getByTitle('Click to assign meal').first().click()
     const dialog = page.getByRole('dialog')
-    await page.clock.install()
-    await page.clock.pauseAt(new Date())
+    await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') })
+    await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
 
     let releaseClose!: () => void
     const closeHeld = new Promise<void>((resolve) => {
@@ -133,7 +133,10 @@ test('@smoke picker pagination, search, and reload preserve the selected slot', 
     .getByRole('button', { name: 'Performance recipe 34', exact: true })
     .click()
   await expect(dialog).not.toBeVisible()
-  await expect(page.locator('.slot-cell').first()).toContainText(
+  const breakfast = page.getByRole('row').filter({
+    has: page.getByRole('cell', { name: /^breakfast$/i }),
+  })
+  await expect(breakfast.locator('.slot-cell').first()).toContainText(
     'Performance recipe 34',
   )
   expect(new URL(page.url()).searchParams.has('pickDate')).toBe(false)

@@ -7,13 +7,14 @@ const listUserMealIds = vi.hoisted(() => vi.fn())
 const verifyPassword = vi.hoisted(() => vi.fn())
 const deleteMealImages = vi.hoisted(() => vi.fn())
 const readMealImage = vi.hoisted(() => vi.fn())
+const saveSettings = vi.hoisted(() => vi.fn())
 
 vi.mock('../repositories/accounts', () => ({
   deleteAccount: deleteAccountRecord,
   findUserById,
   getAccountExport,
   listUserMealIds,
-  saveSettings: vi.fn(),
+  saveSettings,
   updatePassword: vi.fn(),
 }))
 vi.mock('$lib/server/meal-images', () => ({
@@ -26,7 +27,12 @@ vi.mock('../observability', () => ({
     task(),
 }))
 
-import { deleteAccount, exportAccountData, toPantryStaples } from './profile'
+import {
+  deleteAccount,
+  exportAccountData,
+  toPantryStaples,
+  updateProfileSettings,
+} from './profile'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -39,6 +45,42 @@ describe('toPantryStaples', () => {
       'Salt',
       'Tomatoes, canned',
     ])
+  })
+})
+
+describe('nutrition settings', () => {
+  it('saves decimal display goals without changing omitted settings', async () => {
+    await updateProfileSettings(42, {
+      fiberTarget: '25.5',
+      sugarTarget: 60,
+      saturatedFatTarget: '15',
+      saltTarget: '5.5',
+    })
+    expect(saveSettings).toHaveBeenCalledWith(42, {
+      fiberTarget: 25.5,
+      sugarTarget: 60,
+      saturatedFatTarget: 15,
+      saltTarget: 5.5,
+    })
+  })
+
+  it('clears blank and invalid goals, preserving whole-number macro settings', async () => {
+    await updateProfileSettings(42, {
+      proteinTarget: '40.6',
+      fiberTarget: '',
+      sugarTarget: -1,
+      saturatedFatTarget: 'Infinity',
+      saltTarget: null,
+    })
+    expect(saveSettings).toHaveBeenCalledWith(42, {
+      proteinTarget: 41,
+      fiberTarget: null,
+      sugarTarget: null,
+      saturatedFatTarget: null,
+      saltTarget: null,
+    })
+    await updateProfileSettings(42, { saltTarget: true })
+    expect(saveSettings).toHaveBeenLastCalledWith(42, { saltTarget: null })
   })
 })
 
