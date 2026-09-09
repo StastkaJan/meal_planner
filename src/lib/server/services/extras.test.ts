@@ -28,6 +28,9 @@ describe('parseExtra', () => {
     { name: 'x'.repeat(201) },
     { name: 'Coffee', calories: 1.5 },
     { name: 'Coffee', saltG: -1 },
+    ...[true, false, [], [2], {}, 'invalid', 'Infinity', NaN, Infinity].map(
+      (proteinG) => ({ name: 'Coffee', proteinG }),
+    ),
   ])('rejects invalid extras: %j', (body) => {
     expect(() => parseExtra(body)).toThrow()
   })

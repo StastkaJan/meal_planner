@@ -3,9 +3,16 @@ import type { ExtraFields } from '$lib/domain/extras'
 
 function toNumOrNull(v: unknown, max: number, integer = false): number | null {
   if (v === null || v === undefined || v === '') return null
+  if (typeof v !== 'number' && typeof v !== 'string')
+    error(400, 'Invalid nutrition value')
+  if (typeof v === 'string' && !v.trim()) return null
   const n = Number(v)
-  if (!Number.isFinite(n)) return null
-  if (n < 0 || n > max || (integer && !Number.isInteger(n)))
+  if (
+    !Number.isFinite(n) ||
+    n < 0 ||
+    n > max ||
+    (integer && !Number.isInteger(n))
+  )
     error(400, 'Invalid nutrition value')
   return n
 }
