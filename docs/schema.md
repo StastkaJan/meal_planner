@@ -1,7 +1,5 @@
 # DB Schema
 
-`saved_extras`: caller-owned reusable extra names and nutrition, indexed by user; user deletion cascades and account exports include them.
-
 ## Localization
 
 - `user_settings.locale` stores the preferred supported locale (`en` or `cs`).
@@ -30,5 +28,6 @@ Drizzle definitions live in `src/lib/database/schema`, one table per file.
 | `slotRepeats`         | (planId, mealType) composite PK, groupBreaks[6] booleans (gaps Mon\|Tue..Sat\|Sun; true = split, false = joined) — weekly repeat pattern per meal type; no row = every day independent                                                                                                                                                                                                                             |
 | `mealFavorites`       | (userId, mealId) composite PK, both FK cascade — per-user bookmark on a meal                                                                                                                                                                                                                                                                                                                                       |
 | `bonusItems`          | id, planId FK, date, name, calories, proteinG, carbsG, fatG, fiberG, sugarG, saturatedFatG, saltG — off-plan items logged against a day (not slot-bound, so multiple can exist per day)                                                                                                                                                                                                                            |
+| `savedExtras`         | id, userId FK (cascade, indexed), name, calories, proteinG, carbsG, fatG, fiberG, sugarG, saturatedFatG, saltG — caller-owned reusable extras, included in account exports                                                                                                                                                                                                                                         |
 
 <!-- NOTE: Migration 0026 combines nutrient targets and saved extras. It keeps the former 0027 timestamp and uses IF NOT EXISTS so fresh databases and previews with only the former 0026 applied converge; previews with both applied skip it. -->
