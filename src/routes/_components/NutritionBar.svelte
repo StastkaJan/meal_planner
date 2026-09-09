@@ -104,6 +104,7 @@
   ])
 
   const detailId = $props.id()
+  let chart: SVGSVGElement
   let details: HTMLDivElement
   let active = $state<number | null>(null)
   let pinned = $state(false)
@@ -123,7 +124,14 @@
 
   function leaveDetails() {
     cancelClose()
-    if (!pinned) closeTimer = setTimeout(closeDetails, 150)
+    if (!pinned)
+      closeTimer = setTimeout(() => {
+        if (
+          !chart.matches(':focus-within') &&
+          !details.matches(':focus-within')
+        )
+          closeDetails()
+      }, 150)
   }
 
   function showDetails(
@@ -170,6 +178,7 @@
     </div>
   </div>
   <svg
+    bind:this={chart}
     class="nutrient-pie"
     viewBox="-58 -58 116 116"
     role="group"

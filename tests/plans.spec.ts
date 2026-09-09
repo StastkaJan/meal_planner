@@ -147,6 +147,12 @@ test('@smoke nutrient slices show details on demand and mark overflow', async ({
   await page.keyboard.press('ArrowRight')
   await expect(protein).toBeVisible()
   await expect(proteinSlice).toHaveCSS('outline-style', 'solid')
+  await proteinSlice.hover()
+  await page.locator('h1').hover()
+  // Outlast the hover-dismiss timer while the slice retains keyboard focus.
+  await page.waitForTimeout(250)
+  await expect(proteinSlice).toBeFocused()
+  await expect(protein).toBeVisible()
   await proteinSlice.press('Enter')
   await page.locator('h1').hover()
   await expect(protein).toBeVisible()
