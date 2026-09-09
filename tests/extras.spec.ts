@@ -7,6 +7,12 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
 }) => {
   await register(page, uniqueEmail())
   await page.getByRole('button', { name: 'Create plan' }).click()
+  // A successful extra save must not depend on a second plan read.
+  await page.route(/\/plans\/\d+(\?.*)?$/, async (route) => {
+    if (route.request().method() === 'GET')
+      await route.fulfill({ status: 503, body: 'Plan temporarily unavailable' })
+    else await route.continue()
+  })
   const addExtra = page.getByRole('button', { name: '+ extra', exact: true })
   const dialog = page.getByRole('dialog', {
     name: 'Add off-plan item',
@@ -20,6 +26,7 @@ test('@smoke coffee and saved extras are searchable, reusable, and private', asy
   await expect(
     page.locator('.bonus-item').filter({ hasText: 'Latte / cappuccino' }),
   ).toContainText('120')
+  await page.unroute(/\/plans\/\d+(\?.*)?$/)
 
   await addExtra.first().click()
   await dialog.getByRole('button', { name: 'Custom extra' }).click()

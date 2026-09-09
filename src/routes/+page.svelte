@@ -221,12 +221,14 @@
     },
   ) {
     if (!plan) return
-    const res = await planApi.addBonus(plan.id, { date, ...fields })
+    const planId = plan.id
+    const res = await planApi.addBonus(planId, { date, ...fields })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       throw new Error(body.message ?? 'Request failed')
     }
-    await refreshPlan()
+    const item = await res.json()
+    if (plan?.id === planId) plan = { ...plan, bonus: [...plan.bonus, item] }
   }
 
   async function handleDeleteBonus(id: number) {
