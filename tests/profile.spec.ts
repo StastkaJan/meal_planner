@@ -15,7 +15,7 @@ test('@smoke pantry multiselect searches aliases and reuses custom ingredients',
   await page.locator('summary', { hasText: 'Always on hand' }).click()
   const search = page.getByRole('searchbox', { name: 'Search ingredients' })
   await search.fill('rajčata')
-  const tomato = page.getByRole('checkbox')
+  const tomato = page.getByRole('checkbox', { name: 'Tomato', exact: true })
   await expect(tomato).toHaveCount(1)
   await tomato.check()
   await search.fill('My custom seasoning')
