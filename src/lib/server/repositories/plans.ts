@@ -478,7 +478,11 @@ export async function getSlotRepeats(planId: number) {
 
 export async function getWeekMealIds(planId: number, week: string) {
   return db
-    .select({ mealId: weekSlots.mealId })
+    .select({
+      mealId: weekSlots.mealId,
+      date: weekSlots.date,
+      mealType: weekSlots.mealType,
+    })
     .from(weekSlots)
     .where(inWeek(planId, week))
 }

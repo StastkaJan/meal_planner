@@ -44,11 +44,14 @@ different dietary needs. Plans belong to a logged-in user and are private.
   restrictions are all-match. When no meal matches those preferences,
   auto-compose falls back to the visible library, but visibility, slot
   restrictions, **Favourites only**, and **My recipes only** remain hard
-  filters. The two recipe filters can be combined. It ranks calorie fit first,
-  macro fit second, and favours meals not already used that week.
-  It then jointly refines the week's new assignments to reduce daily nutrition
-  misses while preserving repeat groups. Filled slots are never replaced, and
-  a slot stays empty when no permitted meal exists.
+  filters. The two recipe filters can be combined. Initial budgets give snacks
+  less energy than main meals, with custom slots treated as main meals. Within
+  a 10% calorie tolerance, macro fit and variety guide selection; reuse becomes
+  increasingly costly, especially within a day or on neighboring days.
+  Whole-week refinement checks daily totals, counting an intentional repeat
+  group as one choice. Stable per-slot tie-breaking avoids catalogue-order
+  bias. Filled slots are never replaced, and a slot stays empty only when no
+  permitted meal exists; limited libraries can still require repetition.
 - **Configure meal slots.** A plan can disable built-in slots or add a custom
   slot. Disabling a slot clears its assignments; auto-compose and day
   recalculation fill only enabled slots in their configured order.
@@ -61,7 +64,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
   calories and macros. They immediately contribute to the day's nutrition
   totals. **Recalculate** fills only the remaining empty slots using the budget
   left after assigned meals and bonus items; an existing meal must be cleared
-  before it can be replaced.
+  before it can be replaced. Existing repeat-group recipes are preserved.
+  **Reroll** replaces only the selected slot with a different permitted recipe;
+  it shares the daily nutrition tolerance and variety scoring.
 - **Build a shopping list.** The weekly shopping view combines structured
   ingredients from assigned meals. It groups matching names and units, sums
   complete quantities, scales them for the plan's people count and each
@@ -89,4 +94,6 @@ endpoints.
 ## Known limitations
 
 - **Heuristic nutrition fit** — calorie and macro targets guide ranking rather
-  than act as guarantees. A limited library can still miss nutrition targets.
+  than act as guarantees. Outside the tolerance, the closest attainable calorie
+  fit takes precedence. A limited library or locked meals can still miss targets.
+  Stored recipe nutrition is per serving; plan portions affect shopping only.

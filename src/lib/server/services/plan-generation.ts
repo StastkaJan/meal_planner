@@ -5,6 +5,7 @@ import type { Plan } from '$lib/database/schema'
 import type { NutritionTargets } from '$lib/types'
 import {
   fillDaySlots,
+  countMealUsage,
   optimizeWeekSlots,
   sumNutrition,
 } from '$lib/domain/plan-generation'
@@ -39,6 +40,24 @@ export type PlanPopulationCommand = {
 }
 
 type CandidateFilters = NonNullable<Parameters<typeof listCandidateMeals>[1]>
+
+function withRepeatGroups(
+  rows: Awaited<ReturnType<typeof getWeekMealIds>>,
+  repeats: Awaited<ReturnType<typeof getSlotRepeats>>,
+) {
+  const breaksByType = new Map(
+    repeats.map((row) => [row.mealType, row.groupBreaks]),
+  )
+  return rows.map((row) => {
+    const breaks = breaksByType.get(row.mealType)
+    return {
+      ...row,
+      group: breaks
+        ? `${row.mealType}|${groupWindow(row.date, breaks)[0]}`
+        : undefined,
+    }
+  })
+}
 
 async function listPreferredCandidateMeals(
   userId: number,
@@ -111,11 +130,6 @@ async function autocomposeSlots(
   const filled = new Set(
     existingSlots.map((slot) => `${slot.date}-${slot.mealType}`),
   )
-  const usageCounts = new Map<number, number>()
-  for (const { mealId } of existingSlots) {
-    if (mealId !== null)
-      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
-  }
   const breaksByType = new Map(
     repeatRows.map((row) => [row.mealType, row.groupBreaks]),
   )
@@ -158,10 +172,6 @@ async function autocomposeSlots(
         freshSlots.push(mealType)
         continue
       }
-      usageCounts.set(
-        repeatedMeal.id,
-        (usageCounts.get(repeatedMeal.id) ?? 0) + 1,
-      )
       rows.push({ planId: plan.id, date, mealType, mealId: repeatedMeal.id })
       consumed.calories += repeatedMeal.calories ?? 0
       consumed.proteinG += repeatedMeal.proteinG ?? 0
@@ -169,6 +179,10 @@ async function autocomposeSlots(
       consumed.fatG += repeatedMeal.fatG ?? 0
     }
 
+    const history = [...existingSlots, ...rows].map((row) => ({
+      ...row,
+      group: groupKey(row.date, row.mealType) ?? undefined,
+    }))
     const generated = fillDaySlots(
       plan.id,
       date,
@@ -176,7 +190,8 @@ async function autocomposeSlots(
       candidateMeals,
       targets,
       consumed,
-      usageCounts,
+      countMealUsage(history),
+      history,
     )
     for (const row of generated) {
       const key = groupKey(row.date, row.mealType)
@@ -197,7 +212,13 @@ async function autocomposeSlots(
     candidateMeals,
     visibleMeals,
     targets,
-    [...existingSlots, ...weekBonus],
+    [
+      ...existingSlots.map((row) => ({
+        ...row,
+        group: groupKey(row.date, row.mealType) ?? undefined,
+      })),
+      ...weekBonus,
+    ],
   ).map(({ group: _group, locked: _locked, ...row }) => row)
 
   await insertSlots(optimized)
@@ -215,29 +236,64 @@ async function recalcDaySlots(
   const emptySlots = plan.mealSlots.filter((mealType) => !filled.has(mealType))
   if (!emptySlots.length) return 0
 
-  const [candidateMeals, dayBonus, weekMealIds] = await Promise.all([
+  const [candidateMeals, dayBonus, weekSlots, repeatRows] = await Promise.all([
     listPreferredCandidateMeals(ownerId, {
       cuisinePrefs: plan.cuisinePrefs,
       dietaryRestrictions: plan.dietaryRestrictions,
     }),
     getDayBonusNutrition(plan.id, date),
-    getWeekMealIds(plan.id, mondayOf(date)),
+    getWeekSlotsWithNutrition(plan.id, mondayOf(date)),
+    getSlotRepeats(plan.id),
   ])
-  if (!candidateMeals.length) return 0
-  const usageCounts = new Map<number, number>()
-  for (const { mealId } of weekMealIds) {
-    if (mealId !== null)
-      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
-  }
-  const rows = fillDaySlots(
+  const history = withRepeatGroups(weekSlots, repeatRows)
+  const repeated = withRepeatGroups(
+    emptySlots.map((mealType) => ({ date, mealType, mealId: null })),
+    repeatRows,
+  ).flatMap((slot) => {
+    if (!slot.group) return []
+    const index = history.findIndex(
+      (row, index) =>
+        row.group === slot.group &&
+        row.mealId != null &&
+        candidateFromExistingSlot(weekSlots[index], ownerId),
+    )
+    const meal =
+      index < 0 ? null : candidateFromExistingSlot(weekSlots[index], ownerId)
+    return meal
+      ? [
+          {
+            planId: plan.id,
+            date,
+            mealType: slot.mealType,
+            mealId: meal.id,
+            meal,
+            group: slot.group,
+          },
+        ]
+      : []
+  })
+  const remaining = emptySlots.filter(
+    (mealType) => !repeated.some((row) => row.mealType === mealType),
+  )
+  const allHistory = [...history, ...repeated]
+  const generated = fillDaySlots(
     plan.id,
     date,
-    emptySlots,
+    remaining,
     candidateMeals,
     targets,
-    sumNutrition([...daySlots, ...dayBonus]),
-    usageCounts,
+    sumNutrition([
+      ...daySlots,
+      ...dayBonus,
+      ...repeated.map((row) => row.meal),
+    ]),
+    countMealUsage(allHistory),
+    allHistory,
   )
+  const rows = [
+    ...repeated.map(({ meal: _meal, group: _group, ...row }) => row),
+    ...generated,
+  ]
   await insertSlots(rows)
   return rows.length
 }
@@ -291,12 +347,14 @@ export async function rerollPlanMeal(
   mealType: string,
   filters: { favoritesOnly: boolean; myRecipesOnly: boolean },
 ) {
-  const [settings, daySlots, dayBonus, weekMealIds] = await Promise.all([
-    getSettings(plan.userId),
-    getDaySlotsWithNutrition(plan.id, date),
-    getDayBonusNutrition(plan.id, date),
-    getWeekMealIds(plan.id, mondayOf(date)),
-  ])
+  const [settings, daySlots, dayBonus, weekMealIds, repeatRows] =
+    await Promise.all([
+      getSettings(plan.userId),
+      getDaySlotsWithNutrition(plan.id, date),
+      getDayBonusNutrition(plan.id, date),
+      getWeekMealIds(plan.id, mondayOf(date)),
+      getSlotRepeats(plan.id),
+    ])
   const current = daySlots.find((slot) => slot.mealType === mealType)
   if (current?.mealId == null) error(404, 'Slot not found')
   const candidates = await listCandidateMeals(plan.userId, {
@@ -304,11 +362,10 @@ export async function rerollPlanMeal(
     cuisinePrefs: settings?.cuisinePrefs ?? [],
     dietaryRestrictions: settings?.dietaryRestrictions ?? [],
   })
-  const usageCounts = new Map<number, number>()
-  for (const { mealId } of weekMealIds) {
-    if (mealId !== null)
-      usageCounts.set(mealId, (usageCounts.get(mealId) ?? 0) + 1)
-  }
+  const history = withRepeatGroups(
+    weekMealIds.filter((row) => row.date !== date || row.mealType !== mealType),
+    repeatRows,
+  )
   const [replacement] = fillDaySlots(
     plan.id,
     date,
@@ -319,7 +376,8 @@ export async function rerollPlanMeal(
       ...daySlots.filter((slot) => slot.mealType !== mealType),
       ...dayBonus,
     ]),
-    usageCounts,
+    countMealUsage(history),
+    history,
   )
   if (!replacement) return { changed: false }
   const changed = await replaceSingleSlot(

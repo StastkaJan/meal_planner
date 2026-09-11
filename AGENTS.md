@@ -85,6 +85,8 @@
 
 <!-- NOTE: `plans.meal_slots` is the ordered enabled slot list; disabling one transactionally removes its assignments and repeat pattern. -->
 
+<!-- NOTE: Auto-compose/recalc/reroll share a 10% calorie tolerance and increasing reuse/proximity penalties; snacks get smaller initial budgets. Explicit repeat groups count once and recalculation preserves existing group recipes. Stored recipe nutrition is per serving; plan portions scale shopping only. -->
+
 <!-- NOTE: `/profile/export` returns only caller-owned account data, including uploaded recipe images and legal-document events; `DELETE /profile` requires the current password plus exact email, preserves global meals, and rejects deletion of the final administrator. -->
 
 <!-- NOTE: `legal_document_events` records each terms acceptance or privacy-notice acknowledgement by user, document, and version; missing current-version rows drive the signed-in legal notice. -->
