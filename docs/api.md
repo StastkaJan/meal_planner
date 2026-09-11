@@ -1,7 +1,7 @@
 # API Routes
 
 - `POST /plans/[id]/reroll-meal` (Pro): `{date, mealType, favoritesOnly?, myRecipesOnly?}` replaces only that slot with a different visible, unarchived recipe matching its allowed slots and the user's preferences. Returns `{changed: false}` without changing the meal when no alternative matches. Repeat groups are not propagated.
-- `POST /plans/[id]/clear` (owner): `{date}` clears that day's meals and extras; `{}` clears all weeks. Both preserve plan settings and repeat patterns.
+- `POST /plans/[id]/clear` (owner): `{date}` clears that day's meals and extras; `{week}` clears the seven days starting at that date. Missing or mixed scopes are rejected. Both preserve plan settings and repeat patterns.
 
 ## Localization
 

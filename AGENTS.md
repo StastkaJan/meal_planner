@@ -57,7 +57,7 @@
 
 <!-- NOTE: `users.is_pro` is the temporary billing entitlement switch. Pro gates recipe URL import, auto-compose, copy-week, day recalculation, and single-meal reroll; admins manage it in `/admin/users` until billing owns the flag. -->
 
-<!-- NOTE: `POST /plans/[id]/reroll-meal` replaces only the requested slot with a different matching recipe; `POST /plans/[id]/clear` clears meals and extras for `{date}` or all weeks with `{}`, preserving settings and repeat patterns. -->
+<!-- NOTE: `POST /plans/[id]/reroll-meal` replaces only the requested slot with a different matching recipe; `POST /plans/[id]/clear` clears meals and extras for `{date}` or the viewed week with `{week}`, preserving settings and repeat patterns; empty scopes are rejected. The planner offers Clear week and opens settings for empty weeks. -->
 
 <!-- NOTE: `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`. -->
 
@@ -131,7 +131,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 - Plan `portions` is the number of people served; shopping quantities scale by `portions / meal.servings`.
 - Profile `pantryStaples` are case-insensitive shopping-list exclusions, not inventory.
 - Interactive state that should survive navigation/reload belongs in the URL (`?param=`) so `load` reruns automatically — don't shadow it in component `$state`.
-- This project does **not** use `invalidate`/`invalidateAll` and does **not** use `use:enhance`. All mutations use `fetch()` against the REST endpoints (`src/routes/**/+server.ts`), then update local state directly: for an in-place edit, derive a writable copy of load data with `$derived` (e.g. `let plan = $derived(data.plan)`) and reassign it after the `fetch` (see `handleSlotChange`/`handleSettingsChange` in `src/routes/+page.svelte`); for a create/delete that changes which rows exist, `goto()` the new/`/` URL to re-run `load` (see `createPlan`/`deletePlan` in `src/routes/+page.svelte`). If a REST endpoint doesn't exist yet for a form, add one in `+server.ts` — don't use form actions.
+- This project does **not** use `invalidate`/`invalidateAll` and does **not** use `use:enhance`. All mutations use `fetch()` against the REST endpoints (`src/routes/**/+server.ts`), then update local state directly: for an in-place edit, derive a writable copy of load data with `$derived` (e.g. `let plan = $derived(data.plan)`) and reassign it after the `fetch` (see `handleSlotChange`/`handleSettingsChange` in `src/routes/+page.svelte`); for a create/delete that changes which rows exist, `goto()` the new/`/` URL to re-run `load` (see `createPlan` in `src/routes/+page.svelte`). If a REST endpoint doesn't exist yet for a form, add one in `+server.ts` — don't use form actions.
 - Note: `goto()` to the same route doesn't remount the component, so local `$state` for "is this form open" (e.g. `creating`) must be reset explicitly in the handler — see `createPlan` in `src/routes/+page.svelte`.
 - Prefer `$derived`/`$derived.by` over `$effect`; reassigning a `$derived` value (Svelte 5.25+) is the idiomatic way to derive local editable state from a prop instead of `$effect`-syncing it into `$state`.
 - Refs: [svelte.dev/docs/kit/load](https://svelte.dev/docs/kit/load), [svelte.dev/docs/svelte/best-practices](https://svelte.dev/docs/svelte/best-practices).

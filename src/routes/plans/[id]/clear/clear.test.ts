@@ -19,19 +19,24 @@ describe('POST /plans/:id/clear', () => {
     requireOwnedPlan.mockResolvedValue({ id: 4, userId: 7 })
   })
 
-  it.each([{ date: '2026-09-01' }, {}])(
+  it.each([{ date: '2026-09-01' }, { week: '2026-09-01' }])(
     'clears the requested scope: %j',
     async (body) => {
       expect((await POST(event(body))).status).toBe(204)
       expect(clearPlan).toHaveBeenCalledExactlyOnceWith(
         4,
-        'date' in body ? body.date : undefined,
+        '2026-09-01',
+        'date' in body ? '2026-09-02' : '2026-09-08',
       )
     },
   )
 
   it.each([
     null,
+    {},
+    { week: null },
+    { week: '2026-02-30' },
+    { week: '2026-09-01', date: '2026-09-01' },
     { date: null },
     { date: '' },
     { date: '2026-02-30' },

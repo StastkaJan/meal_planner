@@ -43,7 +43,7 @@ test('@smoke create a plan', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: 'Create plan' }),
   ).not.toBeVisible()
-  await page.getByText('Plan settings').click()
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
   await expect(page.getByText('Cuisine preferences')).toBeVisible()
   await expect(page.getByText('Dietary restrictions')).toBeVisible()
   await expect(
@@ -260,7 +260,7 @@ test('configure enabled and custom meal slots for auto-compose', async ({
   grantPro(email)
   await page.reload()
   await page.getByRole('button', { name: 'Create plan' }).click()
-  await page.getByText('Plan settings').click()
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
 
   for (const name of ['morning snack', 'afternoon snack']) {
     await Promise.all([
@@ -295,15 +295,30 @@ test('configure enabled and custom meal slots for auto-compose', async ({
   await expect(customRow.locator('.name').first()).toBeVisible()
 })
 
-test('delete a plan', async ({ page }) => {
+test('empty weeks open settings, including after navigation', async ({
+  page,
+}) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
-
-  page.once('dialog', (d) => d.accept())
-  await page.getByRole('button', { name: 'Delete', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Create plan' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Delete', exact: true }),
+  ).toHaveCount(0)
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
+  await page.getByText('Plan settings').click()
+  await expect(page.locator('details.settings')).not.toHaveAttribute('open', '')
+  await page.getByRole('button', { name: 'Next week' }).click()
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
+  await page.reload()
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
+  await page.getByRole('button', { name: '+ extra' }).first().click()
+  await page.getByRole('button', { name: 'Pizza', exact: true }).click()
+  await expect(page.locator('details.settings')).not.toHaveAttribute('open', '')
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Clear week', exact: true }).click()
+  await expect(page.locator('.bonus-item')).toHaveCount(0)
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
 })
 
-test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async ({
+test('@smoke reroll a single meal, clear a day, and clear only the viewed week', async ({
   page,
 }) => {
   grantPro(email)
@@ -422,14 +437,34 @@ test('@smoke reroll a single meal, clear a day, and clear all plan weeks', async
   await expect(actions).not.toBeVisible()
   await expect(cells.nth(0).locator('.name')).toHaveCount(1)
 
+  for (const days of [6, 7]) {
+    expect(
+      (
+        await page.request.post(`${base}/bonus`, {
+          data: {
+            date: nextDate(days),
+            name: 'Week boundary extra',
+            calories: 100,
+          },
+        })
+      ).ok(),
+    ).toBe(true)
+  }
+  await page.reload()
+  await expect(page.locator('details.settings')).not.toHaveAttribute('open', '')
   page.once('dialog', (dialog) => dialog.accept())
-  await page.getByRole('button', { name: 'Clear plan', exact: true }).click()
+  await page.getByRole('button', { name: 'Clear week', exact: true }).click()
   await expect(page.locator('.cal .name')).toHaveCount(0)
+  await expect(page.locator('.bonus-item')).toHaveCount(0)
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
   const nextWeek = await (
     await page.request.get(`${base}?week=${nextDate(7)}`)
   ).json()
-  expect(nextWeek.slots).toEqual([])
-  expect(nextWeek.bonus).toEqual([])
+  expect(nextWeek.slots).toHaveLength(2)
+  expect(
+    nextWeek.slots.every((slot: { mealId: number }) => slot.mealId === meal.id),
+  ).toBe(true)
+  expect(nextWeek.bonus).toHaveLength(1)
   expect(nextWeek.slotRepeats).toHaveLength(1)
   await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
 })
@@ -439,7 +474,7 @@ test('a joined repeat pattern propagates a slot pick to the rest of the group', 
 }) => {
   await page.getByRole('button', { name: 'Create plan' }).click()
 
-  await page.getByText('Plan settings').click()
+  await expect(page.locator('details.settings')).toHaveAttribute('open', '')
   const lunchRepeatRow = page
     .locator('.repeat-row')
     .filter({ has: page.locator('.mt-label', { hasText: 'lunch' }) })

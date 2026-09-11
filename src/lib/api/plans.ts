@@ -7,11 +7,10 @@ export const getPlan = (id: number, week: string) =>
 
 export const createPlan = () => requestJson<Plan>('/plans', { method: 'POST' })
 
-export const deletePlan = (id: number) =>
-  request(`/plans/${id}`, { method: 'DELETE' })
-
-export const clearPlan = (id: number, date?: string) =>
-  request(`/plans/${id}/clear`, { method: 'POST', body: jsonBody({ date }) })
+export const clearPlan = (
+  id: number,
+  scope: { date: string } | { week: string },
+) => request(`/plans/${id}/clear`, { method: 'POST', body: jsonBody(scope) })
 
 export const rerollMeal = (
   id: number,
