@@ -12,6 +12,7 @@
     plan,
     preferences,
     isPro,
+    weekEmpty,
     favoritesOnly = $bindable(false),
     myRecipesOnly = $bindable(false),
     onPreferenceChange,
@@ -29,6 +30,7 @@
       dietaryRestrictions: string[]
     }
     isPro: boolean
+    weekEmpty: boolean
     favoritesOnly?: boolean
     myRecipesOnly?: boolean
     onPreferenceChange: (patch: {
@@ -96,7 +98,7 @@
   }
 </script>
 
-<details class="settings">
+<details class="settings" open={weekEmpty}>
   <summary>{t('Plan settings')}</summary>
   <div class="body">
     <section>

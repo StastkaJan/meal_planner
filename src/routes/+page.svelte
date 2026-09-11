@@ -84,14 +84,17 @@
         date
           ? t('Clear all meals and extras for this day?')
           : t(
-              'Clear all meals and extras across every week of this plan? Plan settings will be kept.',
+              'Clear all meals and extras for this week? Plan settings will be kept.',
             ),
       )
     )
       return
     plannerBusy = true
     try {
-      const res = await planApi.clearPlan(plan.id, date)
+      const res = await planApi.clearPlan(
+        plan.id,
+        date ? { date } : { week: data.viewWeek },
+      )
       if (await alertIfFailed(res)) return
       await refreshPlan()
     } catch {
@@ -145,12 +148,6 @@
   async function createPlan() {
     const created = await planApi.createPlan()
     await goto(planUrl(created.id, created.weekStart))
-  }
-
-  async function deletePlan(id: number) {
-    if (!confirm(t('Delete this plan?'))) return
-    await planApi.deletePlan(id)
-    await goto('/')
   }
 
   async function handleSlotChange(
@@ -291,31 +288,32 @@
           href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
           >{t('Shopping list')}</a
         >
-        <button class="btn danger" onclick={() => deletePlan(data.activePlanId)}
-          >{t('Delete')}</button
-        >
         <button
           class="btn danger"
           disabled={plannerBusy}
-          onclick={() => handleClear()}>{t('Clear plan')}</button
+          onclick={() => handleClear()}>{t('Clear week')}</button
         >
       {/if}
     </div>
   </div>
 
   {#if plan}
-    <PlanSettings
-      {plan}
-      {preferences}
-      isPro={data.user?.isPro ?? false}
-      bind:favoritesOnly
-      bind:myRecipesOnly
-      onPreferenceChange={handlePreferenceChange}
-      onMealSlotsChange={handleMealSlotsChange}
-      onRepeatChange={handleRepeatChange}
-      onAutoCompose={handleAutoCompose}
-      onCopyWeek={handleCopyWeek}
-    />
+    {#key data.viewWeek}
+      <PlanSettings
+        {plan}
+        weekEmpty={!plan.slots.some((slot) => slot.mealId !== null) &&
+          plan.bonus.length === 0}
+        {preferences}
+        isPro={data.user?.isPro ?? false}
+        bind:favoritesOnly
+        bind:myRecipesOnly
+        onPreferenceChange={handlePreferenceChange}
+        onMealSlotsChange={handleMealSlotsChange}
+        onRepeatChange={handleRepeatChange}
+        onAutoCompose={handleAutoCompose}
+        onCopyWeek={handleCopyWeek}
+      />
+    {/key}
     <WeekTable
       {savedExtras}
       onSaveExtra={saveExtra}

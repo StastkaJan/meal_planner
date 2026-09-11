@@ -45,14 +45,15 @@ export async function deletePlan(id: number) {
   await db.delete(plans).where(eq(plans.id, id))
 }
 
-export async function clearPlan(planId: number, date?: string) {
+export async function clearPlan(planId: number, start: string, end: string) {
   await db.transaction(async (tx) => {
     await tx
       .delete(weekSlots)
       .where(
         and(
           eq(weekSlots.planId, planId),
-          date ? eq(weekSlots.date, date) : undefined,
+          gte(weekSlots.date, start),
+          lt(weekSlots.date, end),
         ),
       )
     await tx
@@ -60,7 +61,8 @@ export async function clearPlan(planId: number, date?: string) {
       .where(
         and(
           eq(bonusItems.planId, planId),
-          date ? eq(bonusItems.date, date) : undefined,
+          gte(bonusItems.date, start),
+          lt(bonusItems.date, end),
         ),
       )
   })

@@ -12,24 +12,25 @@ const dialect = new PgDialect()
 describe('planner clearing and replacement persistence', () => {
   beforeEach(() => vi.resetAllMocks())
 
-  it.each([undefined, '2026-09-01'])(
+  it.each(['2026-09-02', '2026-09-08'])(
     'clears slots and extras atomically with scope %s',
-    async (date) => {
+    async (end) => {
       const where = vi.fn().mockResolvedValue(undefined)
       const tx = { delete: vi.fn(() => ({ where })) }
       db.transaction.mockImplementationOnce((run) => run(tx))
-      await clearPlan(4, date)
+      await clearPlan(4, '2026-09-01', end)
       expect(tx.delete.mock.calls).toEqual([[weekSlots], [bonusItems]])
       const queries = where.mock.calls.map(([condition]) =>
         dialect.sqlToQuery(condition),
       )
       expect(queries.map((query) => query.params)).toEqual([
-        date ? [4, date] : [4],
-        date ? [4, date] : [4],
+        [4, '2026-09-01', end],
+        [4, '2026-09-01', end],
       ])
       for (const query of queries) {
         expect(query.sql).toContain('"plan_id" =')
-        expect(query.sql.includes('"date" =')).toBe(date !== undefined)
+        expect(query.sql).toContain('"date" >=')
+        expect(query.sql).toContain('"date" <')
       }
       expect(db.transaction).toHaveBeenCalledTimes(1)
     },

@@ -87,7 +87,8 @@ test('profile controls stay visible and save settings', async ({ page }) => {
 
   grantPro(email)
   await page.goto('/')
-  await page.getByText('Plan settings').click()
+  if ((await page.locator('details.settings').getAttribute('open')) === null)
+    await page.getByText('Plan settings').click()
   await page.getByRole('button', { name: 'Auto-compose' }).click()
   await expect(page.locator('button.cell').first()).toContainText(
     'Pasta Bolognese',

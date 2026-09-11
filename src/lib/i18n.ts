@@ -25,14 +25,14 @@ const CS_MESSAGES = {
   Pagination: 'Stránkování',
   'Previous page': 'Předchozí strana',
   'Next page': 'Další strana',
-  'Clear plan': 'Vyprázdnit plán',
+  'Clear week': 'Vyprázdnit týden',
   'Clear day': 'Vyprázdnit den',
   'Recalculate day': 'Přepočítat den',
   'Actions for {date}': 'Akce pro {date}',
   'Clear all meals and extras for this day?':
     'Vymazat všechna jídla a položky navíc pro tento den?',
-  'Clear all meals and extras across every week of this plan? Plan settings will be kept.':
-    'Vymazat všechna jídla a položky navíc ve všech týdnech tohoto plánu? Nastavení plánu zůstane zachováno.',
+  'Clear all meals and extras for this week? Plan settings will be kept.':
+    'Vymazat všechna jídla a položky navíc pro tento týden? Nastavení plánu zůstane zachováno.',
   'Try a different recipe': 'Vybrat jiný recept',
   'No different recipe matches this slot and your preferences.':
     'Pro tento čas a vaše preference není k dispozici jiný recept.',
