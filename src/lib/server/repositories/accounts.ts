@@ -4,6 +4,7 @@ import type { PgColumn } from 'drizzle-orm/pg-core'
 import {
   bonusItems,
   ingredients,
+  userIngredients,
   legalDocumentEvents,
   mealFavorites,
   mealIngredients,
@@ -139,6 +140,7 @@ export async function getSettings(userId: number) {
       cuisinePrefs: userSettings.cuisinePrefs,
       dietaryRestrictions: userSettings.dietaryRestrictions,
       pantryStaples: userSettings.pantryStaples,
+      pantryIngredientIds: userSettings.pantryIngredientIds,
       calorieTarget: userSettings.calorieTarget,
       proteinTarget: userSettings.proteinTarget,
       carbsTarget: userSettings.carbsTarget,
@@ -189,7 +191,7 @@ export async function getAccountExport(userId: number) {
         >`coalesce((
           select jsonb_agg(
             jsonb_build_object(
-              'name', ${qualifiedColumn(ingredients.name)},
+              'name', coalesce(${qualifiedColumn(mealIngredients.originalName)}, ${qualifiedColumn(ingredients.name)}),
               'qty', ${qualifiedColumn(mealIngredients.qty)}::float,
               'unit', ${qualifiedColumn(mealIngredients.unit)}
             ) order by ${qualifiedColumn(mealIngredients.position)}
@@ -309,7 +311,13 @@ export async function getAccountExport(userId: number) {
       .select()
       .from(savedExtras)
       .where(eq(savedExtras.userId, userId))
+    const customIngredients = await tx
+      .select({ id: ingredients.id, name: ingredients.name })
+      .from(userIngredients)
+      .innerJoin(ingredients, eq(ingredients.id, userIngredients.ingredientId))
+      .where(eq(userIngredients.userId, userId))
     return {
+      customIngredients,
       version: 1,
       account: { email: account?.email, isPro: account?.isPro, settings },
       recipes: recipeRows,
@@ -326,7 +334,15 @@ export async function deleteAccount(userId: number) {
   return db.transaction(async (tx) => {
     const adminIds = await lockAdminIds(tx)
     if (adminIds.length === 1 && adminIds[0] === userId) return false
+    const personal = await tx
+      .select({ id: userIngredients.ingredientId })
+      .from(userIngredients)
+      .where(eq(userIngredients.userId, userId))
     await tx.delete(users).where(eq(users.id, userId))
+    if (personal.length)
+      await tx.execute(
+        sql`delete from ingredients where id = any(${sql.param(personal.map((row) => row.id))}::int[]) and not is_catalog and not exists (select 1 from user_ingredients where ingredient_id = ingredients.id) and not exists (select 1 from meal_ingredients where ingredient_id = ingredients.id)`,
+      )
     return true
   })
 }

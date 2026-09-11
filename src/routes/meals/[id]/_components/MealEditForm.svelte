@@ -1,6 +1,8 @@
 <script lang="ts">
   import { deleteMealImage, updateMeal, uploadMealImage } from '$lib/api/meals'
   import Textarea from '$lib/components/ui/Textarea.svelte'
+  import IngredientSelect from '$lib/components/ui/IngredientSelect.svelte'
+  import type { IngredientOption } from '$lib/domain/ingredients'
   import {
     CUISINE_OPTIONS,
     DIET_OPTIONS,
@@ -16,12 +18,14 @@
   let {
     meal,
     ingredients,
+    ingredientOptions,
     hasUploadedImage,
     onCancel,
     onSaved,
   }: {
     meal: Meal
     ingredients: IngredientInput[]
+    ingredientOptions: IngredientOption[]
     hasUploadedImage: boolean
     onCancel: () => void
     onSaved: (meal: Meal, hasUploadedImage: boolean) => void | Promise<void>
@@ -41,12 +45,19 @@
   let saving = $state(false)
   let saveError = $state('')
 
-  type IngredientRow = { name: string; qty: number | ''; unit: string }
+  let options = $derived(ingredientOptions)
+  type IngredientRow = {
+    name: string
+    ingredientId?: number
+    qty: number | ''
+    unit: string
+  }
   const emptyRow = (): IngredientRow => ({ name: '', qty: '', unit: '' })
   let ingredientRows = $derived.by<IngredientRow[]>(() =>
     ingredients.length
       ? ingredients.map((i) => ({
           name: i.name,
+          ingredientId: i.ingredientId,
           qty: i.qty ?? '',
           unit: i.unit ?? '',
         }))
@@ -112,6 +123,7 @@
       .filter((r) => r.name.trim() || r.qty !== '' || r.unit)
       .map((r) => ({
         name: r.name.trim(),
+        ingredientId: r.ingredientId,
         qty: r.qty === '' ? null : Number(r.qty),
         unit: r.unit || null,
       }))
@@ -354,10 +366,16 @@
     <div class="ingredient-rows">
       {#each ingredientRows as row, i}
         <div class="ingredient-row">
-          <input
-            type="text"
-            placeholder={t('Ingredient')}
-            bind:value={row.name}
+          <IngredientSelect
+            {options}
+            name={row.name}
+            ingredientId={row.ingredientId}
+            onselect={(ingredient, name) => {
+              row.name = name
+              row.ingredientId = ingredient.id
+              if (!options.some((option) => option.id === ingredient.id))
+                options = [...options, ingredient]
+            }}
           />
           <input
             type="number"

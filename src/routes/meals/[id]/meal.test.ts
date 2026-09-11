@@ -71,7 +71,7 @@ describe('REST /meals/:id', () => {
       mockDb.limit.mockResolvedValueOnce([{ userId: 1, archivedAt: null }])
       updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
       await PATCH(makeEvent({ name: 'updated' }))
-      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' })
+      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' }, 1)
     })
 
     it('does not allow editing a global meal', async () => {
@@ -90,7 +90,7 @@ describe('REST /meals/:id', () => {
       updateMeal.mockResolvedValueOnce({ id: 1, name: 'updated' })
       const response = await PATCH(makeEvent({ name: 'updated' }, '1', 1, true))
       expect(response.status).toBe(200)
-      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' })
+      expect(updateMeal).toHaveBeenCalledWith(1, { name: 'updated' }, 1)
     })
 
     it('hides archived meals with 404', async () => {

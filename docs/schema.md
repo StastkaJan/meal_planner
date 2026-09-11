@@ -1,5 +1,11 @@
 # DB Schema
 
+## Ingredient identity
+
+`ingredients` retains stable IDs and original unique names, adding `name_cs`, `aliases`, and `is_catalog`. `user_ingredients` links reusable personal options to their owner; only catalogue rows and the caller's links appear in pickers. Shared recipes promote their ingredient identities to the catalogue. `meal_ingredients.original_name` preserves recipe wording independently of identity.
+
+`user_settings.pantry_ingredient_ids` stores multiselect exclusions. Legacy `pantry_staples` text remains synchronized for rollback; migration 0027 backfills unambiguous aliases and preserves unmatched names. Shopping groups by ingredient ID and compatible units. Personal links cascade on account deletion; unreferenced non-catalogue ingredient rows are cleaned up, while shared identities survive.
+
 ## Localization
 
 - `user_settings.locale` stores the preferred supported locale (`en` or `cs`).

@@ -14,7 +14,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
     error(400, 'Invalid JSON')
   let updated
   try {
-    updated = await updateUserMeal(id, body)
+    updated = await updateUserMeal(id, body, locals.user!.id)
   } catch (cause) {
     if (cause instanceof InvalidMealInputError) error(400, cause.message)
     throw cause

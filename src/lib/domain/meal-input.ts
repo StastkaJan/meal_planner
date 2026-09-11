@@ -39,6 +39,7 @@ const nullableText = z
 const ingredient = z
   .object(
     {
+      ingredientId: z.number().int().positive().optional(),
       name: z
         .string({ error: 'Ingredient name is required' })
         .trim()

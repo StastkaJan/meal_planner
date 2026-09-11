@@ -1,3 +1,4 @@
+import { aggregateShoppingIngredients } from '$lib/domain/ingredients'
 import { and, eq, gte, inArray, lt, notInArray, or, sql } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
@@ -375,10 +376,13 @@ export async function getShoppingList(
   planId: number,
   week: string,
   pantryStaples: string[] = [],
+  pantryIngredientIds: number[] = [],
+  locale: string = 'en',
 ) {
   const rows = await db
     .select({
-      name: ingredients.name,
+      ingredientId: ingredients.id,
+      name: sql<string>`case when ${locale} = 'cs' then coalesce(${ingredients.nameCs}, ${ingredients.name}) else ${ingredients.name} end`,
       unit: mealIngredients.unit,
       qty: sql<
         number | null
@@ -393,6 +397,9 @@ export async function getShoppingList(
     .where(
       and(
         inWeek(planId, week),
+        pantryIngredientIds.length
+          ? notInArray(ingredients.id, pantryIngredientIds)
+          : undefined,
         pantryStaples.length
           ? notInArray(
               sql`lower(${ingredients.name})`,
@@ -401,10 +408,15 @@ export async function getShoppingList(
           : undefined,
       ),
     )
-    .groupBy(ingredients.name, mealIngredients.unit)
+    .groupBy(
+      ingredients.id,
+      ingredients.name,
+      ingredients.nameCs,
+      mealIngredients.unit,
+    )
     .orderBy(ingredients.name)
 
-  return rows
+  return aggregateShoppingIngredients(rows)
 }
 
 export async function getWeekSlotsWithNutrition(planId: number, week: string) {

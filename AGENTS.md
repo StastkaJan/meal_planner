@@ -114,6 +114,8 @@ docker-compose.yml
 
 ## DB schema & API routes
 
+<!-- NOTE: Ingredient pickers use the bilingual `ingredients` catalogue plus private `user_ingredients` links; `POST /ingredients` saves custom options. Recipe rows retain `original_name`; shopping aggregates ingredient IDs with compatible units. Account export includes custom options; deletion removes unreferenced private ingredients. -->
+
 Recipe editing and translation use `/meals/[id]/edit` and `/meals/[id]/translate`; both require recipe edit access.
 
 See [docs/schema.md](docs/schema.md) and [docs/api.md](docs/api.md).
@@ -127,7 +129,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 - Browser mutations go through `$lib/api`; server routes use guards/services, and only repositories import `db`.
 - Prefer filtering, joins, and aggregation in repository SQL when doing so reduces rows or data transferred; keep TypeScript filtering for domain logic that SQL cannot express clearly.
 - Plan `portions` is the number of people served; shopping quantities scale by `portions / meal.servings`.
-- Profile `pantryStaples` are case-insensitive shopping-list exclusions, not inventory.
+- Pantry exclusions use `pantryIngredientIds`; legacy `pantryStaples` names remain synchronized for rollback.
 - Interactive state that should survive navigation/reload belongs in the URL (`?param=`) so `load` reruns automatically — don't shadow it in component `$state`.
 - This project does **not** use `invalidate`/`invalidateAll` and does **not** use `use:enhance`. All mutations use `fetch()` against the REST endpoints (`src/routes/**/+server.ts`), then update local state directly: for an in-place edit, derive a writable copy of load data with `$derived` (e.g. `let plan = $derived(data.plan)`) and reassign it after the `fetch` (see `handleSlotChange`/`handleSettingsChange` in `src/routes/+page.svelte`); for a create/delete that changes which rows exist, `goto()` the new/`/` URL to re-run `load` (see `createPlan`/`deletePlan` in `src/routes/+page.svelte`). If a REST endpoint doesn't exist yet for a form, add one in `+server.ts` — don't use form actions.
 - Note: `goto()` to the same route doesn't remount the component, so local `$state` for "is this form open" (e.g. `creating`) must be reset explicitly in the handler — see `createPlan` in `src/routes/+page.svelte`.

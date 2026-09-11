@@ -20,6 +20,7 @@
     <MealEditForm
       meal={data.sourceMeal}
       ingredients={data.ingredients}
+      ingredientOptions={data.ingredientOptions}
       hasUploadedImage={data.hasUploadedImage}
       onCancel={() => goto(recipeUrl)}
       onSaved={() => goto(recipeUrl)}

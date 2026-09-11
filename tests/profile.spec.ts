@@ -9,6 +9,44 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/profile')
 })
 
+test('@smoke pantry multiselect searches aliases and reuses custom ingredients', async ({
+  page,
+}) => {
+  await page.locator('summary', { hasText: 'Always on hand' }).click()
+  const search = page.getByRole('searchbox', { name: 'Search ingredients' })
+  await search.fill('rajčata')
+  const tomato = page.getByRole('checkbox')
+  await expect(tomato).toHaveCount(1)
+  await tomato.check()
+  await search.fill('My custom seasoning')
+  await page
+    .getByRole('button', { name: 'Add custom ingredient: My custom seasoning' })
+    .click()
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: My custom seasoning',
+    }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save pantry staples' }).click()
+  await expect(page.getByText('Pantry staples saved.')).toBeVisible()
+  await page.reload()
+  const chips = page.locator('.ingredient-picker .chip')
+  await expect(chips).toHaveCount(2)
+  await page
+    .getByRole('button', { name: 'Remove ingredient: My custom seasoning' })
+    .click()
+  await page.getByRole('button', { name: 'Save pantry staples' }).click()
+  await expect(page.getByText('Pantry staples saved.')).toBeVisible()
+  await page.reload()
+  await expect(chips).toHaveCount(1)
+  await page.locator('summary', { hasText: 'Always on hand' }).click()
+  await search.fill('My custom seasoning')
+  await page
+    .getByRole('checkbox', { name: 'My custom seasoning', exact: true })
+    .check()
+  await expect(chips).toHaveCount(2)
+})
+
 test('@smoke saves all nutrient goals and restores defaults when cleared', async ({
   page,
 }) => {
