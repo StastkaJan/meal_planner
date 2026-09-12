@@ -17,6 +17,7 @@ function makeTx(responses: unknown[]) {
     'onConflictDoNothing',
     'returning',
     'orderBy',
+    'limit',
   ]) {
     chain[method] = vi.fn(() => chain)
   }
@@ -99,7 +100,13 @@ describe('createMeal / updateMeal ingredient sync', () => {
       [{ id: 1, name: 'Soup' }], // insert(meals).values().returning()
       undefined, // delete(mealIngredients).where()
       [{ userId: 1 }], // owner of the meal
-      [{ id: 5, name: 'Carrot', nameCs: null, aliases: ['carrots'] }], // visible catalogue
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
@@ -142,7 +149,13 @@ describe('createMeal / updateMeal ingredient sync', () => {
       [{ id: 1, name: 'Soup' }], // update(meals).set().where().returning()
       undefined, // delete(mealIngredients).where()
       [{ userId: 1 }], // owner of the meal
-      [{ id: 5, name: 'Carrot', nameCs: null, aliases: ['carrots'] }], // visible catalogue
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
@@ -170,7 +183,13 @@ describe('createMeal / updateMeal ingredient sync', () => {
       [{ id: 1, name: 'Soup' }], // select(meals).where() — mealValues is empty, no .update()
       undefined, // delete(mealIngredients).where()
       [{ userId: 1 }], // owner of the meal
-      [{ id: 5, name: 'Carrot', nameCs: null, aliases: ['carrots'] }], // visible catalogue
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>

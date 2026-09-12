@@ -8,6 +8,7 @@ import {
   bonusItems,
   mealIngredients,
   ingredients,
+  ingredientTranslations,
   slotRepeats,
   slotLeftovers,
   mealTranslations,
@@ -382,7 +383,7 @@ export async function getShoppingList(
   const rows = await db
     .select({
       ingredientId: ingredients.id,
-      name: sql<string>`case when ${locale} = 'cs' then coalesce(${ingredients.nameCs}, ${ingredients.name}) else ${ingredients.name} end`,
+      name: sql<string>`coalesce(${ingredientTranslations.name}, ${ingredients.name})`,
       unit: mealIngredients.unit,
       qty: sql<
         number | null
@@ -394,6 +395,13 @@ export async function getShoppingList(
     .innerJoin(meals, eq(weekSlots.mealId, meals.id))
     .innerJoin(mealIngredients, eq(mealIngredients.mealId, meals.id))
     .innerJoin(ingredients, eq(ingredients.id, mealIngredients.ingredientId))
+    .leftJoin(
+      ingredientTranslations,
+      and(
+        eq(ingredientTranslations.ingredientId, ingredients.id),
+        eq(ingredientTranslations.locale, locale),
+      ),
+    )
     .where(
       and(
         inWeek(planId, week),
@@ -411,7 +419,7 @@ export async function getShoppingList(
     .groupBy(
       ingredients.id,
       ingredients.name,
-      ingredients.nameCs,
+      ingredientTranslations.name,
       mealIngredients.unit,
     )
     .orderBy(ingredients.name)

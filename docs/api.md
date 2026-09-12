@@ -1,6 +1,6 @@
 # API Routes
 
-- `POST /ingredients` (signed in): `{name}` with 1–100 characters selects a known alias or saves a reusable personal ingredient option; returns `{id, name, nameCs, aliases}`. No external service is used.
+- `POST /ingredients` (signed in): `{name}` with 1–100 characters selects a known alias or saves a reusable personal ingredient option; returns `{id, name, translations: {[locale]: {name, aliases}}}`. Missing locales fall back to `name`. No external service is used.
 - Recipe ingredient writes accept optional `ingredientId` alongside original `name`, `qty`, and `unit`. IDs must belong to the shared catalogue or acting user's options; name-only imports resolve known aliases automatically.
 - `PATCH /profile` accepts `pantryIngredientIds: number[]` (at most 100 visible options), preserving legacy `pantryStaples` names for rollback. Legacy name-based writes remain supported and resolve IDs. Profile export includes personal ingredient options.
 

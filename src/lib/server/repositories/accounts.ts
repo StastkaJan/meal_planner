@@ -19,6 +19,7 @@ import {
   weekSlots,
 } from '$lib/database/schema'
 import type { LegalNotice } from '$lib/legal'
+import { ingredientOptionColumns } from './ingredients'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -312,7 +313,7 @@ export async function getAccountExport(userId: number) {
       .from(savedExtras)
       .where(eq(savedExtras.userId, userId))
     const customIngredients = await tx
-      .select({ id: ingredients.id, name: ingredients.name })
+      .select(ingredientOptionColumns)
       .from(userIngredients)
       .innerJoin(ingredients, eq(ingredients.id, userIngredients.ingredientId))
       .where(eq(userIngredients.userId, userId))

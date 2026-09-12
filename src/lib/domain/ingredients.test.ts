@@ -2,20 +2,41 @@ import { describe, expect, it } from 'vitest'
 import {
   aggregateShoppingIngredients,
   matchIngredient,
+  ingredientDisplayName,
+  type IngredientOption,
   normalizeIngredientUnit,
 } from './ingredients'
 
-const options = [
-  { id: 1, name: 'Tomato', nameCs: 'Rajče', aliases: ['tomatoes', 'rajčata'] },
+const options: IngredientOption[] = [
+  {
+    id: 1,
+    name: 'Tomato',
+    translations: {
+      en: { name: 'Tomato', aliases: ['tomatoes'] },
+      cs: { name: 'Rajče', aliases: ['rajčata'] },
+    },
+  },
   {
     id: 2,
     name: 'Canned tomatoes',
-    nameCs: 'Konzervovaná rajčata',
-    aliases: [],
+    translations: { cs: { name: 'Konzervovaná rajčata', aliases: [] } },
   },
 ]
 
 describe('ingredient identity', () => {
+  it('supports additional locales and falls back to the original name', () => {
+    const option = {
+      ...options[0],
+      translations: {
+        ...options[0].translations,
+        de: { name: 'Tomate', aliases: ['tomaten'] },
+      },
+    }
+    expect(ingredientDisplayName(option, 'de')).toBe('Tomate')
+    expect(ingredientDisplayName(option, 'fr')).toBe('Tomato')
+    expect(ingredientDisplayName(option, 'constructor')).toBe('Tomato')
+    expect(matchIngredient(' TOMATEN ', [option])?.id).toBe(1)
+  })
   it('matches complete aliases across languages/forms without merging preparation differences', () => {
     expect(matchIngredient('  RAJČATA ', options)?.id).toBe(1)
     expect(matchIngredient('tomatoes', options)?.id).toBe(1)
@@ -24,7 +45,12 @@ describe('ingredient identity', () => {
     expect(
       matchIngredient('tomatoes', [
         ...options,
-        { ...options[1], aliases: ['tomatoes'] },
+        {
+          ...options[1],
+          translations: {
+            en: { name: 'Canned tomatoes', aliases: ['tomatoes'] },
+          },
+        },
       ]),
     ).toBeUndefined()
   })

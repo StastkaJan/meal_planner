@@ -1,9 +1,24 @@
 export type IngredientOption = {
   id: number
   name: string
-  nameCs: string | null
-  aliases: string[]
+  translations: Record<string, { name: string; aliases: string[] }>
 }
+
+export const ingredientDisplayName = (
+  option: IngredientOption,
+  locale: string,
+) =>
+  Object.hasOwn(option.translations, locale)
+    ? option.translations[locale].name
+    : option.name
+
+export const ingredientNames = (option: IngredientOption) => [
+  option.name,
+  ...Object.values(option.translations).flatMap(({ name, aliases }) => [
+    name,
+    ...aliases,
+  ]),
+]
 
 export const normalizeIngredientName = (name: string) =>
   name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en')
@@ -11,7 +26,7 @@ export const normalizeIngredientName = (name: string) =>
 export function matchIngredient(name: string, options: IngredientOption[]) {
   const key = normalizeIngredientName(name)
   const matches = options.filter((option) =>
-    [option.name, option.nameCs, ...option.aliases].some(
+    ingredientNames(option).some(
       (alias) => alias && normalizeIngredientName(alias) === key,
     ),
   )

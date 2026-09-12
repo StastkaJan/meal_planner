@@ -2,6 +2,8 @@
   import { createIngredient } from '$lib/api/ingredients'
   import {
     matchIngredient,
+    ingredientDisplayName,
+    ingredientNames,
     normalizeIngredientName,
     type IngredientOption,
   } from '$lib/domain/ingredients'
@@ -32,21 +34,16 @@
   let busy = $state(false)
   let error = $state('')
   const displayName = (option: IngredientOption) =>
-    locale() === 'cs' ? (option.nameCs ?? option.name) : option.name
+    ingredientDisplayName(option, locale())
   let all = $derived([
     ...options,
     ...custom.filter(
       (item) => !options.some((option) => option.id === item.id),
     ),
   ])
-  const names = (option: IngredientOption) => [
-    option.name,
-    option.nameCs ?? '',
-    ...option.aliases,
-  ]
   let filtered = $derived(
     all.filter((option) =>
-      names(option).some((value) =>
+      ingredientNames(option).some((value) =>
         normalizeIngredientName(value).includes(normalizeIngredientName(query)),
       ),
     ),
