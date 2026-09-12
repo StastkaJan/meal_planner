@@ -12,15 +12,14 @@ test.beforeEach(async ({ page }) => {
 test('@smoke pantry multiselect searches aliases and reuses custom ingredients', async ({
   page,
 }) => {
-  await page.locator('summary', { hasText: 'Always on hand' }).click()
-  const search = page.getByRole('searchbox', { name: 'Search ingredients' })
+  const search = page.getByRole('combobox', { name: 'Search ingredients' })
   await search.fill('rajčata')
-  const tomato = page.getByRole('checkbox', { name: 'Tomato', exact: true })
+  const tomato = page.getByRole('option', { name: 'Tomato', exact: true })
   await expect(tomato).toHaveCount(1)
-  await tomato.check()
+  await tomato.click()
   await search.fill('My custom seasoning')
   await page
-    .getByRole('button', { name: 'Add custom ingredient: My custom seasoning' })
+    .getByRole('option', { name: 'Add custom ingredient: My custom seasoning' })
     .click()
   await expect(
     page.getByRole('button', {
@@ -30,7 +29,7 @@ test('@smoke pantry multiselect searches aliases and reuses custom ingredients',
   await page.getByRole('button', { name: 'Save pantry staples' }).click()
   await expect(page.getByText('Pantry staples saved.')).toBeVisible()
   await page.reload()
-  const chips = page.locator('.ingredient-picker .chip')
+  const chips = page.locator('.ingredient-picker ul.selected > li')
   await expect(chips).toHaveCount(2)
   await page
     .getByRole('button', { name: 'Remove ingredient: My custom seasoning' })
@@ -39,11 +38,10 @@ test('@smoke pantry multiselect searches aliases and reuses custom ingredients',
   await expect(page.getByText('Pantry staples saved.')).toBeVisible()
   await page.reload()
   await expect(chips).toHaveCount(1)
-  await page.locator('summary', { hasText: 'Always on hand' }).click()
   await search.fill('My custom seasoning')
   await page
-    .getByRole('checkbox', { name: 'My custom seasoning', exact: true })
-    .check()
+    .getByRole('option', { name: 'My custom seasoning', exact: true })
+    .click()
   await expect(chips).toHaveCount(2)
 })
 

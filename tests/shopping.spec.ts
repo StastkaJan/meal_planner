@@ -76,9 +76,8 @@ test('@smoke shopping list counts every planned meal and handles different ingre
   await expect(page.getByText(/Copied.*Google Keep/)).toBeVisible()
 
   await page.goto('/profile')
-  await page.locator('summary', { hasText: 'Always on hand' }).click()
-  await page.getByRole('searchbox', { name: 'Search ingredients' }).fill('med')
-  await page.getByRole('checkbox', { name: 'Honey', exact: true }).check()
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('med')
+  await page.getByRole('option', { name: 'Honey', exact: true }).click()
   await page.getByRole('button', { name: 'Save pantry staples' }).click()
   await expect(page.getByText('Pantry staples saved.')).toBeVisible()
   await page.goBack()

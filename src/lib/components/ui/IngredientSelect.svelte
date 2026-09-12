@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MultiSelect from 'svelte-multiselect'
   import { createIngredient } from '$lib/api/ingredients'
   import {
     matchIngredient,
@@ -28,205 +29,104 @@
   } = $props()
   const { t, locale, message } = useI18n()
   let custom = $state<IngredientOption[]>([])
-  let query = $state('')
-  let open = $state(false)
-  let disclosure: HTMLDetailsElement
-  let busy = $state(false)
   let error = $state('')
-  const displayName = (option: IngredientOption) =>
-    ingredientDisplayName(option, locale())
+  const toOption = (ingredient: IngredientOption) => ({
+    label: ingredientDisplayName(ingredient, locale()),
+    ingredient,
+  })
   let all = $derived([
     ...options,
     ...custom.filter(
       (item) => !options.some((option) => option.id === item.id),
     ),
   ])
-  let filtered = $derived(
-    all.filter((option) =>
-      ingredientNames(option).some((value) =>
-        normalizeIngredientName(value).includes(normalizeIngredientName(query)),
-      ),
+  let choices = $derived(all.map(toOption))
+  let selected = $derived(
+    choices.filter(({ ingredient }) =>
+      multiple
+        ? selectedIds.includes(ingredient.id)
+        : ingredient.id === ingredientId,
     ),
   )
-  let exact = $derived(matchIngredient(query, all))
-  let selected = $derived(all.find((option) => option.id === ingredientId))
 
-  function choose(option: IngredientOption) {
-    if (multiple) {
-      selectedIds = selectedIds.includes(option.id)
-        ? selectedIds.filter((id) => id !== option.id)
-        : [...selectedIds, option.id]
-      onchange?.()
-    } else {
-      onselect?.(option, displayName(option))
-      open = false
-      disclosure.querySelector('summary')?.focus()
-      query = ''
-    }
-  }
-
-  async function addCustom() {
-    if (!query.trim() || busy) return
-    busy = true
+  async function addCustom({ option }: { option: unknown }) {
+    const query = String(
+      typeof option === 'object' && option !== null && 'label' in option
+        ? option.label
+        : option,
+    ).trim()
+    if (!query) return false as const
     error = ''
     try {
-      const option = exact ?? (await createIngredient(query.trim()))
-      if (!all.some((item) => item.id === option.id))
-        custom = [...custom, option]
-      if (!multiple || !selectedIds.includes(option.id)) choose(option)
-      query = ''
+      const ingredient =
+        matchIngredient(query, all) ?? (await createIngredient(query))
+      if (!all.some((item) => item.id === ingredient.id))
+        custom = [...custom, ingredient]
+      return toOption(ingredient)
     } catch (cause) {
       error = message(cause instanceof Error ? cause.message : 'Request failed')
-    } finally {
-      busy = false
+      return false as const
     }
   }
 </script>
 
 <div class="ingredient-picker">
-  {#if multiple}
-    <div class="selected" role="group" aria-label={t('Pantry staples')}>
-      {#each all.filter( (option) => selectedIds.includes(option.id) ) as option (option.id)}
-        <button
-          type="button"
-          class="chip"
-          aria-label={`${t('Remove ingredient')}: ${displayName(option)}`}
-          onclick={() => choose(option)}>{displayName(option)} ×</button
-        >
-      {/each}
-    </div>
-  {/if}
-  <details bind:this={disclosure} bind:open>
-    <summary
-      >{multiple
-        ? t('Always on hand')
-        : selected
-          ? displayName(selected)
-          : name || t('Ingredient')}</summary
-    >
-    <div class="choices">
-      <input
-        type="search"
-        aria-label={locale() === 'cs'
-          ? 'Hledat suroviny'
-          : 'Search ingredients'}
-        placeholder={locale() === 'cs'
-          ? 'Hledat suroviny'
-          : 'Search ingredients'}
-        bind:value={query}
-        onkeydown={(event) => {
-          if (event.key === 'Enter') event.preventDefault()
-          if (event.key === 'Escape') {
-            open = false
-            disclosure.querySelector('summary')?.focus()
-          }
-        }}
-      />
-      <div class="results">
-        {#each filtered as option (option.id)}
-          {#if multiple}
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(option.id)}
-                onchange={() => choose(option)}
-              />
-              {displayName(option)}
-            </label>
-          {:else}
-            <button type="button" onclick={() => choose(option)}
-              >{displayName(option)}</button
-            >
-          {/if}
-        {/each}
-      </div>
-      {#if query.trim() && !exact}
-        <button type="button" disabled={busy} onclick={addCustom}>
-          {locale() === 'cs'
-            ? 'Přidat vlastní surovinu'
-            : 'Add custom ingredient'}:
-          {query.trim()}
-        </button>
-      {/if}
-      {#if error}<p role="alert">{error}</p>{/if}
-    </div>
-  </details>
+  <MultiSelect
+    options={choices}
+    bind:selected
+    maxSelect={multiple ? null : 1}
+    minSelect={multiple ? 0 : 1}
+    selectedDisplay={multiple ? 'chips' : 'input'}
+    closeDropdownOnSelect
+    resetFilterOnAdd
+    selectedOptionsDraggable={false}
+    maxSelectMsg={null}
+    removeAllTitle={t('Remove ingredient')}
+    removeBtnTitle={`${t('Remove ingredient')}:`}
+    placeholder={multiple ? t('Always on hand') : name || t('Ingredient')}
+    inputProps={{
+      'aria-label':
+        locale() === 'cs' ? 'Hledat suroviny' : 'Search ingredients',
+    }}
+    key={(option) => option.ingredient?.id ?? option.label}
+    filterFunc={(option, query) =>
+      ingredientNames(option.ingredient).some((value) =>
+        normalizeIngredientName(value).includes(normalizeIngredientName(query)),
+      )}
+    allowUserOptions
+    createOptionMsg={({ searchText }) =>
+      `${locale() === 'cs' ? 'Přidat vlastní surovinu' : 'Add custom ingredient'}: ${searchText.trim()}`}
+    noMatchingOptionsMsg={locale() === 'cs'
+      ? 'Žádné suroviny'
+      : 'No ingredients found'}
+    oncreate={addCustom}
+    onchange={() => {
+      if (multiple) {
+        selectedIds = selected.map(({ ingredient }) => ingredient.id)
+        onchange?.()
+      } else if (selected[0]) {
+        onselect?.(selected[0].ingredient, selected[0].label)
+      }
+    }}
+  />
+  {#if error}<p role="alert">{error}</p>{/if}
 </div>
 
 <style lang="scss">
   .ingredient-picker {
     min-width: 0;
-  }
-  summary,
-  input[type='search'],
-  button,
-  .results label {
-    padding: 9px 10px;
-    font: inherit;
-    color: $color-text;
-  }
-  summary,
-  input[type='search'] {
-    border: 1px solid $color-border-strong;
-    border-radius: $radius-sm;
-    background: $color-surface;
-    min-height: 40px;
-  }
-  summary {
-    cursor: pointer;
-    overflow-wrap: anywhere;
-  }
-  .choices {
-    display: grid;
-    gap: 6px;
-    padding-top: 6px;
-  }
-  input[type='search'] {
-    width: 100%;
-    min-width: 0;
-  }
-  .results {
-    display: grid;
-    max-height: 210px;
-    overflow-y: auto;
-  }
-  button {
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    background: $color-surface-2;
-    cursor: pointer;
-    text-align: left;
-  }
-  .results button {
-    border: 0;
-    background: $color-surface;
-  }
-  .results label {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    cursor: pointer;
-  }
-  .results button:hover,
-  .results label:hover {
-    background: $color-accent-dim;
-  }
-  .selected {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .chip {
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 0.85rem;
+    --sms-min-height: 42px;
+    --sms-border: 1px solid #{$color-border-strong};
+    --sms-border-radius: #{$radius-sm};
+    --sms-bg: #{$color-surface};
+    --sms-text-color: #{$color-text};
+    --sms-options-bg: #{$color-surface};
+    --sms-selected-bg: #{$color-surface-2};
+    --sms-li-active-bg: #{$color-accent-dim};
+    --sms-active-color: #{$color-accent};
+    --sms-padding: 4px 10px;
   }
   p {
     color: $color-danger;
-  }
-  :is(button, summary, input):focus-visible {
-    outline: 2px solid $color-accent;
-    outline-offset: 2px;
   }
 </style>

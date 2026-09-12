@@ -143,12 +143,11 @@ test('warns when an ingredient cannot be scaled', async ({ page }) => {
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.locator('.ingredient-row summary').click()
   await page
-    .getByRole('searchbox', { name: 'Search ingredients' })
+    .getByRole('combobox', { name: 'Search ingredients' })
     .fill('Salt to taste')
   await page
-    .getByRole('button', { name: 'Add custom ingredient: Salt to taste' })
+    .getByRole('option', { name: 'Add custom ingredient: Salt to taste' })
     .click()
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page).toHaveURL(/\/meals\/\d+$/)
@@ -169,9 +168,21 @@ test('@smoke allows an ingredient quantity without a unit', async ({
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.locator('.ingredient-row summary').click()
-  await page.getByRole('searchbox', { name: 'Search ingredients' }).fill('Eggs')
-  await page.getByRole('button', { name: 'Eggs', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Eggs')
+  await page.getByRole('option', { name: 'Eggs', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Eggs')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Milk')
+  await page.getByRole('option', { name: 'Milk', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Milk')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Eggs')
+  await page.getByRole('option', { name: 'Eggs', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Eggs')
   await page.getByPlaceholder('Qty').fill('2')
   const saveResponsePromise = page.waitForResponse(
     (response) =>
@@ -221,11 +232,8 @@ test('scales ingredient quantities with servings', async ({ page }) => {
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
-  await page.locator('.ingredient-row summary').click()
-  await page
-    .getByRole('searchbox', { name: 'Search ingredients' })
-    .fill('Flour')
-  await page.getByRole('button', { name: 'Flour', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Flour')
+  await page.getByRole('option', { name: 'Flour', exact: true }).click()
   await page.getByPlaceholder('Qty').fill('1')
   await page.locator('.ingredient-row select').selectOption('cup')
   await page.getByRole('button', { name: 'Save' }).click()
@@ -245,11 +253,10 @@ test('@smoke translates recipe ingredient names', async ({ page }) => {
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.locator('.ingredient-row summary').click()
   await page
-    .getByRole('searchbox', { name: 'Search ingredients' })
+    .getByRole('combobox', { name: 'Search ingredients' })
     .fill('Carrot')
-  await page.getByRole('button', { name: 'Carrot', exact: true }).click()
+  await page.getByRole('option', { name: 'Carrot', exact: true }).click()
   await page.getByLabel('Instructions').fill('Chop the carrot.')
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page).toHaveURL(/\/meals\/\d+$/)
@@ -445,11 +452,8 @@ test('cooking mode scales ingredients, presents steps, and starts timers', async
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
-  await page.locator('.ingredient-row summary').click()
-  await page
-    .getByRole('searchbox', { name: 'Search ingredients' })
-    .fill('Flour')
-  await page.getByRole('button', { name: 'Flour', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Flour')
+  await page.getByRole('option', { name: 'Flour', exact: true }).click()
   await page.getByPlaceholder('Qty').fill('1')
   await page.locator('.ingredient-row select').selectOption('cup')
   await page
