@@ -17,6 +17,25 @@ test('@smoke pantry multiselect searches aliases and reuses custom ingredients',
   const tomato = page.getByRole('option', { name: 'Tomato', exact: true })
   await expect(tomato).toHaveCount(1)
   await tomato.click()
+  await expect(search).toHaveAttribute('aria-expanded', 'false')
+  await search.fill('Tomato')
+  await expect(tomato).toHaveAttribute('aria-selected', 'true')
+  await tomato.click()
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: Tomato',
+      exact: true,
+    }),
+  ).toHaveCount(0)
+  await search.fill('Tomato')
+  await search.press('ArrowDown')
+  await search.press('Enter')
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: Tomato',
+      exact: true,
+    }),
+  ).toBeVisible()
   await search.fill('My custom seasoning')
   await page
     .getByRole('option', { name: 'Add custom ingredient: My custom seasoning' })
