@@ -1,5 +1,5 @@
 {
-  "id": "6e602a05-5fd0-4ee9-aec9-2e556cde88b9",
+  "id": "da9930ea-b75c-4448-b88c-91756c53bb66",
   "prevId": "41bf06cf-2d67-4339-b8fe-2959c9659215",
   "version": "7",
   "dialect": "postgresql",
@@ -148,7 +148,7 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "is_catalog": {
           "name": "is_catalog",
@@ -158,7 +158,23 @@
           "default": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "ingredients_normalized_name_idx": {
+          "name": "ingredients_normalized_name_idx",
+          "columns": [
+            {
+              "expression": "lower(regexp_replace(trim(\"name\"), \u0027\\s+\u0027, \u0027 \u0027, \u0027g\u0027))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
@@ -168,6 +184,90 @@
           "columns": ["name"]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ingredient_translations": {
+      "name": "ingredient_translations",
+      "schema": "",
+      "columns": {
+        "ingredient_id": {
+          "name": "ingredient_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aliases": {
+          "name": "aliases",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "\u0027{}\u0027"
+        }
+      },
+      "indexes": {
+        "ingredient_translations_name_idx": {
+          "name": "ingredient_translations_name_idx",
+          "columns": [
+            {
+              "expression": "lower(regexp_replace(trim(\"name\"), \u0027\\s+\u0027, \u0027 \u0027, \u0027g\u0027))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ingredient_translations_aliases_idx": {
+          "name": "ingredient_translations_aliases_idx",
+          "columns": [
+            {
+              "expression": "aliases",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ingredient_translations_ingredient_id_ingredients_id_fk": {
+          "name": "ingredient_translations_ingredient_id_ingredients_id_fk",
+          "tableFrom": "ingredient_translations",
+          "tableTo": "ingredients",
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ingredient_translations_ingredient_id_locale_pk": {
+          "name": "ingredient_translations_ingredient_id_locale_pk",
+          "columns": ["ingredient_id", "locale"]
+        }
+      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -510,7 +610,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'en'"
+          "default": "\u0027en\u0027"
         },
         "name": {
           "name": "name",
@@ -571,14 +671,14 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "allowed_slots": {
           "name": "allowed_slots",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "image_url": {
           "name": "image_url",
@@ -663,7 +763,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'New Plan'"
+          "default": "\u0027New Plan\u0027"
         },
         "portions": {
           "name": "portions",
@@ -684,21 +784,21 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "dietary_restrictions": {
           "name": "dietary_restrictions",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "meal_slots": {
           "name": "meal_slots",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "ARRAY['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner']::text[]"
+          "default": "ARRAY[\u0027breakfast\u0027, \u0027morning_snack\u0027, \u0027lunch\u0027, \u0027afternoon_snack\u0027, \u0027dinner\u0027]::text[]"
         }
       },
       "indexes": {},
@@ -758,7 +858,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "\u0027pending\u0027"
         },
         "meal_id": {
           "name": "meal_id",
@@ -1113,35 +1213,35 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'en'"
+          "default": "\u0027en\u0027"
         },
         "cuisine_prefs": {
           "name": "cuisine_prefs",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "dietary_restrictions": {
           "name": "dietary_restrictions",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "pantry_staples": {
           "name": "pantry_staples",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "pantry_ingredient_ids": {
           "name": "pantry_ingredient_ids",
           "type": "integer[]",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'"
+          "default": "\u0027{}\u0027"
         },
         "calorie_target": {
           "name": "calorie_target",

@@ -6,6 +6,8 @@
 
 > Before every commit, run `npm run check` and fix any failures.
 
+> Migrations: keep exactly one migration per PR that changes the database; consolidate its SQL, journal entry, and snapshot before merging. Preserve compatibility with previews that applied earlier PR revisions.
+
 ## Stack
 
 - **Frontend**: SvelteKit 2, Svelte 5, Vite 8, Sass
@@ -114,7 +116,7 @@ docker-compose.yml
 
 ## DB schema & API routes
 
-<!-- NOTE: Ingredient pickers use `ingredients` identities, locale-keyed `ingredient_translations` (name, normalized aliases), and private `user_ingredients` links; `POST /ingredients` returns locale maps. Missing labels fall back to the original name; migration 0028 retains legacy mixed-language aliases under `und` and old columns for rollback. Recipe rows retain `original_name`; shopping aggregates IDs with compatible units. Account export includes custom options and translations; deletion removes unreferenced private ingredients. -->
+<!-- NOTE: Ingredient pickers use `ingredients` identities, locale-keyed `ingredient_translations` (name, normalized aliases), and private `user_ingredients` links; `POST /ingredients` returns locale maps. Missing labels fall back to the original name; migration 0027 retains legacy mixed-language aliases under `und` and old columns for rollback. Recipe rows retain `original_name`; shopping aggregates IDs with compatible units. Account export includes custom options and translations; deletion removes unreferenced private ingredients. -->
 
 Recipe editing and translation use `/meals/[id]/edit` and `/meals/[id]/translate`; both require recipe edit access.
 

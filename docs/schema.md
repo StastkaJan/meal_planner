@@ -26,7 +26,7 @@ Drizzle definitions live in `src/lib/database/schema`, one table per file.
 
 ## Ingredient identity
 
-`ingredients` retains stable IDs, original unique fallback names, and `is_catalog`. `ingredient_translations` stores `(ingredient_id, locale)` as its primary key, with `name` and normalized `aliases[]`; ingredient deletion cascades to translations. Names use normalized expression indexes and aliases use a GIN index for exact resolution. Missing translations fall back to `ingredients.name`. Migration 0028 preserves Czech labels under `cs` and legacy mixed-language aliases under `und`; `name_cs` and legacy `aliases` remain only for rollback. New locales require rows, not columns.
+`ingredients` retains stable IDs, original unique fallback names, and `is_catalog`. `ingredient_translations` stores `(ingredient_id, locale)` as its primary key, with `name` and normalized `aliases[]`; ingredient deletion cascades to translations. Names use normalized expression indexes and aliases use a GIN index for exact resolution. Missing translations fall back to `ingredients.name`. Migration 0027 preserves Czech labels under `cs` and legacy mixed-language aliases under `und`; `name_cs` and legacy `aliases` remain only for rollback. New locales require rows, not columns.
 
 `user_ingredients` links reusable personal options to their owner; only catalogue rows and the caller's links appear in pickers. Shared recipes promote their ingredient identities to the catalogue. `meal_ingredients.original_name` preserves recipe wording independently of identity. Account exports include each personal option's translations.
 
