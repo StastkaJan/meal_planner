@@ -8,6 +8,11 @@ const verifyPassword = vi.hoisted(() => vi.fn())
 const deleteMealImages = vi.hoisted(() => vi.fn())
 const readMealImage = vi.hoisted(() => vi.fn())
 const saveSettings = vi.hoisted(() => vi.fn())
+const pantryIngredientSelection = vi.hoisted(() => vi.fn())
+vi.mock('../repositories/ingredients', () => ({
+  pantryIngredientSelection,
+  createIngredientOption: vi.fn(),
+}))
 
 vi.mock('../repositories/accounts', () => ({
   deleteAccount: deleteAccountRecord,
@@ -49,6 +54,22 @@ describe('toPantryStaples', () => {
 })
 
 describe('nutrition settings', () => {
+  it('saves selected ingredient IDs and rollback-compatible pantry names together', async () => {
+    pantryIngredientSelection.mockResolvedValueOnce([{ id: 3, name: 'Tomato' }])
+    await updateProfileSettings(42, { pantryIngredientIds: [3, 3] })
+    expect(pantryIngredientSelection).toHaveBeenCalledWith(42, [3])
+    expect(saveSettings).toHaveBeenCalledWith(42, {
+      pantryIngredientIds: [3],
+      pantryStaples: ['Tomato'],
+    })
+  })
+
+  it('rejects malformed pantry IDs before saving', async () => {
+    await expect(
+      updateProfileSettings(42, { pantryIngredientIds: ['3'] }),
+    ).rejects.toMatchObject({ status: 400 })
+    expect(saveSettings).not.toHaveBeenCalled()
+  })
   it('saves decimal display goals without changing omitted settings', async () => {
     await updateProfileSettings(42, {
       fiberTarget: '25.5',

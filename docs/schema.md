@@ -1,14 +1,6 @@
 # DB Schema
 
-## Localization
-
-- `user_settings.locale` stores the preferred supported locale (`en` or `cs`).
-- `meals.source_locale` identifies the language of the original `name`,
-  `description`, and `instructions` fields.
-- `meal_translations` uses `(meal_id, locale)` as its primary key and stores
-  nullable `name`, `description`, `ingredients`, and `instructions` overrides.
-  Ingredient overrides are ordered to match the recipe rows; missing values fall
-  back to the original recipe. Deleting a meal cascades to its translations.
+## Tables
 
 Drizzle definitions live in `src/lib/database/schema`, one table per file.
 
@@ -31,3 +23,21 @@ Drizzle definitions live in `src/lib/database/schema`, one table per file.
 | `savedExtras`         | id, userId FK (cascade, indexed), name, calories, proteinG, carbsG, fatG, fiberG, sugarG, saturatedFatG, saltG — caller-owned reusable extras, included in account exports                                                                                                                                                                                                                                         |
 
 <!-- NOTE: Migration 0026 combines nutrient targets and saved extras. It keeps the former 0027 timestamp and uses IF NOT EXISTS so fresh databases and previews with only the former 0026 applied converge; previews with both applied skip it. -->
+
+## Ingredient identity
+
+`ingredients` retains stable IDs, original unique fallback names, and `is_catalog`. `ingredient_translations` stores `(ingredient_id, locale)` as its primary key, with `name` and normalized `aliases[]`; ingredient deletion cascades to translations. Names use normalized expression indexes and aliases use a GIN index for exact resolution. Missing translations fall back to `ingredients.name`. Migration 0027 preserves Czech labels under `cs` and legacy mixed-language aliases under `und`; `name_cs` and legacy `aliases` remain only for rollback. New locales require rows, not columns.
+
+`user_ingredients` links reusable personal options to their owner; only catalogue rows and the caller's links appear in pickers. Shared recipes promote their ingredient identities to the catalogue. `meal_ingredients.original_name` preserves recipe wording independently of identity. Account exports include each personal option's translations.
+
+`user_settings.pantry_ingredient_ids` stores multiselect exclusions. Legacy `pantry_staples` text remains synchronized for rollback; migration 0027 backfills unambiguous aliases and preserves unmatched names. Shopping groups by ingredient ID and compatible units. Personal links cascade on account deletion; unreferenced non-catalogue ingredient rows are cleaned up, while shared identities survive.
+
+## Localization
+
+- `user_settings.locale` stores the preferred supported locale (`en` or `cs`).
+- `meals.source_locale` identifies the language of the original `name`,
+  `description`, and `instructions` fields.
+- `meal_translations` uses `(meal_id, locale)` as its primary key and stores
+  nullable `name`, `description`, `ingredients`, and `instructions` overrides.
+  Ingredient overrides are ordered to match the recipe rows; missing values fall
+  back to the original recipe. Deleting a meal cascades to its translations.

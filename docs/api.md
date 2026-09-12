@@ -1,5 +1,9 @@
 # API Routes
 
+- `POST /ingredients` (signed in): `{name}` with 1–100 characters selects a known alias or saves a reusable personal ingredient option; returns `{id, name, translations: {[locale]: {name, aliases}}}`. Missing locales fall back to `name`. No external service is used.
+- Recipe ingredient writes accept optional `ingredientId` alongside original `name`, `qty`, and `unit`. IDs must belong to the shared catalogue or acting user's options; name-only imports resolve known aliases automatically.
+- `PATCH /profile` accepts `pantryIngredientIds: number[]` (at most 100 visible options), preserving legacy `pantryStaples` names for rollback. Legacy name-based writes remain supported and resolve IDs. Profile export includes personal ingredient options.
+
 - `POST /plans/[id]/reroll-meal` (Pro): `{date, mealType, favoritesOnly?, myRecipesOnly?}` replaces only that slot with a different visible, unarchived recipe matching its allowed slots and the user's preferences. Returns `{changed: false}` without changing the meal when no alternative matches. Repeat groups are not propagated.
 - `POST /plans/[id]/clear` (owner): `{date}` clears that day's meals and extras; `{week}` clears the seven days starting at that date. Missing or mixed scopes are rejected. Both preserve plan settings and repeat patterns.
 

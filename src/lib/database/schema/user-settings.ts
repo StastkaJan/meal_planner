@@ -19,6 +19,10 @@ export const userSettings = pgTable('user_settings', {
     .array()
     .notNull()
     .default(sql`'{}'`),
+  pantryIngredientIds: integer('pantry_ingredient_ids')
+    .array()
+    .notNull()
+    .default(sql`'{}'`),
   calorieTarget: integer('calorie_target'),
   proteinTarget: integer('protein_target'),
   carbsTarget: integer('carbs_target'),

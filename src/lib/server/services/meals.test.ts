@@ -16,6 +16,8 @@ function makeTx(responses: unknown[]) {
     'values',
     'onConflictDoNothing',
     'returning',
+    'orderBy',
+    'limit',
   ]) {
     chain[method] = vi.fn(() => chain)
   }
@@ -97,8 +99,14 @@ describe('createMeal / updateMeal ingredient sync', () => {
     const tx = makeTx([
       [{ id: 1, name: 'Soup' }], // insert(meals).values().returning()
       undefined, // delete(mealIngredients).where()
-      undefined, // insert(ingredients).values().onConflictDoNothing()
-      [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
+      [{ userId: 1 }], // owner of the meal
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
@@ -110,7 +118,17 @@ describe('createMeal / updateMeal ingredient sync', () => {
     })
     expect(meal).toEqual({ id: 1, name: 'Soup' })
     expect(tx.delete).toHaveBeenCalled()
-    expect(tx.insert).toHaveBeenCalledTimes(3) // meals, ingredients, mealIngredients
+    expect(tx.insert).toHaveBeenCalledTimes(2) // meals, mealIngredients; canonical ingredient reused
+    expect(tx.values).toHaveBeenLastCalledWith([
+      {
+        mealId: 1,
+        ingredientId: 5,
+        originalName: 'carrots',
+        position: 0,
+        qty: '2',
+        unit: null,
+      },
+    ])
   })
 
   it('createMeal skips ingredient-table writes when the new meal has no ingredients', async () => {
@@ -130,8 +148,14 @@ describe('createMeal / updateMeal ingredient sync', () => {
     const tx = makeTx([
       [{ id: 1, name: 'Soup' }], // update(meals).set().where().returning()
       undefined, // delete(mealIngredients).where()
-      undefined, // insert(ingredients).values().onConflictDoNothing()
-      [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
+      [{ userId: 1 }], // owner of the meal
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>
@@ -141,15 +165,31 @@ describe('createMeal / updateMeal ingredient sync', () => {
       ingredients: [{ name: 'carrots', qty: 2, unit: null }],
     })
     expect(tx.delete).toHaveBeenCalled()
-    expect(tx.insert).toHaveBeenCalledTimes(2) // ingredients, mealIngredients
+    expect(tx.insert).toHaveBeenCalledTimes(1) // canonical ingredient reused
+    expect(tx.values).toHaveBeenLastCalledWith([
+      {
+        mealId: 1,
+        ingredientId: 5,
+        originalName: 'carrots',
+        position: 0,
+        qty: '2',
+        unit: null,
+      },
+    ])
   })
 
   it('updateMeal looks the row up instead of updating when ingredients is the only field written', async () => {
     const tx = makeTx([
       [{ id: 1, name: 'Soup' }], // select(meals).where() — mealValues is empty, no .update()
       undefined, // delete(mealIngredients).where()
-      undefined, // insert(ingredients).values().onConflictDoNothing()
-      [{ id: 5, name: 'Carrots' }], // select ingredient ids .where()
+      [{ userId: 1 }], // owner of the meal
+      [
+        {
+          id: 5,
+          name: 'Carrot',
+          translations: { en: { name: 'Carrot', aliases: ['carrots'] } },
+        },
+      ], // visible catalogue
       undefined, // insert(mealIngredients).values()
     ])
     mockDb.transaction.mockImplementationOnce((cb: (tx: unknown) => unknown) =>

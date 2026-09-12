@@ -38,6 +38,7 @@ export type MealPickerItem = Pick<
 >
 
 export type IngredientInput = {
+  ingredientId?: number
   name: string
   qty: number | null
   unit: string | null

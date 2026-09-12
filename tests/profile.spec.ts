@@ -9,6 +9,61 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/profile')
 })
 
+test('@smoke pantry multiselect searches aliases and reuses custom ingredients', async ({
+  page,
+}) => {
+  const search = page.getByRole('combobox', { name: 'Search ingredients' })
+  await search.fill('rajčata')
+  const tomato = page.getByRole('option', { name: 'Tomato', exact: true })
+  await expect(tomato).toHaveCount(1)
+  await tomato.click()
+  await expect(search).toHaveAttribute('aria-expanded', 'false')
+  await search.fill('Tomato')
+  await expect(tomato).toHaveAttribute('aria-selected', 'true')
+  await tomato.click()
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: Tomato',
+      exact: true,
+    }),
+  ).toHaveCount(0)
+  await search.fill('Tomato')
+  await search.press('ArrowDown')
+  await search.press('Enter')
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: Tomato',
+      exact: true,
+    }),
+  ).toBeVisible()
+  await search.fill('My custom seasoning')
+  await page
+    .getByRole('option', { name: 'Add custom ingredient: My custom seasoning' })
+    .click()
+  await expect(
+    page.getByRole('button', {
+      name: 'Remove ingredient: My custom seasoning',
+    }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save pantry staples' }).click()
+  await expect(page.getByText('Pantry staples saved.')).toBeVisible()
+  await page.reload()
+  const chips = page.locator('.ingredient-picker ul.selected > li')
+  await expect(chips).toHaveCount(2)
+  await page
+    .getByRole('button', { name: 'Remove ingredient: My custom seasoning' })
+    .click()
+  await page.getByRole('button', { name: 'Save pantry staples' }).click()
+  await expect(page.getByText('Pantry staples saved.')).toBeVisible()
+  await page.reload()
+  await expect(chips).toHaveCount(1)
+  await search.fill('My custom seasoning')
+  await page
+    .getByRole('option', { name: 'My custom seasoning', exact: true })
+    .click()
+  await expect(chips).toHaveCount(2)
+})
+
 test('@smoke saves all nutrient goals and restores defaults when cleared', async ({
   page,
 }) => {

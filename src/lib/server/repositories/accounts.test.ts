@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { drizzle } from 'drizzle-orm/node-postgres'
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { meals, plans } from '$lib/database/schema'
 
 const db = vi.hoisted(() => ({ transaction: vi.fn() }))
@@ -51,12 +52,14 @@ describe('getAccountExport', () => {
       [],
       [],
       [{ id: 1, userId: 42, name: 'My coffee', calories: 10 }],
+      [{ id: 4, name: 'My spice' }],
     ])
     db.transaction.mockImplementationOnce(
       (callback: (transaction: unknown) => unknown) => callback(tx),
     )
 
     const result = await getAccountExport(42)
+    expect(result.customIngredients).toEqual([{ id: 4, name: 'My spice' }])
     const queryBuilder = drizzle.mock()
     const recipeSql = queryBuilder
       .select(tx.select.mock.calls[2][0])
@@ -187,7 +190,10 @@ describe('updateUserPro', () => {
 describe('deleteAccount', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  function deletionTx(admins: { id: number }[]) {
+  function deletionTx(
+    admins: { id: number }[],
+    personal: { id: number }[] = [],
+  ) {
     const lock: any = {}
     for (const method of ['from', 'where', 'orderBy'])
       lock[method] = vi.fn(() => lock)
@@ -195,8 +201,14 @@ describe('deleteAccount', () => {
 
     const deletion = { where: vi.fn().mockResolvedValue(undefined) }
     const tx = {
-      select: vi.fn(() => lock),
+      select: vi
+        .fn()
+        .mockReturnValueOnce(lock)
+        .mockReturnValue({
+          from: () => ({ where: () => Promise.resolve(personal) }),
+        }),
       delete: vi.fn(() => deletion),
+      execute: vi.fn().mockResolvedValue(undefined),
     }
     db.transaction.mockImplementationOnce(
       (callback: (transaction: unknown) => unknown) => callback(tx),
@@ -217,5 +229,16 @@ describe('deleteAccount', () => {
 
     await expect(deleteAccount(7)).resolves.toBe(true)
     expect(tx.delete).toHaveBeenCalled()
+  })
+
+  it('binds multiple custom IDs as one array and retains shared ingredient references', async () => {
+    const { tx } = deletionTx([{ id: 8 }], [{ id: 2 }, { id: 3 }])
+    await deleteAccount(7)
+    const query = new PgDialect().sqlToQuery(tx.execute.mock.calls[0][0])
+    expect(query.params).toEqual([[2, 3]])
+    expect(query.sql).toContain('any($1::int[])')
+    expect(query.sql).toContain('not is_catalog')
+    expect(query.sql).toContain('not exists (select 1 from user_ingredients')
+    expect(query.sql).toContain('not exists (select 1 from meal_ingredients')
   })
 })

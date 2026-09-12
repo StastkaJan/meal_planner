@@ -9,9 +9,11 @@
   } from '$lib/api/profile'
   import { LOCALE_LABELS, SUPPORTED_LOCALES } from '$lib/i18n'
   import { useI18n } from '$lib/i18n-context'
+  import IngredientSelect from '$lib/components/ui/IngredientSelect.svelte'
 
   let { data } = $props()
-  const { t, message } = useI18n()
+  const { t, message, locale } = useI18n()
+  let pantryIngredientIds = $derived<number[]>(data.pantryIngredientIds)
   const tab = $derived(
     ['preferences', 'security', 'data'].includes(
       $page.url.searchParams.get('tab') ?? '',
@@ -69,9 +71,8 @@
     e.preventDefault()
     pantrySaved = false
     pantryError = ''
-    const fd = new FormData(e.target as HTMLFormElement)
     try {
-      await updateProfile({ pantryStaples: fd.get('pantryStaples') })
+      await updateProfile({ pantryIngredientIds })
       pantrySaved = true
     } catch (error) {
       pantryError = message(
@@ -168,21 +169,21 @@
       <section class="card">
         <h2>{t('Pantry staples')}</h2>
         <p class="hint">
-          {t(
-            'Ingredients you always have, such as salt or oil. One per line; they are omitted from shopping lists.',
-          )}
+          {locale() === 'cs'
+            ? 'Vyberte suroviny, které máte vždy doma. Nebudou na nákupním seznamu.'
+            : 'Select ingredients you always have. They are omitted from shopping lists.'}
         </p>
         <form method="POST" onsubmit={savePantry}>
           {#if pantryError}<p class="error">{pantryError}</p>{/if}
           {#if pantrySaved}<p class="success">
               {t('Pantry staples saved.')}
             </p>{/if}
-          <label>
-            {t('Always on hand')}
-            <textarea name="pantryStaples" rows="5"
-              >{data.pantryStaples.join('\n')}</textarea
-            >
-          </label>
+          <IngredientSelect
+            options={data.ingredientOptions}
+            multiple
+            bind:selectedIds={pantryIngredientIds}
+            onchange={() => (pantrySaved = false)}
+          />
           <button type="submit">{t('Save pantry staples')}</button>
         </form>
       </section>
@@ -450,8 +451,7 @@
     color: $color-text-muted;
   }
   input,
-  select,
-  textarea {
+  select {
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;
@@ -459,9 +459,6 @@
     border-radius: $radius-sm;
     color: $color-text;
     font-size: 0.875rem;
-  }
-  textarea {
-    resize: vertical;
   }
   button {
     justify-self: start;

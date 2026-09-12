@@ -68,7 +68,7 @@ export async function createUserMeal(
   return monitorService('meals', 'create', async () => {
     values.sourceLocale ??= locale
     values.userId = body.scope === 'global' ? null : userId
-    return createMeal(values as { name: string })
+    return createMeal(values as { name: string }, userId)
   })
 }
 
@@ -88,11 +88,14 @@ export function localizeMeal(
 export async function updateUserMeal(
   id: number,
   body: Record<string, unknown>,
+  actorId?: number,
 ) {
   const { sourceLocale: _sourceLocale, ...values } = validateMealFields(
     pickMealFields(body),
   )
-  return monitorService('meals', 'update', () => updateMeal(id, values))
+  return monitorService('meals', 'update', () =>
+    updateMeal(id, values, actorId),
+  )
 }
 
 export async function duplicateGlobalMeal(userId: number, id: number) {

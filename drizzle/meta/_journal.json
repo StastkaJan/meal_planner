@@ -190,6 +190,13 @@
       "when": 1788892202558,
       "tag": "0026_shocking_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789211278498,
+      "tag": "0027_purple_zuras",
+      "breakpoints": true
     }
   ]
 }

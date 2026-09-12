@@ -1,5 +1,6 @@
 import { requireUser } from '$lib/server/guards'
 import { getSettings } from '$lib/server/repositories/accounts'
+import { listIngredientOptions } from '$lib/server/repositories/ingredients'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -10,6 +11,8 @@ export const load: PageServerLoad = async ({ locals }) => {
     isPro,
     locale: s?.locale ?? locals.locale,
     pantryStaples: s?.pantryStaples ?? [],
+    pantryIngredientIds: s?.pantryIngredientIds ?? [],
+    ingredientOptions: await listIngredientOptions(id),
     calorieTarget: s?.calorieTarget ?? null,
     proteinTarget: s?.proteinTarget ?? null,
     carbsTarget: s?.carbsTarget ?? null,
