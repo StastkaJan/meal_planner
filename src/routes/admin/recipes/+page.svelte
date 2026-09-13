@@ -272,9 +272,7 @@
     gap: 1rem;
   }
   .table-wrap {
-    overflow: hidden;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
+    min-width: 0;
   }
   .recipe-link {
     color: $color-text;

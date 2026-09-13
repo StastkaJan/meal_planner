@@ -78,6 +78,43 @@ test('create a meal', async ({ page }) => {
   await expect(page.getByText('Pasta Bolognese')).not.toBeVisible()
 })
 
+test('@smoke recipe pagination preserves search and works on mobile', async ({
+  page,
+}) => {
+  const name = `Pagination-${Date.now()}`
+  for (let index = 0; index < 11; index++) {
+    const status = await page.evaluate(async (name) => {
+      const response = await fetch('/meals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      return response.status
+    }, `${name}-${index}`)
+    expect(status).toBe(201)
+  }
+  await page.goto(`/meals?q=${name}&mine=1`)
+  const pagination = page.getByRole('navigation', { name: 'Recipe pages' })
+  await expect(pagination.locator('[aria-current="page"]')).toHaveText('1')
+  await expect(
+    pagination.getByRole('button', { name: 'Previous page' }),
+  ).toBeDisabled()
+  await pagination.getByRole('link', { name: 'Next page' }).click()
+  await expect(page).toHaveURL(new RegExp(`q=${name}.*mine=1.*page=2`))
+  await expect(pagination.locator('[aria-current="page"]')).toHaveText('2')
+  await expect(
+    pagination.getByRole('button', { name: 'Next page' }),
+  ).toBeDisabled()
+  await page.setViewportSize({ width: 320, height: 740 })
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true)
+  await pagination.getByRole('link', { name: 'Previous page' }).click()
+  await expect(pagination.locator('[aria-current="page"]')).toHaveText('1')
+})
+
 test('@smoke mobile recipe controls stay reachable and filters keep their state', async ({
   page,
 }) => {

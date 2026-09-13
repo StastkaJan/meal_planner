@@ -278,10 +278,9 @@
 <style lang="scss">
   .cal-wrap {
     border: 1px solid $color-border;
-    border-radius: $radius;
+    border-radius: $radius-sm;
     overflow: hidden;
     background: $color-surface;
-    box-shadow: 0 16px 40px rgb(41 39 33 / 7%);
   }
 
   .cal-scroll {
@@ -305,7 +304,7 @@
     justify-content: space-between;
     padding: 12px 14px;
     border-bottom: 1px solid $color-border;
-    background: #faf8f2;
+    background: rgba($color-surface-2, 0.4);
   }
 
   .nav-btn {

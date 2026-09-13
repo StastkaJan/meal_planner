@@ -107,11 +107,7 @@
 
 <style lang="scss">
   .table-wrap {
-    overflow: hidden;
-    border: 1px solid $color-border;
-    border-radius: $radius;
-    background: $color-surface;
-    box-shadow: 0 16px 40px rgb(41 39 33 / 6%);
+    min-width: 0;
   }
 
   .create-form {
@@ -119,7 +115,10 @@
     grid-template-columns: 1fr 10rem auto auto;
     gap: 0.6rem;
     padding: 0.8rem;
-    border-bottom: 1px solid $color-border;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface;
+    margin-bottom: 0.75rem;
   }
   .create-form.personal {
     grid-template-columns: minmax(0, 1fr) auto auto;

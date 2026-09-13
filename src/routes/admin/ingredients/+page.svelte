@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Table from '$lib/components/ui/Table.svelte'
+  import Pagination from '$lib/components/ui/Pagination.svelte'
   import type { PageData } from './$types'
   import { goto } from '$app/navigation'
   import { useI18n } from '$lib/i18n-context'
@@ -38,26 +40,27 @@
     />
     <Button type="submit" variant="secondary">{t('Search')}</Button>
   </form>
-  <ul class="ingredients">
-    {#each data.ingredients as ingredient (ingredient.id)}
-      <li>
-        <a href={`/admin/ingredients/${ingredient.id}`}
-          ><span
-            ><strong>{ingredientDisplayName(ingredient, locale())}</strong
-            ><small>{ingredient.name}</small></span
-          ><span class="languages"
-            >{Object.keys(ingredient.translations).join(' · ') || '—'}
-            <span aria-hidden="true">→</span></span
+  <Table
+    data={data.ingredients}
+    columns={[t('Name'), t('Language')]}
+    row={ingredientRow}
+    emptyMessage={t('No ingredients found')}
+  />
+  {#snippet ingredientRow(ingredient: (typeof data.ingredients)[number])}
+    <tr>
+      <td
+        ><a class="ingredient-link" href={`/admin/ingredients/${ingredient.id}`}
+          ><strong>{ingredientDisplayName(ingredient, locale())}</strong><small
+            >{ingredient.name}</small
           ></a
-        >
-      </li>
-    {:else}<li class="empty">{t('No ingredients found')}</li>{/each}
-  </ul>
-  <nav aria-label={t('Pagination')}>
-    {#if data.page > 1}<a href={pageUrl(data.page - 1)}>{t('Previous')}</a>{/if}
-    <span>{data.page}</span>
-    {#if data.hasMore}<a href={pageUrl(data.page + 1)}>{t('Next')}</a>{/if}
-  </nav>
+        ></td
+      >
+      <td class="languages"
+        >{Object.keys(ingredient.translations).join(' / ') || '-'}</td
+      >
+    </tr>
+  {/snippet}
+  <Pagination page={data.page} hasMore={data.hasMore} href={pageUrl} />
 </div>
 
 <style lang="scss">
@@ -98,27 +101,6 @@
     display: flex;
     gap: 0.5rem;
   }
-  .ingredients {
-    list-style: none;
-    border: 1px solid $color-border;
-    border-radius: 10px;
-    overflow: hidden;
-    background: $color-surface;
-  }
-  li + li {
-    border-top: 1px solid rgba($color-border, 0.5);
-  }
-  li a {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.8rem 1rem;
-    text-decoration: none;
-  }
-  li a:hover {
-    background: rgba($color-text, 0.03);
-  }
   strong,
   small {
     display: block;
@@ -129,12 +111,11 @@
     text-align: right;
     overflow-wrap: anywhere;
   }
-  .empty {
-    padding: 1rem;
+  .ingredient-link {
+    color: $color-text;
+    text-decoration: none;
   }
-  nav {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
+  .ingredient-link:hover {
+    color: $color-accent;
   }
 </style>
