@@ -28,7 +28,17 @@ test('@smoke pantry multiselect searches aliases and reuses custom ingredients',
     }),
   ).toHaveCount(0)
   await search.fill('Tomato')
-  await search.press('ArrowDown')
+  const tomatoId = (await tomato.getAttribute('id'))!
+  const optionCount = await page
+    .getByRole('listbox')
+    .getByRole('option')
+    .count()
+  // Search can match several ingredients; navigate by identity, not position.
+  for (let step = 0; step < optionCount; step++) {
+    if ((await search.getAttribute('aria-activedescendant')) === tomatoId) break
+    await search.press('ArrowDown')
+  }
+  await expect(search).toHaveAttribute('aria-activedescendant', tomatoId)
   await search.press('Enter')
   await expect(
     page.getByRole('button', {
