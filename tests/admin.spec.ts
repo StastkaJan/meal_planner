@@ -44,6 +44,18 @@ test('@smoke admin configures ingredient translations and aliases', async ({
   const id = adminId(email)
   try {
     await page.goto('/admin/ingredients')
+    await expect(page.locator('tbody tr')).toHaveCount(10)
+    const pagination = page.getByRole('navigation', { name: 'Pagination' })
+    await expect(pagination.getByText(/^Page 1 of \d+$/)).toBeVisible()
+    await pagination.getByRole('link', { name: 'Next page' }).click()
+    await expect(pagination.locator('[aria-current="page"]')).toHaveText('2')
+    await page.getByLabel('Missing English or Czech translation').check()
+    await expect(pagination.locator('[aria-current="page"]')).toHaveText('1')
+    await expect(page).toHaveURL(/missing=1/)
+    await page.reload()
+    await expect(
+      page.getByLabel('Missing English or Czech translation'),
+    ).toBeChecked()
     await page
       .getByRole('link', { name: 'Add ingredient', exact: true })
       .click()
@@ -88,6 +100,9 @@ test('@smoke admin configures ingredient translations and aliases', async ({
     await page.getByRole('button', { name: 'Save', exact: true }).click()
     await expect(page.getByRole('status')).toHaveText('Ingredient saved.')
     await page.goto('/admin/ingredients?q=testzutaten')
+    await page.getByLabel('Missing English or Czech translation').check()
+    await expect(page.getByText('No ingredients found')).toBeVisible()
+    await page.getByLabel('Missing English or Czech translation').uncheck()
     await page.getByRole('link', { name: new RegExp(name) }).click()
     await expect(page.getByLabel('Original name')).toHaveValue(name)
     await page.getByRole('link', { name: 'Profile', exact: true }).click()

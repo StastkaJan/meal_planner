@@ -8,5 +8,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const value = Number(url.searchParams.get('page') ?? 1)
   const page =
     Number.isSafeInteger(value) && value > 0 ? Math.min(value, 10000) : 1
-  return { ...(await listManagedIngredients(query, page)), query, page }
+  const missing = url.searchParams.get('missing') === '1'
+  return {
+    ...(await listManagedIngredients(query, page, missing)),
+    query,
+    missing,
+  }
 }

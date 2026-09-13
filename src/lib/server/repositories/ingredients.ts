@@ -1,4 +1,4 @@
-import { and, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   ingredients,
@@ -120,21 +120,36 @@ export function createIngredientOption(userId: number, name: string) {
   return db.transaction((tx) => resolveIngredient(tx, name, userId))
 }
 
-export async function listManagedIngredients(query: string, page: number) {
+export async function listManagedIngredients(
+  query: string,
+  requestedPage: number,
+  missing = false,
+) {
   const pattern = `%${normalizeIngredientName(query).replace(/[\\%_]/g, '\\$&')}%`
-  const rows = await ingredientOptionsQuery(
-    db,
-    null,
+  const filter = and(
     sql`(
     ${ingredients.name} ilike ${pattern} or exists (
       select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id}
       and (t.name ilike ${pattern} or exists (select 1 from unnest(t.aliases) alias where alias ilike ${pattern}))
     )
   )`,
+    missing
+      ? sql`(
+      not exists (select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id} and t.locale = 'en')
+      or not exists (select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id} and t.locale = 'cs')
+    )`
+      : undefined,
   )
-    .limit(41)
-    .offset((page - 1) * 40)
-  return { ingredients: rows.slice(0, 40), hasMore: rows.length > 40 }
+  const [result] = await db
+    .select({ total: count() })
+    .from(ingredients)
+    .where(and(eq(ingredients.isCatalog, true), filter))
+  const totalPages = Math.max(1, Math.ceil(result.total / 10))
+  const page = Math.min(requestedPage, totalPages)
+  const rows = await ingredientOptionsQuery(db, null, filter)
+    .limit(10)
+    .offset((page - 1) * 10)
+  return { ingredients: rows, totalPages, page }
 }
 
 export async function getManagedIngredient(id: number) {

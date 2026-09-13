@@ -10,7 +10,7 @@
   let { data }: { data: PageData } = $props()
   const { t, locale } = useI18n()
   const pageUrl = (page: number) =>
-    `/admin/ingredients?${new URLSearchParams({ q: data.query, page: String(page) })}`
+    `/admin/ingredients?${new URLSearchParams({ q: data.query, missing: data.missing ? '1' : '0', page: String(page) })}`
 </script>
 
 <div class="page">
@@ -27,7 +27,7 @@
     onsubmit={(event) => {
       event.preventDefault()
       void goto(
-        `/admin/ingredients?${new URLSearchParams({ q: String(new FormData(event.currentTarget).get('q') ?? '') })}`,
+        `/admin/ingredients?${new URLSearchParams({ q: String(new FormData(event.currentTarget).get('q') ?? ''), missing: data.missing ? '1' : '0' })}`,
       )
     }}
   >
@@ -40,6 +40,17 @@
     />
     <Button type="submit" variant="secondary">{t('Search')}</Button>
   </form>
+  <label class="translation-filter">
+    <input
+      type="checkbox"
+      checked={data.missing}
+      onchange={(event) =>
+        goto(
+          `/admin/ingredients?${new URLSearchParams({ q: data.query, missing: event.currentTarget.checked ? '1' : '0' })}`,
+        )}
+    />
+    {t('Missing English or Czech translation')}
+  </label>
   <Table
     data={data.ingredients}
     columns={[t('Name'), t('Language')]}
@@ -60,13 +71,23 @@
       >
     </tr>
   {/snippet}
-  <Pagination page={data.page} hasMore={data.hasMore} href={pageUrl} />
+  <Pagination page={data.page} totalPages={data.totalPages} href={pageUrl} />
 </div>
 
 <style lang="scss">
   .page {
     display: grid;
     gap: 1.25rem;
+  }
+  .translation-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $color-text-muted;
+    font-size: 0.875rem;
+  }
+  .translation-filter input {
+    accent-color: $color-accent;
   }
   header {
     display: flex;

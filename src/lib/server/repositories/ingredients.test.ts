@@ -82,16 +82,32 @@ it('loads translations without restricting their locale to the current UI langua
 
 it('limits admin searches to shared ingredients and bounds the page size', async () => {
   const { tx, query } = database([
-    Array.from({ length: 41 }, (_, id) => [id, 'Salt', {}]),
+    [[35]],
+    Array.from({ length: 10 }, (_, id) => [id, 'Salt', {}]),
   ])
   db.select.mockImplementation(tx.select.bind(tx))
   const result = await listManagedIngredients('50%_salt', 3)
-  expect(result.ingredients).toHaveLength(40)
-  expect(result.hasMore).toBe(true)
-  const [config, params] = query.mock.calls[0]
+  expect(result.ingredients).toHaveLength(10)
+  expect(result.totalPages).toBe(4)
+  const [config, params] = query.mock.calls[1]
   expect(config.text).toContain('"ingredients"."is_catalog" =')
   expect(params).toContain('%50\\%\\_salt%')
-  expect(params.slice(-2)).toEqual([41, 80])
+  expect(params.slice(-2)).toEqual([10, 20])
+})
+
+it('filters missing translations before counting and clamps out-of-range pages', async () => {
+  const { tx, query } = database([[[11]], [[12, 'Salt', {}]]])
+  db.select.mockImplementation(tx.select.bind(tx))
+  const result = await listManagedIngredients('', 999, true)
+  expect(result.page).toBe(2)
+  expect(result.totalPages).toBe(2)
+  for (const [config] of query.mock.calls) {
+    expect(config.text).toContain('not exists')
+    expect(config.text).toContain("t.locale = 'en'")
+    expect(config.text).toContain("t.locale = 'cs'")
+    expect(config.text).toContain('"ingredients"."is_catalog" =')
+  }
+  expect(query.mock.calls[1][1].slice(-2)).toEqual([10, 10])
 })
 
 it('never edits a private or missing ingredient', async () => {

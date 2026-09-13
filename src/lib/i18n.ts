@@ -16,6 +16,7 @@ const CS_MESSAGES = {
   'Add ingredient': 'Přidat surovinu',
   'Edit ingredient': 'Upravit surovinu',
   'Search ingredients': 'Hledat suroviny',
+  'Missing English or Czech translation': 'Chybí anglický nebo český překlad',
   'Search names and aliases': 'Hledat názvy a alternativní názvy',
   'No ingredients found': 'Žádné suroviny nenalezeny',
   'Original name': 'Původní název',

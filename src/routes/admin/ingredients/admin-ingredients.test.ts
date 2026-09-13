@@ -78,9 +78,26 @@ it('reports missing/private IDs and duplicate names', async () => {
 it('loads URL search and pagination and handles missing ingredients', async () => {
   repository.listManagedIngredients.mockResolvedValue({
     ingredients: [],
-    hasMore: false,
+    totalPages: 1,
+    page: 1,
   })
-  await load(event())
-  expect(repository.listManagedIngredients).toHaveBeenCalledWith('salt', 2)
+  expect(await load(event())).toMatchObject({
+    page: 1,
+    totalPages: 1,
+    missing: false,
+  })
+  expect(repository.listManagedIngredients).toHaveBeenCalledWith(
+    'salt',
+    2,
+    false,
+  )
+  const filtered = event()
+  filtered.url.searchParams.set('missing', '1')
+  expect(await load(filtered)).toMatchObject({ missing: true })
+  expect(repository.listManagedIngredients).toHaveBeenLastCalledWith(
+    'salt',
+    2,
+    true,
+  )
   await expect(loadIngredient(event())).rejects.toMatchObject({ status: 404 })
 })
