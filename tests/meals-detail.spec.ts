@@ -57,6 +57,44 @@ test('@smoke edit meal from detail page', async ({ page }) => {
   await expect(page.getByText('1.0g salt')).toBeVisible()
 })
 
+test('@smoke saves ingredient drafts and clears the previous identity', async ({
+  page,
+}) => {
+  const response = await page.request.post('/meals', {
+    data: {
+      name: `Ingredient-draft-${Date.now()}`,
+      ingredients: [{ name: 'Tomato', qty: null, unit: null }],
+    },
+  })
+  expect(response.ok()).toBe(true)
+  const meal = await response.json()
+  const recipeUrl = `/meals/${meal.id}`
+  const search = page.getByRole('combobox', { name: 'Search ingredients' })
+
+  for (const name of ['Carrot', '', `Custom seasoning ${Date.now()}`]) {
+    await page.goto(`${recipeUrl}/edit`)
+    await page.waitForLoadState('networkidle')
+    await search.fill(name)
+    await search.press('Tab')
+    const saving = page.waitForRequest(
+      (request) =>
+        new URL(request.url()).pathname === recipeUrl &&
+        request.method() === 'PATCH',
+    )
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    expect((await saving).postDataJSON().ingredients).toEqual(
+      name ? [{ name, qty: null, unit: null }] : [],
+    )
+    await expect(page).toHaveURL(recipeUrl)
+    await page.reload()
+    const ingredients = page.locator('section').filter({
+      has: page.getByRole('heading', { name: 'Ingredients', exact: true }),
+    })
+    if (name) await expect(ingredients.getByRole('listitem')).toHaveText(name)
+    else await expect(ingredients).toHaveCount(0)
+  }
+})
+
 test('@smoke uploads and removes a recipe image', async ({ page }) => {
   const createResponse = await page.request.post('/meals', {
     data: { name: `Image-${Date.now()}` },

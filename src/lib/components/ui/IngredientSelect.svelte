@@ -24,7 +24,7 @@
     ingredientId?: number
     multiple?: boolean
     selectedIds?: number[]
-    onselect?: (ingredient: IngredientOption, name: string) => void
+    onselect?: (ingredient: IngredientOption | undefined, name: string) => void
     onchange?: () => void
   } = $props()
   const { t, locale, message } = useI18n()
@@ -102,13 +102,17 @@
       ? 'Žádné suroviny'
       : 'No ingredients found'}
     oncreate={addCustom}
+    oninput={(event) => {
+      if (!multiple && event.target instanceof HTMLInputElement)
+        onselect?.(undefined, event.target.value)
+    }}
     onchange={() => {
       if (multiple) {
         selectedIds = selected.map(({ ingredient }) => ingredient.id)
         onchange?.()
       } else if (selected[0]) {
         onselect?.(selected[0].ingredient, selected[0].label)
-      }
+      } else onselect?.(undefined, '')
     }}
   >
     {#snippet expandIcon()}

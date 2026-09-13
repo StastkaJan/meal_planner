@@ -373,10 +373,13 @@
             onselect={(ingredient, name) => {
               ingredientRows = ingredientRows.map((item, index) =>
                 index === i
-                  ? { ...item, name, ingredientId: ingredient.id }
+                  ? { ...item, name, ingredientId: ingredient?.id }
                   : item,
               )
-              if (!options.some((option) => option.id === ingredient.id))
+              if (
+                ingredient &&
+                !options.some((option) => option.id === ingredient.id)
+              )
                 options = [...options, ingredient]
             }}
           />
