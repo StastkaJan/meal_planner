@@ -8,7 +8,8 @@ describe('consolidated ingredient migration', () => {
   it.each([
     ['before the PR', 1788892202558, true],
     ['former catalogue migration applied', 1789133039998, true],
-    ['both former migrations applied', 1789211278498, false],
+    ['catalogue and translations applied', 1789211278498, true],
+    ['expanded catalogue already applied', 1789293141320, false],
   ] as const)('handles %s', async (_state, timestamp, applies) => {
     const dialect = new PgDialect()
     const migrations = readMigrationFiles({
@@ -16,7 +17,7 @@ describe('consolidated ingredient migration', () => {
     }).filter(
       (migration) =>
         migration.folderMillis > 1788892202558 &&
-        migration.folderMillis <= 1789211278498,
+        migration.folderMillis <= 1789293141320,
     )
     expect(migrations).toHaveLength(1)
     const execute = vi.fn(async (_query: SQL) => [])
@@ -45,6 +46,7 @@ describe('consolidated ingredient migration', () => {
     expect(statements[1].sql).toContain(
       "IF to_regclass('public.ingredient_translations') IS NULL",
     )
-    expect(statements.at(-1)?.params[1]).toBe(1789211278498)
+    expect(statements[2].sql).toContain('WITH catalogue')
+    expect(statements.at(-1)?.params[1]).toBe(1789293141320)
   })
 })
