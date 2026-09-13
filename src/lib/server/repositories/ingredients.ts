@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '$lib/database'
 import {
   ingredients,
@@ -178,8 +178,15 @@ export function saveManagedIngredient(
       ).limit(1)
       if (!existing) return null
     }
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${normalizeIngredientName(input.name)}))`,
+    )
     const [duplicate] = await tx
-      .select({ id: ingredients.id })
+      .select({
+        id: ingredients.id,
+        name: ingredients.name,
+        isCatalog: ingredients.isCatalog,
+      })
       .from(ingredients)
       .where(
         sql`
@@ -187,18 +194,24 @@ export function saveManagedIngredient(
       ${id === undefined ? sql`` : sql`and ${ingredients.id} <> ${id}`}
     `,
       )
+      .orderBy(desc(ingredients.isCatalog), ingredients.id)
       .limit(1)
-    if (duplicate) return false
+    if (duplicate && (id !== undefined || duplicate.isCatalog)) return false
+    const existingId = id ?? duplicate?.id
     const [row] =
-      id === undefined
+      existingId === undefined
         ? await tx
             .insert(ingredients)
             .values({ name: input.name, isCatalog: true })
             .returning({ id: ingredients.id })
         : await tx
             .update(ingredients)
-            .set({ name: input.name })
-            .where(and(eq(ingredients.id, id), eq(ingredients.isCatalog, true)))
+            // Reuse the private original name; rollback rows may reserve case variants.
+            .set({
+              name: id === undefined ? duplicate!.name : input.name,
+              isCatalog: true,
+            })
+            .where(eq(ingredients.id, existingId))
             .returning({ id: ingredients.id })
     await tx
       .delete(ingredientTranslations)

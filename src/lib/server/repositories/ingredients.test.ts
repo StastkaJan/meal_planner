@@ -1,5 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { drizzle } from 'drizzle-orm/node-postgres'
+import { drizzle as pgliteDrizzle } from 'drizzle-orm/pglite'
+import { PGlite } from '@electric-sql/pglite'
 
 const db = vi.hoisted(() => ({ select: vi.fn(), transaction: vi.fn() }))
 vi.mock('$lib/database', () => ({ db }))
@@ -127,6 +129,7 @@ it('replaces translations in one transaction while preserving ingredient identit
   const { tx, query } = database([
     [],
     [[5, 'Salt', {}]],
+    [], // normalized-name lock
     [],
     [[5]],
     [],
@@ -146,9 +149,68 @@ it('replaces translations in one transaction while preserving ingredient identit
     translations: { cs: { aliases: ['soli'] } },
   })
   expect(db.transaction).toHaveBeenCalledTimes(1)
-  expect(query.mock.calls[4][0].text).toContain(
+  expect(query.mock.calls[5][0].text).toContain(
     'delete from "ingredient_translations"',
   )
-  expect(query.mock.calls[5][1]).toContain('cs')
-  expect(query.mock.calls[3][0].text).toContain('"ingredients"."is_catalog" =')
+  expect(query.mock.calls[6][1]).toContain('cs')
+  expect(query.mock.calls[4][0].text).toContain('update "ingredients"')
 })
+
+it('publishes a matching private identity atomically without changing recipe or pantry links', async () => {
+  const client = new PGlite()
+  const database = pgliteDrizzle(client)
+  db.transaction.mockImplementation(database.transaction.bind(database))
+  try {
+    await client.exec(`
+      CREATE TABLE ingredients (id serial PRIMARY KEY, name text NOT NULL UNIQUE, is_catalog boolean DEFAULT false, name_cs text, aliases text[] DEFAULT '{}');
+      CREATE TABLE ingredient_translations (ingredient_id int REFERENCES ingredients, locale text, name text, aliases text[] DEFAULT '{}', PRIMARY KEY (ingredient_id, locale));
+      CREATE TABLE user_ingredients (user_id int, ingredient_id int REFERENCES ingredients, PRIMARY KEY (user_id, ingredient_id));
+      CREATE TABLE meal_ingredients (ingredient_id int REFERENCES ingredients, original_name text);
+      CREATE TABLE user_settings (pantry_ingredient_ids int[]);
+      INSERT INTO ingredients (name) VALUES ('Sumac'), ('SUMAC');
+      INSERT INTO user_ingredients VALUES (42, 1);
+      INSERT INTO meal_ingredients VALUES (1, 'sumac to taste');
+      INSERT INTO user_settings VALUES (ARRAY[1]);
+    `)
+    const translation = { locale: 'en', name: 'Sumac', aliases: ['sumach'] }
+    const input = { name: 'SUMAC', translations: [translation] }
+    // Direct private-ID edits remain forbidden.
+    expect(await saveManagedIngredient(input, 1)).toBeNull()
+    await expect(
+      saveManagedIngredient({
+        ...input,
+        translations: [translation, translation],
+      }),
+    ).rejects.toThrow()
+    expect(
+      (await client.query('SELECT name, is_catalog FROM ingredients')).rows,
+    ).toEqual([
+      { name: 'Sumac', is_catalog: false },
+      { name: 'SUMAC', is_catalog: false },
+    ])
+    const saved = await saveManagedIngredient(input)
+    expect(saved).toEqual({
+      id: 1,
+      name: 'Sumac',
+      translations: { en: { name: 'Sumac', aliases: ['sumach'] } },
+    })
+    expect(await listIngredientOptions(null, database as any)).toEqual([saved])
+    expect((await client.query('SELECT * FROM meal_ingredients')).rows).toEqual(
+      [{ ingredient_id: 1, original_name: 'sumac to taste' }],
+    )
+    expect((await client.query('SELECT * FROM user_settings')).rows).toEqual([
+      { pantry_ingredient_ids: [1] },
+    ])
+    expect((await client.query('SELECT * FROM user_ingredients')).rows).toEqual(
+      [{ user_id: 42, ingredient_id: 1 }],
+    )
+    expect(await saveManagedIngredient(input)).toBe(false)
+    expect(
+      (await client.query('SELECT count(*)::int AS count FROM ingredients'))
+        .rows,
+    ).toEqual([{ count: 2 }])
+  } finally {
+    db.transaction.mockReset()
+    await client.close()
+  }
+}, 15000)

@@ -43,6 +43,16 @@ test('@smoke admin configures ingredient translations and aliases', async ({
   await register(page, email)
   const id = adminId(email)
   try {
+    const personal = await page.request.post('/ingredients', { data: { name } })
+    expect(personal.status()).toBe(201)
+    ingredientId = (await personal.json()).id
+    expect(
+      (
+        await page.request.put(`/admin/ingredients/${ingredientId}`, {
+          data: { name, translations: [] },
+        })
+      ).status(),
+    ).toBe(404)
     await page.goto('/admin/ingredients')
     await expect(page.locator('tbody tr')).toHaveCount(10)
     const pagination = page.getByRole('navigation', { name: 'Pagination' })
@@ -74,8 +84,7 @@ test('@smoke admin configures ingredient translations and aliases', async ({
       .getByLabel('Aliases', { exact: true })
       .fill('Testovací alias\n TESTOVACÍ ALIAS ')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
-    await expect(page).toHaveURL(/\/admin\/ingredients\/\d+$/)
-    ingredientId = Number(page.url().split('/').at(-1))
+    await expect(page).toHaveURL(`/admin/ingredients/${ingredientId}`)
     await page.reload()
     const czech = page.getByRole('region', {
       name: 'Translation cs',

@@ -399,21 +399,39 @@ DO $backfill$
 DECLARE matched record;
 BEGIN
   FOR matched IN
-    WITH legacy AS (
-      SELECT i.id, lower(regexp_replace(trim(i.name), '\s+', ' ', 'g')) AS name
+    WITH normalized AS (
+      SELECT i.id, i.is_catalog,
+        lower(regexp_replace(trim(i.name), '\s+', ' ', 'g')) AS name,
+        EXISTS (SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = i.id) AS managed
       FROM ingredients i
-      WHERE NOT EXISTS (SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = i.id)
-    )
-    SELECT legacy.id AS old_id, min(canonical.id) AS canonical_id
-    FROM legacy JOIN ingredients canonical ON canonical.is_catalog AND canonical.id <> legacy.id
-    WHERE EXISTS (
-      SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = canonical.id AND (
-        legacy.name = lower(regexp_replace(trim(canonical.name), '\s+', ' ', 'g'))
-        OR legacy.name = lower(regexp_replace(trim(t.name), '\s+', ' ', 'g'))
-        OR t.aliases @> ARRAY[legacy.name]
+    ), legacy AS (
+      SELECT * FROM normalized WHERE NOT managed
+    ), original_names AS (
+      SELECT name, coalesce(
+        min(id) FILTER (WHERE managed),
+        min(id) FILTER (WHERE is_catalog),
+        min(id)
+      ) AS canonical_id
+      FROM normalized GROUP BY name
+      HAVING count(*) FILTER (WHERE managed) <= 1
+    ), alias_matches AS (
+      SELECT legacy.id AS old_id, min(canonical.id) AS canonical_id
+      FROM legacy JOIN ingredients canonical ON canonical.is_catalog AND canonical.id <> legacy.id
+      WHERE EXISTS (
+        SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = canonical.id AND (
+          legacy.name = lower(regexp_replace(trim(canonical.name), '\s+', ' ', 'g'))
+          OR legacy.name = lower(regexp_replace(trim(t.name), '\s+', ' ', 'g'))
+          OR t.aliases @> ARRAY[legacy.name]
+        )
       )
+      GROUP BY legacy.id HAVING count(DISTINCT canonical.id) = 1
     )
-    GROUP BY legacy.id HAVING count(DISTINCT canonical.id) = 1
+    SELECT legacy.id AS old_id,
+      coalesce(alias_matches.canonical_id, original_names.canonical_id) AS canonical_id
+    FROM legacy
+    LEFT JOIN alias_matches ON alias_matches.old_id = legacy.id
+    LEFT JOIN original_names ON original_names.name = legacy.name
+    WHERE coalesce(alias_matches.canonical_id, original_names.canonical_id) <> legacy.id
   LOOP
     UPDATE meal_ingredients SET ingredient_id = matched.canonical_id
     WHERE ingredient_id = matched.old_id;

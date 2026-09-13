@@ -118,7 +118,8 @@ describe('consolidated ingredient migration', () => {
     ['former catalogue migration applied', 1789133039998, true],
     ['catalogue and translations applied', 1789211278498, true],
     ['expanded catalogue already applied', 1789293141320, true],
-    ['catalogue backfill already applied', 1789293141321, false],
+    ['catalogue backfill already applied', 1789293141321, true],
+    ['normalized names already reconciled', 1789293141322, false],
   ] as const)('handles %s', async (_state, timestamp, applies) => {
     const dialect = new PgDialect()
     const migrations = readMigrationFiles({
@@ -126,7 +127,7 @@ describe('consolidated ingredient migration', () => {
     }).filter(
       (migration) =>
         migration.folderMillis > 1788892202558 &&
-        migration.folderMillis <= 1789293141321,
+        migration.folderMillis <= 1789293141322,
     )
     expect(migrations).toHaveLength(1)
     const execute = vi.fn(async (_query: SQL) => [])
@@ -157,6 +158,73 @@ describe('consolidated ingredient migration', () => {
     )
     expect(statements[2].sql).toContain('WITH catalogue')
     expect(statements[3].sql).toContain('DO $backfill$')
-    expect(statements.at(-1)?.params[1]).toBe(1789293141321)
+    expect(statements.at(-1)?.params[1]).toBe(1789293141322)
   })
 })
+
+it.each([null, 1])(
+  'preserves case-insensitive custom pantry exclusions for recipe owner %s',
+  async (owner) => {
+    const db = new PGlite()
+    try {
+      await db.exec(`
+        CREATE TABLE users (id integer PRIMARY KEY);
+        CREATE TABLE meals (id integer PRIMARY KEY, user_id integer REFERENCES users);
+        CREATE TABLE ingredients (id serial PRIMARY KEY, name text NOT NULL UNIQUE);
+        CREATE TABLE meal_ingredients (
+          meal_id integer REFERENCES meals, ingredient_id integer REFERENCES ingredients,
+          position integer, PRIMARY KEY (meal_id, position)
+        );
+        CREATE TABLE user_settings (user_id integer PRIMARY KEY REFERENCES users, pantry_staples text[]);
+        INSERT INTO users VALUES (1);
+        INSERT INTO meals VALUES (1, ${owner === null ? 'NULL' : owner});
+        INSERT INTO ingredients (name) VALUES ('My spice'), ('MY SPICE');
+        INSERT INTO meal_ingredients VALUES (1, 1, 0), (1, 2, 1);
+        INSERT INTO user_settings VALUES (1, ARRAY['my spice', 'Other seasoning']);
+      `)
+      // Earlier previews already created a separate lower-case pantry identity.
+      for (const statement of migrations[0].sql.slice(0, 3))
+        await db.exec(statement)
+      const check = async () => {
+        expect(
+          (
+            await db.query(
+              'SELECT ingredient_id, original_name FROM meal_ingredients ORDER BY position',
+            )
+          ).rows,
+        ).toEqual([
+          { ingredient_id: 1, original_name: 'My spice' },
+          { ingredient_id: 1, original_name: 'MY SPICE' },
+        ])
+        expect(
+          (
+            await db.query(
+              `SELECT mi.ingredient_id FROM meal_ingredients mi CROSS JOIN user_settings s WHERE NOT mi.ingredient_id = ANY(s.pantry_ingredient_ids)`,
+            )
+          ).rows,
+        ).toEqual([])
+        expect(
+          (
+            await db.query(
+              `SELECT i.name FROM user_ingredients u JOIN ingredients i ON i.id = u.ingredient_id ORDER BY i.name`,
+            )
+          ).rows,
+        ).toEqual([{ name: 'My spice' }, { name: 'Other seasoning' }])
+      }
+      await db.exec(migrations[0].sql.join('\n'))
+      await check()
+      await db.exec(migrations[0].sql.join('\n'))
+      await check()
+      // Retrying the migration must preserve later pantry edits.
+      await db.exec(`UPDATE user_settings SET pantry_ingredient_ids = ARRAY[1]`)
+      await db.exec(migrations[0].sql.join('\n'))
+      expect(
+        (await db.query('SELECT pantry_ingredient_ids FROM user_settings'))
+          .rows,
+      ).toEqual([{ pantry_ingredient_ids: [1] }])
+    } finally {
+      await db.close()
+    }
+  },
+  15000,
+)

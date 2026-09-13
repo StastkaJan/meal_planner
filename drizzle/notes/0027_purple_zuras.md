@@ -2,7 +2,7 @@
 
 ## Risk
 
-Migration 0027 remaps unambiguous legacy identities after loading the full catalogue. It replaces personal links with their canonical equivalent before deleting redundant links and demotes old catalogue rows. Ambiguous matches and ingredients with existing translations remain separate. Original ingredient rows, recipe wording, pantry text, and translations are retained.
+Migration 0027 remaps unambiguous legacy aliases and normalized original-name duplicates after loading the full catalogue. This includes custom recipe/pantry names differing only in case or whitespace. It replaces personal links with their canonical equivalent before deleting redundant links and demotes old catalogue rows. Ambiguous aliases and multiple managed identities remain separate. Original ingredient rows, recipe wording, pantry text, and translations are retained.
 
 ## Rollback
 
