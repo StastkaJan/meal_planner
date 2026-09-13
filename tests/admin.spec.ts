@@ -34,6 +34,73 @@ function userId(email: string) {
   return Number(sql(`select id from users where email = '${email}'`))
 }
 
+test('@smoke admin configures ingredient translations and aliases', async ({
+  page,
+}) => {
+  const email = uniqueEmail()
+  const name = `Catalogue ${Date.now()}`
+  let ingredientId: number | undefined
+  await register(page, email)
+  const id = adminId(email)
+  try {
+    await page.goto('/admin/ingredients')
+    await page
+      .getByRole('link', { name: 'Add ingredient', exact: true })
+      .click()
+    await page.getByLabel('Original name', { exact: true }).fill(name)
+    const translations = page.getByRole('region', { name: /^Translation / })
+    await translations
+      .nth(0)
+      .getByLabel('Translated name', { exact: true })
+      .fill(name)
+    await translations
+      .nth(1)
+      .getByLabel('Translated name', { exact: true })
+      .fill('Zkušební surovina')
+    await translations
+      .nth(1)
+      .getByLabel('Aliases', { exact: true })
+      .fill('Testovací alias\n TESTOVACÍ ALIAS ')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page).toHaveURL(/\/admin\/ingredients\/\d+$/)
+    ingredientId = Number(page.url().split('/').at(-1))
+    await page.reload()
+    const czech = page.getByRole('region', {
+      name: 'Translation cs',
+      exact: true,
+    })
+    await expect(czech.getByLabel('Aliases', { exact: true })).toHaveValue(
+      'testovací alias',
+    )
+    await czech
+      .getByLabel('Translated name', { exact: true })
+      .fill('Upravená surovina')
+    await page
+      .getByRole('button', { name: 'Add translation', exact: true })
+      .click()
+    await expect(
+      czech.getByLabel('Translated name', { exact: true }),
+    ).toHaveValue('Upravená surovina')
+    const german = translations.last()
+    await german.getByLabel('Language code').fill('de')
+    await german.getByLabel('Translated name').fill('Testzutat')
+    await german.getByLabel('Aliases', { exact: true }).fill('Testzutaten')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByRole('status')).toHaveText('Ingredient saved.')
+    await page.goto('/admin/ingredients?q=testzutaten')
+    await page.getByRole('link', { name: new RegExp(name) }).click()
+    await expect(page.getByLabel('Original name')).toHaveValue(name)
+    await page.getByRole('link', { name: 'Profile', exact: true }).click()
+    await page
+      .getByRole('combobox', { name: 'Search ingredients' })
+      .fill('testzutaten')
+    await expect(page.getByRole('option', { name, exact: true })).toBeVisible()
+  } finally {
+    sql(`delete from users where id = ${id}`)
+    if (ingredientId) sql(`delete from ingredients where id = ${ingredientId}`)
+  }
+})
+
 test('@smoke admin manages users and shared recipes through the UI', async ({
   browser,
 }) => {

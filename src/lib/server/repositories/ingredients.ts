@@ -1,6 +1,11 @@
 import { and, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '$lib/database'
-import { ingredients, userIngredients } from '$lib/database/schema'
+import {
+  ingredients,
+  ingredientTranslations,
+  userIngredients,
+} from '$lib/database/schema'
+import type { IngredientAdminInput } from '$lib/domain/ingredient-admin'
 import {
   normalizeIngredientName,
   type IngredientOption,
@@ -113,6 +118,90 @@ export async function resolveIngredient(
 
 export function createIngredientOption(userId: number, name: string) {
   return db.transaction((tx) => resolveIngredient(tx, name, userId))
+}
+
+export async function listManagedIngredients(query: string, page: number) {
+  const pattern = `%${normalizeIngredientName(query).replace(/[\\%_]/g, '\\$&')}%`
+  const rows = await ingredientOptionsQuery(
+    db,
+    null,
+    sql`(
+    ${ingredients.name} ilike ${pattern} or exists (
+      select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id}
+      and (t.name ilike ${pattern} or exists (select 1 from unnest(t.aliases) alias where alias ilike ${pattern}))
+    )
+  )`,
+  )
+    .limit(41)
+    .offset((page - 1) * 40)
+  return { ingredients: rows.slice(0, 40), hasMore: rows.length > 40 }
+}
+
+export async function getManagedIngredient(id: number) {
+  const [option] = await ingredientOptionsQuery(
+    db,
+    null,
+    eq(ingredients.id, id),
+  ).limit(1)
+  return option
+}
+
+export function saveManagedIngredient(
+  input: IngredientAdminInput,
+  id?: number,
+) {
+  return db.transaction(async (tx) => {
+    // Serialize infrequent catalogue edits to enforce normalized name uniqueness.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext('ingredient-catalogue-admin'))`,
+    )
+    if (id !== undefined) {
+      const [existing] = await ingredientOptionsQuery(
+        tx,
+        null,
+        eq(ingredients.id, id),
+      ).limit(1)
+      if (!existing) return null
+    }
+    const [duplicate] = await tx
+      .select({ id: ingredients.id })
+      .from(ingredients)
+      .where(
+        sql`
+      lower(regexp_replace(trim(${ingredients.name}), '\\s+', ' ', 'g')) = ${normalizeIngredientName(input.name)}
+      ${id === undefined ? sql`` : sql`and ${ingredients.id} <> ${id}`}
+    `,
+      )
+      .limit(1)
+    if (duplicate) return false
+    const [row] =
+      id === undefined
+        ? await tx
+            .insert(ingredients)
+            .values({ name: input.name, isCatalog: true })
+            .returning({ id: ingredients.id })
+        : await tx
+            .update(ingredients)
+            .set({ name: input.name })
+            .where(and(eq(ingredients.id, id), eq(ingredients.isCatalog, true)))
+            .returning({ id: ingredients.id })
+    await tx
+      .delete(ingredientTranslations)
+      .where(eq(ingredientTranslations.ingredientId, row.id))
+    if (input.translations.length)
+      await tx.insert(ingredientTranslations).values(
+        input.translations.map((translation) => ({
+          ...translation,
+          ingredientId: row.id,
+        })),
+      )
+    const [option] = await ingredientOptionsQuery(
+      tx,
+      null,
+      eq(ingredients.id, row.id),
+    ).limit(1)
+    return option
+  })
 }
 
 export async function pantryIngredientSelection(userId: number, ids: number[]) {

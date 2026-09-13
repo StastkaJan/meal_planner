@@ -10,6 +10,33 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'Ingredient catalogue': 'Katalog surovin',
+  'Manage shared ingredient names, translations and aliases.':
+    'Spravujte sdílené názvy surovin, překlady a alternativní názvy.',
+  'Add ingredient': 'Přidat surovinu',
+  'Edit ingredient': 'Upravit surovinu',
+  'Search ingredients': 'Hledat suroviny',
+  'Search names and aliases': 'Hledat názvy a alternativní názvy',
+  'No ingredients found': 'Žádné suroviny nenalezeny',
+  'Original name': 'Původní název',
+  'Translations and aliases': 'Překlady a alternativní názvy',
+  'Translations and aliases are shared by recipes, shopping lists and pantry staples.':
+    'Překlady a alternativní názvy se používají v receptech, nákupních seznamech i běžných zásobách.',
+  'Use a language code such as en, cs or de. Enter one alias per line. Blank translations use the original name.':
+    'Použijte kód jazyka, například en, cs nebo de. Každý alternativní název zadejte na samostatný řádek. Prázdné překlady používají původní název.',
+  'Language code': 'Kód jazyka',
+  'Translated name': 'Přeložený název',
+  'Remove translation': 'Odstranit překlad',
+  'Add translation': 'Přidat překlad',
+  'Ingredient saved.': 'Surovina uložena.',
+  'Invalid ingredient translations or aliases':
+    'Neplatné překlady nebo alternativní názvy suroviny',
+  'Ingredient name is already in use': 'Název suroviny se již používá',
+  'Ingredient not found': 'Surovina nenalezena',
+  'Invalid ingredient id': 'Neplatné ID suroviny',
+  Aliases: 'Alternativní názvy',
+  Translation: 'Překlad',
+  Search: 'Hledat',
   'Latte / cappuccino': 'Latte / cappuccino',
   'Search extras': 'Hledat položky navíc',
   'Custom extra': 'Vlastní položka',
