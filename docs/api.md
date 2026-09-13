@@ -65,6 +65,6 @@
 
 ## Ingredient administration
 
-`GET /admin/ingredients?q=&page=1` lists shared ingredients, searching original names, translations, and aliases (40 per page). `/admin/ingredients/new` and `/admin/ingredients/[id]` provide the editor.
+`GET /admin/ingredients?q=&page=1` lists shared ingredients, searching original names, translations, and aliases (10 per page). `/admin/ingredients/new` and `/admin/ingredients/[id]` provide the editor.
 
 `POST /admin/ingredients` creates a shared ingredient. `PUT /admin/ingredients/[id]` replaces its name and complete translation set. Both require an administrator and accept `{ name, translations: [{ locale, name, aliases: string[] }] }`. Names are limited to 100 characters, languages to 20 unique valid locale codes, and aliases to 100 per language. Aliases are normalized and deduplicated. Omitted languages are removed; original recipe wording and ingredient IDs remain intact. Private ingredient IDs return 404; duplicate original names return 409. Existing ambiguous aliases remain subject to the resolver's no-guessing rule.

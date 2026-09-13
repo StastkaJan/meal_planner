@@ -116,7 +116,7 @@ docker-compose.yml
 
 ## DB schema & API routes
 
-<!-- NOTE: `/admin/ingredients` searches the shared catalogue; `/admin/ingredients/new` and `/admin/ingredients/[id]` create/edit names, locale translations and normalized aliases through admin-only POST/PUT endpoints. Saving replaces the locale set atomically; private ingredients are excluded. Migration 0028 expands English/Czech catalogue data without overwriting existing translations. -->
+<!-- NOTE: `/admin/ingredients` searches the shared catalogue; `/admin/ingredients/new` and `/admin/ingredients/[id]` create/edit names, locale translations and normalized aliases through admin-only POST/PUT endpoints. Saving replaces the locale set atomically; private ingredients are excluded. Migration 0027 expands the catalogue before reconciling legacy recipe, pantry, and picker IDs; its advanced timestamp also repairs earlier previews. -->
 
 <!-- NOTE: Ingredient pickers use `ingredients` identities, locale-keyed `ingredient_translations` (name, normalized aliases), and private `user_ingredients` links; `POST /ingredients` returns locale maps. Missing labels fall back to the original name; migration 0027 retains legacy mixed-language aliases under `und` and old columns for rollback. Recipe rows retain `original_name`; shopping aggregates IDs with compatible units. Account export includes custom options and translations; deletion removes unreferenced private ingredients. -->
 

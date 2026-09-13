@@ -392,3 +392,42 @@ CROSS JOIN LATERAL (VALUES
   ('cs', catalogue.name_cs, catalogue.aliases_cs)
 ) translation(locale, name, aliases)
 ON CONFLICT (ingredient_id, locale) DO NOTHING;
+--> statement-breakpoint
+-- Reconcile legacy identities only after every catalogue translation is available.
+-- Rows with translations are managed identities; never merge them by guessing.
+DO $backfill$
+DECLARE matched record;
+BEGIN
+  FOR matched IN
+    WITH legacy AS (
+      SELECT i.id, lower(regexp_replace(trim(i.name), '\s+', ' ', 'g')) AS name
+      FROM ingredients i
+      WHERE NOT EXISTS (SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = i.id)
+    )
+    SELECT legacy.id AS old_id, min(canonical.id) AS canonical_id
+    FROM legacy JOIN ingredients canonical ON canonical.is_catalog AND canonical.id <> legacy.id
+    WHERE EXISTS (
+      SELECT 1 FROM ingredient_translations t WHERE t.ingredient_id = canonical.id AND (
+        legacy.name = lower(regexp_replace(trim(canonical.name), '\s+', ' ', 'g'))
+        OR legacy.name = lower(regexp_replace(trim(t.name), '\s+', ' ', 'g'))
+        OR t.aliases @> ARRAY[legacy.name]
+      )
+    )
+    GROUP BY legacy.id HAVING count(DISTINCT canonical.id) = 1
+  LOOP
+    UPDATE meal_ingredients SET ingredient_id = matched.canonical_id
+    WHERE ingredient_id = matched.old_id;
+
+    UPDATE user_settings SET pantry_ingredient_ids = ARRAY(
+      SELECT DISTINCT CASE WHEN id = matched.old_id THEN matched.canonical_id ELSE id END
+      FROM unnest(pantry_ingredient_ids) id
+    ) WHERE matched.old_id = ANY(pantry_ingredient_ids);
+
+    INSERT INTO user_ingredients (user_id, ingredient_id)
+    SELECT user_id, matched.canonical_id FROM user_ingredients WHERE ingredient_id = matched.old_id
+    ON CONFLICT DO NOTHING;
+    DELETE FROM user_ingredients WHERE ingredient_id = matched.old_id;
+    -- Keep the old row for rollback, but do not offer a competing picker identity.
+    UPDATE ingredients SET is_catalog = false WHERE id = matched.old_id;
+  END LOOP;
+END $backfill$;
