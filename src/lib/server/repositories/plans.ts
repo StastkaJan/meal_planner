@@ -408,7 +408,7 @@ export async function getShoppingList(
         pantryIngredientIds.length
           ? notInArray(ingredients.id, pantryIngredientIds)
           : undefined,
-        pantryStaples.length
+        !pantryIngredientIds.length && pantryStaples.length
           ? notInArray(
               sql`lower(${ingredients.name})`,
               pantryStaples.map((name) => name.toLocaleLowerCase()),

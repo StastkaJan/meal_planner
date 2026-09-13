@@ -1,13 +1,54 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import type { SQL } from 'drizzle-orm'
+import { PGlite } from '@electric-sql/pglite'
+import { drizzle } from 'drizzle-orm/pglite'
 import { bonusItems, slotLeftovers, weekSlots } from '$lib/database/schema'
 
 const db = vi.hoisted(() => ({ transaction: vi.fn(), select: vi.fn() }))
 vi.mock('$lib/database', () => ({ db }))
-import { clearPlan, replaceSingleSlot, upsertSlot, copyWeek } from './plans'
+import {
+  clearPlan,
+  replaceSingleSlot,
+  upsertSlot,
+  copyWeek,
+  getShoppingList,
+} from './plans'
 
 const dialect = new PgDialect()
+
+it('uses pantry IDs after catalogue renames and falls back to legacy names without IDs', async () => {
+  const client = new PGlite()
+  const database = drizzle(client)
+  db.select.mockImplementation(database.select.bind(database))
+  try {
+    await client.exec(`
+      CREATE TABLE plans (id int, portions int);
+      CREATE TABLE week_slots (plan_id int, date date, meal_id int);
+      CREATE TABLE meals (id int, servings int);
+      CREATE TABLE ingredients (id int, name text);
+      CREATE TABLE ingredient_translations (ingredient_id int, locale text, name text);
+      CREATE TABLE meal_ingredients (meal_id int, ingredient_id int, qty numeric, unit text);
+      INSERT INTO plans VALUES (1, 1);
+      INSERT INTO week_slots VALUES (1, '2026-09-14', 1);
+      INSERT INTO meals VALUES (1, 1);
+      INSERT INTO ingredients VALUES (1, 'Salt');
+      UPDATE ingredients SET name = 'Sea salt' WHERE id = 1;
+      INSERT INTO ingredients VALUES (2, 'Salt');
+      INSERT INTO meal_ingredients VALUES (1, 1, 10, 'g'), (1, 2, 5, 'g');
+    `)
+    expect(await getShoppingList(1, '2026-09-14', ['Salt'], [1])).toEqual([
+      { ingredientId: 2, name: 'Salt', qty: 5, unit: 'g', count: 1 },
+    ])
+    expect(await getShoppingList(1, '2026-09-14', ['sALt'])).toEqual([
+      { ingredientId: 1, name: 'Sea salt', qty: 10, unit: 'g', count: 1 },
+    ])
+    expect(await getShoppingList(1, '2026-09-14')).toHaveLength(2)
+  } finally {
+    db.select.mockReset()
+    await client.close()
+  }
+}, 15000)
 
 describe('planner clearing and replacement persistence', () => {
   beforeEach(() => vi.resetAllMocks())
