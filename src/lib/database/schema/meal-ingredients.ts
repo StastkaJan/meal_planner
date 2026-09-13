@@ -20,6 +20,7 @@ export const mealIngredients = pgTable(
       .notNull()
       .references(() => ingredients.id),
     position: integer('position').notNull(),
+    originalName: text('original_name'),
     qty: numeric('qty', { precision: 10, scale: 3 }),
     unit: text('unit'),
   },

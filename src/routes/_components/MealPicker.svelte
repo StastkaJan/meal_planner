@@ -4,7 +4,7 @@
   import { page as currentPage } from '$app/state'
   import { onDestroy } from 'svelte'
   import { useI18n } from '$lib/i18n-context'
-  import Button from '$lib/components/ui/Button.svelte'
+  import Pagination from '$lib/components/ui/Pagination.svelte'
 
   const { t } = useI18n()
 
@@ -105,21 +105,9 @@
       <li class="no-results">{t('No meals found')}</li>
     {/each}
   </ul>
-  <nav class="picker-footer" aria-label={t('Pagination')}>
-    <Button
-      variant="secondary"
-      size="sm"
-      disabled={disabled || page === 1}
-      onclick={() => filter(page - 1)}>{t('Previous page')}</Button
-    >
-    <span>{page}</span>
-    <Button
-      variant="secondary"
-      size="sm"
-      disabled={disabled || !hasMore}
-      onclick={() => filter(page + 1)}>{t('Next page')}</Button
-    >
-  </nav>
+  <div class="picker-footer">
+    <Pagination {page} {hasMore} {disabled} onPageChange={filter} />
+  </div>
 </fieldset>
 
 <style lang="scss">
@@ -227,13 +215,8 @@
     font-size: 0.875rem;
   }
   .picker-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 12px 16px;
+    padding: 0.75rem 1rem;
     border-top: 1px solid $color-border;
-    font-size: 0.8rem;
   }
   .item:disabled {
     opacity: 0.55;

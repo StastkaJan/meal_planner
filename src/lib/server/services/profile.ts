@@ -1,3 +1,9 @@
+import { error } from '@sveltejs/kit'
+import {
+  createIngredientOption,
+  pantryIngredientSelection,
+} from '../repositories/ingredients'
+import { InvalidMealInputError } from '$lib/domain/meal-input'
 import { hashPassword, verifyPassword } from './auth'
 import {
   deleteAccount as deleteAccountRecord,
@@ -62,8 +68,35 @@ export async function updateProfileSettings(
     if (body.cuisinePrefs !== undefined) patch.cuisinePrefs = body.cuisinePrefs
     if (body.dietaryRestrictions !== undefined)
       patch.dietaryRestrictions = body.dietaryRestrictions
-    if (body.pantryStaples !== undefined)
-      patch.pantryStaples = toPantryStaples(body.pantryStaples)
+    if (body.pantryIngredientIds !== undefined) {
+      const ids = body.pantryIngredientIds
+      if (
+        !Array.isArray(ids) ||
+        ids.length > 100 ||
+        ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+      )
+        error(400, 'Invalid pantry ingredients')
+      let selected
+      try {
+        selected = await pantryIngredientSelection(userId, [
+          ...new Set(ids),
+        ] as number[])
+      } catch (cause) {
+        if (cause instanceof InvalidMealInputError) error(400, cause.message)
+        throw cause
+      }
+      patch.pantryIngredientIds = selected.map((option) => option.id)
+      patch.pantryStaples = selected.map((option) => option.name)
+    } else if (body.pantryStaples !== undefined) {
+      const names = toPantryStaples(body.pantryStaples)
+      const selected = []
+      for (const name of names)
+        selected.push(await createIngredientOption(userId, name))
+      patch.pantryStaples = names
+      patch.pantryIngredientIds = [
+        ...new Set(selected.map((option) => option.id)),
+      ]
+    }
     for (const field of TARGET_FIELDS) {
       if (body[field] !== undefined) patch[field] = toTarget(body[field])
     }

@@ -6,6 +6,9 @@ const { findMeal, requireUser } = vi.hoisted(() => ({
   requireUser: vi.fn(),
 }))
 vi.mock('$lib/server/guards', () => ({ requireUser }))
+vi.mock('$lib/server/repositories/ingredients', () => ({
+  listIngredientOptions: vi.fn().mockResolvedValue([]),
+}))
 vi.mock('$lib/server/repositories/meals', () => ({
   findMeal,
   getMealIngredients: vi.fn().mockResolvedValue([{ name: 'Carrot' }]),

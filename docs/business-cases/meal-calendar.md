@@ -68,9 +68,9 @@ different dietary needs. Plans belong to a logged-in user and are private.
   **Reroll** replaces only the selected slot with a different permitted recipe;
   it shares the daily nutrition tolerance and variety scoring.
 - **Build a shopping list.** The weekly shopping view combines structured
-  ingredients from assigned meals. It groups matching names and units, sums
+  ingredients from assigned meals. It groups matching ingredient identities and compatible units, sums
   complete quantities, scales them for the plan's people count and each
-  recipe's serving count, keeps different units separate, and uses a plain
+  recipe's serving count, keeps incompatible units separate, and uses a plain
   count when quantities are missing. Profile pantry staples are omitted.
 
 See [../schema.md](../schema.md) (`plans`, `weekSlots`,

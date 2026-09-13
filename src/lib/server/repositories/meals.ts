@@ -20,6 +20,7 @@ import {
 } from '$lib/database/schema'
 import type { IngredientInput } from '$lib/types'
 import type { Locale } from '$lib/i18n'
+import { resolveIngredient } from './ingredients'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -196,7 +197,8 @@ export async function findMeal(id: number, userId?: number) {
 export async function getMealIngredients(mealId: number) {
   return db
     .select({
-      name: ingredients.name,
+      name: sql<string>`coalesce(${mealIngredients.originalName}, ${ingredients.name})`,
+      ingredientId: ingredients.id,
       qty: sql<number | null>`${mealIngredients.qty}::float`,
       unit: mealIngredients.unit,
     })
@@ -355,30 +357,13 @@ export async function setMealFavorite(
 
 // ---- structured ingredient links (source of truth for a meal's ingredients) ----
 
-// Resolves each name to its ingredients.id, creating any that don't exist yet. Batched (one
-// insert + one select for the whole set) instead of one round-trip pair per name.
-async function findOrCreateIngredientIds(
-  tx: Tx,
-  names: string[],
-): Promise<Map<string, number>> {
-  if (!names.length) return new Map()
-  await tx
-    .insert(ingredients)
-    .values(names.map((name) => ({ name })))
-    .onConflictDoNothing({ target: ingredients.name })
-  const rows = await tx
-    .select({ id: ingredients.id, name: ingredients.name })
-    .from(ingredients)
-    .where(inArray(ingredients.name, names))
-  return new Map(rows.map((r) => [r.name, r.id]))
-}
-
 // Replaces a meal's structured ingredient rows. Call this whenever a meal's ingredients are
 // written so mealIngredients stays in sync — the shopping list sums the qty column here.
 export async function syncMealIngredients(
   tx: Tx,
   mealId: number,
   items: IngredientInput[],
+  actorId?: number,
 ) {
   await tx.delete(mealIngredients).where(eq(mealIngredients.mealId, mealId))
   const cleaned = items
@@ -386,14 +371,31 @@ export async function syncMealIngredients(
     .filter((it) => it.name)
   if (!cleaned.length) return
 
-  const displayName = (name: string) => name[0].toUpperCase() + name.slice(1)
-  const names = [...new Set(cleaned.map((it) => displayName(it.name)))]
-  const idByName = await findOrCreateIngredientIds(tx, names)
+  const [meal] = await tx
+    .select({ userId: meals.userId })
+    .from(meals)
+    .where(eq(meals.id, mealId))
+  const resolved: number[] = []
+  for (const item of cleaned) {
+    const ingredient = await resolveIngredient(
+      tx,
+      item.name,
+      actorId ?? meal?.userId ?? null,
+      item.ingredientId,
+    )
+    if (meal?.userId === null)
+      await tx
+        .update(ingredients)
+        .set({ isCatalog: true })
+        .where(eq(ingredients.id, ingredient.id))
+    resolved.push(ingredient.id)
+  }
 
   await tx.insert(mealIngredients).values(
     cleaned.map((it, position) => ({
       mealId,
-      ingredientId: idByName.get(displayName(it.name))!,
+      ingredientId: resolved[position],
+      originalName: it.name,
       position,
       qty: it.qty !== null ? String(it.qty) : null,
       unit: it.unit,
@@ -402,12 +404,15 @@ export async function syncMealIngredients(
 }
 
 // Single choke point for meal creation: insert + structured-ingredient sync, one transaction.
-export async function createMeal(values: {
-  name: string
-  ingredients?: IngredientInput[]
-  translations?: Omit<typeof mealTranslations.$inferInsert, 'mealId'>[]
-  [k: string]: unknown
-}) {
+export async function createMeal(
+  values: {
+    name: string
+    ingredients?: IngredientInput[]
+    translations?: Omit<typeof mealTranslations.$inferInsert, 'mealId'>[]
+    [k: string]: unknown
+  },
+  actorId?: number,
+) {
   const {
     ingredients: ingredientInput,
     translations: translationInput,
@@ -415,7 +420,7 @@ export async function createMeal(values: {
   } = values
   return db.transaction(async (tx) => {
     const [meal] = await tx.insert(meals).values(mealValues).returning()
-    await syncMealIngredients(tx, meal.id, ingredientInput ?? [])
+    await syncMealIngredients(tx, meal.id, ingredientInput ?? [], actorId)
     if (translationInput?.length)
       await tx.insert(mealTranslations).values(
         translationInput.map((translation) => ({
@@ -429,7 +434,11 @@ export async function createMeal(values: {
 
 // Single choke point for meal updates: update + structured-ingredient resync (only when
 // ingredients was part of this write), one transaction.
-export async function updateMeal(id: number, values: Record<string, unknown>) {
+export async function updateMeal(
+  id: number,
+  values: Record<string, unknown>,
+  actorId?: number,
+) {
   const { ingredients: ingredientInput, ...mealValues } = values
   return db.transaction(async (tx) => {
     // An ingredients-only write (nothing else changed) leaves mealValues empty — drizzle's
@@ -443,7 +452,12 @@ export async function updateMeal(id: number, values: Record<string, unknown>) {
       : await tx.select().from(meals).where(eq(meals.id, id))
     if (!updated) return updated
     if (ingredientInput !== undefined) {
-      await syncMealIngredients(tx, id, ingredientInput as IngredientInput[])
+      await syncMealIngredients(
+        tx,
+        id,
+        ingredientInput as IngredientInput[],
+        actorId,
+      )
     }
     return updated
   })

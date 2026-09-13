@@ -24,7 +24,7 @@
     {#if caption}<caption>{caption}</caption>{/if}
     <thead>
       <tr>
-        {#each columns as column}<th>{column}</th>{/each}
+        {#each columns as column}<th scope="col">{column}</th>{/each}
       </tr>
     </thead>
     <tbody>
@@ -41,7 +41,10 @@
 
 <style lang="scss">
   .table-scroll {
+    min-width: 0;
     overflow-x: auto;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
     background: $color-surface;
   }
 
@@ -54,16 +57,25 @@
   :global(.ui-table th),
   :global(.ui-table td) {
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid $color-border;
+    border-bottom: 1px solid rgba($color-border, 0.55);
     text-align: left;
+    font-size: 0.875rem;
   }
 
   :global(.ui-table th) {
     color: $color-text-muted;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: #faf8f2;
+    font-weight: 500;
+    background: rgba($color-surface-2, 0.4);
+  }
+
+  :global(.ui-table tbody tr:last-child td) {
+    border-bottom: 0;
+  }
+  :global(.ui-table tbody tr:hover) {
+    background: rgba($color-surface-2, 0.35);
+  }
+  :global(.ui-table th:last-child:not(:first-child)) {
+    text-align: right;
   }
 
   :global(.ui-table .empty) {

@@ -135,9 +135,7 @@
     color: $color-text-muted;
   }
   .table-wrap {
-    overflow: hidden;
-    border: 1px solid $color-border;
-    border-radius: $radius;
+    min-width: 0;
   }
   .plan-summary {
     display: flex;

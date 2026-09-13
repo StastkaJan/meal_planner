@@ -57,6 +57,44 @@ test('@smoke edit meal from detail page', async ({ page }) => {
   await expect(page.getByText('1.0g salt')).toBeVisible()
 })
 
+test('@smoke saves ingredient drafts and clears the previous identity', async ({
+  page,
+}) => {
+  const response = await page.request.post('/meals', {
+    data: {
+      name: `Ingredient-draft-${Date.now()}`,
+      ingredients: [{ name: 'Tomato', qty: null, unit: null }],
+    },
+  })
+  expect(response.ok()).toBe(true)
+  const meal = await response.json()
+  const recipeUrl = `/meals/${meal.id}`
+  const search = page.getByRole('combobox', { name: 'Search ingredients' })
+
+  for (const name of ['Carrot', '', `Custom seasoning ${Date.now()}`]) {
+    await page.goto(`${recipeUrl}/edit`)
+    await page.waitForLoadState('networkidle')
+    await search.fill(name)
+    await search.press('Tab')
+    const saving = page.waitForRequest(
+      (request) =>
+        new URL(request.url()).pathname === recipeUrl &&
+        request.method() === 'PATCH',
+    )
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    expect((await saving).postDataJSON().ingredients).toEqual(
+      name ? [{ name, qty: null, unit: null }] : [],
+    )
+    await expect(page).toHaveURL(recipeUrl)
+    await page.reload()
+    const ingredients = page.locator('section').filter({
+      has: page.getByRole('heading', { name: 'Ingredients', exact: true }),
+    })
+    if (name) await expect(ingredients.getByRole('listitem')).toHaveText(name)
+    else await expect(ingredients).toHaveCount(0)
+  }
+})
+
 test('@smoke uploads and removes a recipe image', async ({ page }) => {
   const createResponse = await page.request.post('/meals', {
     data: { name: `Image-${Date.now()}` },
@@ -143,7 +181,12 @@ test('warns when an ingredient cannot be scaled', async ({ page }) => {
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.getByPlaceholder('Ingredient').fill('Salt to taste')
+  await page
+    .getByRole('combobox', { name: 'Search ingredients' })
+    .fill('Salt to taste')
+  await page
+    .getByRole('option', { name: 'Add custom ingredient: Salt to taste' })
+    .click()
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page).toHaveURL(/\/meals\/\d+$/)
   await page.reload()
@@ -163,7 +206,21 @@ test('@smoke allows an ingredient quantity without a unit', async ({
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.getByPlaceholder('Ingredient').fill('Eggs')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Eggs')
+  await page.getByRole('option', { name: 'Eggs', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Eggs')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Milk')
+  await page.getByRole('option', { name: 'Milk', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Milk')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Eggs')
+  await page.getByRole('option', { name: 'Eggs', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Search ingredients' }),
+  ).toHaveValue('Eggs')
   await page.getByPlaceholder('Qty').fill('2')
   const saveResponsePromise = page.waitForResponse(
     (response) =>
@@ -213,7 +270,8 @@ test('scales ingredient quantities with servings', async ({ page }) => {
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
-  await page.getByPlaceholder('Ingredient').fill('Flour')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Flour')
+  await page.getByRole('option', { name: 'Flour', exact: true }).click()
   await page.getByPlaceholder('Qty').fill('1')
   await page.locator('.ingredient-row select').selectOption('cup')
   await page.getByRole('button', { name: 'Save' }).click()
@@ -233,7 +291,10 @@ test('@smoke translates recipe ingredient names', async ({ page }) => {
     .click()
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.getByPlaceholder('Ingredient').fill('Carrot')
+  await page
+    .getByRole('combobox', { name: 'Search ingredients' })
+    .fill('Carrot')
+  await page.getByRole('option', { name: 'Carrot', exact: true }).click()
   await page.getByLabel('Instructions').fill('Chop the carrot.')
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page).toHaveURL(/\/meals\/\d+$/)
@@ -429,7 +490,8 @@ test('cooking mode scales ingredients, presents steps, and starts timers', async
   await page.getByRole('link', { name, exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Servings').fill('2')
-  await page.getByPlaceholder('Ingredient').fill('Flour')
+  await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Flour')
+  await page.getByRole('option', { name: 'Flour', exact: true }).click()
   await page.getByPlaceholder('Qty').fill('1')
   await page.locator('.ingredient-row select').selectOption('cup')
   await page

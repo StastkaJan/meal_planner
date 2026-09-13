@@ -13,6 +13,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
     planId: plan.id,
     portions: plan.portions,
     week,
-    items: await getShoppingList(plan.id, week, settings?.pantryStaples),
+    items: await getShoppingList(
+      plan.id,
+      week,
+      settings?.pantryStaples,
+      settings?.pantryIngredientIds,
+      locals.locale,
+    ),
   }
 }

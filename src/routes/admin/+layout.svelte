@@ -8,6 +8,13 @@
 
 <nav class="admin-nav" aria-label={t('Admin sections')}>
   <a
+    href="/admin/ingredients"
+    class:active={$page.url.pathname.startsWith('/admin/ingredients')}
+    aria-current={$page.url.pathname.startsWith('/admin/ingredients')
+      ? 'page'
+      : undefined}>{t('Ingredients')}</a
+  >
+  <a
     href="/admin/recipes"
     class:active={$page.url.pathname.startsWith('/admin/recipes')}
     aria-current={$page.url.pathname.startsWith('/admin/recipes')

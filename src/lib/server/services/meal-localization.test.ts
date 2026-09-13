@@ -71,6 +71,6 @@ describe('meal localization', () => {
 
     await updateUserMeal(1, { name: 'Stew', sourceLocale: 'cs' })
 
-    expect(updateMeal).toHaveBeenCalledWith(1, { name: 'Stew' })
+    expect(updateMeal).toHaveBeenCalledWith(1, { name: 'Stew' }, undefined)
   })
 })

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Pagination from '$lib/components/ui/Pagination.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import type { PageData } from './$types'
@@ -272,20 +273,12 @@
     onFavorite={toggleFavorite}
   />
   {#if data.totalPages > 1}
-    <nav class="pagination" aria-label={t('Recipe pages')}>
-      {#if data.page > 1}<a href={recipeUrl({ page: data.page - 1 })}
-          >{t('Previous')}</a
-        >{/if}
-      <span
-        >{t('Page {page} of {pages}', {
-          page: data.page,
-          pages: data.totalPages,
-        })}</span
-      >
-      {#if data.page < data.totalPages}<a
-          href={recipeUrl({ page: data.page + 1 })}>{t('Next')}</a
-        >{/if}
-    </nav>
+    <Pagination
+      page={data.page}
+      totalPages={data.totalPages}
+      href={(page) => recipeUrl({ page })}
+      label={t('Recipe pages')}
+    />
   {/if}
 </div>
 
@@ -341,18 +334,6 @@
     margin-left: auto;
     color: $color-text-muted;
     font-size: 0.8rem;
-  }
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    color: $color-text-muted;
-    font-size: 0.85rem;
-
-    a {
-      color: $color-accent;
-    }
   }
 
   .top-bar {

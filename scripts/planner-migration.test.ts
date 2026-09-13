@@ -15,7 +15,7 @@ describe('consolidated planner migration', () => {
       const dialect = new PgDialect()
       const migrations = readMigrationFiles({
         migrationsFolder: fileURLToPath(new URL('../drizzle', import.meta.url)),
-      })
+      }).filter((migration) => migration.folderMillis <= 1788892202558)
       const execute = vi.fn(async (_query: SQL) => [])
       const session = {
         execute: vi.fn(async () => []),
