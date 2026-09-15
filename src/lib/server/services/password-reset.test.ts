@@ -1,15 +1,20 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   findUserByEmail: vi.fn(),
   savePasswordReset: vi.fn(),
   consumePasswordReset: vi.fn(),
+  createTransport: vi.fn(),
+  sendMail: vi.fn(),
   env: {
     ORIGIN: 'https://papuplan.cz',
-    RESEND_API_KEY: 'test-key',
-    EMAIL_FROM: 'Papuplan <reset@example.com>',
+    GMAIL_USER: ' papuplan.test@gmail.com ',
+    GMAIL_APP_PASSWORD: 'abcd efgh ijkl mnop',
   },
 }))
 vi.mock('$env/dynamic/private', () => ({ env: mocks.env }))
+vi.mock('nodemailer', () => ({
+  default: { createTransport: mocks.createTransport },
+}))
 vi.mock('../repositories/accounts', () => ({
   findUserByEmail: mocks.findUserByEmail,
 }))
@@ -23,46 +28,65 @@ import {
 } from './password-reset'
 import { verifyPassword } from './auth'
 
-const fetchMock = vi.fn()
 beforeEach(() => {
-  vi.clearAllMocks()
-  vi.stubGlobal('fetch', fetchMock)
+  vi.resetAllMocks()
+  mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail })
+  mocks.sendMail.mockResolvedValue({ accepted: ['user@example.com'] })
   mocks.savePasswordReset.mockResolvedValue(true)
   mocks.env.ORIGIN = 'https://papuplan.cz'
-  mocks.env.RESEND_API_KEY = 'test-key'
+  mocks.env.GMAIL_USER = ' papuplan.test@gmail.com '
+  mocks.env.GMAIL_APP_PASSWORD = 'abcd efgh ijkl mnop'
 })
-afterEach(() => vi.unstubAllGlobals())
 
-it('sends a localized, expiring link with only its digest stored', async () => {
-  mocks.findUserByEmail.mockResolvedValue({
-    id: 1,
-    email: 'user@example.com',
-    passwordHash: 'old-hash',
-  })
-  fetchMock.mockResolvedValue({ ok: true })
-  const start = Date.now()
-  await requestPasswordReset('user@example.com', 'cs')
-  const [endpoint, request] = fetchMock.mock.calls[0]
-  const email = JSON.parse(request.body)
-  const link = new URL(email.text.match(/https:\/\/\S+/)[0])
-  const token = link.searchParams.get('token')!
-  expect(endpoint).toBe('https://api.resend.com/emails')
-  expect(link.origin).toBe('https://papuplan.cz')
-  expect(link.pathname).toBe('/auth/reset-password')
-  expect(token).toMatch(/^[a-f0-9]{64}$/)
-  expect(email.subject).toContain('obnova hesla')
-  expect(email.to).toEqual(['user@example.com'])
-  const [id, passwordHash, digest, expiresAt] =
-    mocks.savePasswordReset.mock.calls[0]
-  expect([id, passwordHash, digest]).toEqual([
-    1,
-    'old-hash',
-    hashResetToken(token),
-  ])
-  expect(digest).not.toBe(token)
-  expect(expiresAt.getTime()).toBeGreaterThanOrEqual(start + 30 * 60_000)
-  expect(expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 30 * 60_000)
-})
+it.each(['en', 'cs'] as const)(
+  'sends a localized %s link through authenticated Gmail TLS with only its digest stored',
+  async (locale) => {
+    mocks.findUserByEmail.mockResolvedValue({
+      id: 1,
+      email: 'user@example.com',
+      passwordHash: 'old-hash',
+    })
+    const start = Date.now()
+    await requestPasswordReset('user@example.com', locale)
+    const email = mocks.sendMail.mock.calls[0][0]
+    const link = new URL(email.text.match(/https:\/\/\S+/)[0])
+    const token = link.searchParams.get('token')!
+    expect(mocks.createTransport).toHaveBeenCalledWith({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: { user: 'papuplan.test@gmail.com', pass: 'abcdefghijklmnop' },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 10_000,
+      dnsTimeout: 10_000,
+    })
+    expect(email.from).toEqual({
+      name: 'Papu Plan',
+      address: 'papuplan.test@gmail.com',
+    })
+    expect(link.origin).toBe('https://papuplan.cz')
+    expect(link.pathname).toBe('/auth/reset-password')
+    expect(token).toMatch(/^[a-f0-9]{64}$/)
+    expect(email.subject).toContain(
+      locale === 'cs' ? 'obnova hesla' : 'reset your password',
+    )
+    expect(email.text).toContain(
+      locale === 'cs' ? 'platí 30 minut' : 'valid for 30 minutes',
+    )
+    expect(email.to).toEqual(['user@example.com'])
+    const [id, passwordHash, digest, expiresAt] =
+      mocks.savePasswordReset.mock.calls[0]
+    expect([id, passwordHash, digest]).toEqual([
+      1,
+      'old-hash',
+      hashResetToken(token),
+    ])
+    expect(digest).not.toBe(token)
+    expect(expiresAt.getTime()).toBeGreaterThanOrEqual(start + 30 * 60_000)
+    expect(expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 30 * 60_000)
+  },
+)
 
 it('does not send mail for an unknown account or a superseded password', async () => {
   mocks.findUserByEmail.mockResolvedValue(null)
@@ -71,19 +95,36 @@ it('does not send mail for an unknown account or a superseded password', async (
   mocks.findUserByEmail.mockResolvedValue({ id: 1, passwordHash: 'old' })
   mocks.savePasswordReset.mockResolvedValue(false)
   await requestPasswordReset('user@example.com', 'en')
-  expect(fetchMock).not.toHaveBeenCalled()
+  expect(mocks.createTransport).not.toHaveBeenCalled()
+  expect(mocks.sendMail).not.toHaveBeenCalled()
 })
 
-it('does not expose provider error bodies', async () => {
+it('does not expose SMTP error details', async () => {
   mocks.findUserByEmail.mockResolvedValue({
     id: 1,
     passwordHash: 'old',
     email: 'user@example.com',
   })
-  fetchMock.mockResolvedValue({ ok: false, text: () => 'sensitive data' })
+  const providerError = new Error(
+    '535 credentials or user@example.com rejected',
+  )
+  mocks.sendMail.mockRejectedValue(providerError)
   await expect(requestPasswordReset('user@example.com', 'en')).rejects.toThrow(
     'Password reset email delivery failed',
   )
+  await expect(requestPasswordReset('user@example.com', 'en')).rejects.not.toBe(
+    providerError,
+  )
+})
+
+it('does not issue a link when Gmail credentials are missing', async () => {
+  mocks.env.GMAIL_APP_PASSWORD = '   '
+  await expect(requestPasswordReset('user@example.com', 'en')).rejects.toThrow(
+    'Password reset email is not configured',
+  )
+  expect(mocks.findUserByEmail).not.toHaveBeenCalled()
+  expect(mocks.savePasswordReset).not.toHaveBeenCalled()
+  expect(mocks.createTransport).not.toHaveBeenCalled()
 })
 
 it('requires credentials and a trusted HTTPS origin (or local development)', () => {
@@ -98,7 +139,10 @@ it('requires credentials and a trusted HTTPS origin (or local development)', () 
   }
   mocks.env.ORIGIN = 'http://localhost:3000'
   expect(passwordResetConfigured()).toBe(true)
-  mocks.env.RESEND_API_KEY = ''
+  mocks.env.GMAIL_APP_PASSWORD = '   '
+  expect(passwordResetConfigured()).toBe(false)
+  mocks.env.GMAIL_APP_PASSWORD = 'abcdefghijklmnop'
+  mocks.env.GMAIL_USER = '   '
   expect(passwordResetConfigured()).toBe(false)
 })
 

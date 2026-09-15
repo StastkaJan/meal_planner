@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { env } from '$env/dynamic/private'
+import nodemailer from 'nodemailer'
 import type { Locale } from '$lib/i18n'
 import { findUserByEmail } from '../repositories/accounts'
 import {
@@ -13,7 +14,8 @@ export const hashResetToken = (token: string) =>
   createHash('sha256').update(token).digest('hex')
 
 export function passwordResetConfigured() {
-  if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !env.ORIGIN) return false
+  if (!env.GMAIL_USER?.trim() || !env.GMAIL_APP_PASSWORD?.trim() || !env.ORIGIN)
+    return false
   try {
     const url = new URL(env.ORIGIN)
     return (
@@ -30,6 +32,10 @@ export function passwordResetConfigured() {
 
 export async function requestPasswordReset(email: string, locale: Locale) {
   return monitorService('auth', 'request_password_reset', async () => {
+    const sender = env.GMAIL_USER?.trim()
+    const appPassword = env.GMAIL_APP_PASSWORD?.replace(/\s/g, '')
+    if (!sender || !appPassword)
+      throw new Error('Password reset email is not configured')
     const user = await findUserByEmail(email)
     if (!user) return
     const token = generateToken()
@@ -44,15 +50,22 @@ export async function requestPasswordReset(email: string, locale: Locale) {
       return
     const link = new URL('/auth/reset-password', env.ORIGIN)
     link.searchParams.set('token', token)
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
+    const transport = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: sender,
+        pass: appPassword,
       },
-      signal: AbortSignal.timeout(10_000),
-      body: JSON.stringify({
-        from: env.EMAIL_FROM,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 10_000,
+      dnsTimeout: 10_000,
+    })
+    await transport
+      .sendMail({
+        from: { name: 'Papu Plan', address: sender },
         to: [user.email],
         subject:
           locale === 'cs'
@@ -62,10 +75,11 @@ export async function requestPasswordReset(email: string, locale: Locale) {
           locale === 'cs'
             ? `Nové heslo si nastavíte na tomto odkazu (platí 30 minut):\n\n${link}\n\nPokud jste o obnovu hesla nežádali, tento e-mail ignorujte.`
             : `Set a new password using this link (valid for 30 minutes):\n\n${link}\n\nIf you did not request a password reset, ignore this email.`,
-      }),
-    })
-    // Never include the provider response, email address, or reset link in logs.
-    if (!response.ok) throw new Error('Password reset email delivery failed')
+      })
+      .catch(() => {
+        // SMTP errors can contain addresses or credentials; log a generic failure.
+        throw new Error('Password reset email delivery failed')
+      })
   })
 }
 
