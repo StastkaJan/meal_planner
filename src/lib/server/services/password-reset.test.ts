@@ -7,8 +7,9 @@ const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
   env: {
     ORIGIN: 'https://papuplan.cz',
-    GMAIL_USER: ' papuplan.test@gmail.com ',
-    GMAIL_APP_PASSWORD: 'abcd efgh ijkl mnop',
+    SMTP2GO_USERNAME: ' papuplan-smtp ',
+    SMTP2GO_PASSWORD: ' smtp password ',
+    EMAIL_FROM: ' noreply@papuplan.cz ',
   },
 }))
 vi.mock('$env/dynamic/private', () => ({ env: mocks.env }))
@@ -34,12 +35,13 @@ beforeEach(() => {
   mocks.sendMail.mockResolvedValue({ accepted: ['user@example.com'] })
   mocks.savePasswordReset.mockResolvedValue(true)
   mocks.env.ORIGIN = 'https://papuplan.cz'
-  mocks.env.GMAIL_USER = ' papuplan.test@gmail.com '
-  mocks.env.GMAIL_APP_PASSWORD = 'abcd efgh ijkl mnop'
+  mocks.env.SMTP2GO_USERNAME = ' papuplan-smtp '
+  mocks.env.SMTP2GO_PASSWORD = ' smtp password '
+  mocks.env.EMAIL_FROM = ' noreply@papuplan.cz '
 })
 
 it.each(['en', 'cs'] as const)(
-  'sends a localized %s link through authenticated Gmail TLS with only its digest stored',
+  'sends a localized %s link through authenticated SMTP2GO TLS with only its digest stored',
   async (locale) => {
     mocks.findUserByEmail.mockResolvedValue({
       id: 1,
@@ -52,10 +54,10 @@ it.each(['en', 'cs'] as const)(
     const link = new URL(email.text.match(/https:\/\/\S+/)[0])
     const token = link.searchParams.get('token')!
     expect(mocks.createTransport).toHaveBeenCalledWith({
-      host: 'smtp.gmail.com',
+      host: 'mail.smtp2go.com',
       port: 465,
       secure: true,
-      auth: { user: 'papuplan.test@gmail.com', pass: 'abcdefghijklmnop' },
+      auth: { user: 'papuplan-smtp', pass: ' smtp password ' },
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 10_000,
@@ -63,7 +65,7 @@ it.each(['en', 'cs'] as const)(
     })
     expect(email.from).toEqual({
       name: 'Papu Plan',
-      address: 'papuplan.test@gmail.com',
+      address: 'noreply@papuplan.cz',
     })
     expect(link.origin).toBe('https://papuplan.cz')
     expect(link.pathname).toBe('/auth/reset-password')
@@ -117,15 +119,19 @@ it('does not expose SMTP error details', async () => {
   )
 })
 
-it('does not issue a link when Gmail credentials are missing', async () => {
-  mocks.env.GMAIL_APP_PASSWORD = '   '
-  await expect(requestPasswordReset('user@example.com', 'en')).rejects.toThrow(
-    'Password reset email is not configured',
-  )
-  expect(mocks.findUserByEmail).not.toHaveBeenCalled()
-  expect(mocks.savePasswordReset).not.toHaveBeenCalled()
-  expect(mocks.createTransport).not.toHaveBeenCalled()
-})
+it.each(['SMTP2GO_USERNAME', 'SMTP2GO_PASSWORD', 'EMAIL_FROM'] as const)(
+  'does not issue a link when %s is missing',
+  async (key) => {
+    mocks.env[key] = '   '
+    expect(passwordResetConfigured()).toBe(false)
+    await expect(
+      requestPasswordReset('user@example.com', 'en'),
+    ).rejects.toThrow('Password reset email is not configured')
+    expect(mocks.findUserByEmail).not.toHaveBeenCalled()
+    expect(mocks.savePasswordReset).not.toHaveBeenCalled()
+    expect(mocks.createTransport).not.toHaveBeenCalled()
+  },
+)
 
 it('requires credentials and a trusted HTTPS origin (or local development)', () => {
   expect(passwordResetConfigured()).toBe(true)
@@ -139,11 +145,6 @@ it('requires credentials and a trusted HTTPS origin (or local development)', () 
   }
   mocks.env.ORIGIN = 'http://localhost:3000'
   expect(passwordResetConfigured()).toBe(true)
-  mocks.env.GMAIL_APP_PASSWORD = '   '
-  expect(passwordResetConfigured()).toBe(false)
-  mocks.env.GMAIL_APP_PASSWORD = 'abcdefghijklmnop'
-  mocks.env.GMAIL_USER = '   '
-  expect(passwordResetConfigured()).toBe(false)
 })
 
 it('hashes the new password and consumes the token by digest', async () => {

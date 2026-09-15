@@ -152,32 +152,37 @@ describe('pull request previews', () => {
     expect(start).toBeGreaterThan(marker)
   })
 
-  it('recreates legacy previews once, then preserves demo data on redeploy', () => {
-    const fixture = previewFixture()
-    writeFileSync(fixture.legacyMarker, 'old-release')
-    const first = fixture.run()
-    expect(first.status, first.stderr).toBe(0)
-    const commands = readFileSync(fixture.log, 'utf8')
-    expect(commands).toMatch(
-      /--project-name meal-plan-pr-42 .*down --volumes --remove-orphans/,
-    )
-    expect(commands.indexOf('down --volumes')).toBeLessThan(
-      commands.indexOf('app node scripts-dist/migrate.js'),
-    )
-    expect(commands.indexOf('app node scripts-dist/migrate.js')).toBeLessThan(
-      commands.indexOf('run --rm --no-deps demo-seed'),
-    )
-    expect(existsSync(fixture.legacyMarker)).toBe(false)
-    expect(existsSync(fixture.seedMarker)).toBe(true)
+  // Two Bash runs each have a 10-second process timeout; allow both under load.
+  it(
+    'recreates legacy previews once, then preserves demo data on redeploy',
+    { timeout: 25_000 },
+    () => {
+      const fixture = previewFixture()
+      writeFileSync(fixture.legacyMarker, 'old-release')
+      const first = fixture.run()
+      expect(first.status, first.stderr).toBe(0)
+      const commands = readFileSync(fixture.log, 'utf8')
+      expect(commands).toMatch(
+        /--project-name meal-plan-pr-42 .*down --volumes --remove-orphans/,
+      )
+      expect(commands.indexOf('down --volumes')).toBeLessThan(
+        commands.indexOf('app node scripts-dist/migrate.js'),
+      )
+      expect(commands.indexOf('app node scripts-dist/migrate.js')).toBeLessThan(
+        commands.indexOf('run --rm --no-deps demo-seed'),
+      )
+      expect(existsSync(fixture.legacyMarker)).toBe(false)
+      expect(existsSync(fixture.seedMarker)).toBe(true)
 
-    writeFileSync(fixture.log, '')
-    const second = fixture.run()
-    expect(second.status, second.stderr).toBe(0)
-    const redeploy = readFileSync(fixture.log, 'utf8')
-    expect(redeploy).not.toContain('down --volumes')
-    expect(redeploy).toContain('run --rm --no-deps demo-seed')
-    expect(redeploy).toContain('app node scripts-dist/migrate.js')
-  })
+      writeFileSync(fixture.log, '')
+      const second = fixture.run()
+      expect(second.status, second.stderr).toBe(0)
+      const redeploy = readFileSync(fixture.log, 'utf8')
+      expect(redeploy).not.toContain('down --volumes')
+      expect(redeploy).toContain('run --rm --no-deps demo-seed')
+      expect(redeploy).toContain('app node scripts-dist/migrate.js')
+    },
+  )
 
   it('does not publish or mark a preview initialized when seeding fails', () => {
     const fixture = previewFixture()

@@ -14,7 +14,12 @@ export const hashResetToken = (token: string) =>
   createHash('sha256').update(token).digest('hex')
 
 export function passwordResetConfigured() {
-  if (!env.GMAIL_USER?.trim() || !env.GMAIL_APP_PASSWORD?.trim() || !env.ORIGIN)
+  if (
+    !env.SMTP2GO_USERNAME?.trim() ||
+    !env.SMTP2GO_PASSWORD?.trim() ||
+    !env.EMAIL_FROM?.trim() ||
+    !env.ORIGIN
+  )
     return false
   try {
     const url = new URL(env.ORIGIN)
@@ -32,9 +37,10 @@ export function passwordResetConfigured() {
 
 export async function requestPasswordReset(email: string, locale: Locale) {
   return monitorService('auth', 'request_password_reset', async () => {
-    const sender = env.GMAIL_USER?.trim()
-    const appPassword = env.GMAIL_APP_PASSWORD?.replace(/\s/g, '')
-    if (!sender || !appPassword)
+    const sender = env.EMAIL_FROM?.trim()
+    const username = env.SMTP2GO_USERNAME?.trim()
+    const password = env.SMTP2GO_PASSWORD
+    if (!sender || !username || !password?.trim())
       throw new Error('Password reset email is not configured')
     const user = await findUserByEmail(email)
     if (!user) return
@@ -51,12 +57,12 @@ export async function requestPasswordReset(email: string, locale: Locale) {
     const link = new URL('/auth/reset-password', env.ORIGIN)
     link.searchParams.set('token', token)
     const transport = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
+      host: 'mail.smtp2go.com',
       port: 465,
       secure: true,
       auth: {
-        user: sender,
-        pass: appPassword,
+        user: username,
+        pass: password,
       },
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,

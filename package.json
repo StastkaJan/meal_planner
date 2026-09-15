@@ -24,16 +24,16 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "marked": "^18.0.11",
+    "marked": "^18.0.12",
     "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "sharp": "^0.35.4",
     "svelte-multiselect": "^11.8.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@sveltejs/adapter-node": "^5.2.12",
     "@sveltejs/kit": "^2.70.3",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
@@ -49,7 +49,7 @@
     "svelte-check": "^4.7.6",
     "tsx": "^4.23.13",
     "typescript": "~6.0.3",
-    "vite": "^8.2.2",
+    "vite": "^8.3.0",
     "vitest": "^5.0.0"
   },
   "type": "module"

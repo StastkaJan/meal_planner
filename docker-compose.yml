@@ -21,8 +21,9 @@ services:
     environment:
       DATABASE_URL: postgresql://mealplan:mealplan@db:5432/mealplan
       ORIGIN: http://localhost:3000
-      GMAIL_USER: ${GMAIL_USER:-}
-      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
+      SMTP2GO_USERNAME: ${SMTP2GO_USERNAME:-}
+      SMTP2GO_PASSWORD: ${SMTP2GO_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       BODY_SIZE_LIMIT: 6M
       RECIPE_IMAGE_DIR: /app/data/recipe-images
       LOG_LEVEL: ${LOG_LEVEL:-info}
