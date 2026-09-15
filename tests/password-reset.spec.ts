@@ -38,7 +38,9 @@ test('@smoke forgot password form confirms a reset request', async ({
   await page.goto('/auth/login')
   await page.waitForLoadState('networkidle')
   await page.getByRole('link', { name: 'Forgot password?' }).click()
-  await page.waitForLoadState('networkidle')
+  await expect(
+    page.getByRole('heading', { name: 'Reset password', exact: true }),
+  ).toBeVisible()
   await page.getByLabel('Email', { exact: true }).fill('unknown@example.com')
   await page.getByRole('button', { name: 'Send reset link' }).click()
   await expect(page.getByRole('status')).toContainText('If an account exists')
