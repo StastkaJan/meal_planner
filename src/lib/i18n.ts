@@ -10,6 +10,60 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'Less deciding. More enjoying.': 'Méně rozhodování. Více radosti.',
+  'Our vision': 'Naše vize',
+  'Get started': 'Začít',
+  'A little planning. A lot more living.':
+    'Trocha plánování. Více času na život.',
+  'Less deciding.': 'Méně rozhodování.',
+  'More enjoying.': 'Více radosti.',
+  'Make room for the good part of food.':
+    'Udělejte si prostor na radost z jídla.',
+  'Papu Plan brings your recipes, weekly meals, nutrition, and shopping list together. So “what are we eating?” becomes one less thing on your mind.':
+    'Papu Plan propojí vaše recepty, týdenní jídelníček, výživu a nákupní seznam. A otázka „co budeme jíst?“ vám ubere o jednu starost.',
+  'Meet Papu Plan: your recipes, weekly meals, nutrition, and shopping list in one place. Less deciding, more enjoying everyday food.':
+    'Poznejte Papu Plan: recepty, týdenní jídelníček, výživa a nákupní seznam na jednom místě. Méně rozhodování, více radosti z každodenního jídla.',
+  'Open planner': 'Otevřít plánovač',
+  'Start planning for free': 'Plánovat zdarma',
+  'See how it works': 'Jak to funguje',
+  'Recipes, manual planning, and shopping lists. Free forever.':
+    'Recepty, ruční plánování a nákupní seznamy. Navždy zdarma.',
+  'A taste of your week': 'Ochutnávka vašeho týdne',
+  'Good food, planned.': 'Dobré jídlo má plán.',
+  'Yoghurt, oats & berries': 'Jogurt, vločky a lesní ovoce',
+  'A gentle start': 'Příjemný začátek dne',
+  'Roasted vegetable couscous': 'Kuskus s pečenou zeleninou',
+  'Colour on your plate': 'Barvy na talíři',
+  'Lemon chicken & potatoes': 'Citronové kuře s bramborami',
+  'Something to look forward to': 'Na co se těšit',
+  'Your meals. One shopping list.': 'Vaše jídla. Jeden nákupní seznam.',
+  'An example day. Make yours your own.':
+    'Ukázkový den. Ten svůj si sestavte po svém.',
+  'From inspiration to dinner': 'Od inspirace k večeři',
+  'A simpler rhythm for your week.': 'Jednodušší rytmus vašeho týdne.',
+  'Keep your favourites close.': 'Oblíbené recepty vždy po ruce.',
+  'Save your own recipes and discover shared ones. Build a collection you actually want to cook.':
+    'Ukládejte si vlastní recepty a objevujte sdílené. Vytvořte si sbírku jídel, která budete rádi vařit.',
+  'Give your week a little shape.': 'Dejte svému týdnu trochu řádu.',
+  'Choose your meals, set portions for your household, and see how each day fits your nutrition goals.':
+    'Vyberte si jídla, nastavte porce pro svou domácnost a sledujte, jak jednotlivé dny odpovídají vašim výživovým cílům.',
+  'Take one list to the shop.': 'Na nákup s jedním seznamem.',
+  'Turn your planned meals into a combined shopping list, with quantities for the people at your table.':
+    'Z plánovaných jídel vznikne společný nákupní seznam s množstvím podle počtu lidí u vašeho stolu.',
+  'Everyday food.': 'Každodenní jídlo.',
+  'Less everyday effort.': 'Méně každodenních starostí.',
+  'We believe eating well should fit into your life.':
+    'Věříme, že dobré jídlo má zapadnout do vašeho života.',
+  'Our vision is to make the everyday work around food feel lighter: fewer last-minute decisions, a clearer idea of what to buy, and more space to enjoy cooking and eating together.':
+    'Chceme usnadnit každodenní starosti kolem jídla: méně rozhodování na poslední chvíli, jasnější představu o nákupu a více prostoru užít si vaření i společné stolování.',
+  'A plan is a starting point. Keep your favourite meals, change your mind, and leave room for real life. Papu Plan is here to help you find a rhythm that works for you.':
+    'Plán je výchozí bod. Nechte si oblíbená jídla, měňte názor a dejte prostor běžnému životu. Papu Plan vám pomůže najít rytmus, který vám vyhovuje.',
+  'Start with your next meal': 'Začněte příštím jídlem',
+  'Your week, with one less thing to think about.':
+    'Váš týden o jednu starost lehčí.',
+  'Create your free account': 'Vytvořit účet zdarma',
+  'Want a hand with the planning?': 'Chcete s plánováním pomoct?',
+  'Explore Free & Pro': 'Prohlédnout Free a Pro',
   'Ingredient catalogue': 'Katalog surovin',
   'Manage shared ingredient names, translations and aliases.':
     'Spravujte sdílené názvy surovin, překlady a alternativní názvy.',

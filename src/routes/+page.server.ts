@@ -1,3 +1,4 @@
+import { redirect } from '@sveltejs/kit'
 import { validDateStr } from '$lib/server/services/date'
 import { getPlanDetail, listPlans } from '$lib/server/repositories/plans'
 import { listMealPickerItems } from '$lib/server/repositories/meals'
@@ -8,7 +9,8 @@ import { addDays, mondayOf } from '$lib/utils/date-time'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-  const userId = locals.user!.id
+  if (!locals.user) redirect(303, '/welcome')
+  const userId = locals.user.id
   const [plans, u, savedExtras] = await Promise.all([
     listPlans(userId),
     getSettings(userId),

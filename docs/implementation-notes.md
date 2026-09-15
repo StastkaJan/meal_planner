@@ -64,6 +64,8 @@ See [account data business cases](business-cases/account-data.md).
 
 - `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`.
 
+- `/welcome` is the public EN/CS product and vision landing page; anonymous `/` visits redirect there, while signed-in users keep the planner at `/`.
+
 - `/legal/terms` and `/legal/privacy` are prerendered from the versioned UTF-8 legal Markdown used by registration and account notices.
 
 - Auth rate limits remain in-process; expired entries are pruned every minute. New sessions trigger expired-session cleanup at most hourly. Move rate limits to shared storage before scaling out, or after 429s persist for three 15-minute windows.
