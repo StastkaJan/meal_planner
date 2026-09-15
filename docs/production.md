@@ -1,5 +1,15 @@
 # Production deployment
 
+## Password reset email
+
+Set `RESEND_API_KEY` and `EMAIL_FROM` in `.env.production`; use a sender on a [verified Resend domain](https://resend.com/docs/api-reference/emails/send-email). Both app slots receive these variables. Reset links use the configured `ORIGIN` (production Compose derives it from `DOMAIN`), never a client-supplied host. Local development also needs `ORIGIN=http://localhost:3000` in `.env`.
+
+Apply migration `0028_email_password_reset.sql` through the normal release migration step. Users open **Forgot password?** from sign-in, request an email, and choose a new password using the 30-minute single-use link. A newer link or password change invalidates the previous link; a successful reset signs out all sessions.
+
+Requests return the same confirmation for known and unknown accounts. The Node process delivers email in the background with a 10-second timeout; service errors are recorded as `auth/request_password_reset`, without email addresses or tokens. A restart or provider failure can drop delivery; users can request another link. No credentials means a uniform 503 response. Request and redemption IP limits use SvelteKit's client address; configure trusted proxy forwarding before using client IP headers. Preview email remains unconfigured by default.
+
+Verify delivery with a controlled account after configuring Resend, then confirm the new password works and the old link and password fail. Do not enable email-provider click tracking for reset links.
+
 The production Compose overlay exposes its internal Caddy only on the external
 Docker network `public-web`. The VPS's portfolio Caddy owns ports 80/443,
 terminates TLS, and forwards the Meal Plan domain to `meal-plan-proxy:80` on

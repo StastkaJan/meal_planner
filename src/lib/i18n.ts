@@ -38,6 +38,27 @@ const CS_MESSAGES = {
   Aliases: 'Alternativní názvy',
   Translation: 'Překlad',
   Search: 'Hledat',
+  'Forgot password?': 'Zapomněli jste heslo?',
+  'Reset password': 'Obnovit heslo',
+  'Send reset link': 'Odeslat odkaz pro obnovu',
+  'Confirm password': 'Potvrdit heslo',
+  'Back to sign in': 'Zpět k přihlášení',
+  'Request a new reset link': 'Vyžádat nový odkaz pro obnovu',
+  'Passwords do not match': 'Hesla se neshodují',
+  'Enter a valid email address': 'Zadejte platnou e-mailovou adresu',
+  'Password reset is temporarily unavailable. Try again later.':
+    'Obnova hesla je dočasně nedostupná. Zkuste to později.',
+  'Use a valid reset link and a password between 8 and 128 characters.':
+    'Použijte platný odkaz pro obnovu a heslo o délce 8 až 128 znaků.',
+  'This reset link is invalid or expired. Request a new one.':
+    'Tento odkaz pro obnovu je neplatný nebo vypršel. Vyžádejte si nový.',
+  'Your password has been reset. Sign in with your new password.':
+    'Vaše heslo bylo obnoveno. Přihlaste se novým heslem.',
+  'If an account exists for this email, you will receive a password reset link shortly.':
+    'Pokud účet s tímto e-mailem existuje, brzy obdržíte odkaz pro obnovu hesla.',
+  'Choose a new password for your account.': 'Zvolte nové heslo ke svému účtu.',
+  'Enter your email and we will send you a password reset link.':
+    'Zadejte svůj e-mail a zašleme vám odkaz pro obnovu hesla.',
   'Latte / cappuccino': 'Latte / cappuccino',
   'Search extras': 'Hledat položky navíc',
   'Custom extra': 'Vlastní položka',

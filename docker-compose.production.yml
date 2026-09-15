@@ -4,6 +4,8 @@ x-production-app: &production-app
     DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the production env file}
     ORIGIN: https://${DOMAIN:?Set DOMAIN in the production env file}
     BODY_SIZE_LIMIT: 6M
+    RESEND_API_KEY: ${RESEND_API_KEY:-}
+    EMAIL_FROM: ${EMAIL_FROM:-}
     RECIPE_IMAGE_DIR: /app/data/recipe-images
     LOG_LEVEL: ${LOG_LEVEL:-info}
     DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-dev}
