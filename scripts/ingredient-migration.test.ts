@@ -7,7 +7,11 @@ import { PGlite } from '@electric-sql/pglite'
 
 const migrations = readMigrationFiles({
   migrationsFolder: fileURLToPath(new URL('../drizzle', import.meta.url)),
-}).filter((migration) => migration.folderMillis > 1788892202558)
+}).filter(
+  (migration) =>
+    migration.folderMillis > 1788892202558 &&
+    migration.folderMillis <= 1789293141322,
+)
 
 it.each([0, 1, 2, 3])(
   'unifies expanded catalogue aliases after %i previously applied stages',

@@ -144,6 +144,8 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 ## Auth flow
 
+<!-- NOTE: `/auth/forgot-password` and `/auth/reset-password` use JSON POST endpoints. `password_resets` keeps one 30-minute hashed token per account, tied to the current password; redemption atomically consumes it and revokes sessions. Email uses SMTP2GO over TLS (`SMTP2GO_USERNAME`, `SMTP2GO_PASSWORD`, bare verified-domain address `EMAIL_FROM`, trusted `ORIGIN`); the display name is Papu Plan; background delivery failures appear as `auth/request_password_reset` service errors. -->
+
 1. Registration requires terms acceptance and privacy acknowledgement, records both current document versions with the new user, then creates the session. Register/login → `createSession()` creates a `sessions` row and sets the httpOnly cookie. Login uses a constant-time dummy hash when the user is absent.
 2. `src/hooks.server.ts` validates cookie on every request, attaches user to `event.locals`
 3. Ownership is enforced by `src/lib/server/guards.ts`; persistence checks live in aggregate repositories.

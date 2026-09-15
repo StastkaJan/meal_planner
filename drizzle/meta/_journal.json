@@ -197,6 +197,13 @@
       "when": 1789293141322,
       "tag": "0027_purple_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789485536460,
+      "tag": "0028_email_password_reset",
+      "breakpoints": true
     }
   ]
 }
