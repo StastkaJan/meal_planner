@@ -93,6 +93,8 @@
 
 <!-- NOTE: `legal_document_events` records each terms acceptance or privacy-notice acknowledgement by user, document, and version; missing current-version rows drive the signed-in legal notice. -->
 
+<!-- NOTE: `/welcome` is the public EN/CS product and vision landing page; anonymous `/` visits redirect there, while signed-in users keep the planner at `/`. -->
+
 ## Project layout
 
 ```

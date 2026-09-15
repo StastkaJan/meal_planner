@@ -35,6 +35,14 @@ describe('load /', () => {
     repositories.listMealPickerItems.mockResolvedValue([])
   })
   afterEach(() => vi.useRealTimers())
+  it('redirects anonymous visitors before querying planner data', async () => {
+    await expect(
+      load({ ...event(), locals: { user: null, locale: 'en' } }),
+    ).rejects.toMatchObject({ status: 303, location: '/welcome' })
+    expect(repositories.listPlans).not.toHaveBeenCalled()
+    expect(repositories.getSettings).not.toHaveBeenCalled()
+    expect(repositories.listSavedExtras).not.toHaveBeenCalled()
+  })
   it('defaults to the last plan and current week without loading the catalogue', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-07-30T12:00:00Z'))
