@@ -102,6 +102,7 @@ docker compose up -d  # start postgres + app
 - After every new feature or API change, write or update the corresponding Vitest unit test (colocated next to the file under test) or Playwright E2E test (in `tests/`).
 - Unit tests for pure logic; E2E for user-facing flows.
 - Run `npm run test:unit` before declaring a feature done.
+- Before pushing, verify the relevant CI checks, including browser coverage for UI changes. A test listing is not a test run. If a required check cannot run, report the limitation before pushing; after pushing, wait for CI and fix failures before handing off the PR.
 
 ## Maintaining this file
 

@@ -132,7 +132,11 @@ test('@smoke admin merges a custom ingredient and remembers its alias', async ({
       '0',
     )
     await page.goto('/profile')
-    await expect(page.getByText(targetName, { exact: true })).toBeVisible()
+    await expect(
+      page
+        .getByRole('list', { name: 'selected options' })
+        .getByText(targetName, { exact: true }),
+    ).toBeVisible()
   } finally {
     sql(`delete from users where id = ${id}`)
     if (ingredientIds.length)
