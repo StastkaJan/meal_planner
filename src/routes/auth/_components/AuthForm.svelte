@@ -78,6 +78,9 @@
     {/if}
     <Button type="submit">{submitLabel}</Button>
   </form>
+  {#if !legalAcceptance}
+    <p><a href="/auth/forgot-password">{t('Forgot password?')}</a></p>
+  {/if}
   <p><a href={alternateHref}>{alternateLabel}</a></p>
 </div>
 

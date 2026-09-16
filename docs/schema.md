@@ -1,5 +1,7 @@
 # DB Schema
 
+`password_resets`: `user_id` primary key/FK (cascade), unique SHA-256 `token_hash`, password-hash snapshot, `expires_at`. One pending reset per account; excluded from account exports like sessions. A password change invalidates the snapshot; redemption consumes the row and revokes sessions transactionally. Expired rows are inert, replaced on the next request, and deleted with the account.
+
 ## Tables
 
 Drizzle definitions live in `src/lib/database/schema`, one table per file.

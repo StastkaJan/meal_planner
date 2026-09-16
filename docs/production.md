@@ -1,5 +1,27 @@
 # Production deployment
 
+## Password reset email
+
+Create an [SMTP2GO account](https://www.smtp2go.com/pricing/) on the Free plan. Under **Sending > Verified Senders > Sender domains**, add `papuplan.cz` and copy the CNAME records provided by SMTP2GO into the domain's DNS. Use the exact names and values shown in your account, then wait for verification. These records authorize sending; they do not create an inbox or require changing existing MX records. See [Verified Senders](https://support.smtp2go.com/hc/en-gb/articles/115004408567-Verified-Senders).
+
+Under **Sending > SMTP Users**, create a dedicated SMTP user for Papu Plan. Put its credentials and the sender address in `.env.production` (or `.env` for local development):
+
+```dotenv
+SMTP2GO_USERNAME=your-smtp-username
+SMTP2GO_PASSWORD='your-smtp-password'
+EMAIL_FROM=noreply@papuplan.cz
+```
+
+Use the SMTP user's password, not the SMTP2GO dashboard password or an API key. Preserve it exactly; single-quote the value in the env file to prevent Compose interpolation of characters such as `$`. Set `EMAIL_FROM` to a bare address on the verified domain; the display name is **Papu Plan**. Both app slots receive these variables after redeployment. This implementation sends through `mail.smtp2go.com:465` using authenticated TLS, so outbound port 465 must be reachable. See [SMTP settings](https://support.smtp2go.com/hc/en-gb/articles/223087627-SMTP-Settings).
+
+Reset links use the configured `ORIGIN` (production Compose derives it from `DOMAIN`), never a client-supplied host. Local development also needs `ORIGIN=http://localhost:3000` in `.env`.
+
+Apply migration `0028_email_password_reset.sql` through the normal release migration step. Users open **Forgot password?** from sign-in, request an email, and choose a new password using the 30-minute single-use link. A newer link or password change invalidates the previous link; a successful reset signs out all sessions.
+
+Requests return the same confirmation for known and unknown accounts. The Node process delivers email in the background with 10-second DNS, connection, greeting, and socket-inactivity timeouts. Service errors are recorded as `auth/request_password_reset`, without SMTP error details, email addresses, credentials, or tokens. A restart or provider failure can drop delivery; users can request another link. Missing credentials or sender address mean a uniform 503 response. Request and redemption IP limits use SvelteKit's client address; configure trusted proxy forwarding before using client IP headers. Preview email remains unconfigured by default.
+
+Verify delivery with a controlled account after configuring SMTP2GO, then confirm the new password works and the old link and password fail. Check delivery failures in SMTP2GO's reports as well as app service logs. The Free plan currently allows [1,000 emails per month and 200 per day](https://www.smtp2go.com/blog/smtp2go-questions-answered/); provider queues can delay a reset email beyond its 30-minute expiry when limits are reached. Receiving replies at the sender address requires a separate mailbox or forwarding service.
+
 The production Compose overlay exposes its internal Caddy only on the external
 Docker network `public-web`. The VPS's portfolio Caddy owns ports 80/443,
 terminates TLS, and forwards the Meal Plan domain to `meal-plan-proxy:80` on
