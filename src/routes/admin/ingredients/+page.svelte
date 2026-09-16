@@ -21,6 +21,7 @@
       <p>{t('Manage shared ingredient names, translations and aliases.')}</p>
     </div>
     <a class="add" href="/admin/ingredients/new">{t('Add ingredient')}</a>
+    <a class="add" href="/admin/ingredients/merge">{t('Merge ingredients')}</a>
   </header>
   <form
     role="search"

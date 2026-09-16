@@ -10,6 +10,7 @@ import {
   resolveIngredient,
   saveManagedIngredient,
   listManagedIngredients,
+  mergeIngredients,
 } from './ingredients'
 
 beforeEach(() => vi.clearAllMocks())
@@ -209,6 +210,134 @@ it('publishes a matching private identity atomically without changing recipe or 
       (await client.query('SELECT count(*)::int AS count FROM ingredients'))
         .rows,
     ).toEqual([{ count: 2 }])
+  } finally {
+    db.transaction.mockReset()
+    await client.close()
+  }
+}, 15000)
+
+it('merges private duplicates, preserves recipe data and locale names, and resolves old aliases for every user', async () => {
+  const client = new PGlite()
+  const database = pgliteDrizzle(client)
+  db.transaction.mockImplementation(database.transaction.bind(database))
+  try {
+    await client.exec(`
+      CREATE TABLE ingredients (id serial PRIMARY KEY, name text NOT NULL UNIQUE, is_catalog boolean DEFAULT false, name_cs text, aliases text[] DEFAULT '{}');
+      CREATE TABLE ingredient_translations (ingredient_id int REFERENCES ingredients ON DELETE CASCADE, locale text, name text, aliases text[] DEFAULT '{}', PRIMARY KEY (ingredient_id, locale));
+      CREATE TABLE user_ingredients (user_id int, ingredient_id int REFERENCES ingredients, PRIMARY KEY (user_id, ingredient_id));
+      CREATE TABLE meal_ingredients (ingredient_id int REFERENCES ingredients, original_name text, qty numeric, unit text, position int);
+      CREATE TABLE user_settings (user_id int PRIMARY KEY, pantry_ingredient_ids int[], pantry_staples text[]);
+      INSERT INTO ingredients (name, is_catalog) VALUES ('Scallion', false), ('Spring onion', true), ('Salt', true);
+      INSERT INTO ingredient_translations VALUES (1, 'en', 'Scallions', ARRAY['green onions']), (1, 'de', 'Frühlingszwiebel', ARRAY['frühlingszwiebeln']), (2, 'en', 'Spring onion', ARRAY['spring onions']);
+      INSERT INTO user_ingredients VALUES (42, 1), (42, 2), (43, 1);
+      INSERT INTO meal_ingredients VALUES (1, 'scallion, sliced', 100, 'g', 0), (2, 'Spring onion', 2, 'pcs', 1);
+      INSERT INTO user_settings VALUES (42, ARRAY[3,1,2], ARRAY['Salt', 'Scallion']), (43, ARRAY[]::int[], ARRAY[' scallions ']);
+    `)
+    expect(await mergeIngredients(1, 1)).toBe(false)
+    expect(await mergeIngredients(2, 1)).toBeNull()
+    expect(await mergeIngredients(999, 2)).toBeNull()
+    // A conflicting catalogue alias must leave every reference untouched.
+    await client.exec(
+      "INSERT INTO ingredient_translations VALUES (3, 'en', 'Salt', ARRAY['green onions'])",
+    )
+    expect(await mergeIngredients(1, 2)).toBe(false)
+    expect(
+      (
+        await client.query(
+          'SELECT ingredient_id FROM meal_ingredients ORDER BY position',
+        )
+      ).rows,
+    ).toEqual([{ ingredient_id: 1 }, { ingredient_id: 2 }])
+    await client.exec(
+      'DELETE FROM ingredient_translations WHERE ingredient_id = 3',
+    )
+
+    // A failure late in the transaction also rolls back the aliases and moved links.
+    await client.exec(
+      'ALTER TABLE user_settings ADD CONSTRAINT unchanged_pantry CHECK (pantry_ingredient_ids <> ARRAY[3,2])',
+    )
+    await expect(mergeIngredients(1, 2)).rejects.toThrow()
+    expect(
+      (
+        await client.query(
+          'SELECT ingredient_id FROM user_ingredients WHERE user_id = 43',
+        )
+      ).rows,
+    ).toEqual([{ ingredient_id: 1 }])
+    expect(
+      (
+        await client.query(
+          "SELECT aliases FROM ingredient_translations WHERE ingredient_id = 2 AND locale = 'en'",
+        )
+      ).rows,
+    ).toEqual([{ aliases: ['spring onions'] }])
+    await client.exec(
+      'ALTER TABLE user_settings DROP CONSTRAINT unchanged_pantry',
+    )
+
+    const merged = await mergeIngredients(1, 2)
+    expect(merged).toMatchObject({
+      id: 2,
+      translations: {
+        en: {
+          name: 'Spring onion',
+          aliases: ['spring onions', 'scallions', 'green onions'],
+        },
+        de: {
+          name: 'Frühlingszwiebel',
+          aliases: ['frühlingszwiebel', 'frühlingszwiebeln'],
+        },
+        und: { aliases: ['spring onion', 'scallion'] },
+      },
+    })
+    expect(
+      (await client.query('SELECT * FROM meal_ingredients ORDER BY position'))
+        .rows,
+    ).toEqual([
+      {
+        ingredient_id: 2,
+        original_name: 'scallion, sliced',
+        qty: '100',
+        unit: 'g',
+        position: 0,
+      },
+      {
+        ingredient_id: 2,
+        original_name: 'Spring onion',
+        qty: '2',
+        unit: 'pcs',
+        position: 1,
+      },
+    ])
+    expect(
+      (await client.query('SELECT * FROM user_ingredients ORDER BY user_id'))
+        .rows,
+    ).toEqual([
+      { user_id: 42, ingredient_id: 2 },
+      { user_id: 43, ingredient_id: 2 },
+    ])
+    const settings = (
+      await client.query('SELECT * FROM user_settings ORDER BY user_id')
+    ).rows
+    expect(settings[0]).toMatchObject({
+      pantry_ingredient_ids: [3, 2],
+      pantry_staples: expect.arrayContaining(['Salt', 'Spring onion']),
+    })
+    expect(settings[1]).toMatchObject({
+      pantry_ingredient_ids: [],
+      pantry_staples: ['Spring onion'],
+    })
+    for (const userId of [42, 99, null])
+      for (const name of [' SCALLION ', 'green onions', 'Frühlingszwiebeln'])
+        expect(
+          await database.transaction((tx) =>
+            resolveIngredient(tx as any, name, userId),
+          ),
+        ).toMatchObject({ id: 2 })
+    expect(await mergeIngredients(1, 2)).toBeNull()
+    expect(
+      (await client.query('SELECT id FROM ingredients ORDER BY id')).rows,
+    ).toEqual([{ id: 2 }, { id: 3 }])
   } finally {
     db.transaction.mockReset()
     await client.close()

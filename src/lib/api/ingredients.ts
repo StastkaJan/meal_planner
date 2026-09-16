@@ -2,6 +2,12 @@ import type { IngredientOption } from '$lib/domain/ingredients'
 import type { IngredientAdminInput } from '$lib/domain/ingredient-admin'
 import { jsonBody, requestJson } from './http'
 
+export const mergeCatalogueIngredients = (sourceId: number, targetId: number) =>
+  requestJson<IngredientOption>('/admin/ingredients/merge', {
+    method: 'POST',
+    body: jsonBody({ sourceId, targetId }),
+  })
+
 export const createIngredient = (name: string) =>
   requestJson<IngredientOption>('/ingredients', {
     method: 'POST',

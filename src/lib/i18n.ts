@@ -64,6 +64,19 @@ const CS_MESSAGES = {
   'Create your free account': 'Vytvořit účet zdarma',
   'Want a hand with the planning?': 'Chcete s plánováním pomoct?',
   'Explore Free & Pro': 'Prohlédnout Free a Pro',
+  'Merge ingredients': 'Sloučit suroviny',
+  'Merge into': 'Sloučit do',
+  'Duplicate ingredient': 'Duplicitní surovina',
+  'Search duplicate ingredients': 'Hledat duplicitní suroviny',
+  'Select two different ingredients': 'Vyberte dvě různé suroviny',
+  'An alias also belongs to another catalogue ingredient':
+    'Alternativní název patří také jiné surovině v katalogu',
+  'Includes custom ingredients. Showing up to 30 matches; refine your search if needed.':
+    'Zahrnuje vlastní suroviny. Zobrazuje nejvýše 30 výsledků; případně upřesněte hledání.',
+  'Replace a duplicate ingredient in all recipes and pantry selections. Its names and aliases will point to the selected catalogue ingredient. Quantities and original recipe text stay unchanged.':
+    'Nahraďte duplicitní surovinu ve všech receptech a běžných zásobách. Její názvy budou odkazovat na vybranou surovinu z katalogu. Množství a původní text receptů zůstanou zachovány.',
+  'Merge {source} into {target} for all users? This cannot be undone in the app.':
+    'Sloučit {source} do {target} pro všechny uživatele? Tuto akci nelze v aplikaci vrátit zpět.',
   'Ingredient catalogue': 'Katalog surovin',
   'Manage shared ingredient names, translations and aliases.':
     'Spravujte sdílené názvy surovin, překlady a alternativní názvy.',

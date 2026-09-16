@@ -98,6 +98,8 @@ See [meal calendar business cases](business-cases/meal-calendar.md).
 
 ## Recipes, ingredients, and localization
 
+- `/admin/ingredients/merge` lets admins search shared/private duplicates and merge them into a shared ingredient. One transaction moves recipe, picker and pantry references, preserves quantities/original wording and locale aliases, and deletes the source. No schema change; existing alias resolution handles future name-only writes. Conflicting aliases on a third shared ingredient require correction before merging.
+
 See [recipe business cases](business-cases/recipes.md), [schema](schema.md), and [API routes](api.md).
 
 - `user_settings.locale` selects the `en`/`cs` app interface and `meal_translations` overlays for recipe name/description/ordered ingredients/instructions; nullable translated fields fall back to the original recipe.

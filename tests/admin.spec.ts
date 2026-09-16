@@ -34,6 +34,112 @@ function userId(email: string) {
   return Number(sql(`select id from users where email = '${email}'`))
 }
 
+test('@smoke admin merges a custom ingredient and remembers its alias', async ({
+  page,
+}) => {
+  const email = uniqueEmail()
+  const suffix = Date.now()
+  const sourceName = `Duplicate ${suffix}`
+  const targetName = `Canonical ${suffix}`
+  const ingredientIds: number[] = []
+  await register(page, email)
+  const id = userId(email)
+  try {
+    const custom = await page.request.post('/ingredients', {
+      data: { name: sourceName },
+    })
+    expect(custom.status()).toBe(201)
+    const sourceId = (await custom.json()).id
+    ingredientIds.push(sourceId)
+    expect(
+      (
+        await page.request.post('/admin/ingredients/merge', {
+          data: { sourceId, targetId: 1 },
+        })
+      ).status(),
+    ).toBe(403)
+    adminId(email)
+    const created = await page.request.post('/admin/ingredients', {
+      data: { name: targetName, translations: [] },
+    })
+    expect(created.status()).toBe(201)
+    const targetId = (await created.json()).id
+    ingredientIds.push(targetId)
+    const meal = await page.request.post('/meals', {
+      data: {
+        name: `Merge recipe ${suffix}`,
+        ingredients: [
+          { name: sourceName, ingredientId: sourceId, qty: 100, unit: 'g' },
+        ],
+      },
+    })
+    expect(meal.status()).toBe(201)
+    const mealId = (await meal.json()).id
+    expect(
+      (
+        await page.request.patch('/profile', {
+          data: { pantryIngredientIds: [sourceId, targetId] },
+        })
+      ).ok(),
+    ).toBe(true)
+
+    await page.goto('/admin/ingredients')
+    await page
+      .getByRole('link', { name: 'Merge ingredients', exact: true })
+      .click()
+    await page
+      .getByRole('textbox', { name: 'Search duplicate ingredients' })
+      .fill(sourceName)
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`q=Duplicate\\+${suffix}`))
+    await page.reload()
+    await page
+      .getByLabel('Duplicate ingredient', { exact: true })
+      .selectOption(String(sourceId))
+    await page
+      .getByRole('combobox', { name: 'Merge into', exact: true })
+      .fill(targetName)
+    await page.getByRole('option', { name: targetName, exact: true }).click()
+    page.once('dialog', (dialog) => dialog.dismiss())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    expect(
+      sql(
+        `select ingredient_id from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(String(sourceId))
+    page.once('dialog', (dialog) => dialog.accept())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    await expect(page).toHaveURL(`/admin/ingredients/${targetId}`)
+    expect(
+      sql(
+        `select ingredient_id || ':' || qty || ':' || unit || ':' || original_name from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(`${targetId}:100.000:g:${sourceName}`)
+    expect(
+      sql(
+        `select pantry_ingredient_ids::text from user_settings where user_id = ${id}`,
+      ),
+    ).toBe(`{${targetId}}`)
+    const resolved = await page.request.post('/ingredients', {
+      data: { name: sourceName },
+    })
+    expect((await resolved.json()).id).toBe(targetId)
+    expect(sql(`select count(*) from ingredients where id = ${sourceId}`)).toBe(
+      '0',
+    )
+    await page.goto('/profile')
+    await expect(page.getByText(targetName, { exact: true })).toBeVisible()
+  } finally {
+    sql(`delete from users where id = ${id}`)
+    if (ingredientIds.length)
+      sql(`delete from ingredients where id in (${ingredientIds.join(',')})`)
+  }
+})
+
 test('@smoke admin configures ingredient translations and aliases', async ({
   page,
 }) => {
