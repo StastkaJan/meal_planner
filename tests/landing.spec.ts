@@ -9,7 +9,17 @@ test('@smoke visitors discover the product and can create an account', async ({
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'Less deciding.More enjoying.',
   )
-  await page.getByRole('link', { name: 'See how it works' }).click()
+  const secondary = page.getByRole('link', { name: 'See how it works' })
+  const background = await secondary.evaluate(
+    (link) => getComputedStyle(link).backgroundColor,
+  )
+  await secondary.hover()
+  await expect
+    .poll(() =>
+      secondary.evaluate((link) => getComputedStyle(link).backgroundColor),
+    )
+    .not.toBe(background)
+  await secondary.click()
   await expect(page).toHaveURL('/#how-it-works')
   await expect(
     page.getByRole('heading', { name: 'A simpler rhythm for your week.' }),
@@ -69,6 +79,41 @@ test('planner requires sign-in', async ({ page }) => {
   await page.goto('/planner')
   await expect(page).toHaveURL('/auth/login')
 })
+
+for (const width of [1280, 375]) {
+  test(`landing language switcher works at ${width}px and remembers the visitor's choice`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/?utm_source=test')
+    await page.getByRole('link', { name: 'Čeština', exact: true }).click()
+    await expect(page).toHaveURL('/?utm_source=test&lang=cs')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs')
+    await expect(
+      page.getByRole('link', { name: 'Čeština', exact: true }),
+    ).toHaveAttribute('aria-current', 'true')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Méně rozhodování.Více radosti.',
+    )
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs')
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true)
+    await page.getByRole('link', { name: 'Jak to funguje' }).click()
+    await page.getByRole('link', { name: 'English', exact: true }).click()
+    await expect(page).toHaveURL('/?utm_source=test&lang=en#how-it-works')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await page.getByRole('link', { name: 'Čeština', exact: true }).click()
+    await page.getByRole('link', { name: 'Vytvořit účet zdarma' }).click()
+    await expect(page).toHaveURL('/auth/register')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs')
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs')
+  })
+}
 
 for (const reducedMotion of ['no-preference', 'reduce'] as const) {
   test(`section links respect ${reducedMotion} motion preference`, async ({

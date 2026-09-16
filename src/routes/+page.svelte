@@ -1,9 +1,17 @@
 <script lang="ts">
+  import { page } from '$app/state'
+  import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
   import { useI18n } from '$lib/i18n-context'
   import type { PageData } from './$types'
 
   let { data }: { data: PageData } = $props()
   const { t, label, locale } = useI18n()
+
+  function languageUrl(language: Locale) {
+    const url = new URL(page.url)
+    url.searchParams.set('lang', language)
+    return `${url.pathname}${url.search}${url.hash}`
+  }
   const weekdays = $derived(
     Array.from({ length: 7 }, (_, i) =>
       new Intl.DateTimeFormat(locale(), {
@@ -58,6 +66,17 @@
 </svelte:head>
 
 <div class="landing">
+  <div class="language-switcher" role="group" aria-label={t('Language')}>
+    {#each SUPPORTED_LOCALES as language}
+      <a
+        href={languageUrl(language)}
+        lang={language}
+        hreflang={language}
+        aria-current={locale() === language ? 'true' : undefined}
+        data-sveltekit-reload>{LOCALE_LABELS[language]}</a
+      >
+    {/each}
+  </div>
   <section class="hero" aria-labelledby="intro-heading">
     <div class="intro">
       <p class="eyebrow">
@@ -78,7 +97,7 @@
           >{data.user ? t('Open planner') : t('Start planning for free')}
           <span aria-hidden="true">↗</span></a
         >
-        <a class="text-link" href="#how-it-works"
+        <a class="button secondary" href="#how-it-works"
           >{t('See how it works')} <span aria-hidden="true">↓</span></a
         >
       </div>
@@ -187,6 +206,33 @@
     max-width: 1200px;
     margin: 0 auto;
   }
+  .language-switcher {
+    display: flex;
+    width: fit-content;
+    margin-left: auto;
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface;
+  }
+  .language-switcher a {
+    padding: 11px 14px;
+    border-radius: 7px;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .language-switcher a:hover {
+    background: $color-surface-2;
+    color: $color-text;
+  }
+  .language-switcher a[aria-current='true'] {
+    background: $color-accent;
+    color: white;
+  }
   .hero {
     display: grid;
     grid-template-columns: 1.15fr 1fr;
@@ -260,13 +306,15 @@
   .button:hover {
     background: #89371e;
   }
-  .text-link {
-    display: inline-flex;
-    align-items: center;
+  .button.secondary {
     gap: 12px;
-    min-height: 44px;
-    font-size: 0.875rem;
-    text-decoration: none;
+    background: $color-surface;
+    color: $color-accent;
+    box-shadow: inset 0 0 0 1px $color-accent;
+  }
+  .button.secondary:hover,
+  .button.secondary:focus-visible {
+    background: $color-accent-dim;
   }
   .small-note {
     color: $color-text-muted;

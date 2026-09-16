@@ -66,6 +66,8 @@ See [account data business cases](business-cases/account-data.md).
 
 - `/` is the public EN/CS product and vision landing page; the protected planner lives at `/planner`, including after sign-in and registration. Legacy home URLs with planner query parameters redirect to `/planner` with their filters intact. Hash links scroll smoothly unless reduced motion is requested.
 
+- The landing language switcher uses `?lang=en|cs` and the existing locale cookie for visitors' subsequent pages. Explicit landing language overrides the account locale on `/` only; account language preferences remain unchanged.
+
 - `/legal/terms` and `/legal/privacy` are prerendered from the versioned UTF-8 legal Markdown used by registration and account notices.
 
 - Auth rate limits remain in-process; expired entries are pruned every minute. New sessions trigger expired-session cleanup at most hourly. Move rate limits to shared storage before scaling out, or after 429s persist for three 15-minute windows.

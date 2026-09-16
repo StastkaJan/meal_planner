@@ -101,7 +101,11 @@
       </div>
     {:else}
       <div class="public-links">
-        <a class="vision-link" href="/#vision">{t('Our vision')}</a>
+        <a
+          class="vision-link"
+          href={$page.url.pathname === '/' ? '#vision' : '/#vision'}
+          >{t('Our vision')}</a
+        >
         <a href="/pricing">{t('Pricing')}</a>
         <a href="/auth/login">{t('Sign in')}</a>
         <a class="signup" href="/auth/register">{t('Get started')}</a>
