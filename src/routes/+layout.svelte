@@ -33,12 +33,12 @@
     const path = $page.url.pathname
     if (path.startsWith('/plans/') && path.endsWith('/shopping'))
       return t('Shopping list')
-    if (path === '/' || path.startsWith('/plans/')) return t('Planner')
+    if (path === '/planner' || path.startsWith('/plans/')) return t('Planner')
     if (path.startsWith('/meals')) return t('Recipes')
     if (path.startsWith('/admin')) return t('Admin')
     if (path === '/profile') return t('Profile')
     if (path === '/pricing') return t('Pricing')
-    if (path === '/welcome') return t('Less deciding. More enjoying.')
+    if (path === '/') return t('Less deciding. More enjoying.')
     if (path.startsWith('/auth/login')) return t('Sign in')
     if (path.startsWith('/auth/register')) return t('Create account')
     return t('Meal plan')
@@ -61,9 +61,9 @@
     {#if data.user}
       <div class="main-links">
         <a
-          href="/"
-          aria-current={$page.url.pathname === '/' ? 'page' : undefined}
-          class:active={$page.url.pathname === '/' ||
+          href="/planner"
+          aria-current={$page.url.pathname === '/planner' ? 'page' : undefined}
+          class:active={$page.url.pathname === '/planner' ||
             $page.url.pathname.startsWith('/plans/')}>{t('Planner')}</a
         >
         <a
@@ -101,7 +101,7 @@
       </div>
     {:else}
       <div class="public-links">
-        <a class="vision-link" href="/welcome#vision">{t('Our vision')}</a>
+        <a class="vision-link" href="/#vision">{t('Our vision')}</a>
         <a href="/pricing">{t('Pricing')}</a>
         <a href="/auth/login">{t('Sign in')}</a>
         <a class="signup" href="/auth/register">{t('Get started')}</a>

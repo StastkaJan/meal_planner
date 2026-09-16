@@ -50,6 +50,6 @@ export const actions: Actions = {
     if (!user) return fail(400, { error: 'Email already in use' })
 
     await createSession(user.id, cookies)
-    redirect(303, '/')
+    redirect(303, '/planner')
   },
 }

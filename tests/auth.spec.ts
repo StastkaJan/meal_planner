@@ -51,13 +51,14 @@ test('@smoke protected pages redirect unauthenticated users to login', async ({
   await expect(page).toHaveURL('/auth/login')
 })
 
-test('login with valid credentials redirects to /', async ({ page }) => {
+test('login with valid credentials redirects to /planner', async ({ page }) => {
   const email = uniqueEmail()
   await register(page, email)
   await page.click('nav button[type="submit"]')
   await page.waitForURL('/auth/login')
 
   await login(page, email)
+  await expect(page).toHaveURL('/planner')
   await expect(page.locator('nav button[type="submit"]')).toHaveText('Sign out')
 })
 

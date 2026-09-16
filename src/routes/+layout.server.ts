@@ -3,13 +3,12 @@ import type { LayoutServerLoad } from './$types'
 import { getPendingLegalNotices } from '$lib/server/services/legal'
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
-  if (!locals.user && url.pathname === '/') redirect(303, '/welcome')
   if (
     !locals.user &&
     !url.pathname.startsWith('/auth') &&
     !url.pathname.startsWith('/legal/') &&
     url.pathname !== '/pricing' &&
-    url.pathname !== '/welcome'
+    url.pathname !== '/'
   ) {
     redirect(303, '/auth/login')
   }

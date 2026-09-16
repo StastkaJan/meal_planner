@@ -64,7 +64,7 @@ See [account data business cases](business-cases/account-data.md).
 
 - `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`.
 
-- `/welcome` is the public EN/CS product and vision landing page; anonymous `/` visits redirect there, while signed-in users keep the planner at `/`.
+- `/` is the public EN/CS product and vision landing page; the protected planner lives at `/planner`, including after sign-in and registration. Legacy home URLs with planner query parameters redirect to `/planner` with their filters intact. Hash links scroll smoothly unless reduced motion is requested.
 
 - `/legal/terms` and `/legal/privacy` are prerendered from the versioned UTF-8 legal Markdown used by registration and account notices.
 

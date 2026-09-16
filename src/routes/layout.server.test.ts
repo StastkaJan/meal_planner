@@ -17,15 +17,7 @@ function event(path: string, signedIn = false) {
 }
 
 describe('root layout access', () => {
-  it('sends anonymous home visits to the introduction without fetching account data', async () => {
-    await expect(load(event('/'))).rejects.toMatchObject({
-      status: 303,
-      location: '/welcome',
-    })
-    expect(getPendingLegalNotices).not.toHaveBeenCalled()
-  })
-
-  it.each(['/welcome', '/pricing', '/auth/login'])(
+  it.each(['/', '/pricing', '/auth/login'])(
     'allows anonymous access to %s',
     async (path) => {
       await expect(load(event(path))).resolves.toMatchObject({
@@ -36,20 +28,23 @@ describe('root layout access', () => {
     },
   )
 
-  it('keeps account pages protected', async () => {
-    await expect(load(event('/profile'))).rejects.toMatchObject({
+  it.each(['/planner', '/profile'])('keeps %s protected', async (path) => {
+    await expect(load(event(path))).rejects.toMatchObject({
       status: 303,
       location: '/auth/login',
     })
   })
 
-  it('keeps the signed-in homepage accessible with legal notices', async () => {
-    await expect(load(event('/', true))).resolves.toMatchObject({
-      user: { id: 1 },
-      legalNotices: [],
-    })
-    expect(getPendingLegalNotices).toHaveBeenCalledWith(1)
-  })
+  it.each(['/', '/planner'])(
+    'allows signed-in access to %s with legal notices',
+    async (path) => {
+      await expect(load(event(path, true))).resolves.toMatchObject({
+        user: { id: 1 },
+        legalNotices: [],
+      })
+      expect(getPendingLegalNotices).toHaveBeenCalledWith(1)
+    },
+  )
 
   it('allows public legal pages', async () => {
     const result = await load({

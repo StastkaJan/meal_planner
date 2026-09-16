@@ -1,454 +1,526 @@
 <script lang="ts">
-  import { beforeNavigate, goto } from '$app/navigation'
-  import { page } from '$app/state'
-  import Dialog from '$lib/components/ui/Dialog.svelte'
-  import MealPicker from './_components/MealPicker.svelte'
-  import type { PageData } from './$types'
-  import { addDays } from '$lib/utils/date-time'
-  import * as planApi from '$lib/api/plans'
-  import * as extrasApi from '$lib/api/extras'
-  import type { ExtraFields } from '$lib/domain/extras'
-  import { updateProfile } from '$lib/api/profile'
-  import WeekTable from './_components/WeekTable.svelte'
-  import PlanSettings from './_components/PlanSettings.svelte'
   import { useI18n } from '$lib/i18n-context'
+  import type { PageData } from './$types'
 
   let { data }: { data: PageData } = $props()
-  const { t, message } = useI18n()
-
-  // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
-  let plan = $derived(data.plan)
-  let savedExtras = $derived(data.savedExtras)
-  async function saveExtra(fields: ExtraFields) {
-    const extra = await extrasApi.saveExtra(fields)
-    savedExtras = [...savedExtras, extra]
-  }
-  async function deleteSavedExtra(id: number) {
-    await extrasApi.deleteSavedExtra(id)
-    savedExtras = savedExtras.filter((extra) => extra.id !== id)
-  }
-  let preferences = $derived(data.preferences)
-  let favoritesOnly = $state(false)
-  let myRecipesOnly = $state(false)
-  let savingMeal = $state(false)
-
-  beforeNavigate(({ type, cancel }) => {
-    if (savingMeal && type !== 'goto') cancel()
-  })
-
-  function openPicker(date: string, mealType: string) {
-    const url = new URL(page.url)
-    url.searchParams.set('pickDate', date)
-    url.searchParams.set('pickSlot', mealType)
-    return goto(url, { noScroll: true, keepFocus: true })
-  }
-
-  function closePicker() {
-    const url = new URL(page.url)
-    for (const key of [
-      'pickDate',
-      'pickSlot',
-      'pickQuery',
-      'pickMine',
-      'pickPage',
-    ])
-      url.searchParams.delete(key)
-    return goto(url, { noScroll: true, keepFocus: true, replaceState: true })
-  }
-
-  async function pickMeal(mealId: number | null) {
-    if (savingMeal || !data.picker || !plan) return
-    const { date, mealType } = data.picker
-    const current =
-      plan.slots.find(
-        (slot) => slot.date === date && slot.mealType === mealType,
-      )?.mealId ?? null
-    savingMeal = true
-    try {
-      if (mealId !== current)
-        await planApi.setSlot(plan.id, date, mealType, mealId)
-      await closePicker()
-    } catch {
-      alert(t('Something went wrong.'))
-    } finally {
-      savingMeal = false
-    }
-  }
-
-  let plannerBusy = $state(false)
-
-  async function handleClear(date?: string) {
-    if (!plan || plannerBusy) return
-    if (
-      !confirm(
-        date
-          ? t('Clear all meals and extras for this day?')
-          : t(
-              'Clear all meals and extras for this week? Plan settings will be kept.',
-            ),
-      )
-    )
-      return
-    plannerBusy = true
-    try {
-      const res = await planApi.clearPlan(
-        plan.id,
-        date ? { date } : { week: data.viewWeek },
-      )
-      if (await alertIfFailed(res)) return
-      await refreshPlan()
-    } catch {
-      alert(t('Something went wrong.'))
-    } finally {
-      plannerBusy = false
-    }
-  }
-
-  async function handleRerollMeal(date: string, mealType: string) {
-    if (!plan || plannerBusy) return
-    plannerBusy = true
-    try {
-      const res = await planApi.rerollMeal(
-        plan.id,
-        date,
-        mealType,
-        favoritesOnly,
-        myRecipesOnly,
-      )
-      if (await alertIfFailed(res)) return
-      const { changed } = await res.json()
-      if (!changed)
-        alert(t('No different recipe matches this slot and your preferences.'))
-      await refreshPlan()
-    } catch {
-      alert(t('Something went wrong.'))
-    } finally {
-      plannerBusy = false
-    }
-  }
-
-  async function refreshPlan() {
-    if (!plan) return
-    plan = await planApi.getPlan(plan.id, data.viewWeek)
-  }
-
-  function planUrl(planId: number, week: string) {
-    return `/?plan=${planId}&week=${week}`
-  }
-
-  function shiftWeek(delta: number) {
-    const nextWeek = addDays(data.viewWeek, delta * 7)
-    goto(planUrl(data.activePlanId, nextWeek), {
-      noScroll: true,
-      keepFocus: true,
-      replaceState: true,
-    })
-  }
-
-  async function createPlan() {
-    const created = await planApi.createPlan()
-    await goto(planUrl(created.id, created.weekStart))
-  }
-
-  async function handleSlotChange(
-    date: string,
-    mealType: string,
-    mealId: number | null,
-  ) {
-    if (!plan) return
-    await planApi.setSlot(plan.id, date, mealType, mealId)
-    await refreshPlan()
-  }
-
-  async function handleAutoCompose(
-    favoritesOnly: boolean,
-    myRecipesOnly: boolean,
-  ) {
-    if (!plan) return
-    const { filled } = await planApi.populatePlan(
-      plan.id,
-      data.viewWeek,
-      favoritesOnly,
-      myRecipesOnly,
-    )
-    if (filled === 0) {
-      alert(
-        favoritesOnly || myRecipesOnly
-          ? t('No recipes match the auto-compose filters for any empty slot.')
-          : t('No empty slots to fill.'),
-      )
-    }
-    await refreshPlan()
-  }
-
-  async function handleCopyWeek() {
-    if (!plan) return
-    const from = addDays(data.viewWeek, -7)
-    if (
-      !confirm(
-        t('Copy last week into this week? Existing slots will be overwritten.'),
-      )
-    )
-      return
-    await planApi.copyWeek(plan.id, from, data.viewWeek)
-    await refreshPlan()
-  }
-
-  // Surfaces a server-side error (validation, ownership) that would otherwise be
-  // silently discarded; returns true if it alerted, so the caller can bail out.
-  async function alertIfFailed(res: Response): Promise<boolean> {
-    if (res.ok) return false
-    const body = await res.json().catch(() => ({}))
-    alert(body.message ? message(body.message) : t('Something went wrong.'))
-    return true
-  }
-
-  async function handleAddBonus(
-    date: string,
-    fields: {
-      name: string
-      calories: number | null
-      proteinG: number | null
-      carbsG: number | null
-      fatG: number | null
-      fiberG?: number | null
-      sugarG?: number | null
-      saturatedFatG?: number | null
-      saltG?: number | null
+  const { t, label, locale } = useI18n()
+  const weekdays = $derived(
+    Array.from({ length: 7 }, (_, i) =>
+      new Intl.DateTimeFormat(locale(), {
+        weekday: 'short',
+        timeZone: 'UTC',
+      }).format(new Date(Date.UTC(2026, 8, 14 + i))),
+    ),
+  )
+  const steps = [
+    [
+      'Keep your favourites close.',
+      'Save your own recipes and discover shared ones. Build a collection you actually want to cook.',
+    ],
+    [
+      'Give your week a little shape.',
+      'Choose your meals, set portions for your household, and see how each day fits your nutrition goals.',
+    ],
+    [
+      'Take one list to the shop.',
+      'Turn your planned meals into a combined shopping list, with quantities for the people at your table.',
+    ],
+  ] as const
+  const meals = [
+    {
+      slot: 'breakfast',
+      name: 'Yoghurt, oats & berries',
+      note: 'A gentle start',
+      color: 'breakfast',
     },
-  ) {
-    if (!plan) return
-    const planId = plan.id
-    const res = await planApi.addBonus(planId, { date, ...fields })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      throw new Error(body.message ?? 'Request failed')
-    }
-    const item = await res.json()
-    if (plan?.id === planId) plan = { ...plan, bonus: [...plan.bonus, item] }
-  }
-
-  async function handleDeleteBonus(id: number) {
-    if (!plan) return
-    const res = await planApi.deleteBonus(plan.id, id)
-    if (await alertIfFailed(res)) return
-    await refreshPlan()
-  }
-
-  async function handleRecalcDay(date: string) {
-    if (!plan) return
-    const res = await planApi.recalculateDay(plan.id, date)
-    if (await alertIfFailed(res)) return
-    const { filled } = await res.json()
-    if (filled === 0)
-      alert(t('Nothing to recalculate — that day has no empty slots.'))
-    await refreshPlan()
-  }
-
-  async function handleRepeatChange(mealType: string, groupBreaks: boolean[]) {
-    if (!plan) return
-    await planApi.setSlotRepeat(plan.id, mealType, groupBreaks)
-    await refreshPlan()
-  }
-
-  async function handleMealSlotsChange(mealSlots: string[]) {
-    if (!plan) return
-    const updated = await planApi.setPlanMealSlots(plan.id, mealSlots)
-    plan = {
-      ...plan,
-      mealSlots: updated.mealSlots,
-      slots: plan.slots.filter((slot) => mealSlots.includes(slot.mealType)),
-      slotRepeats: plan.slotRepeats.filter((repeat) =>
-        mealSlots.includes(repeat.mealType),
-      ),
-    }
-  }
-
-  async function handlePreferenceChange(patch: Partial<typeof preferences>) {
-    await updateProfile(patch)
-    preferences = { ...preferences, ...patch }
-  }
+    {
+      slot: 'lunch',
+      name: 'Roasted vegetable couscous',
+      note: 'Colour on your plate',
+      color: 'lunch',
+    },
+    {
+      slot: 'dinner',
+      name: 'Lemon chicken & potatoes',
+      note: 'Something to look forward to',
+      color: 'dinner',
+    },
+  ] as const
 </script>
 
-<div class="page">
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">{t('Weekly planner')}</p>
-      <h1>{t('Meal plan')}</h1>
-      <p class="subtitle">
-        {t('Plan the week, balance nutrition, shop once.')}
+<svelte:head>
+  <meta
+    name="description"
+    content={t(
+      'Meet Papu Plan: your recipes, weekly meals, nutrition, and shopping list in one place. Less deciding, more enjoying everyday food.',
+    )}
+  />
+</svelte:head>
+
+<div class="landing">
+  <section class="hero" aria-labelledby="intro-heading">
+    <div class="intro">
+      <p class="eyebrow">
+        <span aria-hidden="true">✳</span>
+        {t('A little planning. A lot more living.')}
+      </p>
+      <h1 id="intro-heading">
+        {t('Less deciding.')}<br /><em>{t('More enjoying.')}</em>
+      </h1>
+      <p class="lead">{t('Make room for the good part of food.')}</p>
+      <p class="description">
+        {t(
+          'Papu Plan brings your recipes, weekly meals, nutrition, and shopping list together. So “what are we eating?” becomes one less thing on your mind.',
+        )}
+      </p>
+      <div class="actions">
+        <a class="button" href={data.user ? '/planner' : '/auth/register'}
+          >{data.user ? t('Open planner') : t('Start planning for free')}
+          <span aria-hidden="true">↗</span></a
+        >
+        <a class="text-link" href="#how-it-works"
+          >{t('See how it works')} <span aria-hidden="true">↓</span></a
+        >
+      </div>
+      <p class="small-note">
+        {t('Recipes, manual planning, and shopping lists. Free forever.')}
       </p>
     </div>
-    <div class="plan-actions">
-      {#if !plan}
-        <button class="btn" onclick={createPlan}>{t('Create plan')}</button>
-      {:else}
-        <a
-          class="btn"
-          href="/plans/{data.activePlanId}/shopping?week={data.viewWeek}"
-          >{t('Shopping list')}</a
-        >
-        <button
-          class="btn danger"
-          disabled={plannerBusy}
-          onclick={() => handleClear()}>{t('Clear week')}</button
-        >
-      {/if}
-    </div>
-  </div>
 
-  {#if plan}
-    {#key data.viewWeek}
-      <PlanSettings
-        {plan}
-        weekEmpty={!plan.slots.some((slot) => slot.mealId !== null) &&
-          plan.bonus.length === 0}
-        {preferences}
-        isPro={data.user?.isPro ?? false}
-        bind:favoritesOnly
-        bind:myRecipesOnly
-        onPreferenceChange={handlePreferenceChange}
-        onMealSlotsChange={handleMealSlotsChange}
-        onRepeatChange={handleRepeatChange}
-        onAutoCompose={handleAutoCompose}
-        onCopyWeek={handleCopyWeek}
-      />
-    {/key}
-    <WeekTable
-      {savedExtras}
-      onSaveExtra={saveExtra}
-      onDeleteSavedExtra={deleteSavedExtra}
-      {plan}
-      onOpenPicker={openPicker}
-      weekStart={data.viewWeek}
-      targets={data.targets}
-      isPro={data.user?.isPro ?? false}
-      onSlotChange={handleSlotChange}
-      onAddBonus={handleAddBonus}
-      onDeleteBonus={handleDeleteBonus}
-      onRecalcDay={handleRecalcDay}
-      onRerollMeal={handleRerollMeal}
-      onClearDay={handleClear}
-      busy={plannerBusy}
-      onPrevWeek={() => shiftWeek(-1)}
-      onNextWeek={() => shiftWeek(1)}
-    />
-  {:else if data.plans.length === 0}
-    <p class="empty-state">{t('Create your meal plan to get started.')}</p>
-  {:else}
-    <p class="empty-state">{t('Loading…')}</p>
-  {/if}
+    <figure class="preview" aria-labelledby="preview-caption">
+      <div class="planner-preview">
+        <div class="preview-heading">
+          <div>
+            <p class="eyebrow">{t('A taste of your week')}</p>
+            <h2>{t('Good food, planned.')}</h2>
+          </div>
+          <span class="sun" aria-hidden="true">☀</span>
+        </div>
+        <div class="week" aria-hidden="true">
+          {#each weekdays as day, i}
+            <span class:chosen={i === 0}>{day}<b>{14 + i}</b></span>
+          {/each}
+        </div>
+        <div class="meals">
+          {#each meals as meal}
+            <div class="meal {meal.color}">
+              <span class="meal-marker" aria-hidden="true"></span>
+              <div>
+                <p class="meal-slot">{label(meal.slot)}</p>
+                <h3>{t(meal.name)}</h3>
+                <p class="meal-note">{t(meal.note)}</p>
+              </div>
+              <span class="meal-check" aria-hidden="true">✓</span>
+            </div>
+          {/each}
+        </div>
+        <div class="list-note">
+          <span aria-hidden="true">✓</span><span
+            >{t('Your meals. One shopping list.')}</span
+          >
+        </div>
+      </div>
+      <figcaption id="preview-caption">
+        {t('An example day. Make yours your own.')}
+      </figcaption>
+    </figure>
+  </section>
+
+  <section id="how-it-works" class="how" aria-labelledby="how-heading">
+    <div class="section-heading">
+      <p class="eyebrow">{t('From inspiration to dinner')}</p>
+      <h2 id="how-heading">{t('A simpler rhythm for your week.')}</h2>
+    </div>
+    <div class="steps">
+      {#each steps as [title, description], i}
+        <article>
+          <span class="step-number">0{i + 1}</span>
+          <h3>{t(title)}</h3>
+          <p>{t(description)}</p>
+        </article>
+      {/each}
+    </div>
+  </section>
+
+  <section id="vision" class="vision" aria-labelledby="vision-heading">
+    <div>
+      <p class="eyebrow">{t('Our vision')}</p>
+      <h2 id="vision-heading">
+        {t('Everyday food.')}<br /><em>{t('Less everyday effort.')}</em>
+      </h2>
+    </div>
+    <div class="vision-copy">
+      <p class="vision-lead">
+        {t('We believe eating well should fit into your life.')}
+      </p>
+      <p>
+        {t(
+          'Our vision is to make the everyday work around food feel lighter: fewer last-minute decisions, a clearer idea of what to buy, and more space to enjoy cooking and eating together.',
+        )}
+      </p>
+      <p>
+        {t(
+          'A plan is a starting point. Keep your favourite meals, change your mind, and leave room for real life. Papu Plan is here to help you find a rhythm that works for you.',
+        )}
+      </p>
+    </div>
+  </section>
+
+  <section class="closing" aria-labelledby="start-heading">
+    <p class="eyebrow">{t('Start with your next meal')}</p>
+    <h2 id="start-heading">
+      {t('Your week, with one less thing to think about.')}
+    </h2>
+    <a class="button" href={data.user ? '/planner' : '/auth/register'}
+      >{data.user ? t('Open planner') : t('Create your free account')}
+      <span aria-hidden="true">↗</span></a
+    >
+    <p class="small-note">
+      {t('Want a hand with the planning?')}
+      <a href="/pricing">{t('Explore Free & Pro')}</a>
+    </p>
+  </section>
 </div>
 
-{#if data.picker}
-  <Dialog
-    modal
-    class="meal-dialog"
-    aria-busy={savingMeal}
-    oncancel={(event) => {
-      if (savingMeal) event.preventDefault()
-    }}
-    onclose={closePicker}
-  >
-    <MealPicker
-      {...data.picker}
-      disabled={savingMeal}
-      current={plan?.slots.find(
-        (slot) =>
-          slot.date === data.picker?.date &&
-          slot.mealType === data.picker?.mealType,
-      )?.mealId ?? null}
-      onSelect={pickMeal}
-      onClose={closePicker}
-    />
-  </Dialog>
-{/if}
-
 <style lang="scss">
-  .page {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+  .landing {
+    max-width: 1200px;
+    margin: 0 auto;
   }
-  .page-heading {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    align-items: flex-end;
-    justify-content: space-between;
+  .hero {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    align-items: center;
+    gap: 64px;
+    padding: 36px 0 76px;
   }
   .eyebrow {
-    margin-bottom: 4px;
     color: $color-accent;
     font-size: 0.72rem;
     font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
-  h1 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    font-weight: 500;
-    letter-spacing: -0.04em;
-    line-height: 1.05;
-  }
-  .subtitle {
-    margin-top: 8px;
-    color: $color-text-muted;
-    font-size: 0.95rem;
-  }
-  .plan-actions {
+  .intro > .eyebrow {
     display: flex;
-    gap: 6px;
+    align-items: center;
+    gap: 9px;
+  }
+  .intro > .eyebrow span {
+    font-size: 1.5rem;
+  }
+  h1,
+  h2 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    line-height: 1.08;
+  }
+  h1 {
+    margin: 22px 0 26px;
+    font-size: clamp(3.2rem, 5.5vw, 5rem);
+  }
+  em {
+    color: $color-accent;
+    font-weight: 400;
+  }
+  .lead {
+    margin-bottom: 12px;
+    font-size: 1.22rem;
+    font-weight: 550;
+  }
+  .description {
+    max-width: 480px;
+    color: $color-text-muted;
+    font-size: 1.03rem;
+    line-height: 1.75;
+  }
+  .actions {
+    display: flex;
     align-items: center;
     flex-wrap: wrap;
+    gap: 22px;
+    margin: 28px 0 14px;
   }
-  .btn {
+  .button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    min-height: 48px;
+    padding: 14px 22px;
+    border-radius: $radius-sm;
+    background: $color-accent;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 650;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .button:hover {
+    background: #89371e;
+  }
+  .text-link {
     display: inline-flex;
     align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    font-size: 0.875rem;
     text-decoration: none;
-    min-height: 38px;
-    padding: 7px 14px;
-    background: $color-accent;
-    border: none;
-    border-radius: $radius-sm;
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 650;
-    transition:
-      transform 0.15s,
-      box-shadow 0.15s;
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgb(41 39 33 / 12%);
-    }
-    &.danger {
-      border: 1px solid rgb(184 59 50 / 18%);
-      background: #f9e4e1;
-      color: $color-danger;
-    }
   }
-  .empty-state {
+  .small-note {
     color: $color-text-muted;
-    font-size: 0.9rem;
-    padding: 72px 24px;
-    border: 1px dashed $color-border;
+    font-size: 0.76rem;
+    line-height: 1.6;
+  }
+  .preview {
+    position: relative;
+    padding: 22px 16px 0;
+    border-radius: 48% 48% 24px 24px;
+    background: #e9ddca;
+  }
+  .planner-preview {
+    padding: 26px;
+    border: 1px solid #d6cdbf;
     border-radius: $radius;
-    background: rgb(255 253 249 / 55%);
+    background: $color-surface;
+    box-shadow: 0 20px 45px rgb(63 46 25 / 9%);
+    transform: rotate(2deg);
+  }
+  .preview-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .preview-heading h2 {
+    margin-top: 8px;
+    font-size: 1.9rem;
+  }
+  .sun {
+    color: $color-accent;
+    font-size: 2.6rem;
+  }
+  .week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    margin: 24px 0;
+  }
+  .week span {
+    display: grid;
+    gap: 7px;
+    padding: 9px 2px;
+    border-radius: 22px;
+    text-align: center;
+    color: $color-text-muted;
+    font-size: 0.65rem;
+  }
+  .week b {
+    color: $color-text;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .week .chosen {
+    background: $color-accent;
+    color: white;
+  }
+  .week .chosen b {
+    color: white;
+  }
+  .meals {
+    display: grid;
+    gap: 10px;
+  }
+  .meal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 12px;
+    border-radius: 12px;
+  }
+  .breakfast {
+    background: #faf0dc;
+    --meal-color: #a96913;
+  }
+  .lunch {
+    background: #e9efdf;
+    --meal-color: #537147;
+  }
+  .dinner {
+    background: #f3e5de;
+    --meal-color: #a84425;
+  }
+  .meal-marker {
+    flex-shrink: 0;
+    width: 4px;
+    height: 40px;
+    border-radius: 4px;
+    background: var(--meal-color);
+  }
+  .meal-slot {
+    color: var(--meal-color);
+    font-size: 0.65rem;
+    font-weight: 750;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .meal h3 {
+    margin: 3px 0;
+    font-size: 0.86rem;
+    font-weight: 650;
+  }
+  .meal-note {
+    color: $color-text-muted;
+    font-size: 0.7rem;
+  }
+  .meal-check {
+    margin-left: auto;
+    color: var(--meal-color);
+  }
+  .list-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e9e2d6;
+    color: #42634b;
+    font-size: 0.78rem;
+  }
+  figcaption {
+    padding: 18px 0 12px;
+    text-align: center;
+    color: $color-text-muted;
+    font-size: 0.7rem;
+  }
+  .how {
+    padding: 56px 0 64px;
+    border-top: 1px solid $color-border;
+  }
+  section[id] {
+    scroll-margin-top: 110px;
+  }
+  .section-heading h2 {
+    margin-top: 12px;
+    font-size: clamp(2rem, 3.5vw, 3rem);
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+    margin-top: 40px;
+  }
+  .step-number {
+    color: $color-accent;
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
+    font-style: italic;
+  }
+  .steps h3 {
+    margin: 14px 0 10px;
+    font-size: 1.05rem;
+    font-weight: 650;
+  }
+  .steps p,
+  .vision-copy p {
+    color: $color-text-muted;
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+  .vision {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    padding: 48px;
+    border-radius: 24px;
+    background: #e6ebdf;
+  }
+  .vision .eyebrow,
+  .vision em {
+    color: #42634b;
+  }
+  .vision h2 {
+    margin-top: 22px;
+    font-size: clamp(2.2rem, 3.8vw, 3.35rem);
+  }
+  .vision-copy p + p {
+    margin-top: 16px;
+  }
+  .vision-copy .vision-lead {
+    color: $color-text;
+    font-size: 1.12rem;
+    font-weight: 600;
+  }
+  .closing {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 96px 0 48px;
     text-align: center;
   }
-
+  .closing h2 {
+    margin: 16px 0 28px;
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+  }
+  .closing .small-note {
+    margin-top: 18px;
+  }
+  .small-note a {
+    text-underline-offset: 3px;
+  }
+  @media (max-width: 1000px) {
+    .hero {
+      gap: 30px;
+    }
+    .planner-preview {
+      padding: 18px;
+    }
+    .vision {
+      padding: 32px;
+      gap: 32px;
+    }
+  }
   @media (max-width: 720px) {
-    .page {
-      gap: 14px;
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 36px;
+      padding: 12px 0 42px;
     }
-    .plan-actions {
+    h1 {
+      font-size: clamp(3.05rem, 10vw, 4.5rem);
+    }
+    .preview {
       width: 100%;
+      max-width: 460px;
+      justify-self: center;
     }
-    .btn {
-      flex: 0 0 auto;
-      min-height: 44px;
+    .planner-preview {
+      transform: rotate(1deg);
+    }
+    .how {
+      padding: 36px 0;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+      gap: 26px;
+      margin-top: 28px;
+    }
+    .steps article {
+      padding-left: 44px;
+      position: relative;
+    }
+    .step-number {
+      position: absolute;
+      left: 0;
+      top: 8px;
+    }
+    .vision {
+      grid-template-columns: 1fr;
+      padding: 28px 22px;
+      gap: 24px;
+    }
+    .closing {
+      padding-top: 64px;
     }
   }
 </style>

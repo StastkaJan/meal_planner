@@ -23,6 +23,6 @@ export const actions: Actions = {
     }
 
     await createSession(user.id, cookies)
-    redirect(303, '/')
+    redirect(303, '/planner')
   },
 }
