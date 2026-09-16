@@ -86,7 +86,7 @@ describe('register action', () => {
         }),
         cookies: {},
       } as any),
-    ).rejects.toMatchObject({ status: 303, location: '/' })
+    ).rejects.toMatchObject({ status: 303, location: '/planner' })
 
     expect(register).toHaveBeenCalledWith(
       'new@example.com',

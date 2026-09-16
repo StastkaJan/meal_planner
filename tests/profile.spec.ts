@@ -90,7 +90,7 @@ test('@smoke saves all nutrient goals and restores defaults when cleared', async
   await page.reload()
   for (const [label, value] of fields)
     await expect(page.getByLabel(label, { exact: true })).toHaveValue(value)
-  await page.goto('/')
+  await page.goto('/planner')
   await page.getByRole('button', { name: 'Create plan' }).click()
   const nutrition = page.locator('.nutrition-cell').first()
   for (const [label, value] of fields) {
@@ -110,7 +110,7 @@ test('@smoke saves all nutrient goals and restores defaults when cleared', async
   await expect(page.getByLabel('Fibre (g)', { exact: true })).toHaveValue(
     '25.5',
   )
-  await page.goto('/')
+  await page.goto('/planner')
   await nutrition.getByRole('button', { name: 'Salt', exact: true }).click()
   await expect(
     nutrition.getByRole('meter', { name: 'Salt', exact: true }),
@@ -129,7 +129,7 @@ test('profile controls stay visible and save settings', async ({ page }) => {
   await expect(calories).not.toBeVisible()
   await page.getByRole('link', { name: 'Preferences' }).click()
 
-  await page.goto('/')
+  await page.goto('/planner')
   await page.getByRole('button', { name: 'Create plan' }).click()
   await page.goto('/profile')
 
@@ -151,7 +151,7 @@ test('profile controls stay visible and save settings', async ({ page }) => {
   await expect(calories).toHaveValue('2100')
 
   grantPro(email)
-  await page.goto('/')
+  await page.goto('/planner')
   if ((await page.locator('details.settings').getAttribute('open')) === null)
     await page.getByText('Plan settings').click()
   await page.getByRole('button', { name: 'Auto-compose' }).click()

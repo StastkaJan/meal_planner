@@ -33,11 +33,12 @@
     const path = $page.url.pathname
     if (path.startsWith('/plans/') && path.endsWith('/shopping'))
       return t('Shopping list')
-    if (path === '/' || path.startsWith('/plans/')) return t('Planner')
+    if (path === '/planner' || path.startsWith('/plans/')) return t('Planner')
     if (path.startsWith('/meals')) return t('Recipes')
     if (path.startsWith('/admin')) return t('Admin')
     if (path === '/profile') return t('Profile')
     if (path === '/pricing') return t('Pricing')
+    if (path === '/') return t('Less deciding. More enjoying.')
     if (path.startsWith('/auth/login')) return t('Sign in')
     if (path.startsWith('/auth/register')) return t('Create account')
     return t('Meal plan')
@@ -60,9 +61,9 @@
     {#if data.user}
       <div class="main-links">
         <a
-          href="/"
-          aria-current={$page.url.pathname === '/' ? 'page' : undefined}
-          class:active={$page.url.pathname === '/' ||
+          href="/planner"
+          aria-current={$page.url.pathname === '/planner' ? 'page' : undefined}
+          class:active={$page.url.pathname === '/planner' ||
             $page.url.pathname.startsWith('/plans/')}>{t('Planner')}</a
         >
         <a
@@ -97,6 +98,17 @@
         <form method="POST" action="/auth/logout">
           <button type="submit">{t('Sign out')}</button>
         </form>
+      </div>
+    {:else}
+      <div class="public-links">
+        <a
+          class="vision-link"
+          href={$page.url.pathname === '/' ? '#vision' : '/#vision'}
+          >{t('Our vision')}</a
+        >
+        <a href="/pricing">{t('Pricing')}</a>
+        <a href="/auth/login">{t('Sign in')}</a>
+        <a class="signup" href="/auth/register">{t('Get started')}</a>
       </div>
     {/if}
   </nav>
@@ -202,6 +214,19 @@
   .account-links {
     margin-left: auto;
     min-width: 0;
+  }
+  .public-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .public-links .signup {
+    background: $color-accent;
+    color: white;
+    &:hover {
+      background: #89371e;
+    }
   }
   .email {
     max-width: 16rem;
@@ -338,6 +363,13 @@
   }
 
   @media (max-width: 720px) {
+    .public-links .vision-link {
+      display: none;
+    }
+    .public-links a {
+      padding: 11px 8px;
+      font-size: 0.8rem;
+    }
     nav {
       min-height: 62px;
       flex-wrap: wrap;

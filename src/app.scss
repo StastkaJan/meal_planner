@@ -11,6 +11,10 @@ dialog:modal {
   margin: auto;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   font-family:
     Inter,

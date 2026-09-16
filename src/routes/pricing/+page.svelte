@@ -55,7 +55,7 @@
     )}
   </aside>
 
-  <a class="cta" href="/">{t('Start planning')}</a>
+  <a class="cta" href="/planner">{t('Start planning')}</a>
 </div>
 
 <style lang="scss">

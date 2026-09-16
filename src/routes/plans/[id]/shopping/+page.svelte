@@ -67,7 +67,7 @@
 
 <div class="shopping">
   <div class="toolbar">
-    <a class="back" href="/?plan={data.planId}&week={data.week}"
+    <a class="back" href="/planner?plan={data.planId}&week={data.week}"
       >{t('← Meal plan')}</a
     >
     <div class="actions">

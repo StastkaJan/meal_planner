@@ -44,7 +44,7 @@ export async function register(
   await page.check('input[name="termsAccepted"]')
   await page.check('input[name="privacyAcknowledged"]')
   await page.click('button[type="submit"]')
-  await page.waitForURL('/')
+  await page.waitForURL('/planner')
 }
 
 export async function login(page: Page, email: string, password = 'password1') {
@@ -52,5 +52,5 @@ export async function login(page: Page, email: string, password = 'password1') {
   await page.fill('input[name="email"]', email)
   await page.fill('input[name="password"]', password)
   await page.click('button[type="submit"]')
-  await page.waitForURL('/')
+  await page.waitForURL('/planner')
 }
