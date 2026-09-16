@@ -20,8 +20,11 @@
       <h1>{t('Ingredient catalogue')}</h1>
       <p>{t('Manage shared ingredient names, translations and aliases.')}</p>
     </div>
-    <a class="add" href="/admin/ingredients/new">{t('Add ingredient')}</a>
-    <a class="add" href="/admin/ingredients/merge">{t('Merge ingredients')}</a>
+    <div class="actions">
+      <a class="add" href="/admin/ingredients/new">{t('Add ingredient')}</a>
+      <a class="add" href="/admin/ingredients/merge">{t('Merge ingredients')}</a
+      >
+    </div>
   </header>
   <form
     role="search"
@@ -118,6 +121,21 @@
     border-radius: 6px;
     background: $color-surface;
     text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  @media (max-width: 640px) {
+    .actions {
+      width: 100%;
+    }
+    .add {
+      flex: 1;
+    }
   }
   form {
     display: flex;
