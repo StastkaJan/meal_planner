@@ -266,7 +266,7 @@
     gap: 12px;
     min-height: 44px;
     font-size: 0.875rem;
-    text-underline-offset: 5px;
+    text-decoration: none;
   }
   .small-note {
     color: $color-text-muted;
@@ -455,7 +455,7 @@
   .closing {
     max-width: 680px;
     margin: 0 auto;
-    padding: 76px 0 24px;
+    padding: 96px 0 48px;
     text-align: center;
   }
   .closing h2 {
@@ -520,7 +520,7 @@
       gap: 24px;
     }
     .closing {
-      padding-top: 48px;
+      padding-top: 64px;
     }
   }
 </style>
