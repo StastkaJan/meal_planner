@@ -11,6 +11,10 @@ Feature and operational details moved from `AGENTS.md`. Read the section relevan
 
 See [dependency updates](dependency-updates.md) for the update workflow.
 
+- SvelteKit inlines stylesheets below 7,000 characters, including the landing page and shared shell CSS, to avoid render-blocking requests on first visits. Larger stylesheets remain separately cached; small styles are included in each HTML response.
+
+- The shell imports its logo through Vite with `?no-inline`, producing a content-hashed URL under `/_app/immutable/` with the Node adapter's one-year immutable caching.
+
 - Type checks use TypeScript 7 through the `@typescript/native-preview` npm alias and `svelte-check --tsgo`; TypeScript 6 remains installed for tools that still require its legacy compiler API.
 
 - Husky's pre-commit hook formats staged files and runs Svelte/TypeScript checks.
@@ -34,6 +38,8 @@ See [production](production.md), [WireGuard](wireguard.md), and [migrations](mig
 - Production serves `papuplan.cz` via `docker-compose.production.yml`: required secrets, an internal Caddy on the shared `public-web` Docker network behind the VPS TLS proxy, private database/monitoring networks, WireGuard-only Grafana and PostgreSQL host ports, and blue/green app slots switched by `scripts/deploy-production.sh`. PostgreSQL also joins the non-internal `admin` network because Docker cannot publish a port from an exclusively internal network. See `docs/production.md` and `docs/wireguard.md`.
 
 - Same-repository PRs deploy to `pr-N.papuplan.cz` after CI; both preview workflows use the outer Caddy in `/home/github/portfolio`, independently of the SSH user's home. `db:seed:preview` adds Free/Pro users and both admin variants, scoped recipes, plans, and review fixtures without production DB access. The first demo deployment clears legacy preview DB/image volumes; later seeds preserve existing accounts and edits. Demo logins are in `docs/production.md`. Exact-host Caddy routes and all preview state are removed when the PR closes.
+
+- Preview Caddy routes enable `zstd` and `gzip` compression, matching production text compression so preview performance audits include realistic HTML transfer sizes.
 
 - `scripts/deploy-production.sh` takes an off-host backup before migrations; destructive SQL requires a recovery note under `drizzle/notes/`, enforced by CI.
 
@@ -70,6 +76,12 @@ See [account data business cases](business-cases/account-data.md).
 - `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`.
 
 - `/` is the public EN/CS product and vision landing page; the protected planner lives at `/planner`, including after sign-in and registration. Legacy home URLs with planner query parameters redirect to `/planner` with their filters intact. Hash links scroll smoothly unless reduced motion is requested.
+
+- `/robots.txt` is a public static text file so crawlers receive directives instead of the sign-in page. Application authorization still protects private pages.
+
+- `/llms.txt` is a public Markdown summary with links to the product, pricing, and legal pages for AI agents.
+
+- Unmatched URLs return 404 for visitors; the root layout redirects to sign-in only for matched private page routes. This also lets discovery clients distinguish absent optional manifests from HTML login pages.
 
 - The landing language switcher uses `?lang=en|cs` and the existing locale cookie for visitors' subsequent pages. Explicit landing language overrides the account locale on `/` only; account language preferences remain unchanged.
 

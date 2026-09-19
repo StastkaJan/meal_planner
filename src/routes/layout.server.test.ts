@@ -12,11 +12,22 @@ beforeEach(() => vi.clearAllMocks())
 function event(path: string, signedIn = false) {
   return {
     url: new URL(path, 'http://localhost'),
+    route: { id: path },
     locals: { user: signedIn ? { id: 1 } : undefined, locale: 'en' },
   } as Parameters<typeof load>[0]
 }
 
 describe('root layout access', () => {
+  it('leaves unmatched URLs to the framework 404 response', async () => {
+    const request = event('/.well-known/ai-catalog.json')
+    request.route.id = null
+    await expect(load(request)).resolves.toMatchObject({
+      locale: 'en',
+      legalNotices: [],
+    })
+    expect(getPendingLegalNotices).not.toHaveBeenCalled()
+  })
+
   it.each(['/', '/pricing', '/auth/login'])(
     'allows anonymous access to %s',
     async (path) => {
@@ -50,6 +61,7 @@ describe('root layout access', () => {
     const result = await load({
       locals: { user: null, locale: 'cs' },
       url: new URL('http://localhost/legal/terms'),
+      route: { id: '/legal/[document]' },
     } as unknown as Parameters<typeof load>[0])
 
     expect(result).toEqual({ user: null, locale: 'cs', legalNotices: [] })

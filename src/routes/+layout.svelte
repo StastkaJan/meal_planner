@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.scss'
+  import logo from '$lib/assets/logo.svg?no-inline'
   import { browser } from '$app/environment'
   import { page } from '$app/stores'
   import { recordLegalNotice } from '$lib/api/legal'
@@ -56,7 +57,7 @@
 <header class="shell-header">
   <nav aria-label={t('Main navigation')}>
     <a class="brand" href="/" aria-label="Papu Plan home">
-      <img src="/logo.svg" alt="Papu Plan" />
+      <img src={logo} alt="Papu Plan" width="188" height="44" />
     </a>
     {#if data.user}
       <div class="main-links">

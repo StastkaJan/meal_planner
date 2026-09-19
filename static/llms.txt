@@ -1,0 +1,15 @@
+# Papu Plan
+
+> Papu Plan brings recipes, weekly meal planning, nutrition tracking, and shopping lists together. The interface is available in English and Czech.
+
+Personal recipes, meal plans, and account data require sign-in. The links below describe the public product and its policies.
+
+## Product
+
+- [Overview](https://papuplan.cz/): Product introduction and how meal planning works.
+- [Plans and pricing](https://papuplan.cz/pricing): Free features and Pro automation.
+
+## Policies
+
+- [Terms and Conditions](https://papuplan.cz/legal/terms): Terms for using Papu Plan.
+- [Privacy Policy](https://papuplan.cz/legal/privacy): Information about personal data and privacy.

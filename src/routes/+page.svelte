@@ -389,7 +389,7 @@
   }
   .breakfast {
     background: #faf0dc;
-    --meal-color: #a96913;
+    --meal-color: #925a10;
   }
   .lunch {
     background: #e9efdf;
