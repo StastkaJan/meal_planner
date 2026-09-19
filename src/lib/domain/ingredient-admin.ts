@@ -23,6 +23,11 @@ const locale = z
 export const ingredientAdminInput = z
   .object({
     name,
+    aliases: z
+      .array(name)
+      .max(100)
+      .transform((values) => [...new Set(values.map(normalizeIngredientName))])
+      .optional(),
     translations: z
       .array(
         z.object({

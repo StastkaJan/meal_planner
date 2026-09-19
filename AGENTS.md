@@ -56,6 +56,7 @@ Feature business cases (the _why_): [docs/business-cases/meal-calendar.md](docs/
 
 - Fetch page data via `load` in `+page.server.ts`/`+layout.server.ts` through server services/repositories, not `onMount`/`$effect` in components. Consume it via `let { data }: { data: PageData } = $props()`.
 - Keep reusable controls in `$lib/components/ui`; colocate feature components under the owning route's `_components/`.
+- Use shared `Select` for fixed choices and `IngredientSelect` for ingredient pickers. Keep native `<select>` markup inside `Select.svelte` only.
 - Browser mutations go through `$lib/api`; server routes use guards/services, and only repositories import `db`.
 - Prefer filtering, joins, and aggregation in repository SQL when doing so reduces rows or data transferred; keep TypeScript filtering for domain logic that SQL cannot express clearly.
 - Plan `portions` is the number of people served; shopping quantities scale by `portions / meal.servings`.
@@ -102,6 +103,7 @@ docker compose up -d  # start postgres + app
 - After every new feature or API change, write or update the corresponding Vitest unit test (colocated next to the file under test) or Playwright E2E test (in `tests/`).
 - Unit tests for pure logic; E2E for user-facing flows.
 - Run `npm run test:unit` before declaring a feature done.
+- Before pushing, verify the relevant CI checks, including browser coverage for UI changes. A test listing is not a test run. If a required check cannot run, report the limitation before pushing; after pushing, wait for CI and fix failures before handing off the PR.
 
 ## Maintaining this file
 

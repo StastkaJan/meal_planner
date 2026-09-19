@@ -15,6 +15,9 @@
     name = '',
     ingredientId,
     multiple = false,
+    allowCreate = true,
+    showIdentity = false,
+    label,
     selectedIds = $bindable<number[]>([]),
     onselect,
     onchange,
@@ -23,6 +26,9 @@
     name?: string
     ingredientId?: number
     multiple?: boolean
+    allowCreate?: boolean
+    showIdentity?: boolean
+    label?: string
     selectedIds?: number[]
     onselect?: (ingredient: IngredientOption | undefined, name: string) => void
     onchange?: () => void
@@ -31,7 +37,9 @@
   let custom = $state<IngredientOption[]>([])
   let error = $state('')
   const toOption = (ingredient: IngredientOption) => ({
-    label: ingredientDisplayName(ingredient, locale()),
+    label: showIdentity
+      ? `${ingredientDisplayName(ingredient, locale())} (${ingredient.name}, #${ingredient.id})`
+      : ingredientDisplayName(ingredient, locale()),
     ingredient,
   })
   let all = $derived([
@@ -88,14 +96,14 @@
     placeholder={multiple ? t('Always on hand') : name || t('Ingredient')}
     inputProps={{
       'aria-label':
-        locale() === 'cs' ? 'Hledat suroviny' : 'Search ingredients',
+        label ?? (locale() === 'cs' ? 'Hledat suroviny' : 'Search ingredients'),
     }}
     key={(option) => option.ingredient?.id ?? option.label}
     filterFunc={(option, query) =>
       ingredientNames(option.ingredient).some((value) =>
         normalizeIngredientName(value).includes(normalizeIngredientName(query)),
       )}
-    allowUserOptions
+    allowUserOptions={allowCreate}
     createOptionMsg={({ searchText }) =>
       `${locale() === 'cs' ? 'Přidat vlastní surovinu' : 'Add custom ingredient'}: ${searchText.trim()}`}
     noMatchingOptionsMsg={locale() === 'cs'

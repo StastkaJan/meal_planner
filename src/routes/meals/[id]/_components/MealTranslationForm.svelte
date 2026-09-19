@@ -2,6 +2,7 @@
   import Popup from '$lib/components/ui/Popup.svelte'
   import { deleteMealTranslation, updateMealTranslation } from '$lib/api/meals'
   import Textarea from '$lib/components/ui/Textarea.svelte'
+  import Select from '$lib/components/ui/Select.svelte'
   import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
   import type { Meal, MealTranslation } from '$lib/database/schema'
   import { useI18n } from '$lib/i18n-context'
@@ -103,11 +104,14 @@
     </div>
     <label>
       {t('Language')}
-      <select bind:value={locale} disabled={pending}>
-        {#each targets as option}
-          <option value={option}>{LOCALE_LABELS[option]}</option>
-        {/each}
-      </select>
+      <Select
+        bind:value={locale}
+        disabled={pending}
+        options={targets.map((value) => ({
+          value,
+          label: LOCALE_LABELS[value],
+        }))}
+      />
     </label>
   </div>
 
@@ -226,8 +230,7 @@
     font-size: 0.8rem;
     font-weight: 500;
   }
-  input,
-  select {
+  input {
     min-height: 42px;
     padding: 9px 10px;
     background: $color-surface;

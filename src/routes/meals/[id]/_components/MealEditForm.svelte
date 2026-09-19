@@ -1,6 +1,7 @@
 <script lang="ts">
   import { deleteMealImage, updateMeal, uploadMealImage } from '$lib/api/meals'
   import Textarea from '$lib/components/ui/Textarea.svelte'
+  import Select from '$lib/components/ui/Select.svelte'
   import IngredientSelect from '$lib/components/ui/IngredientSelect.svelte'
   import type { IngredientOption } from '$lib/domain/ingredients'
   import {
@@ -170,12 +171,17 @@
     >
     <label
       >{t('Difficulty')}
-      <select name="difficulty">
-        <option value="">—</option>
-        {#each ['easy', 'medium', 'hard'] as d}
-          <option value={d} selected={meal.difficulty === d}>{label(d)}</option>
-        {/each}
-      </select>
+      <Select
+        name="difficulty"
+        value={meal.difficulty ?? ''}
+        options={[
+          { value: '', label: '—' },
+          ...['easy', 'medium', 'hard'].map((value) => ({
+            value,
+            label: label(value),
+          })),
+        ]}
+      />
     </label>
   </div>
   <fieldset class="image-field">
@@ -390,12 +396,14 @@
             placeholder={t('Qty')}
             bind:value={row.qty}
           />
-          <select bind:value={row.unit}>
-            <option value="">—</option>
-            {#each UNIT_OPTIONS as u}
-              <option value={u}>{label(u)}</option>
-            {/each}
-          </select>
+          <Select
+            bind:value={row.unit}
+            aria-label={t('Unit')}
+            options={[
+              { value: '', label: '—' },
+              ...UNIT_OPTIONS.map((value) => ({ value, label: label(value) })),
+            ]}
+          />
           <button
             class="btn sm ghost"
             type="button"
@@ -545,8 +553,7 @@
     color: $color-text-muted;
     min-width: 0;
 
-    input,
-    select {
+    input {
       width: 100%;
       min-height: 42px;
       background: $color-surface;
@@ -635,8 +642,7 @@
     grid-template-columns: 3fr 1fr 1fr auto;
     gap: 8px;
 
-    input,
-    select {
+    input {
       background: $color-surface;
       border: 1px solid $color-border-strong;
       border-radius: $radius-sm;

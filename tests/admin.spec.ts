@@ -34,6 +34,160 @@ function userId(email: string) {
   return Number(sql(`select id from users where email = '${email}'`))
 }
 
+test('@smoke admin merges a custom ingredient and remembers its alias', async ({
+  page,
+}) => {
+  const email = uniqueEmail()
+  const suffix = Date.now()
+  const sourceName = `Duplicate ${suffix}`
+  const targetName = `Canonical ${suffix}`
+  const ingredientIds: number[] = []
+  await register(page, email)
+  const id = userId(email)
+  try {
+    const custom = await page.request.post('/ingredients', {
+      data: { name: sourceName },
+    })
+    expect(custom.status()).toBe(201)
+    const sourceId = (await custom.json()).id
+    ingredientIds.push(sourceId)
+    expect(
+      (
+        await page.request.post('/admin/ingredients/merge', {
+          data: { sourceId, targetId: 1 },
+        })
+      ).status(),
+    ).toBe(403)
+    adminId(email)
+    const created = await page.request.post('/admin/ingredients', {
+      data: { name: targetName, translations: [] },
+    })
+    expect(created.status()).toBe(201)
+    const targetId = (await created.json()).id
+    ingredientIds.push(targetId)
+    const meal = await page.request.post('/meals', {
+      data: {
+        name: `Merge recipe ${suffix}`,
+        ingredients: [
+          { name: sourceName, ingredientId: sourceId, qty: 100, unit: 'g' },
+        ],
+      },
+    })
+    expect(meal.status()).toBe(201)
+    const mealId = (await meal.json()).id
+    expect(
+      (
+        await page.request.patch('/profile', {
+          data: { pantryIngredientIds: [sourceId, targetId] },
+        })
+      ).ok(),
+    ).toBe(true)
+
+    await page.goto('/admin/ingredients')
+    await page
+      .getByRole('link', { name: 'Merge ingredients', exact: true })
+      .click()
+    await page
+      .getByRole('textbox', { name: 'Search duplicate ingredients' })
+      .fill(sourceName)
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`q=Duplicate\\+${suffix}`))
+    await page.reload()
+    await page
+      .getByRole('combobox', { name: 'Duplicate ingredient', exact: true })
+      .fill(sourceName)
+    await page
+      .getByRole('option', {
+        name: `${sourceName} (${sourceName}, #${sourceId})`,
+        exact: true,
+      })
+      .click()
+    await page
+      .getByRole('combobox', { name: 'Merge into', exact: true })
+      .fill(targetName)
+    await page
+      .getByRole('option', {
+        name: `${targetName} (${targetName}, #${targetId})`,
+        exact: true,
+      })
+      .click()
+    sql(
+      `update ingredients set aliases = ARRAY(select 'alias ' || n from generate_series(1, 100) n) where id = ${targetId}`,
+    )
+    page.once('dialog', (dialog) => dialog.accept())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    await expect(page.getByRole('alert')).toHaveText(
+      'Merged ingredient exceeds catalogue limits. Shorten names or remove aliases or translations before merging.',
+    )
+    expect(
+      sql(
+        `select ingredient_id from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(String(sourceId))
+    sql(`update ingredients set aliases = '{}' where id = ${targetId}`)
+    page.once('dialog', (dialog) => dialog.dismiss())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    expect(
+      sql(
+        `select ingredient_id from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(String(sourceId))
+    page.once('dialog', (dialog) => dialog.accept())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    await expect(page).toHaveURL(`/admin/ingredients/${targetId}`)
+    await expect(
+      page.getByRole('region', { name: 'Translation und', exact: true }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByLabel('General aliases', { exact: true }),
+    ).toHaveValue(sourceName.toLowerCase())
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByRole('status')).toHaveText('Ingredient saved.')
+    await page.reload()
+    await expect(
+      page.getByLabel('General aliases', { exact: true }),
+    ).toHaveValue(sourceName.toLowerCase())
+    expect(
+      sql(
+        `select count(*) from ingredient_translations where ingredient_id = ${targetId} and locale = 'und'`,
+      ),
+    ).toBe('0')
+    expect(
+      sql(
+        `select ingredient_id || ':' || qty || ':' || unit || ':' || original_name from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(`${targetId}:100.000:g:${sourceName}`)
+    expect(
+      sql(
+        `select pantry_ingredient_ids::text from user_settings where user_id = ${id}`,
+      ),
+    ).toBe(`{${targetId}}`)
+    const resolved = await page.request.post('/ingredients', {
+      data: { name: sourceName },
+    })
+    expect((await resolved.json()).id).toBe(targetId)
+    expect(sql(`select count(*) from ingredients where id = ${sourceId}`)).toBe(
+      '0',
+    )
+    await page.goto('/profile')
+    await expect(
+      page
+        .getByRole('list', { name: 'selected options' })
+        .getByText(targetName, { exact: true }),
+    ).toBeVisible()
+  } finally {
+    sql(`delete from users where id = ${id}`)
+    if (ingredientIds.length)
+      sql(`delete from ingredients where id in (${ingredientIds.join(',')})`)
+  }
+})
+
 test('@smoke admin configures ingredient translations and aliases', async ({
   page,
 }) => {

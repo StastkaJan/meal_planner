@@ -1,6 +1,7 @@
 export type IngredientOption = {
   id: number
   name: string
+  aliases?: string[]
   translations: Record<string, { name: string; aliases: string[] }>
 }
 
@@ -14,6 +15,7 @@ export const ingredientDisplayName = (
 
 export const ingredientNames = (option: IngredientOption) => [
   option.name,
+  ...(option.aliases ?? []),
   ...Object.values(option.translations).flatMap(({ name, aliases }) => [
     name,
     ...aliases,

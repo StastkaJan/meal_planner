@@ -48,6 +48,9 @@ test('@smoke edit meal from detail page', async ({ page }) => {
   await page.getByLabel('Sugars (g)').fill('8')
   await page.getByLabel('Saturated fat (g)').fill('2.5')
   await page.getByLabel('Salt (g)').fill('1')
+  await page
+    .getByRole('combobox', { name: 'Difficulty', exact: true })
+    .selectOption('hard')
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page).toHaveURL(/\/meals\/\d+$/)
   await expect(page.locator('h1')).toHaveText(updated)
@@ -55,6 +58,10 @@ test('@smoke edit meal from detail page', async ({ page }) => {
   await expect(page.getByText('8.0g sugars')).toBeVisible()
   await expect(page.getByText('2.5g saturated fat')).toBeVisible()
   await expect(page.getByText('1.0g salt')).toBeVisible()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'Difficulty', exact: true }),
+  ).toHaveValue('hard')
 })
 
 test('@smoke saves ingredient drafts and clears the previous identity', async ({
@@ -262,7 +269,7 @@ test('@smoke does not silently discard a partial ingredient row', async ({
   await expect(page.getByRole('alert')).toContainText('Ingredient name')
 })
 
-test('scales ingredient quantities with servings', async ({ page }) => {
+test('@smoke scales ingredient quantities with servings', async ({ page }) => {
   const name = `Scale-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
@@ -276,7 +283,9 @@ test('scales ingredient quantities with servings', async ({ page }) => {
   await page.getByRole('combobox', { name: 'Search ingredients' }).fill('Flour')
   await page.getByRole('option', { name: 'Flour', exact: true }).click()
   await page.getByPlaceholder('Qty').fill('1')
-  await page.locator('.ingredient-row select').selectOption('cup')
+  await page
+    .getByRole('combobox', { name: 'Unit', exact: true })
+    .selectOption('cup')
   await page.getByRole('button', { name: 'Save' }).click()
 
   await expect(page.getByRole('listitem')).toHaveText('1 cup Flour')
@@ -310,12 +319,17 @@ test('@smoke translates recipe ingredient names', async ({ page }) => {
     page.getByRole('heading', { name: 'Translate', exact: true }),
   ).toBeVisible()
   await page.getByLabel('Carrot').fill('Mrkev')
+  await expect(
+    page.getByRole('combobox', { name: 'Language', exact: true }),
+  ).toHaveValue('cs')
   await page.getByRole('button', { name: 'Save translation' }).click()
 
   await expect(page).toHaveURL(/\/meals\/\d+$/)
   const recipeUrl = page.url()
   await page.goto('/profile')
-  await page.locator('select[name="locale"]').selectOption('cs')
+  await page
+    .getByRole('combobox', { name: 'Preferred language', exact: true })
+    .selectOption('cs')
   await page.getByRole('button', { name: 'Save language' }).click()
   await page.waitForLoadState('networkidle')
   await page.goto(recipeUrl)

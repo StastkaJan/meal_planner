@@ -2,13 +2,15 @@
   import type { PageData } from './$types'
   import { goto } from '$app/navigation'
   import { saveCatalogueIngredient } from '$lib/api/ingredients'
+  import type { IngredientOption } from '$lib/domain/ingredients'
   import { useI18n } from '$lib/i18n-context'
   import Input from '$lib/components/ui/Input.svelte'
   import Textarea from '$lib/components/ui/Textarea.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   let { data }: { data: PageData } = $props()
   const { t, message } = useI18n()
-  let ingredient = $derived(data.ingredient)
+  let ingredient = $derived<IngredientOption | null>(data.ingredient)
+  let aliases = $derived((ingredient?.aliases ?? []).join('\n'))
   let rows = $derived(
     ingredient
       ? Object.entries(ingredient.translations).map(([locale, value]) => ({
@@ -46,6 +48,10 @@
       const updated = await saveCatalogueIngredient(
         {
           name: String(fields.get('name') ?? ''),
+          aliases: String(fields.get('aliases') ?? '')
+            .split('\n')
+            .map((value) => value.trim())
+            .filter(Boolean),
           translations: rows
             .map((_, i) => ({
               locale: String(fields.get(`locale-${i}`) ?? ''),
@@ -93,6 +99,18 @@
           maxlength={100}
         /></label
       >
+      <label
+        >{t('General aliases')}<Textarea
+          name="aliases"
+          bind:value={aliases}
+          rows={3}
+        /></label
+      >
+      <p class="hint">
+        {t(
+          'Alternative names without a specified language. Enter one per line.',
+        )}
+      </p>
       <h2>{t('Translations and aliases')}</h2>
       <p class="hint">
         {t(

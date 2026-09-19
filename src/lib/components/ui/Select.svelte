@@ -27,6 +27,8 @@
     border: 1px solid $color-border-strong;
     border-radius: $radius-sm;
     background: $color-surface;
+    color: $color-text;
+    font-size: 0.875rem;
 
     &:focus {
       border-color: $color-accent;
