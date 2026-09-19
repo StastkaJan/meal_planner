@@ -8,6 +8,7 @@ export const ingredients = pgTable(
     name: text('name').notNull().unique(),
     // Retained for rollback to the bilingual catalogue; use ingredientTranslations.
     nameCs: text('name_cs'),
+    // Language-neutral aliases; locale-specific aliases live in ingredientTranslations.
     aliases: text('aliases')
       .array()
       .notNull()

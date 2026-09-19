@@ -10,6 +10,9 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  'General aliases': 'Obecné alternativní názvy',
+  'Alternative names without a specified language. Enter one per line.':
+    'Alternativní názvy bez určeného jazyka. Každý zadejte na samostatný řádek.',
   'Less deciding. More enjoying.': 'Méně rozhodování. Více radosti.',
   'Our vision': 'Naše vize',
   'Get started': 'Začít',

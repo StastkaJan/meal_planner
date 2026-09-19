@@ -1,6 +1,30 @@
 import { expect, it } from 'vitest'
 import { ingredientAdminInput } from './ingredient-admin'
 
+it('normalizes general aliases and accepts explicitly clearing them', () => {
+  expect(
+    ingredientAdminInput.parse({
+      name: 'Spring onion',
+      aliases: [' SCALLION ', 'scallion'],
+      translations: [],
+    }),
+  ).toEqual({ name: 'Spring onion', aliases: ['scallion'], translations: [] })
+  expect(
+    ingredientAdminInput.parse({
+      name: 'Spring onion',
+      aliases: [],
+      translations: [],
+    }).aliases,
+  ).toEqual([])
+  expect(
+    ingredientAdminInput.safeParse({
+      name: 'Salt',
+      aliases: [' '],
+      translations: [],
+    }).success,
+  ).toBe(false)
+})
+
 it('normalizes names, locales and duplicate aliases while preserving accents', () => {
   expect(
     ingredientAdminInput.parse({

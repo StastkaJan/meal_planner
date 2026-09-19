@@ -24,6 +24,16 @@ const options: IngredientOption[] = [
 ]
 
 describe('ingredient identity', () => {
+  it('matches general aliases without inventing a language or display name', () => {
+    const option = {
+      id: 9,
+      name: 'Spring onion',
+      aliases: ['scallion'],
+      translations: {},
+    }
+    expect(matchIngredient(' SCALLION ', [option])).toBe(option)
+    expect(ingredientDisplayName(option, 'cs')).toBe('Spring onion')
+  })
   it('supports additional locales and falls back to the original name', () => {
     const option = {
       ...options[0],

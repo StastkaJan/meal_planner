@@ -11,6 +11,7 @@ import {
   saveManagedIngredient,
   listManagedIngredients,
   mergeIngredients,
+  listMergeSources,
 } from './ingredients'
 
 beforeEach(() => vi.clearAllMocks())
@@ -193,6 +194,7 @@ it('publishes a matching private identity atomically without changing recipe or 
     expect(saved).toEqual({
       id: 1,
       name: 'Sumac',
+      aliases: [],
       translations: { en: { name: 'Sumac', aliases: ['sumach'] } },
     })
     expect(await listIngredientOptions(null, database as any)).toEqual([saved])
@@ -287,9 +289,17 @@ it('merges private duplicates, preserves recipe data and locale names, and resol
           name: 'Frühlingszwiebel',
           aliases: ['frühlingszwiebel', 'frühlingszwiebeln'],
         },
-        und: { aliases: ['spring onion', 'scallion'] },
       },
+      aliases: ['scallion'],
     })
+    expect(merged && merged.translations).not.toHaveProperty('und')
+    expect(
+      (
+        await client.query(
+          "SELECT * FROM ingredient_translations WHERE locale = 'und'",
+        )
+      ).rows,
+    ).toEqual([])
     expect(
       (await client.query('SELECT * FROM meal_ingredients ORDER BY position'))
         .rows,
@@ -338,6 +348,98 @@ it('merges private duplicates, preserves recipe data and locale names, and resol
     expect(
       (await client.query('SELECT id FROM ingredients ORDER BY id')).rows,
     ).toEqual([{ id: 2 }, { id: 3 }])
+
+    // Existing preview merges remain readable; the next save folds und into general aliases.
+    await client.exec(
+      "INSERT INTO ingredient_translations VALUES (2, 'und', 'Old label', ARRAY['old alias'])",
+    )
+    const legacy = (await listIngredientOptions(null, database as any)).find(
+      (row) => row.id === 2,
+    )!
+    expect(legacy.translations).not.toHaveProperty('und')
+    expect(legacy.aliases).toEqual(
+      expect.arrayContaining(['scallion', 'old label', 'old alias']),
+    )
+    const translationInput = Object.entries(legacy.translations).map(
+      ([locale, row]) => ({ locale, ...row }),
+    )
+    const saved = await saveManagedIngredient(
+      { name: legacy.name, translations: translationInput },
+      2,
+    )
+    expect(saved).toMatchObject({ aliases: legacy.aliases })
+    expect(
+      (
+        await client.query(
+          "SELECT * FROM ingredient_translations WHERE locale = 'und'",
+        )
+      ).rows,
+    ).toEqual([])
+
+    await client.exec(`
+      INSERT INTO ingredients (name, aliases) VALUES ('Young onion', ARRAY['young onions']);
+      INSERT INTO ingredient_translations VALUES (4, 'und', 'Young onion', ARRAY['little onions']);
+      UPDATE ingredients SET aliases = ARRAY['young onions'] WHERE id = 3;
+    `)
+    expect(await mergeIngredients(4, 2)).toBe(false)
+    await client.exec("UPDATE ingredients SET aliases = '{}' WHERE id = 3")
+    const repaired = await mergeIngredients(4, 2)
+    expect(repaired).toMatchObject({
+      aliases: expect.arrayContaining([
+        'scallion',
+        'old alias',
+        'young onion',
+        'young onions',
+        'little onions',
+      ]),
+    })
+    expect(repaired && repaired.translations).not.toHaveProperty('und')
+    expect(
+      (
+        await client.query(
+          "SELECT * FROM ingredient_translations WHERE locale = 'und'",
+        )
+      ).rows,
+    ).toEqual([])
+    for (const alias of ['old alias', 'young onions', 'little onions'])
+      expect(
+        await database.transaction((tx) =>
+          resolveIngredient(tx as any, alias, 99),
+        ),
+      ).toMatchObject({ id: 2 })
+
+    db.select.mockImplementation(database.select.bind(database))
+    expect(
+      (await listManagedIngredients('little onions', 1)).ingredients.map(
+        (row) => row.id,
+      ),
+    ).toEqual([2])
+    expect(
+      (await listMergeSources('little onions')).map((row) => row.id),
+    ).toEqual([2])
+    // General aliases can be edited and removed without changing translations.
+    const edited = await saveManagedIngredient(
+      {
+        name: legacy.name,
+        aliases: ['new alias'],
+        translations: translationInput,
+      },
+      2,
+    )
+    expect(edited).toMatchObject({
+      aliases: ['new alias'],
+      translations: legacy.translations,
+    })
+
+    await client.exec(
+      "INSERT INTO ingredients (name, is_catalog) VALUES ('Untranslated duplicate', false), ('Untranslated target', true)",
+    )
+    expect(await mergeIngredients(5, 6)).toEqual({
+      id: 6,
+      name: 'Untranslated target',
+      aliases: ['untranslated duplicate'],
+      translations: {},
+    })
   } finally {
     db.transaction.mockReset()
     await client.close()

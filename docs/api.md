@@ -1,6 +1,6 @@
 # API Routes
 
-- `POST /ingredients` (signed in): `{name}` with 1–100 characters selects a known alias or saves a reusable personal ingredient option; returns `{id, name, translations: {[locale]: {name, aliases}}}`. Missing locales fall back to `name`. No external service is used.
+- `POST /ingredients` (signed in): `{name}` with 1–100 characters selects a known alias or saves a reusable personal ingredient option; returns `{id, name, aliases: string[], translations: {[locale]: {name, aliases}}}`. Top-level aliases have no assigned language. Missing locales fall back to `name`. No external service is used.
 - Recipe ingredient writes accept optional `ingredientId` alongside original `name`, `qty`, and `unit`. IDs must belong to the shared catalogue or acting user's options; name-only imports resolve known aliases automatically.
 - `PATCH /profile` accepts `pantryIngredientIds: number[]` (at most 100 visible options), preserving legacy `pantryStaples` names for rollback. Legacy name-based writes remain supported and resolve IDs. Profile export includes personal ingredient options.
 
@@ -64,6 +64,8 @@
 | POST   | /auth/logout                | yes   | end session                                                                                                                                                                                                                                  |
 
 ## Ingredient administration
+
+The editor separates **General aliases** from language-specific translations. Admin POST/PUT also accept optional top-level `aliases: string[]` (up to 100 names, normalized and deduplicated); omission preserves existing general aliases, and `[]` clears them. Merging retains the source original name as a general alias without inventing a translation. Legacy `und` rows are exposed as general aliases and folded into the existing `ingredients.aliases` column on save/merge.
 
 `GET /admin/ingredients/merge?q=` provides an admin-only duplicate search (up to 30 matches, including private ingredient names without owner details) and a shared catalogue target picker. `POST /admin/ingredients/merge` accepts `{ sourceId, targetId }`, distinct positive integer IDs. The target must be shared. It atomically moves recipe links, private picker links, pantry IDs and legacy pantry names to the target, deduplicates selections, preserves target locale labels and adds source labels/aliases, then removes the duplicate. Original recipe wording, quantities and units are preserved. Returns the target ingredient; 400 for invalid IDs, 404 for missing ingredients or a private target, 409 when a source name/alias also matches a third shared ingredient. The UI requires confirmation; there is no in-app undo. Refresh older open recipe/profile forms after a merge.
 

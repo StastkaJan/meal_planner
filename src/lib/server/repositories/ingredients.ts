@@ -10,6 +10,7 @@ import {
 import type { IngredientAdminInput } from '$lib/domain/ingredient-admin'
 import {
   normalizeIngredientName,
+  ingredientNames,
   type IngredientOption,
 } from '$lib/domain/ingredients'
 import { InvalidMealInputError } from '$lib/domain/meal-input'
@@ -21,8 +22,16 @@ export const ingredientOptionColumns = {
   name: ingredients.name,
   translations: sql<IngredientOption['translations']>`coalesce((
     select jsonb_object_agg(t.locale, jsonb_build_object('name', t.name, 'aliases', t.aliases))
-    from ingredient_translations t where t.ingredient_id = "ingredients"."id"
+    from ingredient_translations t where t.ingredient_id = "ingredients"."id" and t.locale <> 'und'
   ), '{}'::jsonb)`,
+  // Read older unknown-language buckets as general aliases until the next save/merge.
+  aliases: sql<string[]>`array(
+    select distinct lower(regexp_replace(trim(alias), '\\s+', ' ', 'g'))
+    from unnest(${ingredients.aliases} || coalesce((
+      select array[t.name] || t.aliases from ingredient_translations t
+      where t.ingredient_id = "ingredients"."id" and t.locale = 'und'
+    ), '{}'::text[])) alias where trim(alias) <> '' order by 1
+  )`,
 }
 
 function ingredientOptionsQuery(
@@ -76,6 +85,7 @@ export async function resolveIngredient(
     sql`${ingredients.id} in (
       select i.id from ingredients i
       where lower(regexp_replace(trim(i.name), '\\s+', ' ', 'g')) = ${normalized}
+      or i.aliases @> array[${normalized}]::text[]
       union
       select t.ingredient_id from ingredient_translations t
       where lower(regexp_replace(trim(t.name), '\\s+', ' ', 'g')) = ${normalized}
@@ -130,7 +140,7 @@ export async function listManagedIngredients(
   const pattern = `%${normalizeIngredientName(query).replace(/[\\%_]/g, '\\$&')}%`
   const filter = and(
     sql`(
-    ${ingredients.name} ilike ${pattern} or exists (
+    ${ingredients.name} ilike ${pattern} or exists (select 1 from unnest(${ingredients.aliases}) alias where alias ilike ${pattern}) or exists (
       select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id}
       and (t.name ilike ${pattern} or exists (select 1 from unnest(t.aliases) alias where alias ilike ${pattern}))
     )
@@ -204,7 +214,11 @@ export function saveManagedIngredient(
       existingId === undefined
         ? await tx
             .insert(ingredients)
-            .values({ name: input.name, isCatalog: true })
+            .values({
+              name: input.name,
+              aliases: input.aliases ?? [],
+              isCatalog: true,
+            })
             .returning({ id: ingredients.id })
         : await tx
             .update(ingredients)
@@ -212,6 +226,7 @@ export function saveManagedIngredient(
             .set({
               name: id === undefined ? duplicate!.name : input.name,
               isCatalog: true,
+              aliases: input.aliases ?? ingredientOptionColumns.aliases,
             })
             .where(eq(ingredients.id, existingId))
             .returning({ id: ingredients.id })
@@ -254,7 +269,7 @@ export function listMergeSources(query: string) {
     .select(ingredientOptionColumns)
     .from(ingredients)
     .where(
-      sql`${ingredients.name} ilike ${pattern} or exists (
+      sql`${ingredients.name} ilike ${pattern} or exists (select 1 from unnest(${ingredients.aliases}) alias where alias ilike ${pattern}) or exists (
       select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id}
       and (t.name ilike ${pattern} or exists (select 1 from unnest(t.aliases) alias where alias ilike ${pattern}))
     )`,
@@ -288,21 +303,19 @@ export function mergeIngredients(sourceId: number, targetId: number) {
         ),
       ]
     }
-    addAliases('und', target.name, [source.name])
+    const aliases = [
+      ...new Set(
+        [...(target.aliases ?? []), ...(source.aliases ?? []), source.name].map(
+          normalizeIngredientName,
+        ),
+      ),
+    ]
     for (const [locale, row] of Object.entries(source.translations))
       addAliases(locale, row.name, row.aliases)
 
     // Do not create an ambiguous shared alias that would resolve differently by user.
     const names = [
-      ...new Set(
-        [
-          source.name,
-          ...Object.values(source.translations).flatMap((row) => [
-            row.name,
-            ...row.aliases,
-          ]),
-        ].map(normalizeIngredientName),
-      ),
+      ...new Set(ingredientNames(source).map(normalizeIngredientName)),
     ]
     const namesArray = sql`array[${sql.join(
       names.map((name) => sql`${name}`),
@@ -315,12 +328,26 @@ export function mergeIngredients(sourceId: number, targetId: number) {
         sql`
       ${ingredients.isCatalog} and ${ingredients.id} not in (${sourceId}, ${targetId}) and (
         lower(regexp_replace(trim(${ingredients.name}), '\\s+', ' ', 'g')) = any(${namesArray})
+        or ${ingredients.aliases} && ${namesArray}
         or exists (select 1 from ingredient_translations t where t.ingredient_id = ${ingredients.id}
           and (lower(regexp_replace(trim(t.name), '\\s+', ' ', 'g')) = any(${namesArray}) or t.aliases && ${namesArray}))
       )`,
       )
       .limit(1)
     if (conflict) return false
+
+    await tx
+      .update(ingredients)
+      .set({ aliases })
+      .where(eq(ingredients.id, targetId))
+    await tx
+      .delete(ingredientTranslations)
+      .where(
+        and(
+          eq(ingredientTranslations.ingredientId, targetId),
+          eq(ingredientTranslations.locale, 'und'),
+        ),
+      )
 
     for (const [locale, row] of Object.entries(translations))
       await tx
@@ -363,6 +390,6 @@ export function mergeIngredients(sourceId: number, targetId: number) {
       where lower(regexp_replace(trim(name), '\\s+', ' ', 'g')) = any(${namesArray})
     )`)
     await tx.delete(ingredients).where(eq(ingredients.id, sourceId))
-    return { id: target.id, name: target.name, translations }
+    return { id: target.id, name: target.name, aliases, translations }
   })
 }

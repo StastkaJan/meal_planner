@@ -114,6 +114,23 @@ test('@smoke admin merges a custom ingredient and remembers its alias', async ({
       .getByRole('button', { name: 'Merge ingredients', exact: true })
       .click()
     await expect(page).toHaveURL(`/admin/ingredients/${targetId}`)
+    await expect(
+      page.getByRole('region', { name: 'Translation und', exact: true }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByLabel('General aliases', { exact: true }),
+    ).toHaveValue(sourceName.toLowerCase())
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByRole('status')).toHaveText('Ingredient saved.')
+    await page.reload()
+    await expect(
+      page.getByLabel('General aliases', { exact: true }),
+    ).toHaveValue(sourceName.toLowerCase())
+    expect(
+      sql(
+        `select count(*) from ingredient_translations where ingredient_id = ${targetId} and locale = 'und'`,
+      ),
+    ).toBe('0')
     expect(
       sql(
         `select ingredient_id || ':' || qty || ':' || unit || ':' || original_name from meal_ingredients where meal_id = ${mealId}`,
