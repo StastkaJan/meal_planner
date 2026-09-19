@@ -194,8 +194,11 @@ test('@smoke admin manages users and shared recipes through the UI', async ({
       )
     }
     await pageA.setViewportSize({ width: 1280, height: 740 })
-    pageA.once('dialog', (dialog) => dialog.accept())
     await recipeRow.getByRole('button', { name: 'Archive' }).click()
+    await pageA
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click()
     await expect(recipeRow).toHaveCount(0)
     expect(
       sql(`select archived_at is not null from meals where id = ${mealId}`),

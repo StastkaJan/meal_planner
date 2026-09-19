@@ -153,7 +153,7 @@ test('@smoke uploads and removes a recipe image', async ({ page }) => {
   expect((await page.request.get(`/meals/${meal.id}/image`)).status()).toBe(404)
 })
 
-test('delete meal from detail page', async ({ page }) => {
+test('@smoke delete meal from detail page', async ({ page }) => {
   const name = `Del-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
@@ -166,8 +166,11 @@ test('delete meal from detail page', async ({ page }) => {
     page.getByRole('link', { name, exact: true }).click(),
   ])
 
-  page.once('dialog', (d) => d.accept())
   await page.getByRole('button', { name: 'Delete' }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page).toHaveURL('/meals')
 })
 
@@ -358,15 +361,21 @@ test('@smoke translation failures preserve edits and allow retry', async ({
       route.fulfill({ status: 503, json: { message: 'Request failed' } }),
     { times: 1 },
   )
-  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Delete translation' }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.getByRole('alert')).toHaveText('Request failed')
   await expect(page).toHaveURL(`${recipeUrl}/translate`)
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue(
     translatedName,
   )
-  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Delete translation' }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page).toHaveURL(recipeUrl)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
 })
@@ -501,13 +510,16 @@ test('cooking mode scales ingredients, presents steps, and starts timers', async
 
   await page.getByRole('link', { name: 'Start cooking' }).click()
   await expect(page).toHaveURL(/\?cook=1$/)
-  await expect(page.getByText('Heat the oven.')).toBeVisible()
-  await expect(page.getByRole('listitem')).toHaveText('1 cup Flour')
+  const cooking = page.locator('.cooking-mode')
+  await expect(page.getByText('Heat the oven.', { exact: true })).toBeVisible()
+  await expect(cooking.getByRole('listitem')).toHaveText('1 cup Flour')
 
   await page.getByRole('button', { name: 'More cooking servings' }).click()
-  await expect(page.getByRole('listitem')).toHaveText('1.5 cup Flour')
+  await expect(cooking.getByRole('listitem')).toHaveText('1.5 cup Flour')
   await page.getByRole('button', { name: 'Next step' }).click()
-  await expect(page.getByText('Bake until golden.')).toBeVisible()
+  await expect(
+    page.getByText('Bake until golden.', { exact: true }),
+  ).toBeVisible()
 
   await page.getByLabel('Minutes').fill('0.1')
   await page.getByRole('button', { name: 'Start timer' }).click()

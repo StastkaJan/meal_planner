@@ -109,6 +109,7 @@ test('@smoke picker pagination, search, and reload preserve the selected slot', 
 }) => {
   await register(page, uniqueEmail())
   await page.getByRole('button', { name: 'Create plan' }).click()
+  await expect(page.getByRole('link', { name: 'Shopping list' })).toBeVisible()
   for (let i = 0; i < 35; i++) {
     const response = await page.request.post('/meals', {
       data: {

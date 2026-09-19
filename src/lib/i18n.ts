@@ -214,6 +214,7 @@ const CS_MESSAGES = {
   'Saturated fat g': 'Nasycené tuky g',
   'Salt g': 'Sůl g',
   Cancel: 'Zrušit',
+  Confirm: 'Potvrdit',
   Add: 'Přidat',
   'Edit meal assignment': 'Upravit přiřazení jídla',
   'Show recipe': 'Zobrazit recept',

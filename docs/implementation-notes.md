@@ -2,6 +2,11 @@
 
 Feature and operational details moved from `AGENTS.md`. Read the section relevant to your task; code is the source of truth. Update these notes when the described behavior changes. Keep working rules in [AGENTS.md](../AGENTS.md).
 
+## Shared interface
+
+- Recipe and planner confirmations and alerts use `Popup.svelte`, built on the styled `Dialog` and `Button` controls. Confirmations focus Cancel first; Escape cancels, closing restores focus, and navigation dismisses pending requests. Labels use the account language.
+- While a picker save is pending, the planner blocks internal back navigation. It does not cancel document unloads, which would trigger a browser-owned confirmation that cannot use the app's popup.
+
 ## Tooling and CI
 
 See [dependency updates](dependency-updates.md) for the update workflow.

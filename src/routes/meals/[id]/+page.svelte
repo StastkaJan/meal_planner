@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Popup from '$lib/components/ui/Popup.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
   import { deleteMeal as removeMeal, duplicateMeal } from '$lib/api/meals'
@@ -7,6 +8,8 @@
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  let popup: ReturnType<typeof Popup>
+
   const { t, label, namedCount, message } = useI18n()
   let sourceMeal = $derived(data.sourceMeal)
   let hasUploadedImage = $derived(data.hasUploadedImage)
@@ -58,7 +61,7 @@
   const scaleQty = (v: number) => Number((v * factor).toFixed(2))
 
   async function deleteMeal() {
-    if (!confirm(t('Delete this meal?'))) return
+    if (!(await popup.confirm(t('Delete this meal?')))) return
     deleteError = ''
     try {
       await removeMeal(meal.id)
@@ -74,6 +77,8 @@
     await goto(`/meals/${copy.id}`)
   }
 </script>
+
+<Popup bind:this={popup} />
 
 <div class="page">
   {#if cooking && meal.instructions}

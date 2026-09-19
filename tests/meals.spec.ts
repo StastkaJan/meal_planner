@@ -187,7 +187,7 @@ test('preserves the recipe import panel in the URL', async ({ page }) => {
   )
 })
 
-test('delete a meal', async ({ page }) => {
+test('@smoke delete a meal', async ({ page }) => {
   const name = `Del-${Date.now()}`
   await page.getByRole('button', { name: '+ Add meal' }).click()
   await page.getByPlaceholder('Meal name').fill(name)
@@ -197,15 +197,18 @@ test('delete a meal', async ({ page }) => {
     .click()
   await page.getByText(name).waitFor()
 
-  page.once('dialog', (d) => d.accept())
   await page
     .locator('tr', { hasText: name })
     .getByRole('button', { name: 'Delete' })
     .click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.getByText(name)).not.toBeVisible()
 })
 
-test('shows delete failures on the recipe list and detail page', async ({
+test('@smoke shows delete failures on the recipe list and detail page', async ({
   page,
 }) => {
   const name = `Delete-error-${Date.now()}`
@@ -231,14 +234,20 @@ test('shows delete failures on the recipe list and detail page', async ({
     }
   })
 
-  page.once('dialog', (dialog) => dialog.accept())
   await row.getByRole('button', { name: 'Delete' }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.getByRole('alert')).toHaveText('Request failed')
   await expect(row).toBeVisible()
 
   await row.getByRole('link', { name }).click()
-  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Delete' }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.getByRole('alert')).toHaveText('Request failed')
   await expect(page).toHaveURL(detailHref!)
 })
