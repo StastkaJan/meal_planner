@@ -7,7 +7,10 @@ import {
   mealIngredients,
   userSettings,
 } from '$lib/database/schema'
-import type { IngredientAdminInput } from '$lib/domain/ingredient-admin'
+import {
+  ingredientAdminInput,
+  type IngredientAdminInput,
+} from '$lib/domain/ingredient-admin'
 import {
   normalizeIngredientName,
   ingredientNames,
@@ -312,6 +315,20 @@ export function mergeIngredients(sourceId: number, targetId: number) {
     ]
     for (const [locale, row] of Object.entries(source.translations))
       addAliases(locale, row.name, row.aliases)
+
+    if (
+      !ingredientAdminInput.safeParse({
+        name: target.name,
+        aliases,
+        translations: Object.entries(translations).map(([locale, row]) => ({
+          locale,
+          ...row,
+        })),
+      }).success
+    )
+      throw new InvalidMealInputError(
+        'Merged ingredient exceeds catalogue limits. Shorten names or remove aliases or translations before merging.',
+      )
 
     // Do not create an ambiguous shared alias that would resolve differently by user.
     const names = [

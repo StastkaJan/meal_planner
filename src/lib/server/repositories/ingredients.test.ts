@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { drizzle as pgliteDrizzle } from 'drizzle-orm/pglite'
 import { PGlite } from '@electric-sql/pglite'
+import { ingredientAdminInput } from '$lib/domain/ingredient-admin'
 
 const db = vi.hoisted(() => ({ select: vi.fn(), transaction: vi.fn() }))
 vi.mock('$lib/database', () => ({ db }))
@@ -440,6 +441,43 @@ it('merges private duplicates, preserves recipe data and locale names, and resol
       aliases: ['untranslated duplicate'],
       translations: {},
     })
+  } finally {
+    db.transaction.mockReset()
+    await client.close()
+  }
+}, 15000)
+
+it('rejects a merge that would exceed the catalogue editor limits without losing aliases or references', async () => {
+  const client = new PGlite()
+  const database = pgliteDrizzle(client)
+  db.transaction.mockImplementation(database.transaction.bind(database))
+  try {
+    await client.exec(`
+      CREATE TABLE ingredients (id serial PRIMARY KEY, name text NOT NULL UNIQUE, is_catalog boolean DEFAULT false, name_cs text, aliases text[] DEFAULT '{}');
+      CREATE TABLE ingredient_translations (ingredient_id int REFERENCES ingredients ON DELETE CASCADE, locale text, name text, aliases text[] DEFAULT '{}', PRIMARY KEY (ingredient_id, locale));
+      CREATE TABLE user_ingredients (user_id int, ingredient_id int REFERENCES ingredients, PRIMARY KEY (user_id, ingredient_id));
+      CREATE TABLE meal_ingredients (ingredient_id int REFERENCES ingredients);
+      CREATE TABLE user_settings (pantry_ingredient_ids int[], pantry_staples text[]);
+      INSERT INTO ingredients (name, is_catalog) VALUES ('Duplicate', true), ('Target', true);
+      INSERT INTO meal_ingredients VALUES (1);
+      UPDATE ingredients SET aliases = ARRAY(SELECT 'alias ' || n FROM generate_series(1, 100) n) WHERE id = 2;
+    `)
+    const target = (await listIngredientOptions(null, database as any)).find(
+      (row) => row.id === 2,
+    )!
+    expect(
+      ingredientAdminInput.safeParse({ ...target, translations: [] }).success,
+    ).toBe(true)
+    await expect(mergeIngredients(1, 2)).rejects.toThrow(
+      'Merged ingredient exceeds catalogue limits',
+    )
+    expect(
+      (await client.query('SELECT ingredient_id FROM meal_ingredients')).rows,
+    ).toEqual([{ ingredient_id: 1 }])
+    expect(await listIngredientOptions(null, database as any)).toEqual([
+      expect.objectContaining({ id: 1 }),
+      target,
+    ])
   } finally {
     db.transaction.mockReset()
     await client.close()

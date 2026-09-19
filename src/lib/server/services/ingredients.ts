@@ -5,6 +5,7 @@ import {
   mergeIngredients,
 } from '../repositories/ingredients'
 import { ingredientAdminInput } from '$lib/domain/ingredient-admin'
+import { InvalidMealInputError } from '$lib/domain/meal-input'
 import { z } from 'zod'
 
 export async function mergeCatalogueIngredients(body: unknown) {
@@ -12,10 +13,13 @@ export async function mergeCatalogueIngredients(body: unknown) {
   const parsed = z.object({ sourceId: id, targetId: id }).safeParse(body)
   if (!parsed.success || parsed.data.sourceId === parsed.data.targetId)
     error(400, 'Select two different ingredients')
-  const merged = await mergeIngredients(
-    parsed.data.sourceId,
-    parsed.data.targetId,
-  )
+  let merged
+  try {
+    merged = await mergeIngredients(parsed.data.sourceId, parsed.data.targetId)
+  } catch (cause) {
+    if (cause instanceof InvalidMealInputError) error(409, cause.message)
+    throw cause
+  }
   if (merged === false)
     error(409, 'An alias also belongs to another catalogue ingredient')
   if (!merged) error(404, 'Ingredient not found')

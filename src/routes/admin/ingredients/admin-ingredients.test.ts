@@ -14,6 +14,7 @@ import { load } from './+page.server'
 import { load as loadIngredient } from './[id]/+page.server'
 import { POST as merge } from './merge/+server'
 import { load as loadMerge } from './merge/+page.server'
+import { InvalidMealInputError } from '$lib/domain/meal-input'
 
 const input = {
   name: 'Salt',
@@ -63,6 +64,14 @@ it('protects and validates merges and returns useful failure statuses', async ()
   await expect(merge(event(body))).rejects.toMatchObject({ status: 409 })
   expect(await (await merge(event(body))).json()).toEqual({ id: 2 })
   expect(repository.mergeIngredients).toHaveBeenLastCalledWith(1, 2)
+  const message = 'Merged ingredient exceeds catalogue limits'
+  repository.mergeIngredients.mockRejectedValueOnce(
+    new InvalidMealInputError(message),
+  )
+  await expect(merge(event(body))).rejects.toMatchObject({
+    status: 409,
+    body: { message },
+  })
 })
 
 it('loads bounded merge search from the URL with shared targets', async () => {

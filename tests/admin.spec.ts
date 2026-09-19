@@ -100,6 +100,22 @@ test('@smoke admin merges a custom ingredient and remembers its alias', async ({
       .getByRole('combobox', { name: 'Merge into', exact: true })
       .fill(targetName)
     await page.getByRole('option', { name: targetName, exact: true }).click()
+    sql(
+      `update ingredients set aliases = ARRAY(select 'alias ' || n from generate_series(1, 100) n) where id = ${targetId}`,
+    )
+    page.once('dialog', (dialog) => dialog.accept())
+    await page
+      .getByRole('button', { name: 'Merge ingredients', exact: true })
+      .click()
+    await expect(page.getByRole('alert')).toHaveText(
+      'Merged ingredient exceeds catalogue limits. Shorten names or remove aliases or translations before merging.',
+    )
+    expect(
+      sql(
+        `select ingredient_id from meal_ingredients where meal_id = ${mealId}`,
+      ),
+    ).toBe(String(sourceId))
+    sql(`update ingredients set aliases = '{}' where id = ${targetId}`)
     page.once('dialog', (dialog) => dialog.dismiss())
     await page
       .getByRole('button', { name: 'Merge ingredients', exact: true })

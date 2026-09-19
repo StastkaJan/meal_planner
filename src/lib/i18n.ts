@@ -68,6 +68,8 @@ const CS_MESSAGES = {
   'Want a hand with the planning?': 'Chcete s plánováním pomoct?',
   'Explore Free & Pro': 'Prohlédnout Free a Pro',
   'Merge ingredients': 'Sloučit suroviny',
+  'Merged ingredient exceeds catalogue limits. Shorten names or remove aliases or translations before merging.':
+    'Sloučená surovina překračuje limity katalogu. Před sloučením zkraťte názvy nebo odeberte alternativní názvy či překlady.',
   'Merge into': 'Sloučit do',
   'Duplicate ingredient': 'Duplicitní surovina',
   'Search duplicate ingredients': 'Hledat duplicitní suroviny',
