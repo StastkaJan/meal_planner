@@ -6,6 +6,8 @@ Feature and operational details moved from `AGENTS.md`. Read the section relevan
 
 See [dependency updates](dependency-updates.md) for the update workflow.
 
+- SvelteKit inlines stylesheets below 7,000 characters, including the landing page and shared shell CSS, to avoid render-blocking requests on first visits. Larger stylesheets remain separately cached; small styles are included in each HTML response.
+
 - Type checks use TypeScript 7 through the `@typescript/native-preview` npm alias and `svelte-check --tsgo`; TypeScript 6 remains installed for tools that still require its legacy compiler API.
 
 - Husky's pre-commit hook formats staged files and runs Svelte/TypeScript checks.
@@ -65,6 +67,8 @@ See [account data business cases](business-cases/account-data.md).
 - `/pricing` is public and explains Free/Pro access; admins manage the temporary `is_pro` entitlement in `/admin/users`.
 
 - `/` is the public EN/CS product and vision landing page; the protected planner lives at `/planner`, including after sign-in and registration. Legacy home URLs with planner query parameters redirect to `/planner` with their filters intact. Hash links scroll smoothly unless reduced motion is requested.
+
+- `/robots.txt` is a public static text file so crawlers receive directives instead of the sign-in page. Application authorization still protects private pages.
 
 - The landing language switcher uses `?lang=en|cs` and the existing locale cookie for visitors' subsequent pages. Explicit landing language overrides the account locale on `/` only; account language preferences remain unchanged.
 

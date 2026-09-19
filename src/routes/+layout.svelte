@@ -56,7 +56,7 @@
 <header class="shell-header">
   <nav aria-label={t('Main navigation')}>
     <a class="brand" href="/" aria-label="Papu Plan home">
-      <img src="/logo.svg" alt="Papu Plan" />
+      <img src="/logo.svg" alt="Papu Plan" width="188" height="44" />
     </a>
     {#if data.user}
       <div class="main-links">
