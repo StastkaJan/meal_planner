@@ -34,6 +34,8 @@ See [production](production.md), [WireGuard](wireguard.md), and [migrations](mig
 
 - Same-repository PRs deploy to `pr-N.papuplan.cz` after CI; both preview workflows use the outer Caddy in `/home/github/portfolio`, independently of the SSH user's home. `db:seed:preview` adds Free/Pro users and both admin variants, scoped recipes, plans, and review fixtures without production DB access. The first demo deployment clears legacy preview DB/image volumes; later seeds preserve existing accounts and edits. Demo logins are in `docs/production.md`. Exact-host Caddy routes and all preview state are removed when the PR closes.
 
+- Preview Caddy routes enable `zstd` and `gzip` compression, matching production text compression so preview performance audits include realistic HTML transfer sizes.
+
 - `scripts/deploy-production.sh` takes an off-host backup before migrations; destructive SQL requires a recovery note under `drizzle/notes/`, enforced by CI.
 
 - Backup scheduler restarts do no repository work; backups/restores run daily and retention pruning weekly. A failed pre-deploy backup may be bypassed only when the release migration fingerprint matches the active image; first deploys and migration changes still fail closed.

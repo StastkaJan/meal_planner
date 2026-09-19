@@ -72,7 +72,8 @@ function previewFixture() {
         },
       },
     )
-  return { run, log, seedMarker, legacyMarker }
+  const routeFile = join(directory, 'edge/preview-routes/pr-42.caddy')
+  return { run, log, seedMarker, legacyMarker, routeFile }
 }
 
 describe('pull request previews', () => {
@@ -157,6 +158,9 @@ describe('pull request previews', () => {
     writeFileSync(fixture.legacyMarker, 'old-release')
     const first = fixture.run()
     expect(first.status, first.stderr).toBe(0)
+    expect(readFileSync(fixture.routeFile, 'utf8')).toMatch(
+      /pr-42\.example\.test \{\s+encode zstd gzip\s+reverse_proxy pr-42-app:3000\s+\}/,
+    )
     const commands = readFileSync(fixture.log, 'utf8')
     expect(commands).toMatch(
       /--project-name meal-plan-pr-42 .*down --volumes --remove-orphans/,

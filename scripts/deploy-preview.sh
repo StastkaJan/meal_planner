@@ -139,6 +139,7 @@ compose up -d --no-deps --wait --wait-timeout 120 app
 
 cat >"$route_file.tmp" <<EOF
 $domain {
+	encode zstd gzip
 	reverse_proxy $preview_id-app:3000
 }
 EOF
