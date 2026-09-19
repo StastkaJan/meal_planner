@@ -2,8 +2,9 @@ import { redirect } from '@sveltejs/kit'
 import type { LayoutServerLoad } from './$types'
 import { getPendingLegalNotices } from '$lib/server/services/legal'
 
-export const load: LayoutServerLoad = async ({ locals, url }) => {
+export const load: LayoutServerLoad = async ({ locals, url, route }) => {
   if (
+    route.id !== null &&
     !locals.user &&
     !url.pathname.startsWith('/auth') &&
     !url.pathname.startsWith('/legal/') &&

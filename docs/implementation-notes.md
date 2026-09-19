@@ -8,6 +8,8 @@ See [dependency updates](dependency-updates.md) for the update workflow.
 
 - SvelteKit inlines stylesheets below 7,000 characters, including the landing page and shared shell CSS, to avoid render-blocking requests on first visits. Larger stylesheets remain separately cached; small styles are included in each HTML response.
 
+- The shell imports its logo through Vite with `?no-inline`, producing a content-hashed URL under `/_app/immutable/` with the Node adapter's one-year immutable caching.
+
 - Type checks use TypeScript 7 through the `@typescript/native-preview` npm alias and `svelte-check --tsgo`; TypeScript 6 remains installed for tools that still require its legacy compiler API.
 
 - Husky's pre-commit hook formats staged files and runs Svelte/TypeScript checks.
@@ -69,6 +71,10 @@ See [account data business cases](business-cases/account-data.md).
 - `/` is the public EN/CS product and vision landing page; the protected planner lives at `/planner`, including after sign-in and registration. Legacy home URLs with planner query parameters redirect to `/planner` with their filters intact. Hash links scroll smoothly unless reduced motion is requested.
 
 - `/robots.txt` is a public static text file so crawlers receive directives instead of the sign-in page. Application authorization still protects private pages.
+
+- `/llms.txt` is a public Markdown summary with links to the product, pricing, and legal pages for AI agents.
+
+- Unmatched URLs return 404 for visitors; the root layout redirects to sign-in only for matched private page routes. This also lets discovery clients distinguish absent optional manifests from HTML login pages.
 
 - The landing language switcher uses `?lang=en|cs` and the existing locale cookie for visitors' subsequent pages. Explicit landing language overrides the account locale on `/` only; account language preferences remain unchanged.
 
