@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Popup from '$lib/components/ui/Popup.svelte'
   import Pagination from '$lib/components/ui/Pagination.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
@@ -17,6 +18,8 @@
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  let popup: ReturnType<typeof Popup>
+
   const { t, message, label, namedCount } = useI18n()
   let meals = $derived(data.meals)
   let creating = $state(false)
@@ -40,7 +43,7 @@
   }
 
   async function deleteMeal(id: number) {
-    if (!confirm(t('Delete this meal?'))) return
+    if (!(await popup.confirm(t('Delete this meal?')))) return
     deleteError = ''
     try {
       await removeMeal(id)
@@ -115,6 +118,8 @@
     }
   }
 </script>
+
+<Popup bind:this={popup} />
 
 <div class="page">
   <div class="top-bar">

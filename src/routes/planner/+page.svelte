@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Popup from '$lib/components/ui/Popup.svelte'
   import { beforeNavigate, goto } from '$app/navigation'
   import { page } from '$app/state'
   import Dialog from '$lib/components/ui/Dialog.svelte'
@@ -14,6 +15,8 @@
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  let popup: ReturnType<typeof Popup>
+
   const { t, message } = useI18n()
 
   // writable $derived: resets from load on navigation, reassigned locally after a fetch mutation
@@ -32,8 +35,8 @@
   let myRecipesOnly = $state(false)
   let savingMeal = $state(false)
 
-  beforeNavigate(({ type, cancel }) => {
-    if (savingMeal && type !== 'goto') cancel()
+  beforeNavigate(({ type, willUnload, cancel }) => {
+    if (savingMeal && !willUnload && type !== 'goto') cancel()
   })
 
   function openPicker(date: string, mealType: string) {
@@ -69,7 +72,7 @@
         await planApi.setSlot(plan.id, date, mealType, mealId)
       await closePicker()
     } catch {
-      alert(t('Something went wrong.'))
+      await popup.alert(t('Something went wrong.'))
     } finally {
       savingMeal = false
     }
@@ -80,13 +83,13 @@
   async function handleClear(date?: string) {
     if (!plan || plannerBusy) return
     if (
-      !confirm(
+      !(await popup.confirm(
         date
           ? t('Clear all meals and extras for this day?')
           : t(
               'Clear all meals and extras for this week? Plan settings will be kept.',
             ),
-      )
+      ))
     )
       return
     plannerBusy = true
@@ -98,7 +101,7 @@
       if (await alertIfFailed(res)) return
       await refreshPlan()
     } catch {
-      alert(t('Something went wrong.'))
+      await popup.alert(t('Something went wrong.'))
     } finally {
       plannerBusy = false
     }
@@ -118,10 +121,12 @@
       if (await alertIfFailed(res)) return
       const { changed } = await res.json()
       if (!changed)
-        alert(t('No different recipe matches this slot and your preferences.'))
+        await popup.alert(
+          t('No different recipe matches this slot and your preferences.'),
+        )
       await refreshPlan()
     } catch {
-      alert(t('Something went wrong.'))
+      await popup.alert(t('Something went wrong.'))
     } finally {
       plannerBusy = false
     }
@@ -172,7 +177,7 @@
       myRecipesOnly,
     )
     if (filled === 0) {
-      alert(
+      await popup.alert(
         favoritesOnly || myRecipesOnly
           ? t('No recipes match the auto-compose filters for any empty slot.')
           : t('No empty slots to fill.'),
@@ -185,9 +190,9 @@
     if (!plan) return
     const from = addDays(data.viewWeek, -7)
     if (
-      !confirm(
+      !(await popup.confirm(
         t('Copy last week into this week? Existing slots will be overwritten.'),
-      )
+      ))
     )
       return
     await planApi.copyWeek(plan.id, from, data.viewWeek)
@@ -199,7 +204,9 @@
   async function alertIfFailed(res: Response): Promise<boolean> {
     if (res.ok) return false
     const body = await res.json().catch(() => ({}))
-    alert(body.message ? message(body.message) : t('Something went wrong.'))
+    await popup.alert(
+      body.message ? message(body.message) : t('Something went wrong.'),
+    )
     return true
   }
 
@@ -241,7 +248,9 @@
     if (await alertIfFailed(res)) return
     const { filled } = await res.json()
     if (filled === 0)
-      alert(t('Nothing to recalculate — that day has no empty slots.'))
+      await popup.alert(
+        t('Nothing to recalculate — that day has no empty slots.'),
+      )
     await refreshPlan()
   }
 
@@ -269,6 +278,8 @@
     preferences = { ...preferences, ...patch }
   }
 </script>
+
+<Popup bind:this={popup} />
 
 <div class="page">
   <div class="page-heading">

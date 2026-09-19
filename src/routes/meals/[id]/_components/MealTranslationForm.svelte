@@ -1,9 +1,12 @@
 <script lang="ts">
+  import Popup from '$lib/components/ui/Popup.svelte'
   import { deleteMealTranslation, updateMealTranslation } from '$lib/api/meals'
   import Textarea from '$lib/components/ui/Textarea.svelte'
   import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '$lib/i18n'
   import type { Meal, MealTranslation } from '$lib/database/schema'
   import { useI18n } from '$lib/i18n-context'
+
+  let popup: ReturnType<typeof Popup>
 
   const { t, message } = useI18n()
 
@@ -65,11 +68,11 @@
   async function remove() {
     if (pending) return
     if (
-      !confirm(
+      !(await popup.confirm(
         t('Delete the {language} translation?', {
           language: LOCALE_LABELS[locale],
         }),
-      )
+      ))
     )
       return
     requestError = ''
@@ -85,6 +88,8 @@
     }
   }
 </script>
+
+<Popup bind:this={popup} />
 
 <form class="translation-form" onsubmit={save}>
   <div class="form-header">

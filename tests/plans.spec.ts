@@ -288,7 +288,7 @@ test('configure enabled and custom meal slots for auto-compose', async ({
   await expect(labels.filter({ hasText: 'afternoon snack' })).toHaveCount(0)
   await expect(labels.filter({ hasText: 'second breakfast' })).toHaveCount(1)
 
-  await page.getByRole('button', { name: 'Auto-compose' }).click()
+  await page.getByRole('button', { name: 'Auto-compose', exact: true }).click()
   const customRow = page.locator('tbody tr').filter({
     has: page.locator('.row-label', { hasText: 'second breakfast' }),
   })
@@ -312,8 +312,11 @@ test('empty weeks open settings, including after navigation', async ({
   await page.getByRole('button', { name: '+ extra' }).first().click()
   await page.getByRole('button', { name: 'Pizza', exact: true }).click()
   await expect(page.locator('details.settings')).not.toHaveAttribute('open', '')
-  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Clear week', exact: true }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.locator('.bonus-item')).toHaveCount(0)
   await expect(page.locator('details.settings')).toHaveAttribute('open', '')
 })
@@ -403,18 +406,24 @@ test('@smoke reroll a single meal, clear a day, and clear only the viewed week',
     actions.getByRole('button', { name: 'Clear day', exact: true }),
   ).toBeEnabled()
 
-  page.once('dialog', (dialog) => dialog.dismiss())
   await actions
     .getByRole('button', { name: 'Clear day', exact: true })
     .first()
     .click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Cancel', exact: true })
+    .click()
   await expect(cells.nth(0).locator('.name')).toHaveCount(1)
   await expect(actions).not.toBeVisible()
   await trigger.click()
-  page.once('dialog', (dialog) => dialog.accept())
   await actions
     .getByRole('button', { name: 'Clear day', exact: true })
     .first()
+    .click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
     .click()
   await expect(cells.nth(0).locator('.name')).toHaveCount(0)
   await expect(cells.nth(1).locator('.name')).toHaveCount(1)
@@ -452,8 +461,11 @@ test('@smoke reroll a single meal, clear a day, and clear only the viewed week',
   }
   await page.reload()
   await expect(page.locator('details.settings')).not.toHaveAttribute('open', '')
-  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Clear week', exact: true }).click()
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click()
   await expect(page.locator('.cal .name')).toHaveCount(0)
   await expect(page.locator('.bonus-item')).toHaveCount(0)
   await expect(page.locator('details.settings')).toHaveAttribute('open', '')

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Popup from '$lib/components/ui/Popup.svelte'
   import { page } from '$app/stores'
   import type { PageData } from './$types'
   import { queueCatalogue, reviewCatalogueRecipe } from '$lib/api/catalogue'
@@ -8,6 +9,8 @@
   import { useI18n } from '$lib/i18n-context'
 
   let { data }: { data: PageData } = $props()
+  let popup: ReturnType<typeof Popup>
+
   const { t, label, message: translateMessage } = useI18n()
   let imports = $derived(data.imports)
   let recipes = $derived(data.recipes)
@@ -52,7 +55,7 @@
 
   async function archive(id: number) {
     if (archiveBusy) return
-    if (!confirm(t('Archive this shared recipe?'))) return
+    if (!(await popup.confirm(t('Archive this shared recipe?')))) return
     recipeError = ''
     archiveBusy = true
     try {
@@ -68,6 +71,8 @@
     }
   }
 </script>
+
+<Popup bind:this={popup} />
 
 {#snippet recipeRow(recipe: (typeof recipes)[number])}
   <tr>
