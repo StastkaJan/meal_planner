@@ -2,14 +2,13 @@
   import { goto } from '$app/navigation'
   import type { PageData } from './$types'
   import { mergeCatalogueIngredients } from '$lib/api/ingredients'
-  import { ingredientDisplayName } from '$lib/domain/ingredients'
   import { useI18n } from '$lib/i18n-context'
   import IngredientSelect from '$lib/components/ui/IngredientSelect.svelte'
   import Input from '$lib/components/ui/Input.svelte'
   import Button from '$lib/components/ui/Button.svelte'
 
   let { data }: { data: PageData } = $props()
-  const { t, locale, message } = useI18n()
+  const { t, message } = useI18n()
   let sourceId = $derived<number | undefined>(data.sources[0]?.id)
   let targetId = $state<number>()
   let busy = $state(false)
@@ -76,14 +75,15 @@
   </form>
   <form onsubmit={merge}>
     <fieldset disabled={busy}>
-      <label for="source">{t('Duplicate ingredient')}</label>
-      <select id="source" bind:value={sourceId} required>
-        {#each data.sources as row}
-          <option value={row.id}
-            >{ingredientDisplayName(row, locale())} ({row.name}, #{row.id})</option
-          >
-        {/each}
-      </select>
+      <p>{t('Duplicate ingredient')}</p>
+      <IngredientSelect
+        options={data.sources}
+        ingredientId={sourceId}
+        allowCreate={false}
+        showIdentity
+        label={t('Duplicate ingredient')}
+        onselect={(row) => (sourceId = row?.id)}
+      />
       <p class="hint">
         {t(
           'Includes custom ingredients. Showing up to 30 matches; refine your search if needed.',
@@ -95,6 +95,7 @@
         options={data.targets.filter((row) => row.id !== sourceId)}
         ingredientId={targetId}
         allowCreate={false}
+        showIdentity
         label={t('Merge into')}
         onselect={(row) => (targetId = row?.id)}
       />
@@ -135,14 +136,6 @@
   fieldset {
     border: 0;
     min-width: 0;
-  }
-  select {
-    width: 100%;
-    padding: 0.75rem;
-    background: $color-surface;
-    color: $color-text;
-    border: 1px solid $color-border;
-    border-radius: 6px;
   }
   .hint {
     color: $color-text-muted;

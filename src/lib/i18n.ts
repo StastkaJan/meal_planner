@@ -10,6 +10,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 }
 
 const CS_MESSAGES = {
+  Unit: 'Jednotka',
   'General aliases': 'Obecné alternativní názvy',
   'Alternative names without a specified language. Enter one per line.':
     'Alternativní názvy bez určeného jazyka. Každý zadejte na samostatný řádek.',

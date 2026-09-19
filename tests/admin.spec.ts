@@ -94,12 +94,23 @@ test('@smoke admin merges a custom ingredient and remembers its alias', async ({
     await expect(page).toHaveURL(new RegExp(`q=Duplicate\\+${suffix}`))
     await page.reload()
     await page
-      .getByLabel('Duplicate ingredient', { exact: true })
-      .selectOption(String(sourceId))
+      .getByRole('combobox', { name: 'Duplicate ingredient', exact: true })
+      .fill(sourceName)
+    await page
+      .getByRole('option', {
+        name: `${sourceName} (${sourceName}, #${sourceId})`,
+        exact: true,
+      })
+      .click()
     await page
       .getByRole('combobox', { name: 'Merge into', exact: true })
       .fill(targetName)
-    await page.getByRole('option', { name: targetName, exact: true }).click()
+    await page
+      .getByRole('option', {
+        name: `${targetName} (${targetName}, #${targetId})`,
+        exact: true,
+      })
+      .click()
     sql(
       `update ingredients set aliases = ARRAY(select 'alias ' || n from generate_series(1, 100) n) where id = ${targetId}`,
     )

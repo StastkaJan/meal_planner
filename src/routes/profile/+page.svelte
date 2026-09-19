@@ -10,6 +10,7 @@
   import { LOCALE_LABELS, SUPPORTED_LOCALES } from '$lib/i18n'
   import { useI18n } from '$lib/i18n-context'
   import IngredientSelect from '$lib/components/ui/IngredientSelect.svelte'
+  import Select from '$lib/components/ui/Select.svelte'
 
   let { data } = $props()
   const { t, message, locale } = useI18n()
@@ -157,11 +158,14 @@
         <form method="POST" onsubmit={saveLanguage}>
           <label>
             {t('Preferred language')}
-            <select name="locale" value={data.locale}>
-              {#each SUPPORTED_LOCALES as locale}
-                <option value={locale}>{LOCALE_LABELS[locale]}</option>
-              {/each}
-            </select>
+            <Select
+              name="locale"
+              value={data.locale}
+              options={SUPPORTED_LOCALES.map((value) => ({
+                value,
+                label: LOCALE_LABELS[value],
+              }))}
+            />
           </label>
           <button type="submit">{t('Save language')}</button>
         </form>
@@ -450,8 +454,7 @@
     font-weight: 600;
     color: $color-text-muted;
   }
-  input,
-  select {
+  input {
     min-height: 42px;
     padding: 9px 11px;
     background: $color-surface;

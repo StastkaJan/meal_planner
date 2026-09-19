@@ -16,6 +16,7 @@
     ingredientId,
     multiple = false,
     allowCreate = true,
+    showIdentity = false,
     label,
     selectedIds = $bindable<number[]>([]),
     onselect,
@@ -26,6 +27,7 @@
     ingredientId?: number
     multiple?: boolean
     allowCreate?: boolean
+    showIdentity?: boolean
     label?: string
     selectedIds?: number[]
     onselect?: (ingredient: IngredientOption | undefined, name: string) => void
@@ -35,7 +37,9 @@
   let custom = $state<IngredientOption[]>([])
   let error = $state('')
   const toOption = (ingredient: IngredientOption) => ({
-    label: ingredientDisplayName(ingredient, locale()),
+    label: showIdentity
+      ? `${ingredientDisplayName(ingredient, locale())} (${ingredient.name}, #${ingredient.id})`
+      : ingredientDisplayName(ingredient, locale()),
     ingredient,
   })
   let all = $derived([
